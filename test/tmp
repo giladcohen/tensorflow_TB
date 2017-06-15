@@ -1,0 +1,25 @@
+for i in range(N_logs):
+    print ('Start evaluating kNN model for i=%0d, k=%0d in %0s' %(i,k,FLAGS.mode))
+    knn = kNN_vec[i]
+    ret, results, neighbors, dist = knn.findNearest(test_data[i], k)
+    neighbors = neighbors.astype(np.int)
+    neighbors_vec.append(neighbors)
+    first_choice[:,i]  = np.apply_along_axis(lambda x: np.argsort(x)[::-1][0], axis=1, arr=test_logits[i])
+    second_choice[:,i] = np.apply_along_axis(lambda x: np.argsort(x)[::-1][1], axis=1, arr=test_logits[i])
+neighbors_all  = np.hstack(neighbors_vec)
+hist = np.apply_along_axis(lambda x: np.bincount(x, minlength=NUM_CLASSES), axis=1, arr=neighbors_all)
+hist_first_choices = np.apply_along_axis(lambda x: np.bincount(x, minlength=NUM_CLASSES), axis=1, arr=first_choice)
+consistency_level = np.max(hist_first_choices, axis=1).reshape([N_test, 1])
+label_mat = np.empty([N_test, N_logs], dtype=np.int)
+for row in range(N_test):
+    for i in range(N_logs):
+        if (consistency_level[row]>6):
+            label_mat[row,i] = first_choice[row,i] #don't touch
+        else:
+            if (hist[row,second_choice[row,i]] > 1.5*hist[row][first_choice[row,i]]):
+                label_mat[row,i] = second_choice[row][i]
+                print ("overriding test sample #%0d (net=%0d): from %0d to %0d" %(row, i, first_choice[row,i], second_choice[row,i]))
+            else:
+                label_mat[row,i] = first_choice[row][i]
+label_vote = np.apply_along_axis(lambda x: np.bincount(x, minlength=NUM_CLASSES), axis=1, arr=label_mat)
+label_est  = np.argmax(label_vote, axis=1)
