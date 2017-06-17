@@ -15,13 +15,15 @@ from keras.datasets import cifar10, cifar100
 import matplotlib.pyplot as plt #for debug
 from sklearn.cluster import KMeans, k_means_
 import random
+import active_kmean
+from sklearn.neighbors import NearestNeighbors
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
 flags.DEFINE_string('mode', 'train', 'train or eval.')
-flags.DEFINE_string('train_data_path', 'images.bin', 'Filepattern for training data.')
-flags.DEFINE_string('eval_data_path', '', 'Filepattern for eval data')
+flags.DEFINE_string('train_data_path', 'pool_images.bin', 'Filepattern for training data.')
+flags.DEFINE_string('eval_data_path', 'all_images.bin', 'Filepattern for eval data')
 flags.DEFINE_integer('image_size', 32, 'Image side length.')
 flags.DEFINE_string('train_dir', '', 'Directory to keep training outputs.')
 flags.DEFINE_string('eval_dir', '', 'Directory to keep eval outputs.')
@@ -33,7 +35,7 @@ flags.DEFINE_string('log_root', '',
 flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for training. (0 or 1)')
 flags.DEFINE_bool('active_learning', False, 'Use active learning')
 flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
-flags.DEFINE_integer('clusters', 128, 'batch size for train/test')
+flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
 
 TRAIN_SET_SIZE = 50000
 TEST_SET_SIZE  = 10000
@@ -42,7 +44,7 @@ ACTIVE_EPOCHS = 5
 if (FLAGS.batch_size != -1):
     BATCH_SIZE = FLAGS.batch_size
 elif (FLAGS.mode == 'train'):
-  BATCH_SIZE=128
+  BATCH_SIZE=100
 else:
   BATCH_SIZE=100
 
@@ -59,17 +61,19 @@ def update_pool(available_samples, pool, clusters=FLAGS.clusters):
 
 def train(hps):
     """Training loop."""
+    read_mode = tf.placeholder(tf.string) #can be train or eval
+
+    """Training loop. Step1 - selecting 128 randomized images"""
+    (train_images, train_labels), (test_images, test_labels) = cifar10.load_data()
+    tf_utils.convert_numpy_to_bin(train_images, train_labels, FLAGS.eval_data_path)
 
     available_samples = range(TRAIN_SET_SIZE)
     pool = []
     available_samples, pool = update_pool(available_samples, pool)
+    tf_utils.convert_numpy_to_bin(train_images[pool], train_labels[pool], FLAGS.train_data_path)
 
-    """Training loop. Step1 - selecting 128 randomized images"""
-    (train_images, train_labels), (test_images, test_labels) = cifar10.load_data()
-    pool = sorted(random.sample(range(TRAIN_SET_SIZE), BATCH_SIZE))
-    tf_utils.convert_numpy_to_bin(train_images[pool], train_labels[pool], 'images.bin')
-
-    images_raw, images, labels = active_input.build_input(FLAGS.dataset, FLAGS.train_data_path, BATCH_SIZE)
+    images_raw, images, labels = active_input.build_input(FLAGS.dataset, FLAGS.train_data_path,
+                                                          FLAGS.eval_data_path, BATCH_SIZE, read_mode)
     model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
     model.build_graph()
 
@@ -89,6 +93,7 @@ def train(hps):
 
     summary_hook = tf.train.SummarySaverHook(
         save_steps=1, #was 100
+        #save_secs = 60,
         output_dir=FLAGS.train_dir,
         summary_op=tf.summary.merge([model.summaries,
                                      tf.summary.scalar('Precision', precision)]))
@@ -129,19 +134,48 @@ def train(hps):
             # Since we provide a SummarySaverHook, we need to disable default
             # SummarySaverHook. To do that we set save_summaries_steps to 0.
             save_summaries_steps=0,
+            save_checkpoint_secs=60, # was 600
             config=tf.ConfigProto(allow_soft_placement=True))
 
     if (FLAGS.active_learning == False):
         while not sess.should_stop():
             steps_to_go = ACTIVE_EPOCHS * (len(pool) / BATCH_SIZE)
             for i in range(steps_to_go):
-                sess.run(model.train_op)
-            print('updating pool from:')
-            print(pool)
+                sess.run(model.train_op, feed_dict={read_mode: "train"})
             available_samples, pool = update_pool(available_samples, pool)
-            print('to:')
-            print(pool)
-            tf_utils.convert_numpy_to_bin(train_images[pool], train_labels[pool], 'images.bin')
+            print('updating pool to length %0d' % (len(pool)))
+            tf_utils.convert_numpy_to_bin(train_images[pool], train_labels[pool], FLAGS.train_data_path)
+    else:
+        while not sess.should_stop():
+            lp = len(pool)
+            if lp == TRAIN_SET_SIZE:
+                sess.run(model.train_op, feed_dict={read_mode: "train"})
+            else:
+                steps_to_go = ACTIVE_EPOCHS * (lp / BATCH_SIZE)
+                for i in range(steps_to_go):
+                    sess.run(model.train_op, feed_dict={read_mode: "train"})
+                fc1_vec = -1.0 * np.ones((TRAIN_SET_SIZE, 640), dtype=np.float32)
+                batches_to_store = TRAIN_SET_SIZE / BATCH_SIZE
+                for i in range(batches_to_store):
+                    net = sess.run(model.net, feed_dict={read_mode: "eval"})
+                    b = i * BATCH_SIZE
+                    e = (i + 1) * BATCH_SIZE
+                    fc1_vec[b:e] = np.reshape(net['pool_out'], (BATCH_SIZE, 640))
+                assert np.sum(fc1_vec == -1) == 0 #debug
+                KM = active_kmean.KMeansWrapper(fixed_centers=fc1_vec[pool], n_clusters=lp + BATCH_SIZE, init='k-means++', n_init=10,
+                                                max_iter=300, tol=1e-4, precompute_distances='auto',
+                                                verbose=0, random_state=None, copy_x=True,
+                                                n_jobs=1, algorithm='auto')
+                centers = KM.fit_predict_centers(fc1_vec)
+                new_centers = centers[lp:(lp + BATCH_SIZE)]
+                nbrs = NearestNeighbors(n_neighbors=1)
+                nbrs.fit(fc1_vec)
+                indices = nbrs.kneighbors(new_centers, return_distance=False)
+                for myItem in indices:
+                    assert (myItem not in pool)
+                pool = sorted(pool + indices)
+                print('updating pool to length %0d' % (len(pool)))
+                tf_utils.convert_numpy_to_bin(train_images[pool], train_labels[pool], FLAGS.train_data_path)
 
 def evaluate(hps):
   """Eval loop."""
@@ -198,7 +232,7 @@ def evaluate(hps):
     if FLAGS.eval_once:
       break
 
-    time.sleep(60)
+    time.sleep(5)
 
 
 def main(_):
