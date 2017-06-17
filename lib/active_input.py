@@ -1,7 +1,7 @@
 import tensorflow as tf
 import glob
 
-def build_input(dataset, data_path, batch_size, shuffle=True):
+def build_input(dataset, train_data_path, eval_data_path, batch_size, mode, shuffle=False):
     """Build CIFAR image and labels.
 
     Args:
@@ -30,6 +30,10 @@ def build_input(dataset, data_path, batch_size, shuffle=True):
     image_bytes = image_size * image_size * depth
     record_bytes = label_bytes + label_offset + image_bytes
 
+    if (mode == 'train'):
+        data_path = train_data_path
+    else:
+        data_path = eval_data_path
     data_files = tf.gfile.Glob(data_path)
     file_queue = tf.train.string_input_producer(data_files, shuffle=shuffle)
 
@@ -47,22 +51,33 @@ def build_input(dataset, data_path, batch_size, shuffle=True):
     image = tf.cast(tf.transpose(depth_major, [1, 2, 0]), tf.float32)
     image_raw = image
 
-    image = tf.image.resize_image_with_crop_or_pad(
-        image, image_size + 4, image_size + 4)
-    image = tf.random_crop(image, [image_size, image_size, 3])
-    image = tf.image.random_flip_left_right(image)
-    # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
-    # image = tf.image.random_brightness(image, max_delta=63. / 255.)
-    # image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
-    # image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
-    image = tf.image.per_image_standardization(image)
+    if mode == 'train':
+        image = tf.image.resize_image_with_crop_or_pad(
+            image, image_size + 4, image_size + 4)
+        image = tf.random_crop(image, [image_size, image_size, 3])
+        image = tf.image.random_flip_left_right(image)
+        # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
+        # image = tf.image.random_brightness(image, max_delta=63. / 255.)
+        # image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
+        # image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+        image = tf.image.per_image_standardization(image)
 
-    example_queue = tf.RandomShuffleQueue(
-        capacity=1 * batch_size,
-        min_after_dequeue=0 * batch_size,
-        dtypes=[tf.float32, tf.float32, tf.int32],
-        shapes=[[image_size, image_size, depth], [image_size, image_size, depth], [1]])
-    num_threads = 1
+        example_queue = tf.RandomShuffleQueue(
+            capacity=1 * batch_size,
+            min_after_dequeue=0 * batch_size,
+            dtypes=[tf.float32, tf.float32, tf.int32],
+            shapes=[[image_size, image_size, depth], [image_size, image_size, depth], [1]])
+        num_threads = 1
+    else:
+        image = tf.image.resize_image_with_crop_or_pad(
+            image, image_size, image_size)
+        image = tf.image.per_image_standardization(image)
+
+        example_queue = tf.FIFOQueue(
+            1 * batch_size,
+            dtypes=[tf.float32, tf.float32, tf.int32],
+            shapes=[[image_size, image_size, depth], [image_size, image_size, depth], [1]])
+        num_threads = 1
 
     example_enqueue_op = example_queue.enqueue([image_raw, image, label])
     tf.train.add_queue_runner(tf.train.queue_runner.QueueRunner(
