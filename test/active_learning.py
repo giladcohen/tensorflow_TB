@@ -4,7 +4,7 @@
 import time
 import six
 import sys
-sys.path.append('/Users/giladcohen/workspace/Resnet_KNN/lib') #for debug
+sys.path.append('/home/gilad/workspace/Resnet_KNN/test')
 import active_input
 import cifar_input
 import tf_utils
@@ -156,11 +156,13 @@ def train(hps):
                     sess.run(model.train_op, feed_dict={read_mode: "train"})
                 fc1_vec = -1.0 * np.ones((TRAIN_SET_SIZE, 640), dtype=np.float32)
                 batches_to_store = TRAIN_SET_SIZE / BATCH_SIZE
+                print ('start storing feature maps for the entire train set')
                 for i in range(batches_to_store):
                     net = sess.run(model.net, feed_dict={read_mode: "eval"})
                     b = i * BATCH_SIZE
                     e = (i + 1) * BATCH_SIZE
                     fc1_vec[b:e] = np.reshape(net['pool_out'], (BATCH_SIZE, 640))
+                    print ('Storing completed: %0d%%' %(int(100.0*float(i)/batches_to_store)))
                 assert np.sum(fc1_vec == -1) == 0 #debug
                 KM = active_kmean.KMeansWrapper(fixed_centers=fc1_vec[pool], n_clusters=lp + BATCH_SIZE, init='k-means++', n_init=10,
                                                 max_iter=300, tol=1e-4, precompute_distances='auto',
@@ -171,8 +173,14 @@ def train(hps):
                 nbrs = NearestNeighbors(n_neighbors=1)
                 nbrs.fit(fc1_vec)
                 indices = nbrs.kneighbors(new_centers, return_distance=False)
+                indices = indices.T[0].tolist()
+                # for myItem in indices:
+                #     assert (myItem not in pool)
                 for myItem in indices:
-                    assert (myItem not in pool)
+                    if (myItem in pool):
+                        indices.remove(myItem)
+                        print('Removing value %0d from indices because it already exists in pool' % myItem)
+
                 pool = sorted(pool + indices)
                 print('updating pool to length %0d' % (len(pool)))
                 tf_utils.convert_numpy_to_bin(train_images[pool], train_labels[pool], FLAGS.train_data_path)
@@ -232,7 +240,7 @@ def evaluate(hps):
     if FLAGS.eval_once:
       break
 
-    time.sleep(5)
+    time.sleep(60)
 
 
 def main(_):
@@ -270,3 +278,4 @@ def main(_):
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)
   tf.app.run()
+ 
