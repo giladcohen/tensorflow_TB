@@ -17,7 +17,7 @@ from tensorflow.python.training import moving_averages
 
 HParams = namedtuple('HParams',
                      'batch_size, num_classes, min_lrn_rate, lrn_rate, '
-                     'num_residual_units, use_bottleneck, weight_decay_rate, '
+                     'num_residual_units, use_bottleneck, xent_rate, weight_decay_rate, '
                      'relu_leakiness, pool, optimizer, use_nesterov')
 
 
@@ -123,12 +123,16 @@ class ResNet(object):
       self.predictions = tf.nn.softmax(logits)
 
     with tf.variable_scope('costs'):
-      xent = tf.nn.softmax_cross_entropy_with_logits(
-          logits=logits, labels=self.labels)
-      self.cost = tf.reduce_mean(xent, name='xent')
-      self.cost += self._decay()
+      xent_cost = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.labels)
+      xent_cost = tf.reduce_mean(xent_cost, name='cross_entropy_mean')
+      self.xent_cost = tf.multiply(self.hps.xent_rate, xent_cost)
+      assert_op_xent = tf.verify_tensor_all_finite(self.xent_cost, 'xent_cost contains NaN or Inf')
+      self.wd_cost = self._decay()
+      assert_op_wd = tf.verify_tensor_all_finite(self.wd_cost, 'wd_cost contains NaN or Inf')
+      with tf.control_dependencies([assert_op_xent, assert_op_wd]):
+        self.cost = self.xent_cost + self.wd_cost
+        tf.summary.scalar('cost', self.cost)
 
-      tf.summary.scalar('cost', self.cost)
 
   def _build_train_op(self):
     """Build training specific ops for the graph."""
@@ -276,7 +280,7 @@ class ResNet(object):
 
     return tf.multiply(self.hps.weight_decay_rate, tf.add_n(costs))
 
-  def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
+  def _conv(self, name, x, filter_size, in_filters, out_filters, strides, padding='SAME'):
     """Convolution."""
     with tf.variable_scope(name):
       n = filter_size * filter_size * out_filters
@@ -284,29 +288,30 @@ class ResNet(object):
           'DW', [filter_size, filter_size, in_filters, out_filters],
           tf.float32, initializer=tf.random_normal_initializer(
               stddev=np.sqrt(2.0/n)))
-      return tf.nn.conv2d(x, kernel, strides, padding='SAME')
+      return tf.nn.conv2d(x, kernel, strides, padding=padding)
 
   def _relu(self, x, leakiness=0.0):
     """Relu, with optional leaky support."""
     return tf.where(tf.less(x, 0.0), leakiness * x, x, name='leaky_relu')
 
-  def _fully_connected(self, x, out_dim):
+  def _fully_connected(self, x, out_dim, name='fully_connected'):
     """FullyConnected layer for final output."""
-    x = tf.reshape(x, [self.hps.batch_size, -1])
-    w = tf.get_variable(
-        'DW', [x.get_shape()[1], out_dim],
-        initializer=tf.uniform_unit_scaling_initializer(factor=1.0))
-    b = tf.get_variable('biases', [out_dim],
-                        initializer=tf.constant_initializer())
-    return tf.nn.xw_plus_b(x, w, b)
+    with tf.variable_scope(name):
+      x = tf.reshape(x, [self.hps.batch_size, -1])
+      w = tf.get_variable(
+          'DW', [x.get_shape()[1], out_dim],
+          initializer=tf.uniform_unit_scaling_initializer(factor=1.0))
+      b = tf.get_variable('biases', [out_dim],
+                          initializer=tf.constant_initializer())
+      return tf.nn.xw_plus_b(x, w, b)
 
   def _global_avg_pool(self, x):
     assert x.get_shape().ndims == 4
     return tf.reduce_mean(x, [1, 2])
 
-  def _max_pool(self, x):
+  def _max_pool(self, x, padding='SAME'):
     assert x.get_shape().ndims == 4
-    x = tf.nn.max_pool(x, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME', data_format='NHWC', name='max_pool')
+    x = tf.nn.max_pool(x, [1, 2, 2, 1], [1, 2, 2, 1], padding=padding, data_format='NHWC', name='max_pool')
     #p, r, c = tf.nn.fractional_max_pool(x, [1.0, 1.44, 1.44, 1.0], \
     #                                 pseudo_random=True, name='fractional_pool')
     return x
