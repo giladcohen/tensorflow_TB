@@ -14,7 +14,7 @@ def center_updater(init, fixed_centers, n_fixed):
 
 '''Testing new class'''
 class KMeansWrapper(KMeans):
-    def __init__(self, fixed_centers, n_clusters=8, init='k-means++', n_init=10,
+    def __init__(self, fixed_centers, n_clusters=8, init='k-means++', n_init=1,
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs=1, algorithm='auto'):
@@ -30,7 +30,7 @@ class KMeansWrapper(KMeans):
         X = self._check_fit_data(X)
         tol_rev = k_means_._tolerance(X, self.tol)
         itr = 0
-        init = k_means_._init_centroids(X, self.n_clusters, 'k-means++')
+        init = k_means_._init_centroids(X, self.n_clusters, 'random')
         self.cluster_centers_ = center_updater(init, self.fixed_centers, self.n_fixed)
         self.inertia_      = np.infty
         self.inertia_prev_ = np.infty

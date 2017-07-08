@@ -41,13 +41,14 @@ flags.DEFINE_bool('active_learning', False, 'Use active learning')
 flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
 flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
 flags.DEFINE_integer('cap', 1000, 'batch size for train/test')
+flags.DEFINE_integer('active_epochs', 5, 'number of epochs for every pool iteration')
 
 
 TRAIN_DIR = os.path.join(FLAGS.log_root, 'train')
 EVAL_DIR  = os.path.join(FLAGS.log_root, 'test')
 TRAIN_SET_SIZE = 50000
 TEST_SET_SIZE  = 10000
-ACTIVE_EPOCHS  = 5
+ACTIVE_EPOCHS  = FLAGS.active_epochs
 
 if (FLAGS.dataset   == 'cifar10'):
     NUM_CLASSES = 10

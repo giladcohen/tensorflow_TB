@@ -37,7 +37,7 @@ class ActiveDataTank(DataTank):
         lai = len(self.available_samples)
         if lai < li:
             raise ValueError('Calling update_pool with %0d indices and we have %0d available samples' %(li, lai))
-        assert set(indices).isdisjoint(self.available_samples)
+        assert set(indices).isdisjoint(self.pool)
         self._update_pool_common(indices)
 
     def _update_pool_common(self, indices):
