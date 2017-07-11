@@ -31,7 +31,7 @@ flags.DEFINE_string('train_labels_file', os.path.join(pardir, 'cifar10_data/trai
 flags.DEFINE_string('eval_data_dir',     os.path.join(pardir, 'cifar10_data/test_data'),        'dir for evaluation data.')
 flags.DEFINE_string('eval_labels_file',  os.path.join(pardir, 'cifar10_data/test_labels.txt'),  'file for evaluation labels.')
 flags.DEFINE_integer('image_size', 32, 'Image side length.')
-flags.DEFINE_integer('eval_batch_count', 50, 'Number of batches to eval.')
+flags.DEFINE_integer('eval_batch_count', -1, 'Number of batches to eval.')
 flags.DEFINE_bool('eval_once', False, 'Whether evaluate the model only once.')
 flags.DEFINE_string('log_root', '',
                            'Directory to keep the checkpoints. Should be a '
@@ -50,19 +50,24 @@ TRAIN_SET_SIZE = 50000
 TEST_SET_SIZE  = 10000
 ACTIVE_EPOCHS  = FLAGS.active_epochs
 
-if (FLAGS.dataset   == 'cifar10'):
+if FLAGS.dataset   == 'cifar10':
     NUM_CLASSES = 10
-elif (FLAGS.dataset == 'cifar100'):
+elif FLAGS.dataset == 'cifar100':
     NUM_CLASSES = 100
 else:
     raise NameError('Test does not support %s dataset' %FLAGS.dataset)
 
-if (FLAGS.batch_size != -1):
+if FLAGS.batch_size != -1:
     BATCH_SIZE = FLAGS.batch_size
-elif (FLAGS.mode == 'train'):
-  BATCH_SIZE=100
+elif FLAGS.mode == 'train':
+    BATCH_SIZE=250
 else:
-  BATCH_SIZE=100
+    BATCH_SIZE=1250
+
+if FLAGS.eval_batch_count == -1:
+    EVAL_BATCH_COUNT = TEST_SET_SIZE/BATCH_SIZE
+else:
+    EVAL_BATCH_COUNT = FLAGS.eval_batch_count
 
 def train(hps):
     """Training loop."""
@@ -100,7 +105,7 @@ def train(hps):
     images_summary = tf.summary.image('images', images_ph, max_outputs=3)
 
     summary_hook = tf.train.SummarySaverHook(
-        save_steps=1, #was 100
+        save_steps=10, #was 100
         #save_secs = 60,
         output_dir=TRAIN_DIR,
         summary_op=tf.summary.merge([model.summaries,
@@ -113,7 +118,7 @@ def train(hps):
                  'loss_wd': model.wd_cost,
                  'loss': model.cost,
                  'precision': precision},
-        every_n_iter=1) #was 100
+        every_n_iter=10) #was 100
 
     class _LearningRateSetterHook(tf.train.SessionRunHook):
         """Sets learning_rate based on global step."""
@@ -145,7 +150,7 @@ def train(hps):
             # Since we provide a SummarySaverHook, we need to disable default
             # SummarySaverHook. To do that we set save_summaries_steps to 0.
             save_summaries_steps=0,
-            save_checkpoint_secs=600, # was 600
+            save_checkpoint_secs=60, # was 600
             config=tf.ConfigProto(allow_soft_placement=True))
 
     if (FLAGS.active_learning == False):
@@ -156,7 +161,7 @@ def train(hps):
                 sess.run(model.train_op, feed_dict={images_ph: images_aug,
                                                     labels_ph: labels_aug})
             else:
-                steps_to_go = ACTIVE_EPOCHS * (lp / BATCH_SIZE)
+                steps_to_go = int(np.round(ACTIVE_EPOCHS * float(lp) / BATCH_SIZE))
                 for i in range(steps_to_go):
                     images, labels, images_aug, labels_aug = dt.fetch_batch()
                     sess.run(model.train_op, feed_dict={images_ph: images_aug,
@@ -170,7 +175,7 @@ def train(hps):
                 sess.run(model.train_op, feed_dict={images_ph: images_aug,
                                                     labels_ph: labels_aug})
             else:
-                steps_to_go = ACTIVE_EPOCHS * (lp / BATCH_SIZE)
+                steps_to_go = int(np.round(ACTIVE_EPOCHS * float(lp) / BATCH_SIZE))
                 for i in range(steps_to_go):
                     images, labels, images_aug, labels_aug = dt.fetch_batch()
                     sess.run(model.train_op, feed_dict={images_ph: images_aug,
@@ -188,10 +193,11 @@ def train(hps):
                     net = sess.run(model.net, feed_dict={images_ph: images,
                                                         labels_ph:  labels})
                     fc1_vec[b:e] = np.reshape(net['pool_out'], (BATCH_SIZE, 640))
-                    print ('Storing completed: %0d%%' %(int(100.0*float(i)/batches_to_store)))
+                    if (i % 10 == 0):
+                        print ('Storing completed: %0d%%' %(int(100.0*float(i)/batches_to_store)))
                 assert np.sum(fc1_vec == -1) == 0 #debug
                 KM = active_kmean.KMeansWrapper(fixed_centers=fc1_vec[dt.pool], n_clusters=lp + FLAGS.clusters, init='k-means++', n_init=1,
-                                                max_iter=300, tol=1e-4, precompute_distances='auto',
+                                                max_iter=300000, tol=1e-4, precompute_distances='auto',
                                                 verbose=0, random_state=None, copy_x=True,
                                                 n_jobs=1, algorithm='auto')
                 centers = KM.fit_predict_centers(fc1_vec)
@@ -251,7 +257,7 @@ def evaluate(hps):
         saver.restore(sess, ckpt_state.model_checkpoint_path)
 
         total_prediction, correct_prediction = 0, 0
-        for i in range(FLAGS.eval_batch_count):
+        for i in range(EVAL_BATCH_COUNT):
             b = i * BATCH_SIZE
             e = (i + 1) * BATCH_SIZE
             images, labels, _, _ = dt.fetch_batch_common(indices=range(b, e))
@@ -299,7 +305,7 @@ def main(_):
                                num_residual_units=4, #was 5 in source code
                                use_bottleneck=False,
                                xent_rate=1.0,
-                               weight_decay_rate=0.0005, #was 0.0002
+                               weight_decay_rate=0.000005, #was 0.0002
                                relu_leakiness=0.1,
                                pool='gap', #use gap or mp
                                optimizer='mom',
