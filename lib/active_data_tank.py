@@ -27,10 +27,6 @@ class ActiveDataTank(DataTank):
             indices = random.sample(self.available_samples, n_clusters)
         self._update_pool_common(indices)
 
-    def fetch_batch(self):
-        indices = np.random.choice(self.pool, self.batch_size)
-        return self.fetch_batch_common(indices)
-
     def update_pool(self, indices):
         ''' Updating pool with fixed indices '''
         li  = len(indices)

@@ -20,6 +20,7 @@ from lib.data_tank import DataTank
 from lib.active_data_tank import ActiveDataTank
 from sklearn.neighbors import NearestNeighbors
 import os
+from math import ceil
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
@@ -31,24 +32,22 @@ flags.DEFINE_string('train_labels_file', os.path.join(pardir, 'cifar10_data/trai
 flags.DEFINE_string('eval_data_dir',     os.path.join(pardir, 'cifar10_data/test_data'),        'dir for evaluation data.')
 flags.DEFINE_string('eval_labels_file',  os.path.join(pardir, 'cifar10_data/test_labels.txt'),  'file for evaluation labels.')
 flags.DEFINE_integer('image_size', 32, 'Image side length.')
-flags.DEFINE_integer('eval_batch_count', -1, 'Number of batches to eval.')
 flags.DEFINE_bool('eval_once', False, 'Whether evaluate the model only once.')
 flags.DEFINE_string('log_root', '',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
 flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for training. (0 or 1)')
-flags.DEFINE_bool('active_learning', False, 'Use active learning')
+flags.DEFINE_string('learn_mode', 'passive', 'Choose between active/rand_steps/passive')
 flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
 flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
 flags.DEFINE_integer('cap', 1000, 'batch size for train/test')
-flags.DEFINE_integer('active_epochs', 5, 'number of epochs for every pool iteration')
+flags.DEFINE_integer('active_epochs', 50, 'number of epochs for every pool iteration')
 
 
 TRAIN_DIR = os.path.join(FLAGS.log_root, 'train')
 EVAL_DIR  = os.path.join(FLAGS.log_root, 'test')
 TRAIN_SET_SIZE = 50000
 TEST_SET_SIZE  = 10000
-ACTIVE_EPOCHS  = FLAGS.active_epochs
 
 if FLAGS.dataset   == 'cifar10':
     NUM_CLASSES = 10
@@ -58,16 +57,16 @@ else:
     raise NameError('Test does not support %s dataset' %FLAGS.dataset)
 
 if FLAGS.batch_size != -1:
-    BATCH_SIZE = FLAGS.batch_size
-elif FLAGS.mode == 'train':
-    BATCH_SIZE=250
+    TRAIN_BATCH_SIZE = EVAL_BATCH_SIZE = FLAGS.batch_size
 else:
-    BATCH_SIZE=1250
+    TRAIN_BATCH_SIZE = 270
+    EVAL_BATCH_SIZE  = 2200
 
-if FLAGS.eval_batch_count == -1:
-    EVAL_BATCH_COUNT = TEST_SET_SIZE/BATCH_SIZE
-else:
-    EVAL_BATCH_COUNT = FLAGS.eval_batch_count
+# for evaluation analysis:
+TRAIN_BATCH_COUNT     = int(ceil(1.0 * TRAIN_SET_SIZE / EVAL_BATCH_SIZE))
+LAST_TRAIN_BATCH_SIZE = TRAIN_SET_SIZE % EVAL_BATCH_SIZE
+EVAL_BATCH_COUNT      = int(ceil(1.0 * TEST_SET_SIZE  / EVAL_BATCH_SIZE))
+LAST_EVAL_BATCH_SIZE  = TEST_SET_SIZE % EVAL_BATCH_SIZE
 
 def train(hps):
     """Training loop."""
@@ -75,17 +74,18 @@ def train(hps):
     dt = ActiveDataTank(n_clusters=FLAGS.clusters,
                         data_path=FLAGS.train_data_dir,
                         label_file=FLAGS.train_labels_file,
-                        batch_size=BATCH_SIZE,
+                        batch_size=TRAIN_BATCH_SIZE,
                         N=TRAIN_SET_SIZE,
                         to_preprocess=True)
 
-    images_ph = tf.placeholder(tf.float32, [BATCH_SIZE, FLAGS.image_size, FLAGS.image_size, 3])
-    labels_ph = tf.placeholder(tf.int32,   [BATCH_SIZE])
+    images_ph      = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+    labels_ph      = tf.placeholder(tf.int32,   [None])
+    is_training_ph = tf.placeholder(tf.bool)
 
-    images_norm = tf.map_fn(tf.image.per_image_standardization, images_ph)
     labels_1hot = tf.one_hot(labels_ph, NUM_CLASSES)
 
-    model = resnet_model.ResNet(hps, images_norm, labels_1hot, FLAGS.mode)
+    model = resnet_model.ResNet(hps, images_ph, labels_1hot, is_training_ph)
+    model.set_params()
     model.build_graph()
 
     param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
@@ -133,7 +133,11 @@ def train(hps):
 
         def after_run(self, run_context, run_values):
             train_step = run_values.results
-            epoch = (BATCH_SIZE*train_step) // FLAGS.cap #was TRAIN_SET_SIZE
+            epoch = (TRAIN_BATCH_SIZE * train_step) // FLAGS.cap
+            # if FLAGS.learn_mode in ['active', 'rand_steps']:
+            #     epoch = (TRAIN_BATCH_SIZE * train_step) // FLAGS.cap
+            # else:
+            #     epoch = (TRAIN_BATCH_SIZE * train_step) // TRAIN_SET_SIZE #passive learning
             if epoch < 60:
                 self._lrn_rate = FLAGS.learning_rate
             elif epoch < 120:
@@ -153,49 +157,66 @@ def train(hps):
             save_checkpoint_secs=60, # was 600
             config=tf.ConfigProto(allow_soft_placement=True))
 
-    if (FLAGS.active_learning == False):
+    if FLAGS.learn_mode == 'passive':
+        while len(dt.pool) < FLAGS.cap:
+            dt.update_pool_rand()
+        assert len(dt.pool) == FLAGS.cap, "pool size does not equal exactly cap=%0d for passive learn" % FLAGS.cap
+        while not sess.should_stop():
+            images, labels, images_aug, labels_aug = dt.fetch_batch()
+            sess.run(model.train_op, feed_dict={images_ph: images_aug,
+                                                labels_ph: labels_aug,
+                                                is_training_ph: True})
+
+    elif FLAGS.learn_mode == 'rand_steps':
         while not sess.should_stop():
             lp = len(dt.pool)
             if lp == FLAGS.cap:
                 images, labels, images_aug, labels_aug = dt.fetch_batch()
                 sess.run(model.train_op, feed_dict={images_ph: images_aug,
-                                                    labels_ph: labels_aug})
+                                                    labels_ph: labels_aug,
+                                                    is_training_ph: True})
             else:
-                steps_to_go = int(np.round(ACTIVE_EPOCHS * float(lp) / BATCH_SIZE))
+                steps_to_go = int(np.round(FLAGS.active_epochs * float(lp) / TRAIN_BATCH_SIZE))
                 for i in range(steps_to_go):
                     images, labels, images_aug, labels_aug = dt.fetch_batch()
                     sess.run(model.train_op, feed_dict={images_ph: images_aug,
-                                                        labels_ph: labels_aug})
+                                                        labels_ph: labels_aug,
+                                                        is_training_ph: True})
                 dt.update_pool_rand()
-    else:
+
+    elif FLAGS.learn_mode == 'active':
         while not sess.should_stop():
             lp = len(dt.pool)
             if lp == FLAGS.cap:
                 images, labels, images_aug, labels_aug = dt.fetch_batch()
                 sess.run(model.train_op, feed_dict={images_ph: images_aug,
-                                                    labels_ph: labels_aug})
+                                                    labels_ph: labels_aug,
+                                                    is_training_ph: True})
             else:
-                steps_to_go = int(np.round(ACTIVE_EPOCHS * float(lp) / BATCH_SIZE))
+                steps_to_go = int(np.round(FLAGS.active_epochs * float(lp) / TRAIN_BATCH_SIZE))
                 for i in range(steps_to_go):
                     images, labels, images_aug, labels_aug = dt.fetch_batch()
                     sess.run(model.train_op, feed_dict={images_ph: images_aug,
-                                                        labels_ph: labels_aug})
+                                                        labels_ph: labels_aug,
+                                                        is_training_ph: True})
 
                 # analyzing (evaluation)
-                model.mode = 'eval'
                 fc1_vec = -1.0 * np.ones((TRAIN_SET_SIZE, 640), dtype=np.float32)
-                batches_to_store = TRAIN_SET_SIZE / BATCH_SIZE
                 print ('start storing feature maps for the entire train set')
-                for i in range(batches_to_store):
-                    b = i * BATCH_SIZE
-                    e = (i + 1) * BATCH_SIZE
+                for i in range(TRAIN_BATCH_COUNT):
+                    b = i * EVAL_BATCH_SIZE
+                    if i < (TRAIN_BATCH_COUNT - 1) or (LAST_TRAIN_BATCH_SIZE == 0):
+                        e = (i + 1) * EVAL_BATCH_SIZE
+                    else:
+                        e = i * EVAL_BATCH_SIZE + LAST_TRAIN_BATCH_SIZE
                     images, labels, _, _ = dt.fetch_batch_common(indices=range(b,e))
                     net = sess.run(model.net, feed_dict={images_ph: images,
-                                                        labels_ph:  labels})
-                    fc1_vec[b:e] = np.reshape(net['pool_out'], (BATCH_SIZE, 640))
-                    if (i % 10 == 0):
-                        print ('Storing completed: %0d%%' %(int(100.0*float(i)/batches_to_store)))
+                                                         labels_ph: labels,
+                                                         is_training_ph: False})
+                    fc1_vec[b:e] = np.reshape(net['pool_out'], (e - b, 640))
+                    print ('Storing completed: %0d%%' %(int(100.0*float(e)/TRAIN_SET_SIZE)))
                 assert np.sum(fc1_vec == -1) == 0 #debug
+
                 KM = active_kmean.KMeansWrapper(fixed_centers=fc1_vec[dt.pool], n_clusters=lp + FLAGS.clusters, init='k-means++', n_init=1,
                                                 max_iter=300000, tol=1e-4, precompute_distances='auto',
                                                 verbose=0, random_state=None, copy_x=True,
@@ -216,8 +237,6 @@ def train(hps):
                 print('%0d indices were already in pool. Randomized indices will be chosen instead of them' % already_pooled_cnt)
                 dt.update_pool(indices)
                 dt.update_pool_rand(n_clusters=already_pooled_cnt)
-
-                model.mode = 'train'
                 #end of analysis
 
 def evaluate(hps):
@@ -225,17 +244,18 @@ def evaluate(hps):
 
     dt = DataTank(data_path=FLAGS.eval_data_dir,
                   label_file=FLAGS.eval_labels_file,
-                  batch_size=BATCH_SIZE,
+                  batch_size=EVAL_BATCH_SIZE,
                   N=TEST_SET_SIZE,
                   to_preprocess=False)
 
-    images_ph = tf.placeholder(tf.float32, [BATCH_SIZE, FLAGS.image_size, FLAGS.image_size, 3])
-    labels_ph = tf.placeholder(tf.int32, [BATCH_SIZE])
+    images_ph      = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+    labels_ph      = tf.placeholder(tf.int32,   [None])
+    is_training_ph = tf.placeholder(tf.bool)
 
-    images_norm = tf.map_fn(tf.image.per_image_standardization, images_ph)
     labels_1hot = tf.one_hot(labels_ph, NUM_CLASSES)
 
-    model = resnet_model.ResNet(hps, images_norm, labels_1hot, FLAGS.mode)
+    model = resnet_model.ResNet(hps, images_ph, labels_1hot, is_training_ph)
+    model.set_params()
     model.build_graph()
 
     saver = tf.train.Saver()
@@ -258,12 +278,15 @@ def evaluate(hps):
 
         total_prediction, correct_prediction = 0, 0
         for i in range(EVAL_BATCH_COUNT):
-            b = i * BATCH_SIZE
-            e = (i + 1) * BATCH_SIZE
+            b = i * EVAL_BATCH_SIZE
+            if i < (EVAL_BATCH_COUNT - 1) or (LAST_EVAL_BATCH_SIZE == 0):
+                e = (i + 1) * EVAL_BATCH_SIZE
+            else:
+                e = i * EVAL_BATCH_SIZE + LAST_EVAL_BATCH_SIZE
             images, labels, _, _ = dt.fetch_batch_common(indices=range(b, e))
             (summaries, loss, predictions, truth, train_step) = sess.run(
                 [model.summaries, model.cost, model.predictions, model.labels, model.global_step],
-                feed_dict={images_ph: images, labels_ph: labels})
+                feed_dict={images_ph: images, labels_ph: labels, is_training_ph: False})
 
             truth = np.argmax(truth, axis=1)
             predictions = np.argmax(predictions, axis=1)
@@ -289,7 +312,6 @@ def evaluate(hps):
 
         time.sleep(60)
 
-
 def main(_):
     if FLAGS.num_gpus == 0:
         dev = '/cpu:0'
@@ -298,18 +320,14 @@ def main(_):
     else:
         raise ValueError('Only support 0 or 1 gpu.')
 
-    hps = resnet_model.HParams(batch_size=BATCH_SIZE,
-                               num_classes=NUM_CLASSES,
-                               min_lrn_rate=0.0001,
+    hps = resnet_model.HParams(num_classes=NUM_CLASSES,
                                lrn_rate=FLAGS.learning_rate,
                                num_residual_units=4, #was 5 in source code
-                               use_bottleneck=False,
                                xent_rate=1.0,
                                weight_decay_rate=0.000005, #was 0.0002
                                relu_leakiness=0.1,
                                pool='gap', #use gap or mp
-                               optimizer='mom',
-                               use_nesterov=True)
+                               optimizer='mom')
 
     with tf.device(dev):
         if FLAGS.mode == 'train':

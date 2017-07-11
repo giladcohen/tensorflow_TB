@@ -21,6 +21,7 @@ class DataTank(object):
         self.H          = 32
         self.W          = 32
         self.N          = N
+        self.pool       = range(N)
         self.data_list  = self.create_data_list()
         self.labels     = self.create_labels()
         self.preprocessor = PreProcessor(to_preprocess)
@@ -43,14 +44,17 @@ class DataTank(object):
         assert np.sum(labels == -1) == 0
         return labels
 
-    def fetch_batch(self):
-        indices = random.sample(range(self.N), self.batch_size)
+    def fetch_batch(self, batch_size=None):
+        if batch_size is None:
+            batch_size = self.batch_size
+        indices = np.random.choice(self.pool, batch_size)
         return self.fetch_batch_common(indices)
 
     def fetch_batch_common(self, indices):
-        images = np.empty([self.batch_size, self.H, self.W, 3], np.uint8)
+        batch_size = len(indices)
+        images = np.empty([batch_size, self.H, self.W, 3], np.uint8)
         labels = self.labels[indices]
-        for i in xrange(self.batch_size):
+        for i in xrange(batch_size):
             image_file = self.data_list[indices[i]]
             images[i] = np.asarray(Image.open(image_file), dtype=np.uint8)
         images_aug, labels_aug = self.preprocessor.process(images, labels)
