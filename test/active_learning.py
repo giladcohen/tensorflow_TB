@@ -1,6 +1,9 @@
 
 """ResNet Train/Eval module.
 """
+from __future__ import print_function
+
+
 import time
 import six
 import sys
@@ -202,6 +205,7 @@ def train(hps):
 
                 # analyzing (evaluation)
                 fc1_vec = -1.0 * np.ones((TRAIN_SET_SIZE, 640), dtype=np.float32)
+                total_samples = 0 #for debug
                 print ('start storing feature maps for the entire train set')
                 for i in range(TRAIN_BATCH_COUNT):
                     b = i * EVAL_BATCH_SIZE
@@ -214,8 +218,11 @@ def train(hps):
                                                          labels_ph: labels,
                                                          is_training_ph: False})
                     fc1_vec[b:e] = np.reshape(net['pool_out'], (e - b, 640))
+                    total_samples += images.shape[0] #debug
                     print ('Storing completed: %0d%%' %(int(100.0*float(e)/TRAIN_SET_SIZE)))
                 assert np.sum(fc1_vec == -1) == 0 #debug
+                assert total_samples == TRAIN_SET_SIZE, \
+                    'total_samples equals %0d instead of %0d' % (total_samples, TRAIN_SET_SIZE) #debug
 
                 KM = active_kmean.KMeansWrapper(fixed_centers=fc1_vec[dt.pool], n_clusters=lp + FLAGS.clusters, init='k-means++', n_init=1,
                                                 max_iter=300000, tol=1e-4, precompute_distances='auto',
@@ -293,6 +300,8 @@ def evaluate(hps):
             correct_prediction += np.sum(truth == predictions)
             total_prediction += predictions.shape[0]
 
+        assert total_prediction == TEST_SET_SIZE, \
+            'total_prediction equals %0d instead of %0d' %(total_prediction, TEST_SET_SIZE)
         precision = 1.0 * correct_prediction / total_prediction
         best_precision = max(precision, best_precision)
 
@@ -312,6 +321,48 @@ def evaluate(hps):
 
         time.sleep(60)
 
+def print_params(hps):
+    print ('Running script with these parameters:' , \
+           'HPS:', \
+           'hps.num_classes         = %0d'  % hps.num_classes, \
+           'hps.lrn_rate            = %.8f' % hps.lrn_rate, \
+           'hps.num_residual_units  = %0d'  % hps.num_residual_units, \
+           'hps.xent_rate           = %.8f' % hps.xent_rate, \
+           'hps.weight_decay_rate   = %.8f' % hps.weight_decay_rate, \
+           'hps.relu_leakiness      = %.8f' % hps.relu_leakiness, \
+           'hps.pool                = %0s'  % hps.pool, \
+           'hps.optimizer           = %0s'  % hps.optimizer, \
+           '', \
+           'FLAGS:' , \
+           'FLAGS.learning_rate     = %.8f' % FLAGS.learning_rate, \
+           'FLAGS.dataset           = %0s'  % FLAGS.dataset, \
+           'FLAGS.mode              = %0s'  % FLAGS.mode, \
+           'FLAGS.train_data_dir    = %0s'  % FLAGS.train_data_dir, \
+           'FLAGS.train_labels_file = %0s'  % FLAGS.train_labels_file, \
+           'FLAGS.eval_data_dir     = %0s'  % FLAGS.eval_data_dir, \
+           'FLAGS.eval_labels_file  = %0s'  % FLAGS.eval_labels_file, \
+           'FLAGS.image_size        = %0d'  % FLAGS.image_size, \
+           'FLAGS.eval_once         = %r'   % FLAGS.eval_once, \
+           'FLAGS.log_root          = %0s'  % FLAGS.log_root, \
+           'FLAGS.num_gpus          = %0d'  % FLAGS.num_gpus, \
+           'FLAGS.learn_mode        = %0s'  % FLAGS.learn_mode, \
+           'FLAGS.batch_size        = %0d'  % FLAGS.batch_size, \
+           'FLAGS.clusters          = %0d'  % FLAGS.clusters, \
+           'FLAGS.cap               = %0d'  % FLAGS.cap, \
+           'FLAGS.active_epochs     = %0d'  % FLAGS.active_epochs, \
+           '', \
+           'Other parameters:', \
+           'TRAIN_SET_SIZE          = %0d'  % TRAIN_SET_SIZE, \
+           'TEST_SET_SIZE           = %0d'  % TEST_SET_SIZE, \
+           'NUM_CLASSES             = %0d'  % NUM_CLASSES, \
+           'TRAIN_BATCH_SIZE        = %0d'  % TRAIN_BATCH_SIZE, \
+           'EVAL_BATCH_SIZE         = %0d'  % EVAL_BATCH_SIZE, \
+           'TRAIN_BATCH_COUNT       = %0d'  % TRAIN_BATCH_COUNT, \
+           'LAST_TRAIN_BATCH_SIZE   = %0d'  % LAST_TRAIN_BATCH_SIZE, \
+           'EVAL_BATCH_COUNT        = %0d'  % EVAL_BATCH_COUNT, \
+           'LAST_EVAL_BATCH_SIZE    = %0d'  % LAST_EVAL_BATCH_SIZE, \
+           sep = '\n\t')
+
 def main(_):
     if FLAGS.num_gpus == 0:
         dev = '/cpu:0'
@@ -329,6 +380,7 @@ def main(_):
                                pool='gap', #use gap or mp
                                optimizer='mom')
 
+    print_params(hps)
     with tf.device(dev):
         if FLAGS.mode == 'train':
             train(hps)
