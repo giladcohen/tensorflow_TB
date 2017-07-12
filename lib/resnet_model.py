@@ -175,14 +175,15 @@ class ResNet(object):
             zip(grads, trainable_variables),
             global_step=self.global_step, name='train_step')
 
+        self._extra_train_ops.extend(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
         train_ops = [apply_op] + self._extra_train_ops
         self.train_op = tf.group(*train_ops)
 
     def _batch_norm(self, name, x):
         """Batch normalization."""
         with tf.variable_scope(name):
-            bn = tf.layers.batch_normalization(x, training=self.is_training)
-            self._extra_train_ops.extend(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
+            bn = tf.layers.batch_normalization(x, momentum=0.9, training=self.is_training)
+            #self._extra_train_ops.extend(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
             return bn
 
     def _residual(self, x, in_filter, out_filter, stride,

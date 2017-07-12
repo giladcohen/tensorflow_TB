@@ -40,7 +40,7 @@ flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for training. (0 or 1)'
 flags.DEFINE_string('learn_mode', 'passive', 'Choose between active/rand_steps/passive')
 flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
 flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
-flags.DEFINE_integer('cap', 1000, 'batch size for train/test')
+flags.DEFINE_integer('cap', 50000, 'batch size for train/test')
 flags.DEFINE_integer('active_epochs', 50, 'number of epochs for every pool iteration')
 
 
