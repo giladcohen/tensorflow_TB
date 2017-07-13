@@ -27,7 +27,8 @@ from math import ceil
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
+flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
+flags.DEFINE_float('epsilon', 1e-8, 'epsilon for adam optimizer.')
 flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
 flags.DEFINE_string('mode', 'train', 'train or eval.')
 flags.DEFINE_string('train_data_dir',    os.path.join(pardir, 'cifar10_data/train_data'),       'dir for training data.')
@@ -62,7 +63,7 @@ else:
 if FLAGS.batch_size != -1:
     TRAIN_BATCH_SIZE = EVAL_BATCH_SIZE = FLAGS.batch_size
 else:
-    TRAIN_BATCH_SIZE = 270
+    TRAIN_BATCH_SIZE = 200
     EVAL_BATCH_SIZE  = 2200
 
 # for evaluation analysis:
@@ -137,18 +138,15 @@ def train(hps):
         def after_run(self, run_context, run_values):
             train_step = run_values.results
             epoch = (TRAIN_BATCH_SIZE * train_step) // FLAGS.cap
-            # if FLAGS.learn_mode in ['active', 'rand_steps']:
-            #     epoch = (TRAIN_BATCH_SIZE * train_step) // FLAGS.cap
+            self._lrn_rate = FLAGS.learning_rate
+            # if epoch < 60:
+            #     self._lrn_rate = FLAGS.learning_rate
+            # elif epoch < 120:
+            #     self._lrn_rate = FLAGS.learning_rate/5
+            # elif epoch < 160:
+            #     self._lrn_rate = FLAGS.learning_rate/25
             # else:
-            #     epoch = (TRAIN_BATCH_SIZE * train_step) // TRAIN_SET_SIZE #passive learning
-            if epoch < 60:
-                self._lrn_rate = FLAGS.learning_rate
-            elif epoch < 120:
-                self._lrn_rate = FLAGS.learning_rate/5
-            elif epoch < 160:
-                self._lrn_rate = FLAGS.learning_rate/25
-            else:
-                self._lrn_rate = FLAGS.learning_rate/125
+            #     self._lrn_rate = FLAGS.learning_rate/125
 
     sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,
@@ -319,13 +317,14 @@ def evaluate(hps):
         if FLAGS.eval_once:
           break
 
-        time.sleep(60)
+        time.sleep(30)
 
 def print_params(hps):
     print ('Running script with these parameters:' , \
            'HPS:', \
            'hps.num_classes         = %0d'  % hps.num_classes, \
            'hps.lrn_rate            = %.8f' % hps.lrn_rate, \
+           'hps.epsilon             = %.8f' % hps.epsilon, \
            'hps.num_residual_units  = %0d'  % hps.num_residual_units, \
            'hps.xent_rate           = %.8f' % hps.xent_rate, \
            'hps.weight_decay_rate   = %.8f' % hps.weight_decay_rate, \
@@ -373,12 +372,13 @@ def main(_):
 
     hps = resnet_model.HParams(num_classes=NUM_CLASSES,
                                lrn_rate=FLAGS.learning_rate,
+                               epsilon=FLAGS.epsilon,
                                num_residual_units=4, #was 5 in source code
                                xent_rate=1.0,
-                               weight_decay_rate=0.000005, #was 0.0002
+                               weight_decay_rate=0.0005, #was 0.0002
                                relu_leakiness=0.1,
                                pool='gap', #use gap or mp
-                               optimizer='mom')
+                               optimizer='adam')
 
     print_params(hps)
     with tf.device(dev):

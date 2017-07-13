@@ -17,7 +17,7 @@ from tensorflow.python.training import moving_averages
 
 
 HParams = namedtuple('HParams',
-                     'num_classes, lrn_rate, '
+                     'num_classes, lrn_rate, epsilon, '
                      'num_residual_units, xent_rate, weight_decay_rate, '
                      'relu_leakiness, pool, optimizer')
 
@@ -57,6 +57,9 @@ class ResNet(object):
         self.lrn_rate           = tf.get_variable(
             name='learning_rate', dtype=tf.float32, shape=[],
             initializer=tf.constant_initializer(self.hps.lrn_rate), trainable=False)
+        self.epsilon            = tf.get_variable(
+            name='epsilon', dtype=tf.float32, shape=[],
+            initializer=tf.constant_initializer(self.hps.epsilon), trainable=False)
         self.num_residual_units = tf.get_variable(
             name='num_residual_units', dtype=tf.int32, shape=[],
             initializer=tf.constant_initializer(self.hps.num_residual_units), trainable=False)
@@ -170,6 +173,8 @@ class ResNet(object):
             optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
         elif self.hps.optimizer == 'mom':
             optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
+        elif self.hps.optimizer == 'adam':
+            optimizer = tf.train.AdamOptimizer(self.lrn_rate, epsilon=self.epsilon)
 
         apply_op = optimizer.apply_gradients(
             zip(grads, trainable_variables),
