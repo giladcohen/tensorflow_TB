@@ -27,8 +27,9 @@ from math import ceil
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_float('learning_rate', 0.0001, 'Initial learning rate.')
-flags.DEFINE_float('epsilon', 1e-8, 'epsilon for adam optimizer.')
+flags.DEFINE_float('learning_rate', 0.1, 'Initial learning rate.')
+flags.DEFINE_float('decay', -1, 'weight decay rate.')
+flags.DEFINE_string('optimizer', 'mom', 'optimizer: sgd/mom/adam.')
 flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
 flags.DEFINE_string('mode', 'train', 'train or eval.')
 flags.DEFINE_string('train_data_dir',    os.path.join(pardir, 'cifar10_data/train_data'),       'dir for training data.')
@@ -71,6 +72,12 @@ TRAIN_BATCH_COUNT     = int(ceil(1.0 * TRAIN_SET_SIZE / EVAL_BATCH_SIZE))
 LAST_TRAIN_BATCH_SIZE = TRAIN_SET_SIZE % EVAL_BATCH_SIZE
 EVAL_BATCH_COUNT      = int(ceil(1.0 * TEST_SET_SIZE  / EVAL_BATCH_SIZE))
 LAST_EVAL_BATCH_SIZE  = TEST_SET_SIZE % EVAL_BATCH_SIZE
+
+# auto-set the weight decay based on the batch size
+if FLAGS.decay != -1:
+    WEIGHT_DECAY = FLAGS.decay
+else:
+    WEIGHT_DECAY = 0.0005 * (TRAIN_BATCH_SIZE/128.0) #WRN28-10 used decay of 0.0005 for batch_size=128
 
 def train(hps):
     """Training loop."""
@@ -324,7 +331,6 @@ def print_params(hps):
            'HPS:', \
            'hps.num_classes         = %0d'  % hps.num_classes, \
            'hps.lrn_rate            = %.8f' % hps.lrn_rate, \
-           'hps.epsilon             = %.8f' % hps.epsilon, \
            'hps.num_residual_units  = %0d'  % hps.num_residual_units, \
            'hps.xent_rate           = %.8f' % hps.xent_rate, \
            'hps.weight_decay_rate   = %.8f' % hps.weight_decay_rate, \
@@ -334,6 +340,8 @@ def print_params(hps):
            '', \
            'FLAGS:' , \
            'FLAGS.learning_rate     = %.8f' % FLAGS.learning_rate, \
+           'FLAGS.decay             = %.8f' % FLAGS.decay, \
+           'FLAGS.optimizer         = %0s'  % FLAGS.optimizer, \
            'FLAGS.dataset           = %0s'  % FLAGS.dataset, \
            'FLAGS.mode              = %0s'  % FLAGS.mode, \
            'FLAGS.train_data_dir    = %0s'  % FLAGS.train_data_dir, \
@@ -360,6 +368,7 @@ def print_params(hps):
            'LAST_TRAIN_BATCH_SIZE   = %0d'  % LAST_TRAIN_BATCH_SIZE, \
            'EVAL_BATCH_COUNT        = %0d'  % EVAL_BATCH_COUNT, \
            'LAST_EVAL_BATCH_SIZE    = %0d'  % LAST_EVAL_BATCH_SIZE, \
+           'WEIGHT_DECAY            = %.8f' % WEIGHT_DECAY, \
            sep = '\n\t')
 
 def main(_):
@@ -372,13 +381,12 @@ def main(_):
 
     hps = resnet_model.HParams(num_classes=NUM_CLASSES,
                                lrn_rate=FLAGS.learning_rate,
-                               epsilon=FLAGS.epsilon,
-                               num_residual_units=4, #was 5 in source code
+                               num_residual_units=4,
                                xent_rate=1.0,
-                               weight_decay_rate=0.0005, #was 0.0002
+                               weight_decay_rate=WEIGHT_DECAY,
                                relu_leakiness=0.1,
-                               pool='gap', #use gap or mp
-                               optimizer='adam')
+                               pool='gap',
+                               optimizer=FLAGS.optimizer)
 
     print_params(hps)
     with tf.device(dev):
