@@ -39,42 +39,55 @@ class ResNet(object):
         self.is_training = is_training
         self.net = {}
 
+        self.assign_ops = {}
         self._extra_train_ops = []
 
     def build_graph(self):
         """Build a whole graph for the model."""
+        self._init_params()
+        self._set_params()
         self._build_inference()
         self._build_interpretation()
         self._build_loss()
         self._build_train_op()
         self.summaries = tf.summary.merge_all()
 
-    def set_params(self):
+    def _init_params(self):
         self.global_step        = tf.contrib.framework.get_or_create_global_step()
-        self.num_classes        = tf.get_variable(
+        self.num_classes        = tf.contrib.framework.model_variable(
             name='num_classes', dtype=tf.int32, shape=[],
             initializer=tf.constant_initializer(self.hps.num_classes), trainable=False)
-        self.lrn_rate           = tf.get_variable(
+        self.lrn_rate           = tf.contrib.framework.model_variable(
             name='learning_rate', dtype=tf.float32, shape=[],
             initializer=tf.constant_initializer(self.hps.lrn_rate), trainable=False)
-        self.num_residual_units = tf.get_variable(
+        self.num_residual_units = tf.contrib.framework.model_variable(
             name='num_residual_units', dtype=tf.int32, shape=[],
             initializer=tf.constant_initializer(self.hps.num_residual_units), trainable=False)
-        self.xent_rate          = tf.get_variable(
+        self.xent_rate          = tf.contrib.framework.model_variable(
             name='xent_rate', dtype=tf.float32, shape=[],
             initializer=tf.constant_initializer(self.hps.xent_rate), trainable=False)
-        self.weight_decay_rate  = tf.get_variable(
+        self.weight_decay_rate  = tf.contrib.framework.model_variable(
             name='weight_decay_rate', dtype=tf.float32, shape=[],
             initializer=tf.constant_initializer(self.hps.weight_decay_rate), trainable=False)
-        self.relu_leakiness     = tf.get_variable(
+        self.relu_leakiness     = tf.contrib.framework.model_variable(
             name='relu_leakiness', dtype=tf.float32, shape=[],
             initializer=tf.constant_initializer(self.hps.relu_leakiness), trainable=False)
-        self.pool               = tf.get_variable(
+        self.pool               = tf.contrib.framework.model_variable(
             name='pool', dtype=tf.string, shape=[],
             initializer=tf.constant_initializer(self.hps.pool), trainable=False)
-        self.optimizer          = tf.get_variable(
+        self.optimizer          = tf.contrib.framework.model_variable(
             name='optimizer', dtype=tf.string, shape=[],
             initializer=tf.constant_initializer(self.hps.optimizer), trainable=False)
+
+    def _set_params(self):
+        # self.assign_ops['num_classes'] = self.num_classes.assign(self.hps.num_classes)
+        self.assign_ops['lrn_rate'] = self.lrn_rate.assign(self.hps.lrn_rate)
+        # self.assign_ops['num_residual_units'] = self.num_residual_units.assign(self.hps.num_residual_units)
+        self.assign_ops['xent_rate'] = self.xent_rate.assign(self.hps.xent_rate)
+        self.assign_ops['weight_decay_rate'] = self.weight_decay_rate.assign(self.hps.weight_decay_rate)
+        self.assign_ops['relu_leakiness'] = self.relu_leakiness.assign(self.hps.relu_leakiness)
+        # self.assign_ops['pool'] = self.pool.assign(self.hps.pool)
+        self.assign_ops['optimizer'] = self.optimizer.assign(self.hps.optimizer)
 
     def _stride_arr(self, stride):
         """Map a stride scalar to the stride array for tf.nn.conv2d."""
@@ -184,7 +197,7 @@ class ResNet(object):
     def _batch_norm(self, name, x):
         """Batch normalization."""
         with tf.variable_scope(name):
-            bn = tf.layers.batch_normalization(x, momentum=0.9, training=self.is_training)
+            bn = tf.layers.batch_normalization(x, training=self.is_training)
             #self._extra_train_ops.extend(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
             return bn
 

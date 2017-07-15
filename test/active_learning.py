@@ -3,7 +3,6 @@
 """
 from __future__ import print_function
 
-
 import time
 import six
 import sys
@@ -29,6 +28,7 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 flags.DEFINE_float('learning_rate', 0.1, 'Initial learning rate.')
 flags.DEFINE_float('decay', -1, 'weight decay rate.')
+flags.DEFINE_float('xent_rate', 1.0, 'cross entropy rate.')
 flags.DEFINE_string('optimizer', 'mom', 'optimizer: sgd/mom/adam.')
 flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
 flags.DEFINE_string('mode', 'train', 'train or eval.')
@@ -36,14 +36,13 @@ flags.DEFINE_string('train_data_dir',    os.path.join(pardir, 'cifar10_data/trai
 flags.DEFINE_string('train_labels_file', os.path.join(pardir, 'cifar10_data/train_labels.txt'), 'file for training labels.')
 flags.DEFINE_string('eval_data_dir',     os.path.join(pardir, 'cifar10_data/test_data'),        'dir for evaluation data.')
 flags.DEFINE_string('eval_labels_file',  os.path.join(pardir, 'cifar10_data/test_labels.txt'),  'file for evaluation labels.')
-flags.DEFINE_integer('image_size', 32, 'Image side length.')
 flags.DEFINE_bool('eval_once', False, 'Whether evaluate the model only once.')
 flags.DEFINE_string('log_root', '',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
 flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for training. (0 or 1)')
 flags.DEFINE_string('learn_mode', 'passive', 'Choose between active/rand_steps/passive')
-flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
+flags.DEFINE_integer('batch_size', 10, 'batch size for train/test')
 flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
 flags.DEFINE_integer('cap', 50000, 'batch size for train/test')
 flags.DEFINE_integer('active_epochs', 50, 'number of epochs for every pool iteration')
@@ -53,6 +52,8 @@ TRAIN_DIR = os.path.join(FLAGS.log_root, 'train')
 EVAL_DIR  = os.path.join(FLAGS.log_root, 'test')
 TRAIN_SET_SIZE = 50000
 TEST_SET_SIZE  = 10000
+IMAGE_SIZE=32
+setter_done = False
 
 if FLAGS.dataset   == 'cifar10':
     NUM_CLASSES = 10
@@ -79,6 +80,7 @@ if FLAGS.decay != -1:
 else:
     WEIGHT_DECAY = 0.0005 * (TRAIN_BATCH_SIZE/128.0) #WRN28-10 used decay of 0.0005 for batch_size=128
 
+
 def train(hps):
     """Training loop."""
     """Training loop. Step1 - selecting TRAIN_BATCH randomized images"""
@@ -89,14 +91,13 @@ def train(hps):
                         N=TRAIN_SET_SIZE,
                         to_preprocess=True)
 
-    images_ph      = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+    images_ph      = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
     labels_ph      = tf.placeholder(tf.int32,   [None])
     is_training_ph = tf.placeholder(tf.bool)
 
-    labels_1hot = tf.one_hot(labels_ph, NUM_CLASSES)
+    labels_1hot = tf.one_hot(labels_ph, hps.num_classes)
 
     model = resnet_model.ResNet(hps, images_ph, labels_1hot, is_training_ph)
-    model.set_params()
     model.build_graph()
 
     param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
@@ -135,25 +136,26 @@ def train(hps):
         """Sets learning_rate based on global step."""
 
         def begin(self):
-            self._lrn_rate = FLAGS.learning_rate
+            self._lrn_rate = hps.lrn_rate
 
         def before_run(self, run_context):
-            return tf.train.SessionRunArgs(
-                model.global_step,  # Asks for global step value.
-                feed_dict={model.lrn_rate: self._lrn_rate})  # Sets learning rate
+            if setter_done:
+                return tf.train.SessionRunArgs(
+                    model.global_step,  # Asks for global step value.
+                    feed_dict={model.lrn_rate: self._lrn_rate})  # Sets learning rate
 
         def after_run(self, run_context, run_values):
-            train_step = run_values.results
-            epoch = (TRAIN_BATCH_SIZE * train_step) // FLAGS.cap
-            self._lrn_rate = FLAGS.learning_rate
-            # if epoch < 60:
-            #     self._lrn_rate = FLAGS.learning_rate
-            # elif epoch < 120:
-            #     self._lrn_rate = FLAGS.learning_rate/5
-            # elif epoch < 160:
-            #     self._lrn_rate = FLAGS.learning_rate/25
-            # else:
-            #     self._lrn_rate = FLAGS.learning_rate/125
+            if setter_done:
+                train_step = run_values.results
+                epoch = (TRAIN_BATCH_SIZE * train_step) // FLAGS.cap
+                # if epoch < 60:
+                #     self._lrn_rate = FLAGS.learning_rate
+                # elif epoch < 120:
+                #     self._lrn_rate = FLAGS.learning_rate/5
+                # elif epoch < 160:
+                #     self._lrn_rate = FLAGS.learning_rate/25
+                # else:
+                #     self._lrn_rate = FLAGS.learning_rate/125
 
     sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,
@@ -164,6 +166,8 @@ def train(hps):
             save_summaries_steps=0,
             save_checkpoint_secs=60, # was 600
             config=tf.ConfigProto(allow_soft_placement=True))
+
+    set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph)
 
     if FLAGS.learn_mode == 'passive':
         while len(dt.pool) < FLAGS.cap:
@@ -251,6 +255,7 @@ def train(hps):
                 dt.update_pool_rand(n_clusters=already_pooled_cnt)
                 #end of analysis
 
+
 def evaluate(hps):
     """Eval loop."""
 
@@ -260,14 +265,13 @@ def evaluate(hps):
                   N=TEST_SET_SIZE,
                   to_preprocess=False)
 
-    images_ph      = tf.placeholder(tf.float32, [None, FLAGS.image_size, FLAGS.image_size, 3])
+    images_ph      = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 3])
     labels_ph      = tf.placeholder(tf.int32,   [None])
     is_training_ph = tf.placeholder(tf.bool)
 
-    labels_1hot = tf.one_hot(labels_ph, NUM_CLASSES)
+    labels_1hot = tf.one_hot(labels_ph, hps.num_classes)
 
     model = resnet_model.ResNet(hps, images_ph, labels_1hot, is_training_ph)
-    model.set_params()
     model.build_graph()
 
     saver = tf.train.Saver()
@@ -326,6 +330,7 @@ def evaluate(hps):
 
         time.sleep(30)
 
+
 def print_params(hps):
     print ('Running script with these parameters:' , \
            'HPS:', \
@@ -339,16 +344,12 @@ def print_params(hps):
            'hps.optimizer           = %0s'  % hps.optimizer, \
            '', \
            'FLAGS:' , \
-           'FLAGS.learning_rate     = %.8f' % FLAGS.learning_rate, \
-           'FLAGS.decay             = %.8f' % FLAGS.decay, \
-           'FLAGS.optimizer         = %0s'  % FLAGS.optimizer, \
            'FLAGS.dataset           = %0s'  % FLAGS.dataset, \
            'FLAGS.mode              = %0s'  % FLAGS.mode, \
            'FLAGS.train_data_dir    = %0s'  % FLAGS.train_data_dir, \
            'FLAGS.train_labels_file = %0s'  % FLAGS.train_labels_file, \
            'FLAGS.eval_data_dir     = %0s'  % FLAGS.eval_data_dir, \
            'FLAGS.eval_labels_file  = %0s'  % FLAGS.eval_labels_file, \
-           'FLAGS.image_size        = %0d'  % FLAGS.image_size, \
            'FLAGS.eval_once         = %r'   % FLAGS.eval_once, \
            'FLAGS.log_root          = %0s'  % FLAGS.log_root, \
            'FLAGS.num_gpus          = %0d'  % FLAGS.num_gpus, \
@@ -361,15 +362,54 @@ def print_params(hps):
            'Other parameters:', \
            'TRAIN_SET_SIZE          = %0d'  % TRAIN_SET_SIZE, \
            'TEST_SET_SIZE           = %0d'  % TEST_SET_SIZE, \
-           'NUM_CLASSES             = %0d'  % NUM_CLASSES, \
            'TRAIN_BATCH_SIZE        = %0d'  % TRAIN_BATCH_SIZE, \
            'EVAL_BATCH_SIZE         = %0d'  % EVAL_BATCH_SIZE, \
            'TRAIN_BATCH_COUNT       = %0d'  % TRAIN_BATCH_COUNT, \
            'LAST_TRAIN_BATCH_SIZE   = %0d'  % LAST_TRAIN_BATCH_SIZE, \
            'EVAL_BATCH_COUNT        = %0d'  % EVAL_BATCH_COUNT, \
            'LAST_EVAL_BATCH_SIZE    = %0d'  % LAST_EVAL_BATCH_SIZE, \
-           'WEIGHT_DECAY            = %.8f' % WEIGHT_DECAY, \
            sep = '\n\t')
+
+
+def set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph):
+    '''overriding model initial param if hps have changed'''
+    # model_variables = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)
+    model_variables = [model.num_classes, model.lrn_rate, model.num_residual_units, model.xent_rate, \
+                       model.weight_decay_rate, model.relu_leakiness, model.pool, model.optimizer]
+    images, labels, _, _ = dt.fetch_batch()
+
+    [num_classes, lrn_rate, num_residual_units, xent_rate, weight_decay_rate, relu_leakiness, pool, optimizer] = \
+    sess.run(model_variables, feed_dict={images_ph: images,
+                                         labels_ph: labels,
+                                         is_training_ph: False})
+    assign_ops = []
+    # if num_classes != hps.num_classes:
+    #     assign_ops.append(model.assign_ops['num_classes'])
+    #     tf.logging.warning('changing model.num_classes from %0d to %0d' %(num_classes, hps.num_classes))
+    if not np.isclose(lrn_rate, hps.lrn_rate):
+        assign_ops.append(model.assign_ops['lrn_rate'])
+        tf.logging.warning('changing model.lrn_rate from %f to %f' %(lrn_rate, hps.lrn_rate))
+    # if num_residual_units != hps.num_residual_units:
+    #     assign_ops.append(model.assign_ops['num_residual_units'])
+    #     tf.logging.error('changing model.num_residual_units from %0d to %0d' %(num_residual_units, hps.num_residual_units))
+    if not np.isclose(xent_rate, hps.xent_rate):
+        assign_ops.append(model.assign_ops['xent_rate'])
+        tf.logging.warning('changing model.xent_rate from %f to %f' %(xent_rate, hps.xent_rate))
+    if not np.isclose(weight_decay_rate, hps.weight_decay_rate):
+        assign_ops.append(model.assign_ops['weight_decay_rate'])
+        tf.logging.warning('changing model.weight_decay_rate from %f to %f' %(weight_decay_rate, hps.weight_decay_rate))
+    if not np.isclose(relu_leakiness, hps.relu_leakiness):
+        assign_ops.append(model.assign_ops['relu_leakiness'])
+        tf.logging.warning('changing model.relu_leakiness from %f to %f' %(relu_leakiness, hps.relu_leakiness))
+    # if pool != hps.pool:
+    #     assign_ops.append(model.assign_ops['pool'])
+    #     tf.logging.error('changing model.pool from %s to %s' %(pool, hps.pool))
+    if optimizer != hps.optimizer:
+        assign_ops.append(model.assign_ops['optimizer'])
+        tf.logging.warning('changing model.optimizer from %s to %s' %(optimizer, hps.optimizer))
+    sess.run(assign_ops)
+    setter_done = True
+
 
 def main(_):
     if FLAGS.num_gpus == 0:
@@ -382,7 +422,7 @@ def main(_):
     hps = resnet_model.HParams(num_classes=NUM_CLASSES,
                                lrn_rate=FLAGS.learning_rate,
                                num_residual_units=4,
-                               xent_rate=1.0,
+                               xent_rate=FLAGS.xent_rate,
                                weight_decay_rate=WEIGHT_DECAY,
                                relu_leakiness=0.1,
                                pool='gap',
