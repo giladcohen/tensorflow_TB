@@ -43,6 +43,7 @@ class LearningRateSetterHook(tf.train.SessionRunHook):
         self.TRAIN_BATCH_SIZE = TRAIN_BATCH_SIZE
         self.cap = cap
         self.setter_done = False
+        self.notify = [False, False, False, False]
 
     def begin(self):
         self._lrn_rate = self.hps.lrn_rate
@@ -59,10 +60,22 @@ class LearningRateSetterHook(tf.train.SessionRunHook):
             epoch = (self.TRAIN_BATCH_SIZE * train_step) // self.cap
             if epoch < 60:
                 self._lrn_rate = self.hps.lrn_rate
+                if not self.notify[0]:
+                    tf.logging.info('epoch=%0d. Decreasing learning rate to %.8f' %(epoch, self._lrn_rate))
+                    self.notify[0] = True
             elif epoch < 120:
                 self._lrn_rate = self.hps.lrn_rate/5
+                if not self.notify[1]:
+                    tf.logging.info('epoch=%0d. Decreasing learning rate to %.8f' %(epoch, self._lrn_rate))
+                    self.notify[1] = True
             elif epoch < 160:
                 self._lrn_rate = self.hps.lrn_rate/25
+                if not self.notify[2]:
+                    tf.logging.info('epoch=%0d. Decreasing learning rate to %.8f' %(epoch, self._lrn_rate))
+                    self.notify[2] = True
             else:
                 self._lrn_rate = self.hps.lrn_rate/125
+                if not self.notify[3]:
+                    tf.logging.info('epoch=%0d. Decreasing learning rate to %.8f' %(epoch, self._lrn_rate))
+                    self.notify[3] = True
 

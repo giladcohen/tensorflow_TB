@@ -131,7 +131,7 @@ def train(hps):
                  'precision': precision},
         every_n_iter=10) #was 100
 
-    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_SET_SIZE, FLAGS.cap)
+    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_BATCH_SIZE, FLAGS.cap)
 
     sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,
