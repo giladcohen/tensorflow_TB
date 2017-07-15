@@ -4,6 +4,8 @@ import numpy as np
 from keras.datasets import cifar10
 import cv2
 import os
+import tensorflow as tf
+
 
 def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
     images = (np.array(images))
@@ -32,4 +34,35 @@ def save_cifar10_to_disk(train_data_dir, train_labels_file, test_data_dir, test_
         img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         cv2.imwrite(os.path.join(test_data_dir,  'test_image_%0d.png'  % i), img_bgr)
 
+class LearningRateSetterHook(tf.train.SessionRunHook):
+    """Sets learning_rate based on global step."""
+
+    def __init__(self, hps, model, TRAIN_BATCH_SIZE, cap):
+        self.hps = hps
+        self.model = model
+        self.TRAIN_BATCH_SIZE = TRAIN_BATCH_SIZE
+        self.cap = cap
+        self.setter_done = False
+
+    def begin(self):
+        self._lrn_rate = self.hps.lrn_rate
+
+    def before_run(self, run_context):
+        if self.setter_done:
+            return tf.train.SessionRunArgs(
+                self.model.global_step,  # Asks for global step value.
+                feed_dict={self.model.lrn_rate: self._lrn_rate})  # Sets learning rate
+
+    def after_run(self, run_context, run_values):
+        if self.setter_done:
+            train_step = run_values.results
+            epoch = (self.TRAIN_BATCH_SIZE * train_step) // self.cap
+            if epoch < 60:
+                self._lrn_rate = self.hps.lrn_rate
+            elif epoch < 120:
+                self._lrn_rate = self.hps.lrn_rate/5
+            elif epoch < 160:
+                self._lrn_rate = self.hps.lrn_rate/25
+            else:
+                self._lrn_rate = self.hps.lrn_rate/125
 

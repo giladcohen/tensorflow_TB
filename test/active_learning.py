@@ -23,6 +23,7 @@ from lib.active_data_tank import ActiveDataTank
 from sklearn.neighbors import NearestNeighbors
 import os
 from math import ceil
+import lib.tf_utils as tf_utils
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
@@ -42,7 +43,7 @@ flags.DEFINE_string('log_root', '',
                            'parent directory of FLAGS.train_dir/eval_dir.')
 flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for training. (0 or 1)')
 flags.DEFINE_string('learn_mode', 'passive', 'Choose between active/rand_steps/passive')
-flags.DEFINE_integer('batch_size', 10, 'batch size for train/test')
+flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
 flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
 flags.DEFINE_integer('cap', 50000, 'batch size for train/test')
 flags.DEFINE_integer('active_epochs', 50, 'number of epochs for every pool iteration')
@@ -53,7 +54,6 @@ EVAL_DIR  = os.path.join(FLAGS.log_root, 'test')
 TRAIN_SET_SIZE = 50000
 TEST_SET_SIZE  = 10000
 IMAGE_SIZE=32
-setter_done = False
 
 if FLAGS.dataset   == 'cifar10':
     NUM_CLASSES = 10
@@ -79,7 +79,6 @@ if FLAGS.decay != -1:
     WEIGHT_DECAY = FLAGS.decay
 else:
     WEIGHT_DECAY = 0.0005 * (TRAIN_BATCH_SIZE/128.0) #WRN28-10 used decay of 0.0005 for batch_size=128
-
 
 def train(hps):
     """Training loop."""
@@ -132,34 +131,11 @@ def train(hps):
                  'precision': precision},
         every_n_iter=10) #was 100
 
-    class _LearningRateSetterHook(tf.train.SessionRunHook):
-        """Sets learning_rate based on global step."""
-
-        def begin(self):
-            self._lrn_rate = hps.lrn_rate
-
-        def before_run(self, run_context):
-            if setter_done:
-                return tf.train.SessionRunArgs(
-                    model.global_step,  # Asks for global step value.
-                    feed_dict={model.lrn_rate: self._lrn_rate})  # Sets learning rate
-
-        def after_run(self, run_context, run_values):
-            if setter_done:
-                train_step = run_values.results
-                epoch = (TRAIN_BATCH_SIZE * train_step) // FLAGS.cap
-                # if epoch < 60:
-                #     self._lrn_rate = FLAGS.learning_rate
-                # elif epoch < 120:
-                #     self._lrn_rate = FLAGS.learning_rate/5
-                # elif epoch < 160:
-                #     self._lrn_rate = FLAGS.learning_rate/25
-                # else:
-                #     self._lrn_rate = FLAGS.learning_rate/125
+    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_SET_SIZE, FLAGS.cap)
 
     sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,
-            hooks=[logging_hook, _LearningRateSetterHook()],
+            hooks=[logging_hook, learning_rate_hook],
             chief_only_hooks=[summary_hook],
             # Since we provide a SummarySaverHook, we need to disable default
             # SummarySaverHook. To do that we set save_summaries_steps to 0.
@@ -168,6 +144,7 @@ def train(hps):
             config=tf.ConfigProto(allow_soft_placement=True))
 
     set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph)
+    learning_rate_hook.setter_done = True
 
     if FLAGS.learn_mode == 'passive':
         while len(dt.pool) < FLAGS.cap:
@@ -255,7 +232,6 @@ def train(hps):
                 dt.update_pool_rand(n_clusters=already_pooled_cnt)
                 #end of analysis
 
-
 def evaluate(hps):
     """Eval loop."""
 
@@ -330,7 +306,6 @@ def evaluate(hps):
 
         time.sleep(30)
 
-
 def print_params(hps):
     print ('Running script with these parameters:' , \
            'HPS:', \
@@ -370,7 +345,6 @@ def print_params(hps):
            'LAST_EVAL_BATCH_SIZE    = %0d'  % LAST_EVAL_BATCH_SIZE, \
            sep = '\n\t')
 
-
 def set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph):
     '''overriding model initial param if hps have changed'''
     # model_variables = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)
@@ -388,19 +362,19 @@ def set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph):
     #     tf.logging.warning('changing model.num_classes from %0d to %0d' %(num_classes, hps.num_classes))
     if not np.isclose(lrn_rate, hps.lrn_rate):
         assign_ops.append(model.assign_ops['lrn_rate'])
-        tf.logging.warning('changing model.lrn_rate from %f to %f' %(lrn_rate, hps.lrn_rate))
+        tf.logging.warning('changing model.lrn_rate from %.8f to %.8f' %(lrn_rate, hps.lrn_rate))
     # if num_residual_units != hps.num_residual_units:
     #     assign_ops.append(model.assign_ops['num_residual_units'])
     #     tf.logging.error('changing model.num_residual_units from %0d to %0d' %(num_residual_units, hps.num_residual_units))
     if not np.isclose(xent_rate, hps.xent_rate):
         assign_ops.append(model.assign_ops['xent_rate'])
-        tf.logging.warning('changing model.xent_rate from %f to %f' %(xent_rate, hps.xent_rate))
+        tf.logging.warning('changing model.xent_rate from %.8f to %.8f' %(xent_rate, hps.xent_rate))
     if not np.isclose(weight_decay_rate, hps.weight_decay_rate):
         assign_ops.append(model.assign_ops['weight_decay_rate'])
-        tf.logging.warning('changing model.weight_decay_rate from %f to %f' %(weight_decay_rate, hps.weight_decay_rate))
+        tf.logging.warning('changing model.weight_decay_rate from %.8f to %.8f' %(weight_decay_rate, hps.weight_decay_rate))
     if not np.isclose(relu_leakiness, hps.relu_leakiness):
         assign_ops.append(model.assign_ops['relu_leakiness'])
-        tf.logging.warning('changing model.relu_leakiness from %f to %f' %(relu_leakiness, hps.relu_leakiness))
+        tf.logging.warning('changing model.relu_leakiness from %.8f to %.8f' %(relu_leakiness, hps.relu_leakiness))
     # if pool != hps.pool:
     #     assign_ops.append(model.assign_ops['pool'])
     #     tf.logging.error('changing model.pool from %s to %s' %(pool, hps.pool))
@@ -408,8 +382,6 @@ def set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph):
         assign_ops.append(model.assign_ops['optimizer'])
         tf.logging.warning('changing model.optimizer from %s to %s' %(optimizer, hps.optimizer))
     sess.run(assign_ops)
-    setter_done = True
-
 
 def main(_):
     if FLAGS.num_gpus == 0:
