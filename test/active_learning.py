@@ -138,7 +138,7 @@ def train(hps):
                  'precision': precision},
         every_n_iter=10) #was 100
 
-    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_BATCH_SIZE, FLAGS.cap)
+    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_BATCH_SIZE, FLAGS.cap, best_precision)
 
     sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,
@@ -161,7 +161,7 @@ def train(hps):
         while not sess.should_stop():
             global_step = sess.run(model.global_step)
             if global_step % STEPS_TO_EVAL == 0 and EVAL_FLAG: #eval
-                precision = evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary_writer)
+                precision, best_precision = evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary_writer, best_precision)
                 print('precision is %.8f' %precision)
                 EVAL_FLAG = False
             else: #train
@@ -247,7 +247,8 @@ def train(hps):
                 dt.update_pool_rand(n_clusters=already_pooled_cnt)
                 #end of analysis
 
-def evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary_writer):
+def evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary_writer, best_precision_copy):
+    print('DEBUG: start running eval in train')
     dt = DataTank(data_path=FLAGS.eval_data_dir,
                   label_file=FLAGS.eval_labels_file,
                   batch_size=EVAL_BATCH_SIZE,
@@ -262,11 +263,9 @@ def evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary
         else:
             e = i * EVAL_BATCH_SIZE + LAST_EVAL_BATCH_SIZE
         images, labels, _, _ = dt.fetch_batch_common(indices=range(b, e))
-        print('DEBUG: running eval for ')
         (summaries, loss, predictions, truth, train_step) = sess.run(
             [model.summaries, model.cost, model.predictions, model.labels, model.global_step],
             feed_dict={images_ph: images, labels_ph: labels, is_training_ph: False})
-        print('DEBUG: ran eval for train_step=%0d. i=%0d' %(train_step, i))
 
         truth = np.argmax(truth, axis=1)
         predictions = np.argmax(predictions, axis=1)
@@ -275,7 +274,7 @@ def evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary
     assert total_prediction == TEST_SET_SIZE, \
         'total_prediction equals %0d instead of %0d' %(total_prediction, TEST_SET_SIZE)
     precision = 1.0 * correct_prediction / total_prediction
-    best_precision = max(precision, best_precision)
+    best_precision = max(precision, best_precision_copy)
 
     precision_summ = tf.Summary()
     precision_summ.value.add(tag='Precision', simple_value=precision)
@@ -287,7 +286,7 @@ def evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary
     tf.logging.info('EVALUATION: loss: %.4f, precision: %.4f, best precision: %.4f' %
                     (loss, precision, best_precision))
     summary_writer.flush()
-    return precision
+    return precision, best_precision
 
 def evaluate(hps):
     """Eval loop."""
