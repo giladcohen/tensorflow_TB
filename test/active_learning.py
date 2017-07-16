@@ -77,7 +77,6 @@ LAST_EVAL_BATCH_SIZE  = TEST_SET_SIZE % EVAL_BATCH_SIZE
 
 # for eval within training
 STEPS_TO_EVAL = int(FLAGS.cap / (TRAIN_BATCH_SIZE * FLAGS.evals_in_epoch))
-best_precision = 0.0
 
 # auto-set the weight decay based on the batch size
 if FLAGS.decay != -1:
@@ -138,7 +137,7 @@ def train(hps):
                  'precision': precision},
         every_n_iter=10) #was 100
 
-    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_BATCH_SIZE, FLAGS.cap, best_precision)
+    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_BATCH_SIZE, FLAGS.cap)
 
     sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,
@@ -153,13 +152,17 @@ def train(hps):
     set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph)
     learning_rate_hook.setter_done = True
     EVAL_FLAG = True
+    best_precision = 0.0
 
     if FLAGS.learn_mode == 'passive':
         while len(dt.pool) < FLAGS.cap:
             dt.update_pool_rand()
         assert len(dt.pool) == FLAGS.cap, "pool size does not equal exactly cap=%0d for passive learn" % FLAGS.cap
         while not sess.should_stop():
-            global_step = sess.run(model.global_step)
+            #using dummy feed
+            global_step = sess.run(model.global_step, feed_dict={images_ph: np.zeros([1,IMAGE_SIZE,IMAGE_SIZE,3]),
+                                                                 labels_ph: np.zeros([1]),
+                                                                 is_training_ph: False})
             if global_step % STEPS_TO_EVAL == 0 and EVAL_FLAG: #eval
                 precision, best_precision = evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary_writer, best_precision)
                 print('precision is %.8f' %precision)
