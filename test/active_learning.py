@@ -47,6 +47,7 @@ flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
 flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
 flags.DEFINE_integer('cap', 50000, 'batch size for train/test')
 flags.DEFINE_integer('active_epochs', 50, 'number of epochs for every pool iteration')
+flags.DEFINE_integer('evals_in_epoch', 5, 'number of evaluations done in every epoch')
 
 
 TRAIN_DIR = os.path.join(FLAGS.log_root, 'train')
@@ -73,6 +74,10 @@ TRAIN_BATCH_COUNT     = int(ceil(1.0 * TRAIN_SET_SIZE / EVAL_BATCH_SIZE))
 LAST_TRAIN_BATCH_SIZE = TRAIN_SET_SIZE % EVAL_BATCH_SIZE
 EVAL_BATCH_COUNT      = int(ceil(1.0 * TEST_SET_SIZE  / EVAL_BATCH_SIZE))
 LAST_EVAL_BATCH_SIZE  = TEST_SET_SIZE % EVAL_BATCH_SIZE
+
+# for eval within training
+STEPS_TO_EVAL = int(FLAGS.cap / (TRAIN_BATCH_SIZE * FLAGS.evals_in_epoch))
+best_precision = 0.0
 
 # auto-set the weight decay based on the batch size
 if FLAGS.decay != -1:
@@ -123,6 +128,8 @@ def train(hps):
                                      images_summary,
                                      tf.summary.scalar('Precision', precision)]))
 
+    summary_writer = tf.summary.FileWriter(EVAL_DIR) #for evaluation withing training
+
     logging_hook = tf.train.LoggingTensorHook(
         tensors={'step': model.global_step,
                  'loss_xent': model.xent_cost,
@@ -145,16 +152,24 @@ def train(hps):
 
     set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph)
     learning_rate_hook.setter_done = True
+    EVAL_FLAG = True
 
     if FLAGS.learn_mode == 'passive':
         while len(dt.pool) < FLAGS.cap:
             dt.update_pool_rand()
         assert len(dt.pool) == FLAGS.cap, "pool size does not equal exactly cap=%0d for passive learn" % FLAGS.cap
         while not sess.should_stop():
-            images, labels, images_aug, labels_aug = dt.fetch_batch()
-            sess.run(model.train_op, feed_dict={images_ph: images_aug,
-                                                labels_ph: labels_aug,
-                                                is_training_ph: True})
+            global_step = sess.run(model.global_step)
+            if global_step % STEPS_TO_EVAL == 0 and EVAL_FLAG: #eval
+                precision = evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary_writer)
+                print('precision is %.8f' %precision)
+                EVAL_FLAG = False
+            else: #train
+                images, labels, images_aug, labels_aug = dt.fetch_batch()
+                sess.run(model.train_op, feed_dict={images_ph: images_aug,
+                                                    labels_ph: labels_aug,
+                                                    is_training_ph: True})
+                EVAL_FLAG = True
 
     elif FLAGS.learn_mode == 'rand_steps':
         while not sess.should_stop():
@@ -231,6 +246,48 @@ def train(hps):
                 dt.update_pool(indices)
                 dt.update_pool_rand(n_clusters=already_pooled_cnt)
                 #end of analysis
+
+def evaluate_in_train(sess, model, images_ph, labels_ph, is_training_ph, summary_writer):
+    dt = DataTank(data_path=FLAGS.eval_data_dir,
+                  label_file=FLAGS.eval_labels_file,
+                  batch_size=EVAL_BATCH_SIZE,
+                  N=TEST_SET_SIZE,
+                  to_preprocess=False)
+
+    total_prediction, correct_prediction = 0, 0
+    for i in range(EVAL_BATCH_COUNT):
+        b = i * EVAL_BATCH_SIZE
+        if i < (EVAL_BATCH_COUNT - 1) or (LAST_EVAL_BATCH_SIZE == 0):
+            e = (i + 1) * EVAL_BATCH_SIZE
+        else:
+            e = i * EVAL_BATCH_SIZE + LAST_EVAL_BATCH_SIZE
+        images, labels, _, _ = dt.fetch_batch_common(indices=range(b, e))
+        print('DEBUG: running eval for ')
+        (summaries, loss, predictions, truth, train_step) = sess.run(
+            [model.summaries, model.cost, model.predictions, model.labels, model.global_step],
+            feed_dict={images_ph: images, labels_ph: labels, is_training_ph: False})
+        print('DEBUG: ran eval for train_step=%0d. i=%0d' %(train_step, i))
+
+        truth = np.argmax(truth, axis=1)
+        predictions = np.argmax(predictions, axis=1)
+        correct_prediction += np.sum(truth == predictions)
+        total_prediction += predictions.shape[0]
+    assert total_prediction == TEST_SET_SIZE, \
+        'total_prediction equals %0d instead of %0d' %(total_prediction, TEST_SET_SIZE)
+    precision = 1.0 * correct_prediction / total_prediction
+    best_precision = max(precision, best_precision)
+
+    precision_summ = tf.Summary()
+    precision_summ.value.add(tag='Precision', simple_value=precision)
+    summary_writer.add_summary(precision_summ, train_step)
+    best_precision_summ = tf.Summary()
+    best_precision_summ.value.add(tag='Best Precision', simple_value=best_precision)
+    summary_writer.add_summary(best_precision_summ, train_step)
+    summary_writer.add_summary(summaries, train_step)
+    tf.logging.info('EVALUATION: loss: %.4f, precision: %.4f, best precision: %.4f' %
+                    (loss, precision, best_precision))
+    summary_writer.flush()
+    return precision
 
 def evaluate(hps):
     """Eval loop."""
@@ -333,6 +390,7 @@ def print_params(hps):
            'FLAGS.clusters          = %0d'  % FLAGS.clusters, \
            'FLAGS.cap               = %0d'  % FLAGS.cap, \
            'FLAGS.active_epochs     = %0d'  % FLAGS.active_epochs, \
+           'FLAGS.evals_in_epoch    = %0d'  % FLAGS.evals_in_epoch, \
            '', \
            'Other parameters:', \
            'TRAIN_SET_SIZE          = %0d'  % TRAIN_SET_SIZE, \
@@ -343,6 +401,7 @@ def print_params(hps):
            'LAST_TRAIN_BATCH_SIZE   = %0d'  % LAST_TRAIN_BATCH_SIZE, \
            'EVAL_BATCH_COUNT        = %0d'  % EVAL_BATCH_COUNT, \
            'LAST_EVAL_BATCH_SIZE    = %0d'  % LAST_EVAL_BATCH_SIZE, \
+           'STEPS_TO_EVAL           = %0d'  % STEPS_TO_EVAL, \
            sep = '\n\t')
 
 def set_params(sess, model, hps, dt, images_ph, labels_ph, is_training_ph):
