@@ -145,7 +145,7 @@ N = M // mb
 #calculating k-NN
 k_arr = np.array([1, 3, 5, 7, 9, 11, 13, 15, 31, 51, 101, 151, 201, 301, 401, 501])
 knn = cv2.ml.KNearest_create()
-print ('Start training kNN model...')
+print ('Start trainers kNN model...')
 knn.train(train_data, cv2.ml.ROW_SAMPLE, train_labels)
 print ("KNN accuracies:")
 for k in np.nditer(k_arr):

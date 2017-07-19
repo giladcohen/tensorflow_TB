@@ -15,17 +15,17 @@ FLAGS = flags.FLAGS
 flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
 flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
 flags.DEFINE_string('mode', 'train', 'train or eval.')
-flags.DEFINE_string('train_data_path', '', 'Filepattern for training data.')
+flags.DEFINE_string('train_data_path', '', 'Filepattern for trainers data.')
 flags.DEFINE_string('eval_data_path', '', 'Filepattern for eval data')
 flags.DEFINE_integer('image_size', 32, 'Image side length.')
-flags.DEFINE_string('train_dir', '', 'Directory to keep training outputs.')
+flags.DEFINE_string('train_dir', '', 'Directory to keep trainers outputs.')
 flags.DEFINE_string('eval_dir', '', 'Directory to keep eval outputs.')
 flags.DEFINE_integer('eval_batch_count', 50, 'Number of batches to eval.')
 flags.DEFINE_bool('eval_once', False, 'Whether evaluate the model only once.')
 flags.DEFINE_string('log_root', '',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
-flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for training. (0 or 1)')
+flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for trainers. (0 or 1)')
 
 TRAIN_SET_SIZE = 50000
 TEST_SET_SIZE  = 10000

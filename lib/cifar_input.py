@@ -105,7 +105,7 @@ def build_input(dataset, data_path, batch_size, mode, shuffle=True):
   assert labels.get_shape()[0] == batch_size
   assert labels.get_shape()[1] == num_classes
 
-  # Display the training images in the visualizer.
+  # Display the trainers images in the visualizer.
   tf.summary.image('images_raw', images_raw)
   tf.summary.image('images',     images)
   return images_raw, images, labels

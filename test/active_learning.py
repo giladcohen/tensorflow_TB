@@ -33,15 +33,15 @@ flags.DEFINE_float('xent_rate', 1.0, 'cross entropy rate.')
 flags.DEFINE_string('optimizer', 'mom', 'optimizer: sgd/mom/adam.')
 flags.DEFINE_string('dataset', 'cifar10', 'cifar10 or cifar100.')
 flags.DEFINE_string('mode', 'train', 'train or eval.')
-flags.DEFINE_string('train_data_dir',    os.path.join(pardir, 'cifar10_data/train_data'),       'dir for training data.')
-flags.DEFINE_string('train_labels_file', os.path.join(pardir, 'cifar10_data/train_labels.txt'), 'file for training labels.')
+flags.DEFINE_string('train_data_dir',    os.path.join(pardir, 'cifar10_data/train_data'),       'dir for trainers data.')
+flags.DEFINE_string('train_labels_file', os.path.join(pardir, 'cifar10_data/train_labels.txt'), 'file for trainers labels.')
 flags.DEFINE_string('eval_data_dir',     os.path.join(pardir, 'cifar10_data/test_data'),        'dir for evaluation data.')
 flags.DEFINE_string('eval_labels_file',  os.path.join(pardir, 'cifar10_data/test_labels.txt'),  'file for evaluation labels.')
 flags.DEFINE_bool('eval_once', False, 'Whether evaluate the model only once.')
 flags.DEFINE_string('log_root', '',
                            'Directory to keep the checkpoints. Should be a '
                            'parent directory of FLAGS.train_dir/eval_dir.')
-flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for training. (0 or 1)')
+flags.DEFINE_integer('num_gpus', 0, 'Number of gpus used for trainers. (0 or 1)')
 flags.DEFINE_string('learn_mode', 'passive', 'Choose between active/rand_steps/passive')
 flags.DEFINE_integer('batch_size', -1, 'batch size for train/test')
 flags.DEFINE_integer('clusters', 100, 'batch size for train/test')
@@ -75,7 +75,7 @@ LAST_TRAIN_BATCH_SIZE = TRAIN_SET_SIZE % EVAL_BATCH_SIZE
 EVAL_BATCH_COUNT      = int(ceil(1.0 * TEST_SET_SIZE  / EVAL_BATCH_SIZE))
 LAST_EVAL_BATCH_SIZE  = TEST_SET_SIZE % EVAL_BATCH_SIZE
 
-# for eval within training
+# for eval within trainers
 STEPS_TO_EVAL = int(FLAGS.cap / (TRAIN_BATCH_SIZE * FLAGS.evals_in_epoch))
 
 # auto-set the weight decay based on the batch size
@@ -127,7 +127,7 @@ def train(hps):
                                      images_summary,
                                      tf.summary.scalar('Precision', precision)]))
 
-    summary_writer = tf.summary.FileWriter(EVAL_DIR) #for evaluation withing training
+    summary_writer = tf.summary.FileWriter(EVAL_DIR) #for evaluation withing trainers
 
     logging_hook = tf.train.LoggingTensorHook(
         tensors={'step': model.global_step,
