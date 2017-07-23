@@ -3,23 +3,25 @@ from __future__ import division
 from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
-from lib.trainers.base.train_base import TrainBase
-from lib.trainers.hooks import LearningRateSetterHook
+
 import tensorflow as tf
+
+from lib.trainers.hooks import LearningRateSetterHook
+from lib.trainers.train_base import TrainBase
 
 
 class ClassificationTrainer(TrainBase):
     __metaclass__ = ABCMeta
 
-    def __init__(self, **kwargs):
-        super(ClassificationTrainer, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(ClassificationTrainer, self).__init__(*args, **kwargs)
         self.best_precision = 0.0
         self.global_step    = 0
         self._activate_eval = True
 
     def train(self):
         super(ClassificationTrainer, self).train()
-        truth          = tf.argmax(self.model.labels, axis=1)
+        truth          = self.model.labels
         predictions    = tf.argmax(self.model.predictions, axis=1)
         precision      = tf.reduce_mean(tf.to_float(tf.equal(predictions, truth)))
 
