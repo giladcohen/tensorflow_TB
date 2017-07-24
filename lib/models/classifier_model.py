@@ -31,15 +31,3 @@ class ClassifierModel(ModelBase):
             xent_assert_op = tf.verify_tensor_all_finite(self.xent_cost, 'xent_cost contains NaN or Inf')
             tf.add_to_collection('losses', self.xent_cost)
             tf.add_to_collection('assertions', xent_assert_op)
-
-
-
-
-
-
-
-
-
-
-
-

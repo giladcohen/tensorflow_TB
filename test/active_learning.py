@@ -3,10 +3,10 @@
 """
 from __future__ import print_function
 
-import time
-import six
-import sys
 import os
+import sys
+import time
+
 dirname=os.path.dirname
 cwd = os.getcwd()        #Resnet_KNN
 pardir = dirname(cwd)    #workspace
@@ -15,15 +15,13 @@ print ('cwd = %s' % cwd)
 import numpy as np
 import lib.resnet_model as resnet_model
 import tensorflow as tf
-from keras.datasets import cifar10, cifar100 # for debug
-import matplotlib.pyplot as plt #for debug
 import lib.active_kmean as active_kmean
 from lib.data_tank import DataTank
 from lib.active_data_tank import ActiveDataTank
 from sklearn.neighbors import NearestNeighbors
 import os
 from math import ceil
-import lib.tf_utils as tf_utils
+import utils.utils as utils
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
@@ -137,7 +135,7 @@ def train(hps):
                  'precision': precision},
         every_n_iter=10) #was 100
 
-    learning_rate_hook = tf_utils.LearningRateSetterHook(hps, model, TRAIN_BATCH_SIZE, FLAGS.cap)
+    learning_rate_hook = utils.LearningRateSetterHook(hps, model, TRAIN_BATCH_SIZE, FLAGS.cap)
 
     sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.log_root,

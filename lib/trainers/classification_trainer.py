@@ -18,6 +18,7 @@ class ClassificationTrainer(TrainBase):
         self.best_precision = 0.0
         self.global_step    = 0
         self._activate_eval = True
+        self.eval_steps = int(self.dataset.train_set.size / (self.train_batch_size * self.evals_in_epoch))
 
     def train(self):
         super(ClassificationTrainer, self).train()
@@ -59,11 +60,12 @@ class ClassificationTrainer(TrainBase):
                 self._activate_eval = False
             else:
                 self.train_step()
+                self.global_step = self.sess.run([self.model.global_step])
                 self._activate_eval = True
 
     @abstractmethod
     def train_step(self):
-        '''Implementing one training step. This function must update self.global_step'''
+        '''Implementing one training step.'''
         pass
 
     @abstractmethod
@@ -71,6 +73,7 @@ class ClassificationTrainer(TrainBase):
         '''Implementing one evaluation step.'''
         pass
 
-
-
+    def print_stats(self):
+        super(ClassificationTrainer, self).print_stats()
+        self._logger.info(' EVAL_STEPS: {}'.format(self.eval_steps))
 

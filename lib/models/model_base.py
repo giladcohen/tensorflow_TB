@@ -33,6 +33,9 @@ class ModelBase(object):
         self.assign_ops = {}       # optional assign operations
         self._extra_train_ops = [] # optional training operations to apply
 
+    def __str__(self):
+        return self.prm.network.ARCHITECTURE
+
     def build_graph(self):
         """Build a whole graph for the model."""
         self._init_params()
@@ -66,14 +69,14 @@ class ModelBase(object):
             initializer=tf.constant_initializer(self.prm.network.system.RELU_LEAKINESS), trainable=False)
         self.optimizer          = tf.contrib.framework.model_variable(
             name='optimizer', dtype=tf.string, shape=[],
-            initializer=tf.constant_initializer(self.prm.network.optimization.optimizer), trainable=False)
+            initializer=tf.constant_initializer(self.prm.network.optimization.OPTIMIZER), trainable=False)
 
     def _set_params(self):
         self.assign_ops['lrn_rate'] = self.lrn_rate.assign(self.prm.network.optimization.LEARNING_RATE)
         self.assign_ops['xent_rate'] = self.xent_rate.assign(self.prm.network.optimization.XENTROPY_RATE)
         self.assign_ops['weight_decay_rate'] = self.weight_decay_rate.assign(self.prm.network.optimization.WEIGHT_DECAY_RATE)
         self.assign_ops['relu_leakiness'] = self.relu_leakiness.assign(self.prm.network.system.RELU_LEAKINESS)
-        self.assign_ops['optimizer'] = self.optimizer.assign(self.prm.network.optimization.optimizer)
+        self.assign_ops['optimizer'] = self.optimizer.assign(self.prm.network.optimization.OPTIMIZER)
 
     @abstractmethod
     def _set_placeholders(self):

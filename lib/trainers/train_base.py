@@ -19,18 +19,16 @@ class TrainBase(object):
         self.dataset = dataset
 
         # train parameters only
-        self.train_batch_size   = self.prm.train.train_control.TRAIN_BATCH_SIZE
-        self.eval_batch_size    = self.prm.train.train_control.EVAL_BATCH_SIZE
-        self.num_gpus           = self.prm.train.train_control.NUM_GPUS
-        self.root_dir           = self.prm.train.train_control.ROOT_DIR
-        self.train_dir          = self.prm.train.train_control.TRAIN_DIR
-        self.eval_dir           = self.prm.train.train_control.EVAL_DIR
-        self.checkpoint_dir     = self.prm.train.train_control.CHECKPOINT_DIR
-        self.max_steps          = self.prm.train.train_control.MAX_STEPS
-        self.summary_steps      = self.prm.train.train_control.SUMMARY_STEPS
-        self.checkpoint_secs    = self.prm.train.train_control.CHECKPOINT_SECS
-        self.logger_steps       = self.prm.train.train_control.LOGGER_STEPS
-        self.eval_steps         = self.prm.train.train_control.EVAL_STEPS
+        self.train_batch_size      = self.prm.train.train_control.TRAIN_BATCH_SIZE
+        self.eval_batch_size       = self.prm.train.train_control.EVAL_BATCH_SIZE
+        self.root_dir              = self.prm.train.train_control.ROOT_DIR
+        self.train_dir             = self.prm.train.train_control.TRAIN_DIR
+        self.eval_dir              = self.prm.train.train_control.EVAL_DIR
+        self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
+        self.summary_steps         = self.prm.train.train_control.SUMMARY_STEPS
+        self.checkpoint_secs       = self.prm.train.train_control.CHECKPOINT_SECS
+        self.logger_steps          = self.prm.train.train_control.LOGGER_STEPS
+        self.evals_in_epoch        = self.prm.train.train_control.EVALS_IN_EPOCH
 
         self.print_stats()
 
@@ -39,16 +37,14 @@ class TrainBase(object):
         self._logger.info('Train parameters:')
         self._logger.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
         self._logger.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
-        self._logger.info(' NUM_GPUS: {}'.format(self.num_gpus))
         self._logger.info(' ROOT_DIR: {}'.format(self.root_dir))
         self._logger.info(' TRAIN_DIR: {}'.format(self.train_dir))
         self._logger.info(' EVAL_DIR: {}'.format(self.eval_dir))
         self._logger.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
-        self._logger.info(' MAX_STEPS: {}'.format(self.max_steps))
         self._logger.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
         self._logger.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
         self._logger.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
-        self._logger.info(' EVAL_STEPS: {}'.format(self.eval_steps))
+        self._logger.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
 
     @abstractmethod
     def train(self):
@@ -62,11 +58,3 @@ class TrainBase(object):
         tf.contrib.tfprof.model_analyzer.print_model_analysis(
             tf.get_default_graph(),
             tfprof_options=tf.contrib.tfprof.model_analyzer.FLOAT_OPS_OPTIONS)
-
-
-
-
-
-
-
-
