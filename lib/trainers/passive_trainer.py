@@ -20,9 +20,10 @@ class PassiveTrainer(ClassificationTrainer):
     def train_step(self):
         '''Implementing one training step'''
         images, labels = self.dataset.get_mini_batch_train()
-        self.sess.run(self.model.train_op, feed_dict={self.model.images: images,
-                                                      self.model.labels: labels,
-                                                      self.model.is_training: True})
+        _ , self.global_step = self.sess.run([self.model.train_op, self.model.global_step],
+                                             feed_dict={self.model.images: images,
+                                                        self.model.labels: labels,
+                                                        self.model.is_training: True})
 
     def eval_step(self):
         '''Implementing one evaluation step.'''
@@ -45,7 +46,7 @@ class PassiveTrainer(ClassificationTrainer):
             predictions = np.argmax(predictions, axis=1)
             correct_prediction += np.sum(labels == predictions)
             total_prediction += predictions.shape[0]
-        if total_prediction != self.dataset.validation_set.size:
+        if total_prediction != self.dataset.validation_dataset.size:
             self.log.error('total_prediction equals {} instead of {}'.format(total_prediction,
                                                                              self.dataset.validation_set.size))
         precision = correct_prediction / total_prediction

@@ -61,12 +61,11 @@ class ClassificationTrainer(TrainBase):
                 self._activate_eval = False
             else:
                 self.train_step()
-                self.global_step = self.sess.run([self.model.global_step])
                 self._activate_eval = True
 
     @abstractmethod
     def train_step(self):
-        '''Implementing one training step.'''
+        '''Implementing one training step. Must update self.global_step.'''
         pass
 
     @abstractmethod
@@ -77,4 +76,3 @@ class ClassificationTrainer(TrainBase):
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
-

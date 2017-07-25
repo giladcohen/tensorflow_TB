@@ -8,5 +8,5 @@ def logging_config():
     if not os.path.isfile(log_config_file):
         err_str = 'Log configuration file not found:'.format(log_config_file)
         raise Exception(err_str)
-    logging.config.fileConfig(log_config_file)
+    logging.config.fileConfig(log_config_file, disable_existing_loggers=False)
     return logging

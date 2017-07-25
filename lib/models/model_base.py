@@ -25,6 +25,8 @@ class ModelBase(object):
         self.prm = prm
         self.log = logger.get_logger(name)
 
+        self.architecture = self.prm.network.ARCHITECTURE
+        self.device       = self.prm.network.DEVICE
         self.train_op = None       # training operation
         self.cost = None           # total objective to decrease - input to train_op
         self.wd_cost = None        # weight decay cost
@@ -40,6 +42,8 @@ class ModelBase(object):
     def print_stats(self):
         """print model parameters"""
         self.log.info('Model parameters:')
+        self.log.info(' ARCHITECTURE: {}'.format(self.architecture))
+        self.log.info(' DEVICE: {}'.format(self.device))
         self.log.info(' LEARNING_RATE: {}'.format(self.prm.network.optimization.LEARNING_RATE))
         self.log.info(' XENTROPY_RATE: {}'.format(self.prm.network.optimization.XENTROPY_RATE))
         self.log.info(' WEIGHT_DECAY_RATE: {}'.format(self.prm.network.optimization.WEIGHT_DECAY_RATE))

@@ -4,9 +4,7 @@ from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
 import lib.logger.logger as logger
-import os
 import tensorflow as tf
-import sys
 
 class TrainBase(object):
     __metaclass__ = ABCMeta
@@ -19,6 +17,7 @@ class TrainBase(object):
         self.dataset = dataset
 
         # train parameters only
+        self.trainer               = self.prm.train.train_control.TRAINER  # just used for printing.
         self.train_batch_size      = self.prm.train.train_control.TRAIN_BATCH_SIZE
         self.eval_batch_size       = self.prm.train.train_control.EVAL_BATCH_SIZE
         self.root_dir              = self.prm.train.train_control.ROOT_DIR
@@ -36,6 +35,7 @@ class TrainBase(object):
     def print_stats(self):
         '''print basic train parameters'''
         self.log.info('Train parameters:')
+        self.log.info(' TRAINER: {}'.format(self.trainer))
         self.log.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
         self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
         self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
