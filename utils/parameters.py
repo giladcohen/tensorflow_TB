@@ -24,7 +24,7 @@ class Parameters(parser_utils.FrozenClass):
         #----------------------------------
         # dataset section
         #----------------------------------
-        self._logger.info('Configuration saved to file: {}'.format(out_file))
+        self.log.info('Configuration saved to file: {}'.format(out_file))
 
         # add the settings to the structure of the file, and lets write it out...
         config = configparser.ConfigParser()
@@ -47,23 +47,23 @@ class Parameters(parser_utils.FrozenClass):
     def load(self, in_file):
         if not os.path.isfile(in_file):
             err_str = 'File not found: {}'.format(in_file)
-            self._logger.error(err_str)
-            raise Exception(err_str)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
 
         override_mode = False
-        self._logger.info('Loading parameters by file: {}'.format(in_file))
+        self.log.info('Loading parameters by file: {}'.format(in_file))
         self.set_from_file(in_file, override_mode)
 
     def override(self, in_file):
         override_mode = True
-        self._logger.info('Overriding parameters by file: {}'.format(in_file))
+        self.log.info('Overriding parameters by file: {}'.format(in_file))
         self.set_from_file(in_file, override_mode)
 
     def set_from_file(self, in_file, override_mode):
         if not os.path.isfile(in_file):
             err_str = 'File not found: {}'.format(in_file)
-            self._logger.error(err_str)
-            raise Exception(err_str)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
 
         parser = configparser.ConfigParser()
         parser._interpolation = configparser.ExtendedInterpolation()
@@ -89,8 +89,9 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.IMAGE_WIDTH = None                        # integer: Image width at network input
         self.NUM_RESIDUAL_UNITS = None                 # integer: number of residual modules in a ResNet model
 
-        self.system       = ParametersNetworkSystem()
-        self.optimization = ParametersNetworkOptimization()
+        self.pre_processing = ParametersNetworkPreProcessing()
+        self.system         = ParametersNetworkSystem()
+        self.optimization   = ParametersNetworkOptimization()
 
         self._freeze()
 
@@ -106,6 +107,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'IMAGE_WIDTH'        , self.IMAGE_WIDTH)
         self.set_to_config(do_save_none, section_name, config, 'NUM_RESIDUAL_UNITS' , self.NUM_RESIDUAL_UNITS)
 
+        self.pre_processing.save_to_ini(do_save_none, section_name, config)
         self.system.save_to_ini(do_save_none, section_name, config)
         self.optimization.save_to_ini(do_save_none, section_name, config)
 
@@ -119,6 +121,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_WIDTH'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'NUM_RESIDUAL_UNITS' , int)
 
+        self.pre_processing.set_from_file(override_mode, section_name, parser)
         self.system.set_from_file(override_mode, section_name, parser)
         self.optimization.set_from_file(override_mode, section_name, parser)
 
@@ -129,6 +132,10 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.DATASET_NAME = None                             # string, dataset name. e.g.: "cifar10"
         self.TRAIN_SET_SIZE = None                           # integer: train set size
         self.VALIDATION_SET_SIZE = None                      # integer: validation set size
+        self.TRAIN_IMAGES_DIR = None                         # string: path to train images dir
+        self.TRAIN_LABELS_FILE = None                        # string: path to train labels file
+        self.VALIDATION_IMAGES_DIR = None                    # string: path to validation images dir
+        self.VALIDATION_LABELS_FILE = None                   # string: path to validation labels file
 
         self._freeze()
 
@@ -137,15 +144,23 @@ class ParametersDataset(parser_utils.FrozenClass):
 
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
-        self.set_to_config(do_save_none, section_name, config, 'DATASET_NAME'       , self.DATASET_NAME)
-        self.set_to_config(do_save_none, section_name, config, 'TRAIN_SET_SIZE'     , self.TRAIN_SET_SIZE)
-        self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE', self.VALIDATION_SET_SIZE)
+        self.set_to_config(do_save_none, section_name, config, 'DATASET_NAME'          , self.DATASET_NAME)
+        self.set_to_config(do_save_none, section_name, config, 'TRAIN_SET_SIZE'        , self.TRAIN_SET_SIZE)
+        self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE'   , self.VALIDATION_SET_SIZE)
+        self.set_to_config(do_save_none, section_name, config, 'TRAIN_IMAGES_DIR'      , self.TRAIN_IMAGES_DIR)
+        self.set_to_config(do_save_none, section_name, config, 'TRAIN_LABELS_FILE'     , self.TRAIN_LABELS_FILE)
+        self.set_to_config(do_save_none, section_name, config, 'VALIDATION_IMAGES_DIR' , self.VALIDATION_IMAGES_DIR)
+        self.set_to_config(do_save_none, section_name, config, 'VALIDATION_LABELS_FILE', self.VALIDATION_LABELS_FILE)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME', str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE', int)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE', int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_LABELS_FILE', str)
 
 class ParametersTrain(parser_utils.FrozenClass):
     def __init__(self):
@@ -295,3 +310,22 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_SECS' , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOGGER_STEPS'    , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'  , int)
+
+class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
+    def __init__(self):
+        parser_utils.FrozenClass.__init__(self)
+
+        self.PREPROCESSOR = None     # string: preprocessor name. e.g. preprocessor_drift_flip
+
+        self._freeze()
+
+    def name(self):
+        return 'pre_processing'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.set_to_config(do_save_none, section_name, config, 'PREPROCESSOR', self.PREPROCESSOR)
+
+    def set_from_file(self, override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.parse_from_config(self, override_mode, section_name, parser, 'PREPROCESSOR', str)

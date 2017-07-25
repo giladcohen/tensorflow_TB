@@ -8,11 +8,17 @@ class ClassifierModel(ModelBase):
 
     def __init__(self, *args, **kwargs):
         super(ClassifierModel, self).__init__(*args, **kwargs)
-        self.predictions  = None    # predictions of the classifier
-        self.xent_cost    = None    # contribution of cross entropy to loss
         self.num_classes  = self.prm.network.NUM_CLASSES
         self.image_height = self.prm.network.IMAGE_HEIGHT
         self.image_width  = self.prm.network.IMAGE_WIDTH
+        self.predictions  = None    # predictions of the classifier
+        self.xent_cost    = None    # contribution of cross entropy to loss
+
+    def print_stats(self):
+        super(ClassifierModel, self).print_stats()
+        self.log.info(' NUM_CLASSES: {}'.format(self.num_classes))
+        self.log.info(' IMAGE_HEIGHT: {}'.format(self.image_height))
+        self.log.info(' IMAGE_WIDTH: {}'.format(self.image_width))
 
     def _set_placeholders(self):
         self.images = tf.placeholder(tf.float32, [None, self.image_height, self.image_width, 3])

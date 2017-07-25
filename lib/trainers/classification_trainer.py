@@ -18,12 +18,13 @@ class ClassificationTrainer(TrainBase):
         self.best_precision = 0.0
         self.global_step    = 0
         self._activate_eval = True
-        self.eval_steps = int(self.dataset.train_set.size / (self.train_batch_size * self.evals_in_epoch))
+        self.eval_steps = int(self.dataset.train_dataset.size / (self.train_batch_size * self.evals_in_epoch))
 
     def train(self):
         super(ClassificationTrainer, self).train()
         truth          = self.model.labels
         predictions    = tf.argmax(self.model.predictions, axis=1)
+        predictions    = tf.cast(predictions, tf.int32)
         precision      = tf.reduce_mean(tf.to_float(tf.equal(predictions, truth)))
 
         images_summary = tf.summary.image('images', self.model.images)
@@ -45,7 +46,7 @@ class ClassificationTrainer(TrainBase):
                      'precision': precision},
             every_n_iter=self.logger_steps)
 
-        learning_rate_hook = LearningRateSetterHook(self.prm, self.model, self._logger)
+        learning_rate_hook = LearningRateSetterHook('LearningRateSetterHook', self.prm, self.model)
 
         self.sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=self.checkpoint_dir,
@@ -75,5 +76,5 @@ class ClassificationTrainer(TrainBase):
 
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()
-        self._logger.info(' EVAL_STEPS: {}'.format(self.eval_steps))
+        self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
 

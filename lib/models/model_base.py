@@ -22,8 +22,9 @@ class ModelBase(object):
             prm: parameters
         """
         self.name = name
-        self._logger = logger.get_logger(name)
         self.prm = prm
+        self.log = logger.get_logger(name)
+
         self.train_op = None       # training operation
         self.cost = None           # total objective to decrease - input to train_op
         self.wd_cost = None        # weight decay cost
@@ -34,7 +35,16 @@ class ModelBase(object):
         self._extra_train_ops = [] # optional training operations to apply
 
     def __str__(self):
-        return self.prm.network.ARCHITECTURE
+        return self.name
+
+    def print_stats(self):
+        """print model parameters"""
+        self.log.info('Model parameters:')
+        self.log.info(' LEARNING_RATE: {}'.format(self.prm.network.optimization.LEARNING_RATE))
+        self.log.info(' XENTROPY_RATE: {}'.format(self.prm.network.optimization.XENTROPY_RATE))
+        self.log.info(' WEIGHT_DECAY_RATE: {}'.format(self.prm.network.optimization.WEIGHT_DECAY_RATE))
+        self.log.info(' RELU_LEAKINESS: {}'.format(self.prm.network.system.RELU_LEAKINESS))
+        self.log.info(' OPTIMIZER: {}'.format(self.prm.network.optimization.OPTIMIZER))
 
     def build_graph(self):
         """Build a whole graph for the model."""
@@ -54,6 +64,7 @@ class ModelBase(object):
             self.summaries = tf.summary.merge_all()
 
     def _init_params(self):
+        """Initialize params that may be changed from two traiuning sessions"""
         self.global_step        = tf.contrib.framework.get_or_create_global_step()
         self.lrn_rate           = tf.contrib.framework.model_variable(
             name='learning_rate', dtype=tf.float32, shape=[],
@@ -117,7 +128,8 @@ class ModelBase(object):
         tf.summary.scalar('learning_rate', self.lrn_rate)
         trainable_variables = tf.trainable_variables()
         grads = tf.gradients(self.cost, trainable_variables)
-        optimizer = self._get_optimizer(self.optimizer)
+        # optimizer = self._get_optimizer(self.optimizer) # FIXME(gilad): support SGD and ADAM
+        optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
 
         apply_op = optimizer.apply_gradients(
             zip(grads, trainable_variables),
@@ -136,13 +148,13 @@ class ModelBase(object):
               # tf.summary.histogram(var.op.name, var)
         return tf.multiply(self.weight_decay_rate, tf.add_n(costs))
 
-    def _get_optimizer(self, optimizer_name):
-        def adam(): return tf.train.AdamOptimizer(self.lrn_rate)
-        def mom():  return tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
-        def sgd():  return tf.train.GradientDescentOptimizer(self.lrn_rate)
-
-        optimizer = tf.case(
-            {tf.equal(optimizer_name, 'ADAM'): adam(),
-             tf.equal(optimizer_name, 'MOM'):  mom()},
-            default=sgd(), exclusive=True)
-        return optimizer
+    # def _get_optimizer(self, optimizer_name):
+    #     def adam(): return tf.train.AdamOptimizer(self.lrn_rate)
+    #     def mom():  return tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
+    #     def sgd():  return tf.train.GradientDescentOptimizer(self.lrn_rate)
+    #
+    #     optimizer = tf.case(
+    #         {tf.equal(optimizer_name, 'ADAM'): adam(),
+    #          tf.equal(optimizer_name, 'MOM'):  mom()},
+    #         default=sgd(), exclusive=True)
+    #     return optimizer

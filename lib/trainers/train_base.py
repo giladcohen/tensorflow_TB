@@ -13,7 +13,7 @@ class TrainBase(object):
 
     def __init__(self, name, prm, model, dataset):
         self.name = name
-        self._logger = logger.get_logger(name)
+        self.log = logger.get_logger(name)
         self.prm     = prm
         self.model   = model
         self.dataset = dataset
@@ -30,21 +30,22 @@ class TrainBase(object):
         self.logger_steps          = self.prm.train.train_control.LOGGER_STEPS
         self.evals_in_epoch        = self.prm.train.train_control.EVALS_IN_EPOCH
 
-        self.print_stats()
+    def __str__(self):
+        return self.name
 
     def print_stats(self):
         '''print basic train parameters'''
-        self._logger.info('Train parameters:')
-        self._logger.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
-        self._logger.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
-        self._logger.info(' ROOT_DIR: {}'.format(self.root_dir))
-        self._logger.info(' TRAIN_DIR: {}'.format(self.train_dir))
-        self._logger.info(' EVAL_DIR: {}'.format(self.eval_dir))
-        self._logger.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
-        self._logger.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
-        self._logger.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
-        self._logger.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
-        self._logger.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
+        self.log.info('Train parameters:')
+        self.log.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
+        self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
+        self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
+        self.log.info(' TRAIN_DIR: {}'.format(self.train_dir))
+        self.log.info(' EVAL_DIR: {}'.format(self.eval_dir))
+        self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
+        self.log.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
+        self.log.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
+        self.log.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
+        self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
 
     @abstractmethod
     def train(self):
@@ -53,7 +54,7 @@ class TrainBase(object):
         param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
             tf.get_default_graph(),
             tfprof_options=tf.contrib.tfprof.model_analyzer.TRAINABLE_VARS_PARAMS_STAT_OPTIONS)
-        self._logger.info('total_params: {}\n'.format(param_stats.total_parameters))
+        self.log.info('total_params: {}\n'.format(param_stats.total_parameters))
 
         tf.contrib.tfprof.model_analyzer.print_model_analysis(
             tf.get_default_graph(),

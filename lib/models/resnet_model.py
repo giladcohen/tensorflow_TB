@@ -10,6 +10,10 @@ class ResNet(ClassifierModel):
         super(ResNet, self).__init__(*args, **kwargs)
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
 
+    def print_stats(self):
+        super(ResNet, self).print_stats()
+        self.log.info(' NUM_RESIDUAL_UNITS: {}'.format(self.num_residual_units))
+
     def _build_inference(self):
         """building the inference model of ResNet"""
         with tf.variable_scope('init'):
@@ -75,5 +79,5 @@ class ResNet(ClassifierModel):
                              [(out_filter-in_filter)//2, (out_filter-in_filter)//2]])
             x += orig_x
 
-        self._logger.info('image after unit %s', x.get_shape())
+        self.log.info('image after unit %s', x.get_shape())
         return x

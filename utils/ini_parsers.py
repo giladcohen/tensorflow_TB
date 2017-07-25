@@ -6,7 +6,7 @@ DEBUG_MODE = False
 class IniParser(object):
 
     def __init__(self):
-        self._logger = logger.get_logger('IniParser')
+        self.log = logger.get_logger('IniParser')
 
     def __setattr__(self, key, value):
         object.__setattr__(self, key, value)
@@ -34,7 +34,7 @@ class IniParser(object):
             val_as_str = parser.get(section, key)
             val = val_type(val_as_str)
             if DEBUG_MODE:
-                self._logger.info(
+                self.log.info(
                     'Parse: section: {} , key: {}, val_str: {}, val_type: {}'.format(section, key, val_as_str, val))
 
             if isinstance(val, bool):
@@ -53,7 +53,7 @@ class IniParser(object):
             else:
                 # In override mode, do not set any new value
                 if DEBUG_MODE:
-                    self._logger.warn(
+                    self.log.warn(
                         'Parse: section: {} , key: {}. KEY NOT FOUND'.format(section, key))
 
                 return
@@ -62,13 +62,13 @@ class FrozenClass(IniParser):
     __isfrozen = False
 
     def __init__(self):
-        self._logger = logger.get_logger('FrozenIniParser')
+        self.log = logger.get_logger('FrozenIniParser')
         super(FrozenClass,self).__init__()
 
     def __setattr__(self, key, value):
         if self.__isfrozen and not hasattr(self, key):
             err_str = 'Can not set value to a frozen class: (key={},val={})'.format(key, value)
-            self._logger.error(err_str)
+            self.log.error(err_str)
             raise TypeError(err_str)
         else:
             super(FrozenClass, self).__setattr__(key, value)

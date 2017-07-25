@@ -19,9 +19,19 @@ def train(train_config):
     prm.override(train_config)
     factories = Factories(prm)
 
-    model = factories.get_model()
-    trainer = factories.get_trainer()
-    print('hey')
+    model        = factories.get_model()
+    model.print_stats() #debug
+
+    preprocessor = factories.get_preprocessor()
+    preprocessor.print_stats() #debug
+
+    dataset      = factories.get_dataset(preprocessor)
+    dataset.print_stats() #debug
+
+    trainer      = factories.get_trainer(model, dataset)
+    trainer.print_stats() #debug
+
+    trainer.train()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
