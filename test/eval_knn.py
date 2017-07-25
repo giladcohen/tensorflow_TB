@@ -163,7 +163,7 @@ def build_KNN(data, labels):
     kNN_vec = []
     for i in range(N_logs): #train
         knn = cv2.ml.KNearest_create()
-        print ('Start training kNN model for i=%0d for %0s' %(i, FLAGS.mode))
+        print ('Start trainers kNN model for i=%0d for %0s' %(i, FLAGS.mode))
         knn.train(data[i], cv2.ml.ROW_SAMPLE, labels)
         kNN_vec.append(knn)
     return kNN_vec

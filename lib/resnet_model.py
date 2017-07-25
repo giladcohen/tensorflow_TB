@@ -31,7 +31,7 @@ class ResNet(object):
           hps: Hyperparameters.
           images: Batches of images. [batch_size, image_size, image_size, 3]
           labels: Batches of labels. [batch_size, num_classes]
-          is_training: True for training. False for evaluation.
+          is_training: True for trainers. False for evaluation.
         """
         self.hps = hps
         self._images = images
@@ -173,7 +173,7 @@ class ResNet(object):
                 tf.summary.scalar('cost', self.cost)
 
     def _build_train_op(self):
-        """Build training specific ops for the graph."""
+        """Build trainers specific ops for the graph."""
         tf.summary.scalar('learning_rate', self.lrn_rate)
 
         trainable_variables = tf.trainable_variables()
