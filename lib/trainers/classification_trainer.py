@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
-
 import tensorflow as tf
 
 from lib.trainers.hooks import LearningRateSetterHook
@@ -54,6 +53,8 @@ class ClassificationTrainer(TrainBase):
             chief_only_hooks=[summary_hook],
             save_checkpoint_secs=self.checkpoint_secs,
             config=tf.ConfigProto(allow_soft_placement=True))
+
+        self.set_params()
 
         while not self.sess.should_stop():
             if self.global_step % self.eval_steps == 0 and self._activate_eval:

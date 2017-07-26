@@ -25,8 +25,9 @@ class ModelBase(object):
         self.prm = prm
         self.log = logger.get_logger(name)
 
-        self.architecture = self.prm.network.ARCHITECTURE
-        self.device       = self.prm.network.DEVICE
+        self.architecture   = self.prm.network.ARCHITECTURE
+        self.device         = self.prm.network.DEVICE
+        self.optimizer_name = self.prm.network.optimization.OPTIMIZER
         self.train_op = None       # training operation
         self.cost = None           # total objective to decrease - input to train_op
         self.wd_cost = None        # weight decay cost
@@ -132,8 +133,7 @@ class ModelBase(object):
         tf.summary.scalar('learning_rate', self.lrn_rate)
         trainable_variables = tf.trainable_variables()
         grads = tf.gradients(self.cost, trainable_variables)
-        # optimizer = self._get_optimizer(self.optimizer) # FIXME(gilad): support SGD and ADAM
-        optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
+        optimizer = self._get_optimizer()
 
         apply_op = optimizer.apply_gradients(
             zip(grads, trainable_variables),
@@ -152,13 +152,22 @@ class ModelBase(object):
               # tf.summary.histogram(var.op.name, var)
         return tf.multiply(self.weight_decay_rate, tf.add_n(costs))
 
-    # def _get_optimizer(self, optimizer_name):
-    #     def adam(): return tf.train.AdamOptimizer(self.lrn_rate)
-    #     def mom():  return tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
-    #     def sgd():  return tf.train.GradientDescentOptimizer(self.lrn_rate)
-    #
-    #     optimizer = tf.case(
-    #         {tf.equal(optimizer_name, 'ADAM'): adam(),
-    #          tf.equal(optimizer_name, 'MOM'):  mom()},
-    #         default=sgd(), exclusive=True)
-    #     return optimizer
+    def _get_optimizer(self):
+        """Returns an optimizer.
+        Args:
+        :param optimizer_name: string (not tensor) - name of optimizer
+        :return optimizer (tensor)
+        """
+        if self.optimizer_name == 'ADAM':
+            optimizer = tf.train.AdamOptimizer(self.lrn_rate)
+        elif self.optimizer_name == 'MOM':
+            optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
+        elif self.optimizer_name == 'SGD':
+            optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
+        else:
+            err_str = 'optimizer_name ({}) is not supported'.format(self.optimizer_name)
+            self.log.error(err_str)
+            raise NameError(err_str)
+        self.log.info('using optimizer: {}'.format(self.optimizer_name))
+        return optimizer
+
