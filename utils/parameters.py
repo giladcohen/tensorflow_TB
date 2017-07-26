@@ -130,6 +130,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         super(ParametersDataset, self).__init__()
 
         self.DATASET_NAME = None                             # string, dataset name. e.g.: "cifar10"
+        self.DATASET_DIR = None                              # string, dataset directory
         self.TRAIN_SET_SIZE = None                           # integer: train set size
         self.VALIDATION_SET_SIZE = None                      # integer: validation set size
         self.TRAIN_IMAGES_DIR = None                         # string: path to train images dir
@@ -145,6 +146,7 @@ class ParametersDataset(parser_utils.FrozenClass):
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
         self.set_to_config(do_save_none, section_name, config, 'DATASET_NAME'          , self.DATASET_NAME)
+        self.set_to_config(do_save_none, section_name, config, 'DATASET_DIR'           , self.DATASET_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_SET_SIZE'        , self.TRAIN_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE'   , self.VALIDATION_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_IMAGES_DIR'      , self.TRAIN_IMAGES_DIR)
@@ -155,6 +157,7 @@ class ParametersDataset(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_DIR', str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE', int)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE', int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR', str)

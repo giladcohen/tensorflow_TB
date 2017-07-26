@@ -8,7 +8,7 @@ sys.path.insert(0, cwd)
 import lib.logger.logger as logger
 from lib.logger.logging_config import logging_config
 from utils.parameters import Parameters
-from utils.utils import Factories
+from utils.factories import Factories
 import tensorflow as tf
 
 logging = logging_config()
