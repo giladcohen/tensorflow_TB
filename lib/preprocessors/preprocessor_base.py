@@ -43,7 +43,7 @@ class PreProcessorBase(object):
     @abstractmethod
     def process(self, images, labels):
         """processing batch of images and labels"""
-        if images.shape[0] == labels.shape[0]:
+        if images.shape[0] != labels.shape[0]:
             err_str = 'process: number of images ({}) does not match number of labels ({})'.format(images.shape[0], labels.shape[0])
             self.log.error(err_str)
             raise AssertionError(err_str)
