@@ -30,7 +30,6 @@ class TrainBase(object):
         self.summary_steps         = self.prm.train.train_control.SUMMARY_STEPS
         self.checkpoint_secs       = self.prm.train.train_control.CHECKPOINT_SECS
         self.logger_steps          = self.prm.train.train_control.LOGGER_STEPS
-        self.evals_in_epoch        = self.prm.train.train_control.EVALS_IN_EPOCH
 
     def __str__(self):
         return self.name
@@ -48,7 +47,6 @@ class TrainBase(object):
         self.log.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
         self.log.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
         self.log.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
-        self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
 
     @abstractmethod
     def train(self):

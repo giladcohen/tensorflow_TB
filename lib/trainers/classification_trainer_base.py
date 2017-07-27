@@ -16,7 +16,11 @@ class ClassificationTrainerBase(TrainBase):
         self.best_precision = 0.0
         self.global_step    = 0
         self._activate_eval = True
-        self.eval_steps = int(self.dataset.train_dataset.size / (self.train_batch_size * self.evals_in_epoch))
+        self.eval_steps = self.prm.train.train_control.EVAL_STEPS
+        self.evals_in_epoch = self.prm.train.train_control.EVALS_IN_EPOCH
+        if self.eval_steps is None:
+            self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
+            self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
         self.Factories = utils.factories.Factories(self.prm) # to get hooks
 
     def train(self):
@@ -80,3 +84,4 @@ class ClassificationTrainerBase(TrainBase):
     def print_stats(self):
         super(ClassificationTrainerBase, self).print_stats()
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
+        self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
