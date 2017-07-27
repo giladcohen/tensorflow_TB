@@ -2,79 +2,68 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from abc import ABCMeta, abstractmethod
 import tensorflow as tf
+from lib.trainers.classification_trainer_base import ClassificationTrainerBase
+from math import ceil
+import numpy as np
 
-import utils
-from lib.trainers.train_base import TrainBase
 
-class ClassificationTrainer(TrainBase):
-    __metaclass__ = ABCMeta
+class ClassificationTrainer(ClassificationTrainerBase):
+    """Implementing classification trainer
+    Using the entire labeled trainset for training"""
 
     def __init__(self, *args, **kwargs):
         super(ClassificationTrainer, self).__init__(*args, **kwargs)
-        self.best_precision = 0.0
-        self.global_step    = 0
-        self._activate_eval = True
-        self.eval_steps = int(self.dataset.train_dataset.size / (self.train_batch_size * self.evals_in_epoch))
-        self.Factories = utils.factories.Factories(self.prm) # to get hooks
+        self.eval_batch_count     = int(ceil(self.dataset.validation_dataset.size / self.eval_batch_size))
+        self.last_eval_batch_size = self.dataset.validation_dataset.size % self.eval_batch_size
 
-    def train(self):
-        super(ClassificationTrainer, self).train()
-        truth          = self.model.labels
-        predictions    = tf.argmax(self.model.predictions, axis=1)
-        predictions    = tf.cast(predictions, tf.int32)
-        precision      = tf.reduce_mean(tf.to_float(tf.equal(predictions, truth)))
-
-        images_summary = tf.summary.image('images', self.model.images)
-        self.summary_writer_train = tf.summary.FileWriter(self.train_dir)  # for training
-        self.summary_writer_eval  = tf.summary.FileWriter(self.eval_dir)   # for evaluation
-
-        summary_hook = tf.train.SummarySaverHook(
-            save_steps=self.summary_steps,
-            summary_writer=self.summary_writer_train,
-            summary_op=tf.summary.merge([self.model.summaries,
-                                         images_summary,
-                                         tf.summary.scalar('Precision', precision)]))
-
-        logging_hook = tf.train.LoggingTensorHook(
-            tensors={'step': self.model.global_step,
-                     'loss_xent': self.model.xent_cost,
-                     'loss_wd': self.model.wd_cost,
-                     'loss': self.model.cost,
-                     'precision': precision},
-            every_n_iter=self.logger_steps)
-
-        learning_rate_hook = self.Factories.get_learning_rate_setter(self.model)
-        learning_rate_hook.print_stats() #debug
-
-        self.sess = tf.train.MonitoredTrainingSession(
-            checkpoint_dir=self.checkpoint_dir,
-            hooks=[logging_hook, learning_rate_hook],
-            chief_only_hooks=[summary_hook],
-            save_checkpoint_secs=self.checkpoint_secs,
-            config=tf.ConfigProto(allow_soft_placement=True))
-
-        self.set_params()
-
-        while not self.sess.should_stop():
-            if self.global_step % self.eval_steps == 0 and self._activate_eval:
-                self.eval_step()
-                self._activate_eval = False
-            else:
-                self.train_step()
-                self._activate_eval = True
-
-    @abstractmethod
     def train_step(self):
-        '''Implementing one training step. Must update self.global_step.'''
-        pass
+        '''Implementing one training step'''
+        images, labels = self.dataset.get_mini_batch_train()
+        _ , self.global_step = self.sess.run([self.model.train_op, self.model.global_step],
+                                             feed_dict={self.model.images: images,
+                                                        self.model.labels: labels,
+                                                        self.model.is_training: True})
 
-    @abstractmethod
     def eval_step(self):
         '''Implementing one evaluation step.'''
-        pass
+        self.log.info('start running eval within training. global_step={}'.format(self.global_step))
+        total_prediction, correct_prediction = 0, 0
+        for i in range(self.eval_batch_count):
+            b = i * self.eval_batch_size
+            if i < (self.eval_batch_count - 1) or (self.last_eval_batch_size == 0):
+                e = (i + 1) * self.eval_batch_size
+            else:
+                e = i * self.eval_batch_size + self.last_eval_batch_size
+            images, labels = self.dataset.get_mini_batch_validate(indices=range(b, e))
+            (summaries, loss, predictions, train_step) = self.sess.run(
+                [self.model.summaries, self.model.cost,
+                 self.model.predictions, self.model.global_step],
+                feed_dict={self.model.images     : images,
+                           self.model.labels     : labels,
+                           self.model.is_training: False})
+
+            predictions = np.argmax(predictions, axis=1)
+            correct_prediction += np.sum(labels == predictions)
+            total_prediction += predictions.shape[0]
+        if total_prediction != self.dataset.validation_dataset.size:
+            self.log.error('total_prediction equals {} instead of {}'.format(total_prediction,
+                                                                             self.dataset.validation_set.size))
+        precision = correct_prediction / total_prediction
+        self.best_precision = max(precision, self.best_precision)
+
+        precision_summ = tf.Summary()
+        precision_summ.value.add(tag='Precision', simple_value=precision)
+        best_precision_summ = tf.Summary()
+        best_precision_summ.value.add(tag='Best Precision', simple_value=self.best_precision)
+        self.summary_writer_eval.add_summary(precision_summ, train_step)
+        self.summary_writer_eval.add_summary(best_precision_summ, train_step)
+        self.summary_writer_eval.add_summary(summaries, train_step)
+        self.summary_writer_eval.flush()
+
+        self.log.info('EVALUATION: loss: {}, precision: {}, best precision: {}'.format(loss, precision, self.best_precision))
 
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()
-        self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
+        self.log.info(' EVAL_BATCH_COUNT: {}'.format(self.eval_batch_count))
+        self.log.info(' LAST_EVAL_BATCH_SIZE: {}'.format(self.last_eval_batch_size))

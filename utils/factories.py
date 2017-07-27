@@ -2,11 +2,12 @@ from __future__ import division
 
 import lib.logger.logger as logger
 from lib.preprocessors.preprocessor import PreProcessor
-from lib.trainers.passive_trainer import PassiveTrainer
+from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.models.resnet_model import ResNet
 from lib.datasets.dataset import DataSet
+from lib.datasets.passive_dataset import PassiveDataSet
 from lib.datasets.active_dataset import ActiveDataSet
 
 
@@ -24,7 +25,7 @@ class Factories(object):
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
 
     def get_train_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': ActiveDataSet}
+        available_datasets = {'cifar10': DataSet, 'passive_cifar10': PassiveDataSet, 'active_cifar10': ActiveDataSet}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
             self.log.info('get_train_dataset: returning ' + str(dataset))
@@ -35,7 +36,7 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_validation_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': DataSet}
+        available_datasets = {'cifar10': DataSet, 'passive_cifar10': DataSet, 'active_cifar10': DataSet}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
             self.log.info('get_validation_dataset: returning ' + str(dataset))
@@ -68,7 +69,7 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_trainer(self, model, dataset):
-        available_trainers = {'passive': PassiveTrainer}
+        available_trainers = {'simple': ClassificationTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
