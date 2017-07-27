@@ -31,6 +31,9 @@ class DataSetBase(object):
     def __str__(self):
         return self.name
 
+    def print_stats(self):
+        pass
+
     @abstractmethod
     def get_mini_batch(self, batch_size=None):
         pass

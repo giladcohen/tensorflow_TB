@@ -42,7 +42,6 @@ class IniParser(object):
             elif isinstance(val, np.ndarray):
                 val = eval(val_as_str)
             elif isinstance(val, list):
-                #val = map(int, val_as_str.split(","))
                 val = val_as_str.split(",")
                 for i, v in enumerate(val):
                     try:

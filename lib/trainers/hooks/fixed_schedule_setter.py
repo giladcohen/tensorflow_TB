@@ -37,12 +37,8 @@ class FixedScheduleSetter(LearningRateSetterBase):
         self.log.info(' SCHEDULED_LEARNING_RATES: {}'.format(self.scheduled_reaning_rates))
         self.log.info(' ALL_LEARNING_RATES: {}'.format(self.all_learning_rates))
 
-
     def assert_config(self):
         if len(self.scheduled_epochs) != len(self.scheduled_reaning_rates):
             err_str = 'SCHEDULED_EPOCHS ({}) and SCHEDULED_LEARNING_RATES ({}) must have the same lengths'.format(self.scheduled_epochs, self.scheduled_reaning_rates)
             self.log.error(err_str)
             raise AssertionError(err_str)
-
-
-

@@ -9,6 +9,7 @@ import lib.logger.logger as logger
 from lib.logger.logging_config import logging_config
 from utils.parameters import Parameters
 from utils.factories import Factories
+from lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
 
 logging = logging_config()
@@ -24,10 +25,13 @@ def train(prm):
     preprocessor = factories.get_preprocessor()
     preprocessor.print_stats() #debug
 
-    dataset      = factories.get_dataset(preprocessor)
-    dataset.print_stats() #debug
+    train_dataset      = factories.get_train_dataset(preprocessor)
+    validation_dataset = factories.get_validation_dataset(preprocessor)
 
-    trainer      = factories.get_trainer(model, dataset)
+    dataset_wrapper =  DatasetWrapper(prm.dataset.DATASET_NAME + '_wrapper', prm, train_dataset, validation_dataset)
+    dataset_wrapper.print_stats()
+
+    trainer      = factories.get_trainer(model, dataset_wrapper)
     trainer.print_stats() #debug
 
     trainer.train()

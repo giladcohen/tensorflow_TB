@@ -137,6 +137,8 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.TRAIN_LABELS_FILE = None                        # string: path to train labels file
         self.VALIDATION_IMAGES_DIR = None                    # string: path to validation images dir
         self.VALIDATION_LABELS_FILE = None                   # string: path to validation labels file
+        self.N_CLUSTERS = None                               # integer: number of new clusters when updating active pool
+        self.CAP = None                                      # integer: maximum number of labels in active training
 
         self._freeze()
 
@@ -153,17 +155,21 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_LABELS_FILE'     , self.TRAIN_LABELS_FILE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_IMAGES_DIR' , self.VALIDATION_IMAGES_DIR)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_LABELS_FILE', self.VALIDATION_LABELS_FILE)
+        self.set_to_config(do_save_none, section_name, config, 'N_CLUSTERS'            , self.N_CLUSTERS)
+        self.set_to_config(do_save_none, section_name, config, 'CAP'                   , self.CAP)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
-        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_DIR', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE', int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE', int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME'          , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_DIR'           , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE'        , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE'   , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR'      , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE'     , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_LABELS_FILE', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'N_CLUSTERS'            , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'CAP'                   , int)
 
 class ParametersTrain(parser_utils.FrozenClass):
     def __init__(self):

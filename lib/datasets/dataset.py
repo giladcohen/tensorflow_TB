@@ -52,7 +52,7 @@ class DataSet(DataSetBase):
             return self.get_indices(indices)
         if batch_size is None:
             batch_size = self.batch_size
-        indices = np.random.choice(self.pool, batch_size)
+        indices = np.random.choice(self.pool, batch_size, replace=False)
         return self.get_indices(indices)
 
     def get_indices(self, indices):
@@ -65,3 +65,6 @@ class DataSet(DataSetBase):
         if self.to_preprocess:
             images, labels = self.preprocessor.process(images, labels)
         return images, labels
+
+    def pool_size(self):
+        return len(self.pool)
