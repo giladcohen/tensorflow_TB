@@ -12,7 +12,7 @@ class FixedScheduleSetter(LearningRateSetterBase):
 
         self.train_batch_size = self.prm.train.train_control.TRAIN_BATCH_SIZE
         self.train_set_size   = self.prm.dataset.TRAIN_SET_SIZE
-        self._notify = False * len(self.all_learning_rates)
+        self._notify = [False] * len(self.all_learning_rates)
 
         self.assert_config()
 
@@ -25,7 +25,7 @@ class FixedScheduleSetter(LearningRateSetterBase):
                 if not self._notify[i]:
                     self.log.info('epoch={}. setting learning rate to {}'.format(epoch, self._lrn_rate))
                     self._notify[i] = True
-                    return
+                return
         self._lrn_rate = self.all_learning_rates[i+1]
         if not self._notify[i+1]:
             self.log.info('epoch={}. setting learning rate to {}'.format(epoch, self._lrn_rate))
