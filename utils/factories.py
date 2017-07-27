@@ -79,10 +79,10 @@ class Factories(object):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-    def get_learning_rate_setter(self, model):
+    def get_learning_rate_setter(self, model, trainset_dataset):
         available_setters = {'fixed': LearningRateSetterBase, 'fixed_schedule': FixedScheduleSetter}
         if self.learning_rate_setter in available_setters:
-            setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model)
+            setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model, trainset_dataset)
             self.log.info('get_learning_rate_setter: returning ' + str(setter))
             return setter
         else:

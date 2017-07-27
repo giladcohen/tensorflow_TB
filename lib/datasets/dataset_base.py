@@ -28,6 +28,8 @@ class DataSetBase(object):
             self.log.error(err_str)
             raise NameError(err_str)
 
+        self.pool = range(self.size)  # list of indices which can be chosen for a batch
+
     def __str__(self):
         return self.name
 
@@ -37,3 +39,7 @@ class DataSetBase(object):
     @abstractmethod
     def get_mini_batch(self, batch_size=None):
         pass
+
+    def pool_size(self):
+        return len(self.pool)
+

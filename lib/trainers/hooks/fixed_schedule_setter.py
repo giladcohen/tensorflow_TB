@@ -10,8 +10,8 @@ class FixedScheduleSetter(LearningRateSetterBase):
         self.scheduled_reaning_rates = self.prm.train.train_control.learning_rate_setter.SCHEDULED_LEARNING_RATES
         self.all_learning_rates      = [self._init_lrn_rate] + self.scheduled_reaning_rates # all learning rates
 
-        self.train_batch_size = self.prm.train.train_control.TRAIN_BATCH_SIZE
-        self.train_set_size   = self.prm.dataset.TRAIN_SET_SIZE
+        self.train_batch_size = self.trainset_dataset.batch_size
+        self.train_set_size   = self.trainset_dataset.pool_size()
         self._notify = [False] * len(self.all_learning_rates)
 
         self.assert_config()
@@ -36,6 +36,7 @@ class FixedScheduleSetter(LearningRateSetterBase):
         self.log.info(' SCHEDULED_EPOCHS: {}'.format(self.scheduled_epochs))
         self.log.info(' SCHEDULED_LEARNING_RATES: {}'.format(self.scheduled_reaning_rates))
         self.log.info(' ALL_LEARNING_RATES: {}'.format(self.all_learning_rates))
+        self.log.info(' [DEBUG]: Using in hook: train_batch_size={}, train_set_size={}'.format(self.train_batch_size, self.train_set_size))
 
     def assert_config(self):
         if len(self.scheduled_epochs) != len(self.scheduled_reaning_rates):

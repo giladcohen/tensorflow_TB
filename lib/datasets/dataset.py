@@ -15,7 +15,6 @@ class DataSet(DataSetBase):
         super(DataSet, self).__init__(*args, **kwargs)
         self.H = self.prm.network.IMAGE_HEIGHT
         self.W = self.prm.network.IMAGE_WIDTH
-        self.pool = range(self.size)  #list of indices which might be chosen for a batch
         self.images_list = self.create_images_list()
         self.labels = self.create_labels()
 
@@ -65,6 +64,3 @@ class DataSet(DataSetBase):
         if self.to_preprocess:
             images, labels = self.preprocessor.process(images, labels)
         return images, labels
-
-    def pool_size(self):
-        return len(self.pool)

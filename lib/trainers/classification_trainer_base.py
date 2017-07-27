@@ -45,7 +45,9 @@ class ClassificationTrainerBase(TrainBase):
                      'precision': precision},
             every_n_iter=self.logger_steps)
 
-        learning_rate_hook = self.Factories.get_learning_rate_setter(self.model)
+        # LearningRateSetter needs the actual pool size of the trainset to know what is the epoch in every step
+        # I assume the pool size is static, otherwise the epoch count becomes meaningless
+        learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset)
         learning_rate_hook.print_stats() #debug
 
         self.sess = tf.train.MonitoredTrainingSession(
