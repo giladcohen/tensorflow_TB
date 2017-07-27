@@ -5,9 +5,8 @@ from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 
-from lib.trainers.hooks import LearningRateSetterHook
+import utils
 from lib.trainers.train_base import TrainBase
-
 
 class ClassificationTrainer(TrainBase):
     __metaclass__ = ABCMeta
@@ -18,6 +17,7 @@ class ClassificationTrainer(TrainBase):
         self.global_step    = 0
         self._activate_eval = True
         self.eval_steps = int(self.dataset.train_dataset.size / (self.train_batch_size * self.evals_in_epoch))
+        self.Factories = utils.factories.Factories(self.prm) # to get hooks
 
     def train(self):
         super(ClassificationTrainer, self).train()
@@ -45,7 +45,8 @@ class ClassificationTrainer(TrainBase):
                      'precision': precision},
             every_n_iter=self.logger_steps)
 
-        learning_rate_hook = LearningRateSetterHook('LearningRateSetterHook', self.prm, self.model)
+        learning_rate_hook = self.Factories.get_learning_rate_setter(self.model)
+        learning_rate_hook.print_stats() #debug
 
         self.sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=self.checkpoint_dir,

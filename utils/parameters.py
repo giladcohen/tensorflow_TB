@@ -281,6 +281,8 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.LOGGER_STEPS     = None  # integer: number of training steps to output log string to shell
         self.EVALS_IN_EPOCH   = None  # integer: number of evaluation steps within an epoch
 
+        self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
+
         self._freeze()
 
     def name(self):
@@ -300,6 +302,8 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'LOGGER_STEPS'    , self.LOGGER_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'  , self.EVALS_IN_EPOCH)
 
+        self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
+
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAINER'         , str)
@@ -313,6 +317,8 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_SECS' , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOGGER_STEPS'    , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'  , int)
+
+        self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
 
 class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def __init__(self):
@@ -332,3 +338,30 @@ class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'PREPROCESSOR', str)
+
+class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
+    def __init__(self):
+        super(ParametersTrainControlLearningRateSetter, self).__init__()
+
+        self.LEARNING_RATE_SETTER          = None  # string: Name of the learning rate setter
+        self.SCHEDULED_EPOCHS              = None  # list: the epochs in which the learning rate is decreased
+        self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_EPOCHS
+
+        self._freeze()
+
+    def name(self):
+        return 'learning_rate_setter'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE_SETTER'     , self.LEARNING_RATE_SETTER)
+        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_EPOCHS'         , self.SCHEDULED_EPOCHS)
+        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_LEARNING_RATES' , self.SCHEDULED_EPOCHS)
+
+
+    def set_from_file(self, override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_SETTER'        , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_EPOCHS'            , list)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , list)
+

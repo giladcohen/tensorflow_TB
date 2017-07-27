@@ -3,6 +3,8 @@ from __future__ import division
 import lib.logger.logger as logger
 from lib.preprocessors.preprocessor import PreProcessor
 from lib.trainers.passive_trainer import PassiveTrainer
+from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
+from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.models.resnet_model import ResNet
 from lib.datasets.dataset_wrapper import DatasetWrapper
 
@@ -14,10 +16,11 @@ class Factories(object):
         self.log = logger.get_logger('factories')
         self.prm = prm
 
-        self.dataset = self.prm.dataset.DATASET_NAME
-        self.preprocessor = self.prm.network.pre_processing.PREPROCESSOR
-        self.trainer = prm.train.train_control.TRAINER
-        self.architecture = prm.network.ARCHITECTURE
+        self.dataset              = self.prm.dataset.DATASET_NAME
+        self.preprocessor         = self.prm.network.pre_processing.PREPROCESSOR
+        self.trainer              = self.prm.train.train_control.TRAINER
+        self.architecture         = self.prm.network.ARCHITECTURE
+        self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
 
     def get_dataset(self, preprocessor):
         available_datasets = {'cifar10': DatasetWrapper, 'cifar100': DatasetWrapper}
@@ -60,5 +63,16 @@ class Factories(object):
             return trainer
         else:
             err_str = 'get_trainer: trainer {} was not found. Available trainers are: {}'.format(self.trainer, available_trainers.keys())
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
+    def get_learning_rate_setter(self, model):
+        available_setters = {'fixed': LearningRateSetterBase, 'fixed_schedule': FixedScheduleSetter}
+        if self.learning_rate_setter in available_setters:
+            setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model)
+            self.log.info('get_learning_rate_setter: returning ' + str(setter))
+            return setter
+        else:
+            err_str = 'get_learning_rate_setter: learning_rate_setter {} was not found. Available setters are: {}'.format(self.learning_rate_setter, available_setters.keys())
             self.log.error(err_str)
             raise AssertionError(err_str)
