@@ -3,7 +3,9 @@ from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 class PrecisionDecaySetter(LearningRateSetterBase):
     """Decaying the learning rate based on the precision retention.
     If the precision is not improved after a defined time interval, the learning rate
-    will be multiplied by a decaying factor of 0.9"""
+    will be multiplied by a decaying factor of 0.9, as done in:
+    https://arxiv.org/abs/1705.08292
+    """
 
     def __init__(self, *args, **kwargs):
         super(PrecisionDecaySetter, self).__init__(*args, **kwargs)
