@@ -137,6 +137,8 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.TRAIN_LABELS_FILE = None                        # string: path to train labels file
         self.VALIDATION_IMAGES_DIR = None                    # string: path to validation images dir
         self.VALIDATION_LABELS_FILE = None                   # string: path to validation labels file
+        self.N_CLUSTERS = None                               # integer: number of new clusters when updating active pool
+        self.CAP = None                                      # integer: maximum number of labels in active training
 
         self._freeze()
 
@@ -153,17 +155,21 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_LABELS_FILE'     , self.TRAIN_LABELS_FILE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_IMAGES_DIR' , self.VALIDATION_IMAGES_DIR)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_LABELS_FILE', self.VALIDATION_LABELS_FILE)
+        self.set_to_config(do_save_none, section_name, config, 'N_CLUSTERS'            , self.N_CLUSTERS)
+        self.set_to_config(do_save_none, section_name, config, 'CAP'                   , self.CAP)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
-        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_DIR', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE', int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE', int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME'          , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_DIR'           , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE'        , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE'   , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR'      , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE'     , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_LABELS_FILE', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'N_CLUSTERS'            , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'CAP'                   , int)
 
 class ParametersTrain(parser_utils.FrozenClass):
     def __init__(self):
@@ -279,7 +285,11 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.SUMMARY_STEPS    = None  # integer: training steps to collect summary
         self.CHECKPOINT_SECS  = None  # integer: number of seconds to save new checkpoint
         self.LOGGER_STEPS     = None  # integer: number of training steps to output log string to shell
+        self.EVAL_STEPS       = None  # integer: number of training steps from one evaluation to the next
         self.EVALS_IN_EPOCH   = None  # integer: number of evaluation steps within an epoch
+        self.PRECISION_RETENTION_SIZE = None  # integer: the number of last precisions to remember
+
+        self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
 
         self._freeze()
 
@@ -298,7 +308,11 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'SUMMARY_STEPS'   , self.SUMMARY_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_SECS' , self.CHECKPOINT_SECS)
         self.set_to_config(do_save_none, section_name, config, 'LOGGER_STEPS'    , self.LOGGER_STEPS)
+        self.set_to_config(do_save_none, section_name, config, 'EVAL_STEPS'      , self.EVAL_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'  , self.EVALS_IN_EPOCH)
+        self.set_to_config(do_save_none, section_name, config, 'PRECISION_RETENTION_SIZE', self.PRECISION_RETENTION_SIZE)
+
+        self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
@@ -312,7 +326,11 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'SUMMARY_STEPS'   , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_SECS' , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOGGER_STEPS'    , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_STEPS'      , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'  , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'PRECISION_RETENTION_SIZE', int)
+
+        self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
 
 class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def __init__(self):
@@ -332,3 +350,33 @@ class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'PREPROCESSOR', str)
+
+class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
+    def __init__(self):
+        super(ParametersTrainControlLearningRateSetter, self).__init__()
+
+        self.LEARNING_RATE_SETTER          = None  # string: Name of the learning rate setter
+        self.SCHEDULED_EPOCHS              = None  # list: the epochs in which the learning rate is decreased
+        self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_EPOCHS
+        self.DECAY_REFRACTORY_STEPS        = None  # integer: number of training steps after decaying the learning
+                                                   # rate in which no new decay can be utilized
+
+        self._freeze()
+
+    def name(self):
+        return 'learning_rate_setter'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE_SETTER'     , self.LEARNING_RATE_SETTER)
+        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_EPOCHS'         , self.SCHEDULED_EPOCHS)
+        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_LEARNING_RATES' , self.SCHEDULED_LEARNING_RATES)
+        self.set_to_config(do_save_none, section_name, config, 'DECAY_REFRACTORY_STEPS'   , self.DECAY_REFRACTORY_STEPS)
+
+
+    def set_from_file(self, override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_SETTER'        , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_EPOCHS'            , list)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , list)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DECAY_REFRACTORY_STEPS'      , list)

@@ -41,6 +41,13 @@ class IniParser(object):
                 val = parser.getboolean(section, key)
             elif isinstance(val, np.ndarray):
                 val = eval(val_as_str)
+            elif isinstance(val, list):
+                val = val_as_str.split(",")
+                for i, v in enumerate(val):
+                    try:
+                        val[i] = int(v)
+                    except ValueError:
+                        val[i] = float(v)
             else:
                 if val_as_str == 'None':
                     val = None

@@ -3,16 +3,17 @@ from __future__ import absolute_import
 import lib.logger.logger as logger
 from lib.datasets.dataset import DataSet
 import os
-from utils import utils
+from utils import misc
 
 class DatasetWrapper(object):
     """Wrapper which hold both the trainset and the validation set for cifar-10"""
     #FIXME(gilad): consider using parent class for other datasets
 
-    def __init__(self, name, prm, preprocessor):
+    def __init__(self, name, prm, train_dataset, validation_dataset):
         self.name = name
         self.prm = prm
-        self.preprocessor = preprocessor
+        self.train_dataset      = train_dataset
+        self.validation_dataset = validation_dataset
         self.log = logger.get_logger(name)
 
         self.dataset_name           = self.prm.dataset.DATASET_NAME
@@ -25,9 +26,6 @@ class DatasetWrapper(object):
         self.validation_labels_file = self.prm.dataset.VALIDATION_LABELS_FILE
 
         self.verify_dataset()
-
-        self.train_dataset      = DataSet(self.name + '_train'     , self.prm, self.preprocessor)
-        self.validation_dataset = DataSet(self.name + '_validation', self.prm, self.preprocessor)
 
     def __str__(self):
         return self.name
@@ -43,6 +41,9 @@ class DatasetWrapper(object):
         self.log.info(' TRAIN_LABELS_FILE: {}'.format(self.train_labels_file))
         self.log.info(' VALIDATION_IMAGES_DIR: {}'.format(self.validation_images_dir))
         self.log.info(' VALIDATION_LABELS_FILE: {}'.format(self.validation_labels_file))
+
+        self.train_dataset.print_stats()
+        self.validation_dataset.print_stats()
 
     def get_mini_batch_train(self, *args, **kwargs):
         return self.train_dataset.get_mini_batch(*args, **kwargs)
@@ -73,6 +74,6 @@ class DatasetWrapper(object):
             os.makedirs(self.train_images_dir)
             os.makedirs(self.validation_images_dir)
             self.log.info('Creating {} dataset into {}. This may take a while'.format(self.dataset_name, self.dataset_dir))
-            utils.save_cifar10_to_disk(self.train_images_dir     , self.train_labels_file,
-                                       self.validation_images_dir, self.validation_labels_file)
+            misc.save_cifar10_to_disk(self.train_images_dir, self.train_labels_file,
+                                      self.validation_images_dir, self.validation_labels_file)
             self.log.info('dataset {} was successfully written to {}.'.format(self.dataset_name, self.dataset_dir))
