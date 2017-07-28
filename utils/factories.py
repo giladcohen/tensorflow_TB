@@ -5,6 +5,7 @@ from lib.preprocessors.preprocessor import PreProcessor
 from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
+from lib.trainers.hooks.precision_decay_setter import PrecisionDecaySetter
 from lib.models.resnet_model import ResNet
 from lib.datasets.dataset import DataSet
 from lib.datasets.passive_dataset import PassiveDataSet
@@ -79,10 +80,11 @@ class Factories(object):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-    def get_learning_rate_setter(self, model, trainset_dataset):
-        available_setters = {'fixed': LearningRateSetterBase, 'fixed_schedule': FixedScheduleSetter}
+    def get_learning_rate_setter(self, model, trainset_dataset, precision_retention):
+        available_setters = {'fixed': LearningRateSetterBase, 'fixed_schedule': FixedScheduleSetter,
+                             'precision_decay': PrecisionDecaySetter}
         if self.learning_rate_setter in available_setters:
-            setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model, trainset_dataset)
+            setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model, trainset_dataset, precision_retention)
             self.log.info('get_learning_rate_setter: returning ' + str(setter))
             return setter
         else:

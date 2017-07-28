@@ -6,11 +6,12 @@ import lib.logger.logger as logger
 class LearningRateSetterBase(tf.train.SessionRunHook):
     """Sets learning_rate based on the initial learning rate parameter."""
 
-    def __init__(self, name, prm, model, trainset_dataset):
+    def __init__(self, name, prm, model, trainset_dataset, precision_retention):
         self.name = name
         self.prm = prm
         self.model = model
         self.trainset_dataset = trainset_dataset  # used in children
+        self.precision_retention = precision_retention  # used in children
         self.log = logger.get_logger(name)
 
         self.learning_rate_setter  = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER

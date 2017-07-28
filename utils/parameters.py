@@ -287,6 +287,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.LOGGER_STEPS     = None  # integer: number of training steps to output log string to shell
         self.EVAL_STEPS       = None  # integer: number of training steps from one evaluation to the next
         self.EVALS_IN_EPOCH   = None  # integer: number of evaluation steps within an epoch
+        self.PRECISION_RETENTION_SIZE = None  # integer: the number of last precisions to remember
 
         self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
 
@@ -309,6 +310,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'LOGGER_STEPS'    , self.LOGGER_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_STEPS'      , self.EVAL_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'  , self.EVALS_IN_EPOCH)
+        self.set_to_config(do_save_none, section_name, config, 'PRECISION_RETENTION_SIZE', self.PRECISION_RETENTION_SIZE)
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
 
@@ -326,6 +328,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'LOGGER_STEPS'    , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_STEPS'      , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'  , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'PRECISION_RETENTION_SIZE', int)
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
 
@@ -355,6 +358,8 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.LEARNING_RATE_SETTER          = None  # string: Name of the learning rate setter
         self.SCHEDULED_EPOCHS              = None  # list: the epochs in which the learning rate is decreased
         self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_EPOCHS
+        self.DECAY_REFRACTORY_STEPS        = None  # integer: number of training steps after decaying the learning
+                                                   # rate in which no new decay can be utilized
 
         self._freeze()
 
@@ -365,7 +370,8 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         section_name = self.add_section(txt, self.name(), config)
         self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE_SETTER'     , self.LEARNING_RATE_SETTER)
         self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_EPOCHS'         , self.SCHEDULED_EPOCHS)
-        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_LEARNING_RATES' , self.SCHEDULED_EPOCHS)
+        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_LEARNING_RATES' , self.SCHEDULED_LEARNING_RATES)
+        self.set_to_config(do_save_none, section_name, config, 'DECAY_REFRACTORY_STEPS'   , self.DECAY_REFRACTORY_STEPS)
 
 
     def set_from_file(self, override_mode, txt, parser):
@@ -373,4 +379,4 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_SETTER'        , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_EPOCHS'            , list)
         self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , list)
-
+        self.parse_from_config(self, override_mode, section_name, parser, 'DECAY_REFRACTORY_STEPS'      , list)

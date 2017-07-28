@@ -7,21 +7,24 @@ import tensorflow as tf
 
 import utils
 from lib.trainers.train_base import TrainBase
+from lib.precision_retention import PrecisionRetention
 
 class ClassificationTrainerBase(TrainBase):
     __metaclass__ = ABCMeta
 
     def __init__(self, *args, **kwargs):
         super(ClassificationTrainerBase, self).__init__(*args, **kwargs)
-        self.best_precision = 0.0
-        self.global_step    = 0
-        self._activate_eval = True
+
         self.eval_steps = self.prm.train.train_control.EVAL_STEPS
         self.evals_in_epoch = self.prm.train.train_control.EVALS_IN_EPOCH
         if self.eval_steps is None:
             self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
             self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
+
+        self.global_step    = 0
+        self._activate_eval = True
         self.Factories = utils.factories.Factories(self.prm) # to get hooks
+        self.precision_retention = PrecisionRetention('PrecisionRetention', self.prm)  # for logging and setting lrn rate
 
     def train(self):
         super(ClassificationTrainerBase, self).train()
@@ -51,8 +54,8 @@ class ClassificationTrainerBase(TrainBase):
 
         # LearningRateSetter needs the actual pool size of the trainset to know what is the epoch in every step
         # I assume the pool size is static, otherwise the epoch count becomes meaningless
-        learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset)
-        learning_rate_hook.print_stats() #debug
+        learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.precision_retention)
+        learning_rate_hook.print_stats()  # debug
 
         self.sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=self.checkpoint_dir,
@@ -85,3 +88,4 @@ class ClassificationTrainerBase(TrainBase):
         super(ClassificationTrainerBase, self).print_stats()
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
         self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
+        self.precision_retention.print_stats()
