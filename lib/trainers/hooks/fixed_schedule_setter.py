@@ -17,8 +17,8 @@ class FixedScheduleSetter(LearningRateSetterBase):
         self.assert_config()
 
     def after_run(self, run_context, run_values):
-        train_step = run_values.results
-        epoch = (self.train_batch_size * train_step) // self.train_set_size
+        global_step = run_values.results
+        epoch = (self.train_batch_size * global_step) // self.train_set_size
         for i in range(len(self.scheduled_epochs)):
             if epoch < self.scheduled_epochs[i]:
                 self._lrn_rate = self.all_learning_rates[i]

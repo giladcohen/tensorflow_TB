@@ -50,7 +50,7 @@ class ClassificationTrainer(ClassificationTrainerBase):
             self.log.error('total_prediction equals {} instead of {}'.format(total_prediction,
                                                                              self.dataset.validation_set.size))
         precision = correct_prediction / total_prediction
-        self.precision_retention.add_precision(precision)
+        self.precision_retention.add_precision(precision, train_step)
 
         precision_summ = tf.Summary()
         precision_summ.value.add(tag='Precision', simple_value=precision)
@@ -61,7 +61,8 @@ class ClassificationTrainer(ClassificationTrainerBase):
         self.summary_writer_eval.add_summary(summaries, train_step)
         self.summary_writer_eval.flush()
 
-        self.log.info('EVALUATION: loss: {}, precision: {}, best precision: {}'.format(loss, precision, self.precision_retention.get_best_precision()))
+        self.log.info('EVALUATION (step={}): loss: {}, precision: {}, best precision: {}' \
+                      .format(train_step, loss, precision, self.precision_retention.get_best_precision()))
 
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()

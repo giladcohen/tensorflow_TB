@@ -15,19 +15,19 @@ class PrecisionDecaySetter(LearningRateSetterBase):
             self.decay_refractory_steps = self.prm.train.train_control.EVAL_STEPS * \
                                           self.prm.train.train_control.PRECISION_RETENTION_SIZE
 
-        self.train_step_of_last_decay = 0
+        self.global_step_of_last_decay = 0
 
     def print_stats(self):
         super(PrecisionDecaySetter, self).print_stats()
         self.log.info(' DECAY_REFRACTORY_STEPS: {}'.format(self.decay_refractory_steps))
 
     def after_run(self, run_context, run_values):
-        train_step = run_values.results
-        if train_step - self.train_step_of_last_decay < self.decay_refractory_steps:
+        global_step = run_values.results
+        if global_step - self.global_step_of_last_decay < self.decay_refractory_steps:
             # if we didn't wait decay_refractory_steps number of steps from the last decay, do nothing
             return
         if self.precision_retention.is_precision_stuck():
-            self.log.info('train_step={}: Validtion precision did not improve after {} steps. decreasing the learning rate by a factor of {} to {}' \
-                          .format(train_step, train_step - self.train_step_of_last_decay, 0.9, 0.9 * self._lrn_rate))
+            self.log.info('global_step={}: Validtion precision did not improve after {} steps. Decreasing the learning rate by a factor of {} to {}. Last learning rate decay was before {} steps.' \
+                          .format(global_step, global_step - self.precision_retention.best_precision_step, 0.9, 0.9 * self._lrn_rate, global_step - self.global_step_of_last_decay))
             self._lrn_rate *= 0.9
-            self.train_step_of_last_decay = train_step
+            self.global_step_of_last_decay = global_step
