@@ -288,7 +288,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.EVAL_STEPS           = None  # integer: number of training steps from one evaluation to the next
         self.EVALS_IN_EPOCH       = None  # integer: number of evaluation steps within an epoch
         self.PRECISION_RETENTION_SIZE = None  # integer: the number of last precisions to remember
-        self.MIN_LEARNING_RATE    = None  # integer: minimal learning rate before choosing new labels in active training
+        self.MIN_LEARNING_RATE    = None  # float: minimal learning rate before choosing new labels in active training
         self.CHOICE_OF_NEW_LABELS = None  # string: method to chose new labels in active learning. e.g.: kmeans/random
 
         self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
@@ -366,6 +366,7 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_EPOCHS
         self.DECAY_REFRACTORY_STEPS        = None  # integer: number of training steps after decaying the learning
                                                    # rate in which no new decay can be utilized
+        self.LEARNING_RATE_RESET           = None  # float: reset value of learning rate
 
         self._freeze()
 
@@ -378,7 +379,7 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_EPOCHS'         , self.SCHEDULED_EPOCHS)
         self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_LEARNING_RATES' , self.SCHEDULED_LEARNING_RATES)
         self.set_to_config(do_save_none, section_name, config, 'DECAY_REFRACTORY_STEPS'   , self.DECAY_REFRACTORY_STEPS)
-
+        self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE_RESET'      , self.LEARNING_RATE_RESET)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
@@ -386,3 +387,5 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_EPOCHS'            , list)
         self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , list)
         self.parse_from_config(self, override_mode, section_name, parser, 'DECAY_REFRACTORY_STEPS'      , list)
+        self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_RESET'         , float)
+
