@@ -57,14 +57,15 @@ class ActiveTrainer(ClassificationTrainer):
             features_vec = self.collect_train_features()
 
             # prediction
-            KM = KMeansWrapper(name='KMeansWrapper', prm=self.prm, fixed_centers=features_vec, \
-                               n_clusters=lp + self.clusters, max_iter=30000)
+            KM = KMeansWrapper(name='KMeansWrapper', prm=self.prm, \
+                               fixed_centers=features_vec[self.dataset.train_dataset.pool], \
+                               n_clusters=lp + self.clusters)
             centers = KM.fit_predict_centers(features_vec)
             new_centers = centers[lp:(lp + self.clusters)]
             nbrs = NearestNeighbors(n_neighbors=1)
             nbrs.fit(features_vec)
             indices = nbrs.kneighbors(new_centers, return_distance=False)  # get indices of NNs of new centers
-            indices = indices.T[0].tolist()
+            indices = indices.T[0]
 
             # exclude existing labels in pool
             already_pooled_cnt = 0  # number of indices of samples that we added to pool already
@@ -74,7 +75,7 @@ class ActiveTrainer(ClassificationTrainer):
                     indices.remove(myItem)
                     self.log.info('Removing value {} from indices because it already exists in pool'.format(myItem))
             self.log.info('{} indices were already in pool. Randomized indices will be chosen instead of them'.format(already_pooled_cnt))
-            self.dataset.train_dataset.update_pool_with_indices(indices)
+            self.dataset.train_dataset.update_pool(indices=indices)
             self.dataset.train_dataset.update_pool(clusters=already_pooled_cnt)
         else:
             err_str = 'Unfamiliar value of choice_of_new_labels ({}). Fix assert_config'.format(self.choice_of_new_labels)
@@ -102,10 +103,10 @@ class ActiveTrainer(ClassificationTrainer):
                                                            self.model.is_training: False})
             features_vec[b:e] = np.reshape(net['pool_out'], (e - b, 640))
             total_samples += images.shape[0]
-            self.log.info('Storing completed: {}%'.format(int(100.0 * e / self.prm.dataset.train_dataset.size)))
+            self.log.info('Storing completed: {}%'.format(int(100.0 * e / self.dataset.train_dataset.size)))
         assert np.sum(features_vec == -1) == 0
-        assert total_samples == self.prm.dataset.train_dataset.size, \
-            'total_samples equals {} instead of {}'.format(total_samples, self.prm.dataset.train_dataset.size)
+        assert total_samples == self.dataset.train_dataset.size, \
+            'total_samples equals {} instead of {}'.format(total_samples, self.dataset.train_dataset.size)
         self.dataset.train_dataset.to_preprocess = True
         return features_vec
 
