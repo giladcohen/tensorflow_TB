@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import lib.logger.logger as logger
-from lib.datasets.dataset import DataSet
 import os
 from utils import misc
 

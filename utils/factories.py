@@ -3,6 +3,7 @@ from __future__ import division
 import lib.logger.logger as logger
 from lib.preprocessors.preprocessor import PreProcessor
 from lib.trainers.classification_trainer import ClassificationTrainer
+from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.precision_decay_setter import PrecisionDecaySetter
@@ -70,7 +71,7 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_trainer(self, model, dataset):
-        available_trainers = {'simple': ClassificationTrainer}
+        available_trainers = {'simple': ClassificationTrainer, 'active': ActiveTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))

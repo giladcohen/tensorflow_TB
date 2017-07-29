@@ -21,14 +21,14 @@ class FixedScheduleSetter(LearningRateSetterBase):
         epoch = (self.train_batch_size * global_step) // self.train_set_size
         for i in range(len(self.scheduled_epochs)):
             if epoch < self.scheduled_epochs[i]:
-                self._lrn_rate = self.all_learning_rates[i]
                 if not self._notify[i]:
-                    self.log.info('epoch={}. setting learning rate to {}'.format(epoch, self._lrn_rate))
+                    self.log.info('epoch={}. setting learning rate to {}'.format(epoch, self.all_learning_rates[i]))
+                    self.set_lrn_rate(self.all_learning_rates[i])
                     self._notify[i] = True
                 return
-        self._lrn_rate = self.all_learning_rates[i+1]
         if not self._notify[i+1]:
-            self.log.info('epoch={}. setting learning rate to {}'.format(epoch, self._lrn_rate))
+            self.log.info('epoch={}. setting learning rate to {}'.format(epoch, self.all_learning_rates[i+1]))
+            self.set_lrn_rate(self.all_learning_rates[i+1])
             self._notify[i+1] = True
 
     def print_stats(self):

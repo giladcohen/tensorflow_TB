@@ -31,3 +31,14 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
     def print_stats(self):
         self.log.info('Learning Rate Setter parameters:')
         self.log.info(' LEARNING_RATE_SETTER: {}'.format(self.learning_rate_setter))
+
+    def get_lrn_rate(self):
+        return self._lrn_rate
+
+    def set_lrn_rate(self, lrn_rate):
+        self.log.info('set_lrn_rate: changing the learning rate from {} to {}'.format(self._lrn_rate, lrn_rate))
+        self._lrn_rate = lrn_rate
+
+    def reset_learning_rate(self):
+        self.log.info('Reseting learning rate to initial value')
+        self.set_lrn_rate(self._init_lrn_rate)

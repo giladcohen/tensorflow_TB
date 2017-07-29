@@ -31,5 +31,5 @@ class PrecisionDecaySetter(LearningRateSetterBase):
         if self.precision_retention.is_precision_stuck():
             self.log.info('global_step={}: Validtion precision did not improve after {} steps. Decreasing the learning rate by a factor of {} to {}. Last learning rate decay was before {} steps.' \
                           .format(global_step, global_step - self.precision_retention.best_precision_step, 0.9, 0.9 * self._lrn_rate, global_step - self.global_step_of_last_decay))
-            self._lrn_rate *= 0.9
+            self.set_lrn_rate(0.9 * self._lrn_rate)
             self.global_step_of_last_decay = global_step

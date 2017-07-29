@@ -15,7 +15,7 @@ class ClassificationTrainer(ClassificationTrainerBase):
     def __init__(self, *args, **kwargs):
         super(ClassificationTrainer, self).__init__(*args, **kwargs)
         self.eval_batch_count     = int(ceil(self.dataset.validation_dataset.size / self.eval_batch_size))
-        self.last_eval_batch_size = self.dataset.validation_dataset.size % self.eval_batch_size
+        self.last_eval_batch_size =          self.dataset.validation_dataset.size % self.eval_batch_size
 
     def train_step(self):
         '''Implementing one training step'''
