@@ -23,8 +23,10 @@ class ClassificationTrainerBase(TrainBase):
 
         self.global_step    = 0
         self._activate_eval = True
-        self.Factories = utils.factories.Factories(self.prm) # to get hooks
         self.precision_retention = PrecisionRetention('PrecisionRetention', self.prm)  # for logging and setting lrn rate
+
+        self.Factories = utils.factories.Factories(self.prm) # to get hooks
+        self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.precision_retention)
 
     def train(self):
         super(ClassificationTrainerBase, self).train()
@@ -54,12 +56,10 @@ class ClassificationTrainerBase(TrainBase):
 
         # LearningRateSetter needs the actual pool size of the trainset to know what is the epoch in every step
         # I assume the pool size is static, otherwise the epoch count becomes meaningless
-        learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.precision_retention)
-        learning_rate_hook.print_stats()  # debug
 
         self.sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=self.checkpoint_dir,
-            hooks=[logging_hook, learning_rate_hook],
+            hooks=[logging_hook, self.learning_rate_hook],
             chief_only_hooks=[summary_hook],
             save_checkpoint_secs=self.checkpoint_secs,
             config=tf.ConfigProto(allow_soft_placement=True))
@@ -89,3 +89,4 @@ class ClassificationTrainerBase(TrainBase):
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
         self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
         self.precision_retention.print_stats()
+        self.learning_rate_hook.print_stats()
