@@ -9,6 +9,7 @@ class ActiveDataSet(PassiveDataSet):
             self.update_pool()
 
     def update_pool(self, clusters=None, indices=None):
+        """Indices must be None or list"""
         if indices is not None:
             return self.update_pool_with_indices(indices)
         if clusters is None:
@@ -18,9 +19,11 @@ class ActiveDataSet(PassiveDataSet):
             self.log.warning('Adding {} indices instead of {} to pool. pool is full'.format(len(indices), clusters))
         else:
             indices = np.random.choice(self.available_samples, clusters, replace=False)
+            indices = indices.tolist()
         self.update_pool_with_indices(indices)
 
     def update_pool_with_indices(self, indices):
+        """indices must be list type"""
         self.assert_unique_indices(indices)  # time consuming. There is no sense checking it for passive dataset.
         super(ActiveDataSet, self).update_pool_with_indices(indices)
 

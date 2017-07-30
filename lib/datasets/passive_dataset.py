@@ -24,10 +24,12 @@ class PassiveDataSet(DataSet):
 
     def initialize_pool(self):
         indices = np.random.choice(self.available_samples, self.cap, replace=False)
+        indices = indices.tolist()
         self.update_pool_with_indices(indices)
 
     def update_pool_with_indices(self, indices):
-        self.pool += indices.tolist()
+        """indices must be of type list"""
+        self.pool += indices
         self.pool = sorted(self.pool)
         self.available_samples = [i for j, i in enumerate(self.available_samples) if i not in self.pool]
         self.log.info('updating pool length to {}'.format(self.pool_size()))

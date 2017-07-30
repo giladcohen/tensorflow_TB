@@ -65,7 +65,7 @@ class ActiveTrainer(ClassificationTrainer):
             nbrs = NearestNeighbors(n_neighbors=1)
             nbrs.fit(features_vec)
             indices = nbrs.kneighbors(new_centers, return_distance=False)  # get indices of NNs of new centers
-            indices = indices.T[0]
+            indices = indices.T[0].tolist()
 
             # exclude existing labels in pool
             already_pooled_cnt = 0  # number of indices of samples that we added to pool already
