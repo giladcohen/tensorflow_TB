@@ -9,7 +9,6 @@ from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.precision_decay_setter import PrecisionDecaySetter
 from lib.models.resnet_model import ResNet
 from lib.datasets.dataset import DataSet
-from lib.datasets.passive_dataset import PassiveDataSet
 from lib.datasets.active_dataset import ActiveDataSet
 
 
@@ -27,9 +26,10 @@ class Factories(object):
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
 
     def get_train_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'passive_cifar10': PassiveDataSet, 'active_cifar10': ActiveDataSet}
+        available_datasets = {'cifar10': DataSet, 'active_cifar10': ActiveDataSet}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
+            dataset.initialize_pool()
             self.log.info('get_train_dataset: returning ' + str(dataset))
             return dataset
         else:
@@ -41,6 +41,7 @@ class Factories(object):
         available_datasets = {'cifar10': DataSet, 'passive_cifar10': DataSet, 'active_cifar10': DataSet}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
+            dataset.initialize_pool()
             self.log.info('get_validation_dataset: returning ' + str(dataset))
             return dataset
         else:

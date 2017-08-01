@@ -137,7 +137,8 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.TRAIN_LABELS_FILE = None                        # string: path to train labels file
         self.VALIDATION_IMAGES_DIR = None                    # string: path to validation images dir
         self.VALIDATION_LABELS_FILE = None                   # string: path to validation labels file
-        self.CLUSTERS = None                               # integer: number of new clusters when updating active pool
+        self.CLUSTERS = None                                 # integer: number of new clusters when updating active pool
+        self.INIT_SIZE = None                                # integer: the initial pool size when dataset constructs
         self.CAP = None                                      # integer: maximum number of labels in active training
 
         self._freeze()
@@ -156,6 +157,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_IMAGES_DIR' , self.VALIDATION_IMAGES_DIR)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_LABELS_FILE', self.VALIDATION_LABELS_FILE)
         self.set_to_config(do_save_none, section_name, config, 'CLUSTERS'              , self.CLUSTERS)
+        self.set_to_config(do_save_none, section_name, config, 'INIT_SIZE'             , self.INIT_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'CAP'                   , self.CAP)
 
     def set_from_file(self, override_mode, txt, parser):
@@ -169,6 +171,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_LABELS_FILE', str)
         self.parse_from_config(self, override_mode, section_name, parser, 'CLUSTERS'              , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'INIT_SIZE'             , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CAP'                   , int)
 
 class ParametersTrain(parser_utils.FrozenClass):

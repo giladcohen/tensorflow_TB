@@ -28,7 +28,7 @@ class DataSetBase(object):
             self.log.error(err_str)
             raise NameError(err_str)
 
-        self.pool = range(self.size)  # list of indices which can be chosen for a batch
+        self.pool = None  # list of indices which can be chosen for a batch
 
     def __str__(self):
         return self.name
@@ -43,3 +43,6 @@ class DataSetBase(object):
     def pool_size(self):
         return len(self.pool)
 
+    def initialize_pool(self):
+        """Must be called immidiately after __init__"""
+        self.pool = range(self.size)  # list of indices which can be chosen for a batch

@@ -22,8 +22,8 @@ class ActiveTrainer(ClassificationTrainer):
         self.min_learning_rate     = self.prm.train.train_control.MIN_LEARNING_RATE
         self.choice_of_new_labels  = self.prm.train.train_control.CHOICE_OF_NEW_LABELS
 
-        self.cap      = self.dataset.train_dataset.cap
-        self.clusters = self.dataset.train_dataset.clusters
+        self.clusters  = self.dataset.train_dataset.clusters
+        self.cap       = self.dataset.train_dataset.cap
 
         self.assert_config()
 
@@ -36,20 +36,13 @@ class ActiveTrainer(ClassificationTrainer):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        if lp < self.clusters:
-            # I need at least CLUSTERS labels before I start training
-            self.log.info('Not enough labeled sampled in pool ({}). Increasing to CLUSTERS={}'.format(lp, self.clusters))
-            self.dataset.train_dataset.update_pool(clusters=self.clusters - lp)
-            assert self.dataset.train_dataset.pool_size() == self.clusters
-            return
-
         if self.learning_rate_hook.get_lrn_rate() > self.min_learning_rate or lp == self.cap:
             # learning rate has not reached the minimal value, or we reached the CAP - train normally
             super(ActiveTrainer, self).train_step()
             return
 
         # here we have learning rate <= min_learning_rate AND lp < CAP - need to choose next CLUSTERS labels
-        self.log.info('Adding {} new labels to train dataset using method: {}'.format(self.clusters, self.choice_of_new_labels))
+        self.log.info('Adding {} new labels to train dataset using method: {}.'.format(self.clusters, self.choice_of_new_labels))
         if self.choice_of_new_labels == 'random':
             self.dataset.train_dataset.update_pool()
         elif self.choice_of_new_labels == 'kmeans':
