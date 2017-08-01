@@ -84,6 +84,7 @@ class ActiveTrainer(ClassificationTrainer):
 
         # reset learning rate to initial value
         self.learning_rate_hook.reset_learning_rate()
+        self.precision_retention.reset_memory()
 
     def collect_train_features(self):
         """Collecting all the features from the last layer (before the classifier) in the trainset"""

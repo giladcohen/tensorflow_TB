@@ -9,9 +9,11 @@ class PrecisionRetention(object):
 
         self.precision_retention_size = self.prm.train.train_control.PRECISION_RETENTION_SIZE
 
-        self.best_precision = 0.0
-        self.best_precision_step = 0
-        self.precision_memory = [0.0] * self.precision_retention_size
+        self.best_precision      = None  # need to be reset
+        self.best_precision_step = None  # need to be reset
+        self.precision_memory    = None  # need to be reset
+
+        self.reset_memory()
 
     def __str__(self):
         return self.name
@@ -40,5 +42,8 @@ class PrecisionRetention(object):
     def is_precision_stuck(self):
         return all(val < self.get_best_precision() for val in self.precision_memory)
 
-
-
+    def reset_memory(self):
+        self.log.info('Reseting ' + self.__str__() + 'memory')
+        self.best_precision = 0.0
+        self.best_precision_step = 0
+        self.precision_memory = [0.0] * self.precision_retention_size
