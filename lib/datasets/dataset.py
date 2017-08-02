@@ -51,7 +51,10 @@ class DataSet(DataSetBase):
             return self.get_indices(indices)
         if batch_size is None:
             batch_size = self.batch_size
-        indices = np.random.choice(self.pool, batch_size, replace=False)
+        if self.stochastic:
+            indices = np.random.choice(self.pool, batch_size, replace=False)
+        else:
+            indices = self.minibatch_server.get_mini_batch(batch_size)
         return self.get_indices(indices)
 
     def get_indices(self, indices):

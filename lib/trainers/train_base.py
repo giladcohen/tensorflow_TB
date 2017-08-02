@@ -100,7 +100,7 @@ class TrainBase(object):
 
     def _get_dummy_feed(self):
         """Getting dummy feed to bypass tensorflow (possible bug?) complaining about no placeholder value"""
-        images, labels = self.dataset.get_mini_batch_train(batch_size=1)
+        images, labels = self.dataset.get_mini_batch_train(indices=[0])
         feed_dict = {self.model.images     : images,
                      self.model.labels     : labels,
                      self.model.is_training: False}
