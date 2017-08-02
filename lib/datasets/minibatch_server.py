@@ -36,8 +36,7 @@ class MiniBatchServer(object):
             self._current_index = 0
             end = batch_size
         elif end >= self._n_elements:  # current call reaches the end of the epoch
-            self.log.info('Server reached end of epoch {}.'.format(self._n_epoch))
-            self.log.info('DEBUG: ' + self.__str__())
+            self.log.debug('Server reached end of epoch {}'.format(self._n_epoch))
             self._current_index = self._n_elements - batch_size
             end = self._n_elements
             self._is_end_of_epoch = True

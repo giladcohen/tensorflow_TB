@@ -56,7 +56,8 @@ class ActiveDataSet(DataSet):
         self.pool += indices
         self.pool = sorted(self.pool)
         self.available_samples = [i for j, i in enumerate(self.available_samples) if i not in self.pool]
-        self.log.info('updating pool length to {}'.format(self.pool_size()))
+        self.minibatch_server.set_pool(self.pool)
+        self.log.info('updated pool length to {}'.format(self.pool_size()))
         if self.pool_size() > self.cap:
             err_str = 'update_pool_with_indices: pool size ({}) surpassed cap ({})'.format(self.pool_size(), self.cap)
             self.log.error(err_str)
