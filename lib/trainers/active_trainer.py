@@ -36,8 +36,8 @@ class ActiveTrainer(ClassificationTrainer):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        if self.learning_rate_hook.get_lrn_rate() > self.min_learning_rate or lp == self.cap:
-            # learning rate has not reached the minimal value, or we reached the CAP - train normally
+        if self.learning_rate_hook.get_lrn_rate() >= self.min_learning_rate or lp == self.cap:
+            # learning rate has not reached below the minimal value, or we reached the CAP - train normally
             super(ActiveTrainer, self).train_step()
             return
 

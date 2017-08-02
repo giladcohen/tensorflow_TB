@@ -24,7 +24,6 @@ class ActiveDataSet(DataSet):
         self.pool = []
         self.available_samples = range(self.size)
         self.update_pool(clusters=self.init_size)
-        self.minibatch_server.set_pool(self.pool)
 
     def update_pool(self, clusters=None, indices=None):
         """Indices must be None or list"""

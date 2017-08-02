@@ -9,7 +9,7 @@ class MiniBatchServer(object):
 
         self.pool = None  # needs to be set manually
         self._n_elements = None  # needs to be calculated when a new pool is set.
-        self._permuted_indices = None  # needs to be shuffled at new epochs
+        self._permuted_indices = None  # needs to be shuffled at new epochs and when setting new pool
         self._n_step = 0
         self._n_epoch = 0
         self._is_end_of_epoch = True
@@ -24,6 +24,7 @@ class MiniBatchServer(object):
         self.log.info('Setting new pool to server. pool size {}'.format(len(pool)))
         self.pool = pool
         self._n_elements = len(self.pool)
+        self._permuted_indices = np.random.permutation(self.pool)
 
     def get_mini_batch(self, batch_size):
         self._n_step += 1
