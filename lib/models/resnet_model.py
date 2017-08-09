@@ -4,7 +4,12 @@ import six
 
 
 class ResNet(ClassifierModel):
-    '''Implementing an image classifier using a ResNet architecture'''
+    """Implementing an image classifier using a ResNet architecture
+    Related papers:
+    https://arxiv.org/pdf/1603.05027v2.pdf
+    https://arxiv.org/pdf/1512.03385v1.pdf
+    https://arxiv.org/pdf/1605.07146v1.pdf
+    """
 
     def __init__(self, *args, **kwargs):
         super(ResNet, self).__init__(*args, **kwargs)

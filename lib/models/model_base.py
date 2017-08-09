@@ -1,11 +1,3 @@
-
-"""ResNet model.
-
-Related papers:
-https://arxiv.org/pdf/1603.05027v2.pdf
-https://arxiv.org/pdf/1512.03385v1.pdf
-https://arxiv.org/pdf/1605.07146v1.pdf
-"""
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 import lib.logger.logger as logger
@@ -69,7 +61,7 @@ class ModelBase(object):
             self.summaries = tf.summary.merge_all()
 
     def _init_params(self):
-        """Initialize params that may be changed from two traiuning sessions"""
+        """Initialize params that may be changed from two training sessions"""
         self.global_step        = tf.contrib.framework.get_or_create_global_step()
         self.lrn_rate           = tf.contrib.framework.model_variable(
             name='learning_rate', dtype=tf.float32, shape=[],
@@ -155,7 +147,6 @@ class ModelBase(object):
     def _get_optimizer(self):
         """Returns an optimizer.
         Args:
-        :param optimizer_name: string (not tensor) - name of optimizer
         :return optimizer (tensor)
         """
         if self.optimizer_name == 'ADAM':

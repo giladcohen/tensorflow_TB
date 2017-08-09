@@ -48,4 +48,3 @@ class PreProcessorBase(object):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-
