@@ -16,6 +16,7 @@ class ResNet(ClassifierModel):
     def __init__(self, *args, **kwargs):
         super(ResNet, self).__init__(*args, **kwargs)
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
+        self.num_fc_neurons = 640
 
     def print_stats(self):
         super(ResNet, self).print_stats()

@@ -24,6 +24,7 @@ class ActiveTrainer(ClassificationTrainer):
 
         self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
+        self.num_fc_neurons = self.model.num_fc_neurons
 
         self.assert_config()
 
@@ -81,7 +82,7 @@ class ActiveTrainer(ClassificationTrainer):
 
     def collect_train_features(self):
         """Collecting all the features from the last layer (before the classifier) in the trainset"""
-        features_vec = -1.0 * np.ones((self.dataset.train_dataset.size, 640), dtype=np.float32)
+        features_vec = -1.0 * np.ones((self.dataset.train_dataset.size, self.num_fc_neurons), dtype=np.float32)
         total_samples = 0  # for debug
         self.log.info('start storing feature maps for the entire train set.')
         self.dataset.train_dataset.to_preprocess = False  # temporal setting
@@ -95,7 +96,7 @@ class ActiveTrainer(ClassificationTrainer):
             net = self.sess.run(self.model.net, feed_dict={self.model.images     : images,
                                                            self.model.labels     : labels,
                                                            self.model.is_training: False})
-            features_vec[b:e] = np.reshape(net['pool_out'], (e - b, 640))
+            features_vec[b:e] = np.reshape(net['pool_out'], (e - b, self.num_fc_neurons))
             total_samples += images.shape[0]
             self.log.info('Storing completed: {}%'.format(int(100.0 * e / self.dataset.train_dataset.size)))
         assert np.sum(features_vec == -1) == 0
