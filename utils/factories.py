@@ -7,7 +7,8 @@ from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.precision_decay_setter import PrecisionDecaySetter
-from lib.models.resnet_model import ResNet
+from lib.models.wide_resnet_28_10 import WideResNet_28_10
+from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
 from lib.datasets.dataset import DataSet
 from lib.datasets.active_dataset import ActiveDataSet
 
@@ -50,7 +51,7 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_model(self):
-        available_networks = {'Wide-Resnet-28-10': ResNet}
+        available_networks = {'Wide-Resnet-28-10': WideResNet_28_10, 'Wide-Resnet-28-10_plus_fc': WideResNet_28_10_plus_fc}
         if self.architecture in available_networks:
             model = available_networks[self.architecture](self.architecture, self.prm)
             self.log.info('get_model: returning ' + str(model))

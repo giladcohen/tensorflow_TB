@@ -88,6 +88,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.IMAGE_HEIGHT = None                       # integer: Image height at network input
         self.IMAGE_WIDTH = None                        # integer: Image width at network input
         self.NUM_RESIDUAL_UNITS = None                 # integer: number of residual modules in a ResNet model
+        self.NUM_FC_NEURONS = None                     # integer: number of fully connected neurons before classifier
 
         self.pre_processing = ParametersNetworkPreProcessing()
         self.system         = ParametersNetworkSystem()
@@ -106,6 +107,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'IMAGE_HEIGHT'       , self.IMAGE_HEIGHT)
         self.set_to_config(do_save_none, section_name, config, 'IMAGE_WIDTH'        , self.IMAGE_WIDTH)
         self.set_to_config(do_save_none, section_name, config, 'NUM_RESIDUAL_UNITS' , self.NUM_RESIDUAL_UNITS)
+        self.set_to_config(do_save_none, section_name, config, 'NUM_FC_NEURONS' ,     self.NUM_FC_NEURONS)
 
         self.pre_processing.save_to_ini(do_save_none, section_name, config)
         self.system.save_to_ini(do_save_none, section_name, config)
@@ -120,6 +122,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_HEIGHT'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_WIDTH'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'NUM_RESIDUAL_UNITS' , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_FC_NEURONS'     , int)
 
         self.pre_processing.set_from_file(override_mode, section_name, parser)
         self.system.set_from_file(override_mode, section_name, parser)
