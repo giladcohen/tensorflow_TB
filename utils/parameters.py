@@ -89,7 +89,8 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.IMAGE_WIDTH = None                        # integer: Image width at network input
         self.NUM_RESIDUAL_UNITS = None                 # integer: number of residual modules in a ResNet model
         self.NUM_FC_NEURONS = None                     # integer: number of fully connected neurons before classifier
-        self.NORMALIZE_EMBEDDING = None                # boolean: whether or not to randomize the embedded space
+        self.BATCH_NORMALIZE_EMBEDDING = None          # boolean: whether or not to apply batch normalization before the embedding activation
+        self.NORMALIZE_EMBEDDING = None                # boolean: whether or not to normalize the embedded space
 
         self.pre_processing = ParametersNetworkPreProcessing()
         self.system         = ParametersNetworkSystem()
@@ -102,14 +103,15 @@ class ParametersNetwork(parser_utils.FrozenClass):
 
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
-        self.set_to_config(do_save_none, section_name, config, 'ARCHITECTURE'        , self.ARCHITECTURE)
-        self.set_to_config(do_save_none, section_name, config, 'DEVICE'              , self.DEVICE)
-        self.set_to_config(do_save_none, section_name, config, 'NUM_CLASSES'         , self.NUM_CLASSES)
-        self.set_to_config(do_save_none, section_name, config, 'IMAGE_HEIGHT'        , self.IMAGE_HEIGHT)
-        self.set_to_config(do_save_none, section_name, config, 'IMAGE_WIDTH'         , self.IMAGE_WIDTH)
-        self.set_to_config(do_save_none, section_name, config, 'NUM_RESIDUAL_UNITS'  , self.NUM_RESIDUAL_UNITS)
-        self.set_to_config(do_save_none, section_name, config, 'NUM_FC_NEURONS'      , self.NUM_FC_NEURONS)
-        self.set_to_config(do_save_none, section_name, config, 'NORMALIZE_EMBEDDING' , self.NORMALIZE_EMBEDDING)
+        self.set_to_config(do_save_none, section_name, config, 'ARCHITECTURE'              , self.ARCHITECTURE)
+        self.set_to_config(do_save_none, section_name, config, 'DEVICE'                    , self.DEVICE)
+        self.set_to_config(do_save_none, section_name, config, 'NUM_CLASSES'               , self.NUM_CLASSES)
+        self.set_to_config(do_save_none, section_name, config, 'IMAGE_HEIGHT'              , self.IMAGE_HEIGHT)
+        self.set_to_config(do_save_none, section_name, config, 'IMAGE_WIDTH'               , self.IMAGE_WIDTH)
+        self.set_to_config(do_save_none, section_name, config, 'NUM_RESIDUAL_UNITS'        , self.NUM_RESIDUAL_UNITS)
+        self.set_to_config(do_save_none, section_name, config, 'NUM_FC_NEURONS'            , self.NUM_FC_NEURONS)
+        self.set_to_config(do_save_none, section_name, config, 'BATCH_NORMALIZE_EMBEDDING' , self.BATCH_NORMALIZE_EMBEDDING)
+        self.set_to_config(do_save_none, section_name, config, 'NORMALIZE_EMBEDDING'       , self.NORMALIZE_EMBEDDING)
 
         self.pre_processing.save_to_ini(do_save_none, section_name, config)
         self.system.save_to_ini(do_save_none, section_name, config)
@@ -118,14 +120,15 @@ class ParametersNetwork(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
 
-        self.parse_from_config(self, override_mode, section_name, parser, 'ARCHITECTURE'        , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'DEVICE'              , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_CLASSES'         , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_HEIGHT'        , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_WIDTH'         , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_RESIDUAL_UNITS'  , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_FC_NEURONS'      , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'NORMALIZE_EMBEDDING' , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'ARCHITECTURE'              , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DEVICE'                    , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_CLASSES'               , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_HEIGHT'              , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_WIDTH'               , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_RESIDUAL_UNITS'        , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_FC_NEURONS'            , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'BATCH_NORMALIZE_EMBEDDING' , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'NORMALIZE_EMBEDDING'       , bool)
 
         self.pre_processing.set_from_file(override_mode, section_name, parser)
         self.system.set_from_file(override_mode, section_name, parser)
