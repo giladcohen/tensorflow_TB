@@ -40,7 +40,7 @@ def fully_connected(x, out_dim, name='fully_connected'):
 
 def variable_summaries(name, var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
-    with tf.name_scope(name + ' summaries'):
+    with tf.name_scope(name + '_summaries'):
         mean = tf.reduce_mean(var)
         tf.summary.scalar('mean', mean)
         with tf.name_scope('stddev'):

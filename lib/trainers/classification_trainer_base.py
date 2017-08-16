@@ -17,13 +17,14 @@ class ClassificationTrainerBase(TrainBase):
 
         self.eval_steps = self.prm.train.train_control.EVAL_STEPS
         self.evals_in_epoch = self.prm.train.train_control.EVALS_IN_EPOCH
+        self.skip_first_evaluation = self.prm.train.train_control.SKIP_FIRST_EVALUATION
         if self.eval_steps is None:
             self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
             self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
 
         self.global_step    = 0
-        if self.prm.network.DEVICE == '/cpu:0':
-            self.log.info('Running with CPU - skipping evaluation for global_step=0')
+        if self.skip_first_evaluation:
+            self.log.info('skipping evaluation for global_step=0')
             self._activate_eval = False
         else:
             self._activate_eval = True
@@ -92,5 +93,6 @@ class ClassificationTrainerBase(TrainBase):
         super(ClassificationTrainerBase, self).print_stats()
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
         self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
+        self.log.info(' SKIP_FIRST_EVALUATION: {}'.format(self.skip_first_evaluation))
         self.precision_retention.print_stats()
         self.learning_rate_hook.print_stats()
