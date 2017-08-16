@@ -39,7 +39,7 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_validation_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'passive_cifar10': DataSet, 'active_cifar10': DataSet}
+        available_datasets = {'cifar10': DataSet, 'active_cifar10': DataSet}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
             dataset.initialize_pool()

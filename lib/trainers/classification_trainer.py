@@ -6,6 +6,7 @@ import tensorflow as tf
 from lib.trainers.trainer_base import TrainerBase
 from math import ceil
 from lib.base.collections import TRAIN_SUMMARIES
+import numpy as np
 
 
 class ClassificationTrainer(TrainerBase):
@@ -36,14 +37,14 @@ class ClassificationTrainer(TrainerBase):
             else:
                 e = i * self.eval_batch_size + self.last_eval_batch_size
             images, labels = self.dataset.get_mini_batch_validate(indices=range(b, e))
-            (summaries, loss, score, train_step, predictions) = self.sess.run(
+            (summaries, loss, train_step, predictions) = self.sess.run(
                 [self.model.summaries, self.model.cost,
-                 self.model.score, self.model.global_step, self.model.predictions],
+                 self.model.global_step, self.model.predictions],
                 feed_dict={self.model.images     : images,
                            self.model.labels     : labels,
                            self.model.is_training: False})
 
-            total_score   += score
+            total_score   += np.sum(labels == predictions)
             total_samples += images.shape[0]
         if total_samples != self.dataset.validation_dataset.size:
             self.log.error('total_samples equals {} instead of {}'.format(total_samples, self.dataset.validation_set.size))
