@@ -21,4 +21,9 @@ class WideResNet_28_10_plus_fc(ResNet):
         x = relu(x, self.relu_leakiness)
         if self.normalize_embedding:
             x = slim.unit_norm(x, dim=1, scope='normalize_vec')
+            variable_summaries(x, 'embedding')
+            tf.summary.scalar('x[0]', x[0])
+            tf.summary.scalar('x[1]', x[1])
+            tf.summary.scalar('x[2]', x[2])
+            tf.summary.scalar('x[3]', x[3])
         return x
