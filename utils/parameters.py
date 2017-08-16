@@ -299,7 +299,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.LOGGER_STEPS          = None  # integer: number of training steps to output log string to shell
         self.EVAL_STEPS            = None  # integer: number of training steps from one evaluation to the next
         self.EVALS_IN_EPOCH        = None  # integer: number of evaluation steps within an epoch
-        self.PRECISION_RETENTION_SIZE = None  # integer: the number of last precisions to remember
+        self.RETENTION_SIZE        = None  # integer: the number of last scores to remember
         self.MIN_LEARNING_RATE     = None  # float: minimal learning rate before choosing new labels in active training
         self.CHOICE_OF_NEW_LABELS  = None  # string: method to chose new labels in active learning. e.g.: kmeans/random
         self.SKIP_FIRST_EVALUATION = None  # boolean: whether or not to skip the first evaluation in the training
@@ -325,7 +325,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'LOGGER_STEPS'         , self.LOGGER_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_STEPS'           , self.EVAL_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'       , self.EVALS_IN_EPOCH)
-        self.set_to_config(do_save_none, section_name, config, 'PRECISION_RETENTION_SIZE', self.PRECISION_RETENTION_SIZE)
+        self.set_to_config(do_save_none, section_name, config, 'RETENTION_SIZE'       , self.RETENTION_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'MIN_LEARNING_RATE'    , self.MIN_LEARNING_RATE)
         self.set_to_config(do_save_none, section_name, config, 'CHOICE_OF_NEW_LABELS' , self.CHOICE_OF_NEW_LABELS)
         self.set_to_config(do_save_none, section_name, config, 'SKIP_FIRST_EVALUATION', self.SKIP_FIRST_EVALUATION)
@@ -346,7 +346,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'LOGGER_STEPS'         , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_STEPS'           , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'       , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'PRECISION_RETENTION_SIZE', int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'RETENTION_SIZE'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'MIN_LEARNING_RATE'    , float)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHOICE_OF_NEW_LABELS' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'SKIP_FIRST_EVALUATION', bool)

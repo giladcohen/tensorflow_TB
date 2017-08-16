@@ -1,17 +1,16 @@
 from abc import ABCMeta, abstractmethod
 from lib.datasets.minibatch_server import MiniBatchServer
-import lib.logger.logger as logger
+from lib.base.agent_base import AgentBase
 
 
-class DataSetBase(object):
+class DataSetBase(AgentBase):
     """Base class that holds a specific dataset: train or validation - not both"""
     __metaclass__ = ABCMeta
 
     def __init__(self, name, prm, preprocessor):
-        self.name = name
+        super(DataSetBase, self).__init__(name)
         self.prm = prm
         self.preprocessor = preprocessor
-        self.log = logger.get_logger(name)
 
         if 'train' in name:
             self.size          = self.prm.dataset.TRAIN_SET_SIZE
@@ -34,9 +33,6 @@ class DataSetBase(object):
 
         self.pool = None  # list of indices which can be chosen for a batch
         self.minibatch_server = MiniBatchServer(self.name + '_MiniBatchServer')  # server used for non stochastic mini batches
-
-    def __str__(self):
-        return self.name
 
     def print_stats(self):
         self.log.info(self.__str__() +' parameters:')

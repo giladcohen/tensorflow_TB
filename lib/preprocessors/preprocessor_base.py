@@ -1,13 +1,12 @@
 from abc import ABCMeta, abstractmethod
-import lib.logger.logger as logger
+from lib.base.agent_base import AgentBase
 
-class PreProcessorBase(object):
+class PreProcessorBase(AgentBase):
     __metaclass__ = ABCMeta
 
     def __init__(self, name, prm):
-        self.name = name
+        super(PreProcessorBase, self).__init__(name)
         self.prm = prm
-        self.log = logger.get_logger(name)
         self.preprocessor       = self.prm.network.pre_processing.PREPROCESSOR
         self.data_augmentation  = self.prm.train.data_augmentation.DATA_AUGMENTATION
         self.label_augmentation = self.prm.train.data_augmentation.LABEL_AUGMENTATION
@@ -26,9 +25,6 @@ class PreProcessorBase(object):
         self.log.info(' FLIP_IMAGE: {}'.format(self.flip_image))
         self.log.info(' DRIFT_X: {}'.format(self.drift_x))
         self.log.info(' DRIFT_Y: {}'.format(self.drift_y))
-
-    def __str__(self):
-        return self.name
 
     def assert_config(self):
         if self.label_augmentation and not self.data_augmentation:

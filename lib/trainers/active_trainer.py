@@ -12,7 +12,7 @@ from math import ceil
 class ActiveTrainer(ClassificationTrainer):
     """Implementing active trainer
     Increasing the labeled pool gradually by using K-Means and K-NN
-    Should run with PrecisionDecaySetter
+    Should run with DecayByScoreSetter
     """
 
     def __init__(self, *args, **kwargs):
@@ -78,7 +78,7 @@ class ActiveTrainer(ClassificationTrainer):
 
         # reset learning rate to initial value
         self.learning_rate_hook.reset_learning_rate()
-        self.precision_retention.reset_memory()
+        self.retention.reset_memory()
 
     def collect_train_features(self):
         """Collecting all the features from the last layer (before the classifier) in the trainset"""

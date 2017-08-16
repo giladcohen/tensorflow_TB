@@ -3,12 +3,12 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from lib.trainers.classification_trainer_base import ClassificationTrainerBase
+from lib.trainers.trainer_base import TrainerBase
 from math import ceil
-import numpy as np
+from lib.base.collections import TRAIN_SUMMARIES
 
 
-class ClassificationTrainer(ClassificationTrainerBase):
+class ClassificationTrainer(TrainerBase):
     """Implementing classification trainer
     Using the entire labeled trainset for training"""
 
@@ -28,7 +28,7 @@ class ClassificationTrainer(ClassificationTrainerBase):
     def eval_step(self):
         '''Implementing one evaluation step.'''
         self.log.info('start running eval within training. global_step={}'.format(self.global_step))
-        total_prediction, correct_prediction = 0, 0
+        total_samples, total_score = 0, 0
         for i in range(self.eval_batch_count):
             b = i * self.eval_batch_size
             if i < (self.eval_batch_count - 1) or (self.last_eval_batch_size == 0):
@@ -36,35 +36,32 @@ class ClassificationTrainer(ClassificationTrainerBase):
             else:
                 e = i * self.eval_batch_size + self.last_eval_batch_size
             images, labels = self.dataset.get_mini_batch_validate(indices=range(b, e))
-            (summaries, loss, predictions, train_step) = self.sess.run(
+            (summaries, loss, score, train_step, predictions) = self.sess.run(
                 [self.model.summaries, self.model.cost,
-                 self.model.predictions, self.model.global_step],
+                 self.model.score, self.model.global_step, self.model.predictions],
                 feed_dict={self.model.images     : images,
                            self.model.labels     : labels,
                            self.model.is_training: False})
 
-            predictions = np.argmax(predictions, axis=1)
-            correct_prediction += np.sum(labels == predictions)
-            total_prediction += predictions.shape[0]
-        if total_prediction != self.dataset.validation_dataset.size:
-            self.log.error('total_prediction equals {} instead of {}'.format(total_prediction,
-                                                                             self.dataset.validation_set.size))
-        precision = correct_prediction / total_prediction
-        self.precision_retention.add_precision(precision, train_step)
+            total_score   += score
+            total_samples += images.shape[0]
+        if total_samples != self.dataset.validation_dataset.size:
+            self.log.error('total_samples equals {} instead of {}'.format(total_samples, self.dataset.validation_set.size))
+        score = total_score / total_samples
+        self.retention.add_score(score, train_step)
 
-        precision_summ = tf.Summary()
-        precision_summ.value.add(tag='Precision', simple_value=precision)
-        best_precision_summ = tf.Summary()
-        best_precision_summ.value.add(tag='Best Precision', simple_value=self.precision_retention.get_best_precision())
-        self.summary_writer_eval.add_summary(precision_summ, train_step)
-        self.summary_writer_eval.add_summary(best_precision_summ, train_step)
+        self.tb_logger_eval.log_scalar('score', score, train_step)
+        self.tb_logger_eval.log_scalar('best score', self.retention.get_best_score(), train_step)
         self.summary_writer_eval.add_summary(summaries, train_step)
         self.summary_writer_eval.flush()
-
-        self.log.info('EVALUATION (step={}): loss: {}, precision: {}, best precision: {}' \
-                      .format(train_step, loss, precision, self.precision_retention.get_best_precision()))
+        self.log.info('EVALUATION (step={}): loss: {}, score: {}, best score: {}' \
+                      .format(train_step, loss, score, self.retention.get_best_score()))
 
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()
         self.log.info(' EVAL_BATCH_COUNT: {}'.format(self.eval_batch_count))
         self.log.info(' LAST_EVAL_BATCH_SIZE: {}'.format(self.last_eval_batch_size))
+
+    def get_train_summaries(self):
+        super(ClassificationTrainer, self).get_train_summaries()
+        tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.image('input_images', self.model.images))
