@@ -22,9 +22,13 @@ class ClassificationTrainerBase(TrainBase):
             self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
 
         self.global_step    = 0
-        self._activate_eval = True
-        self.precision_retention = PrecisionRetention('PrecisionRetention', self.prm)  # for logging and setting lrn rate
+        if self.prm.network.DEVICE == '/cpu:0':
+            self.log.info('Running with CPU - skipping evaluation for global_step=0')
+            self._activate_eval = False
+        else:
+            self._activate_eval = True
 
+        self.precision_retention = PrecisionRetention('PrecisionRetention', self.prm)  # for logging and setting lrn rate
         self.Factories = utils.factories.Factories(self.prm) # to get hooks
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.precision_retention)
 
