@@ -11,10 +11,31 @@ from utils.parameters import Parameters
 from utils.factories import Factories
 from lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
+from utils.misc import query_yes_no
 
 logging = logging_config()
+
 logging.disable(logging.DEBUG)
 log = logger.get_logger('main')
+
+def get_params(train_config):
+    """get params and save them to root dir"""
+    prm = Parameters()
+    prm.override(train_config)
+    parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'parameters.ini')
+
+    ret = True
+    if os.path.isfile(parameter_file):
+        log.warning('Parameter file {} already exists'.format(parameter_file))
+        ret = query_yes_no('Overwrite parameter file?')
+
+    if ret:
+        dir = os.path.dirname(parameter_file)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        prm.save(parameter_file)
+
+    return prm
 
 def train(prm):
     factories = Factories(prm)
@@ -46,9 +67,8 @@ if __name__ == "__main__":
         log.error('Can not find file: {}'.format(train_config))
         exit(-1)
 
-    prm = Parameters()
-    prm.override(train_config)
-    dev = prm.network.DEVICE
+    prm = get_params(train_config)
 
+    dev = prm.network.DEVICE
     with tf.device(dev):
         train(prm)

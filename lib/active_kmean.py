@@ -1,12 +1,11 @@
 '''This function builds the input pool for the active learning algorithm'''
+from __future__ import division
 
-import tensorflow as tf
 from sklearn.cluster import KMeans, k_means_
 from sklearn.cluster.k_means_ import *
-# from sklearn.datasets import make_blobs #for testing
+import lib.logger.logger as logger
 import numpy as np
 import math
-# import matplotlib.pyplot as plt #for debug
 
 def center_updater(init, fixed_centers, n_fixed):
     init[0:n_fixed] = fixed_centers
@@ -14,28 +13,40 @@ def center_updater(init, fixed_centers, n_fixed):
 
 '''Testing new class'''
 class KMeansWrapper(KMeans):
-    def __init__(self, fixed_centers, n_clusters=8, init='k-means++', n_init=1,
-                 max_iter=300, tol=1e-4, precompute_distances='auto',
-                 verbose=0, random_state=None, copy_x=True,
-                 n_jobs=1, algorithm='auto'):
-        super(KMeansWrapper, self).__init__(n_clusters=n_clusters, init=init, n_init=n_init,
-                 max_iter=max_iter, tol=tol, precompute_distances=precompute_distances,
-                 verbose=verbose, random_state=random_state, copy_x=copy_x,
-                 n_jobs=n_jobs, algorithm=algorithm)
+    def __init__(self, name, prm, fixed_centers, *args, **kwargs):
+        super(KMeansWrapper, self).__init__(*args, **kwargs)
+        self.name = name
+        self.prm = prm
+        self.log = logger.get_logger(name)
+
         self.fixed_centers = fixed_centers
         self.n_fixed = fixed_centers.shape[0]
-        assert self.n_fixed < self.n_clusters
+        self.init = 'random'
+        self.n_init = 1
+        self.verbose = True
+        self.assert_config()
+
+    def __str__(self):
+        return self.name
+
+    def assert_config(self):
+        if self.n_fixed >= self.n_clusters:
+            err_str = 'number of fixed centers ({}) must be smaller than n_clusters ({})'.format(self.n_fixed, self.n_clusters)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
     def fit(self, X, y=None):
+        # FIXME(gilad): sub-optimal. consider using _kmeans_single_elkan.
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
-        tol_rev = k_means_._tolerance(X, self.tol)
+        tol = k_means_._tolerance(X, self.tol)
         itr = 0
-        init = k_means_._init_centroids(X, self.n_clusters, 'random')
+        init = k_means_._init_centroids(X, self.n_clusters, 'random', random_state)
         self.cluster_centers_ = center_updater(init, self.fixed_centers, self.n_fixed)
         self.inertia_      = np.infty
         self.inertia_prev_ = np.infty
         inertia_del        = np.infty
-        while (itr < self.max_iter and inertia_del > tol_rev):
+        while itr < self.max_iter and inertia_del > tol:
             self.inertia_prev_ = self.inertia_
             self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
                 k_means(
@@ -46,30 +57,16 @@ class KMeansWrapper(KMeans):
                     n_jobs=self.n_jobs, algorithm=self.algorithm,
                     return_n_iter=True)
             self.cluster_centers_ = center_updater(self.cluster_centers_, self.fixed_centers, self.n_fixed)
-            if (itr > 0):
+            if itr > 0:
                 inertia_del = math.fabs((self.inertia_ - self.inertia_prev_) / self.inertia_prev_)
-            if (self.verbose):
-                print('calculating for itr=%0d: inertia_del = %f, tol_rev = %f' % (itr, inertia_del, tol_rev))
+            if self.verbose:
+                self.log.info('calculating for itr={}: inertia_del={}, tol={}'.format(itr, inertia_del, tol))
             itr += 1
-        if (itr < self.max_iter):
-            print('convergence achieved for iteration %0d. inertia = %f. inertia_del = %f' % (itr, self.inertia_, inertia_del))
+        if itr < self.max_iter:
+            self.log.info('convergence achieved for iteration {}. inertia={}. inertia_del={}'.format(itr, self.inertia_, inertia_del))
         else:
-            print('convergence not achieved. itr = %0d. inertia = %f. inertia_del = %f' %(itr, self.inertia_, inertia_del))
+            self.log.info('convergence not achieved. itr={}. inertia={}. inertia_del={}'.format(itr, self.inertia_, inertia_del))
         return self
+
     def fit_predict_centers(self, X):
         return self.fit(X).cluster_centers_
-
-
-# testing
-# n_samples = 150000
-# random_state = 170
-# X, y = make_blobs(n_samples=n_samples, random_state=random_state, centers=np.array([[-6.0,-6.0], [-6.0, 6.0], [6.0 , -6.0], [6.0, 6.0]]))
-# plt.subplot(221)
-# plt.scatter(X[:, 0], X[:, 1], c=y)
-# #fixed_centers = np.array([[0.0, -6.0], [0.0, 6.0]])
-# fixed_centers = np.array([[1e6, 0.0], [-1e6, 0.0]])
-# KM = KMeansWrapper(fixed_centers=fixed_centers, n_clusters=4, random_state=random_state, verbose=1)
-# centers = KM.fit_predict_centers(X)
-# y_pred = KM.predict(X)
-# plt.subplot(222)
-# plt.scatter(X[:, 0], X[:, 1], c=y_pred)

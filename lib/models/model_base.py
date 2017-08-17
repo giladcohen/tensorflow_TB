@@ -1,17 +1,9 @@
-
-"""ResNet model.
-
-Related papers:
-https://arxiv.org/pdf/1603.05027v2.pdf
-https://arxiv.org/pdf/1512.03385v1.pdf
-https://arxiv.org/pdf/1605.07146v1.pdf
-"""
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
-import lib.logger.logger as logger
+from lib.base.agent_base import AgentBase
 
 
-class ModelBase(object):
+class ModelBase(AgentBase):
     __metaclass__ = ABCMeta
     """base model class for NNs"""
 
@@ -21,9 +13,8 @@ class ModelBase(object):
             name: name of model
             prm: parameters
         """
-        self.name = name
+        super(ModelBase, self).__init__(name)
         self.prm = prm
-        self.log = logger.get_logger(name)
 
         self.architecture   = self.prm.network.ARCHITECTURE
         self.device         = self.prm.network.DEVICE
@@ -32,13 +23,12 @@ class ModelBase(object):
         self.cost = None           # total objective to decrease - input to train_op
         self.wd_cost = None        # weight decay cost
         self.logits = None         # output of network - used to calculate cost
+        self.predictions = None    # predictions of the network
+        self.score = None          # total score of the network
         self.summaries = None      # summaries collected from the entire graph
         self.net = {}              # optional hash map for sampling signals along the network
         self.assign_ops = {}       # optional assign operations
         self._extra_train_ops = [] # optional training operations to apply
-
-    def __str__(self):
-        return self.name
 
     def print_stats(self):
         """print model parameters"""
@@ -69,7 +59,7 @@ class ModelBase(object):
             self.summaries = tf.summary.merge_all()
 
     def _init_params(self):
-        """Initialize params that may be changed from two traiuning sessions"""
+        """Initialize params that may be changed from two training sessions"""
         self.global_step        = tf.contrib.framework.get_or_create_global_step()
         self.lrn_rate           = tf.contrib.framework.model_variable(
             name='learning_rate', dtype=tf.float32, shape=[],
@@ -97,7 +87,7 @@ class ModelBase(object):
     @abstractmethod
     def _set_placeholders(self):
         '''Setting up inputs for the network'''
-        pass
+        self.is_training = tf.placeholder(tf.bool)
 
     @abstractmethod
     def _build_inference(self):
@@ -155,7 +145,6 @@ class ModelBase(object):
     def _get_optimizer(self):
         """Returns an optimizer.
         Args:
-        :param optimizer_name: string (not tensor) - name of optimizer
         :return optimizer (tensor)
         """
         if self.optimizer_name == 'ADAM':
@@ -170,4 +159,3 @@ class ModelBase(object):
             raise NameError(err_str)
         self.log.info('using optimizer: {}'.format(self.optimizer_name))
         return optimizer
-

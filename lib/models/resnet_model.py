@@ -1,14 +1,22 @@
+from abc import ABCMeta, abstractmethod
 from lib.models.classifier_model import ClassifierModel
 from lib.models.layers import *
 import six
 
 
 class ResNet(ClassifierModel):
-    '''Implementing an image classifier using a ResNet architecture'''
+    """Implementing an image classifier using a ResNet architecture
+    Related papers:
+    https://arxiv.org/pdf/1603.05027v2.pdf
+    https://arxiv.org/pdf/1512.03385v1.pdf
+    https://arxiv.org/pdf/1605.07146v1.pdf
+    """
+    __metaclass__ = ABCMeta
 
     def __init__(self, *args, **kwargs):
         super(ResNet, self).__init__(*args, **kwargs)
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
+        self.num_fc_neurons = 640
 
     def print_stats(self):
         super(ResNet, self).print_stats()
@@ -43,9 +51,10 @@ class ResNet(ClassifierModel):
                 x = self._residual(x, filters[3], stride_arr(1), False)
 
         with tf.variable_scope('unit_last'):
-            x = tf.layers.batch_normalization(x, training=self.is_training, name='final_bn')
+            x = tf.layers.batch_normalization(x, training=self.is_training, name='pre_pool_bn')
             x = relu(x, self.relu_leakiness)
             x = global_avg_pool(x)
+            x = self.add_fc_layers(x)
             self.net['pool_out'] = x
             self.logits = fully_connected(x, self.num_classes)
 
@@ -81,3 +90,9 @@ class ResNet(ClassifierModel):
 
         self.log.info('image after unit %s', x.get_shape())
         return x
+
+    @abstractmethod
+    def add_fc_layers(self, x):
+        """Building the fully connected layers of the resnet model.
+        Calculating self.logits"""
+        pass
