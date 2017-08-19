@@ -10,6 +10,7 @@ class Parameters(parser_utils.FrozenClass):
         super(Parameters, self).__init__()
 
         self.DEBUG_MODE = None                   # boolean
+        self.SUPERSEED = None
         self.network = ParametersNetwork()
         self.dataset = ParametersDataset()
         self.train   = ParametersTrain()
@@ -35,6 +36,7 @@ class Parameters(parser_utils.FrozenClass):
         root_section = 'self'
         config.add_section(root_section)
         self.set_to_config(do_save_none, root_section, config, 'DEBUG_MODE', self.DEBUG_MODE)
+        self.set_to_config(do_save_none, root_section, config, 'SUPERSEED', self.DEBUG_MODE)
 
         self.network.save_to_ini(do_save_none, root_section, config)
         self.dataset.save_to_ini(do_save_none, root_section, config)
@@ -73,6 +75,7 @@ class Parameters(parser_utils.FrozenClass):
 
         root_section = 'self'
         self.parse_from_config(self, override_mode, root_section, parser, 'DEBUG_MODE', bool)
+        self.parse_from_config(self, override_mode, root_section, parser, 'SUPERSEED', int)
 
         self.network.set_from_file(override_mode, root_section, parser)
         self.dataset.set_from_file(override_mode, root_section, parser)

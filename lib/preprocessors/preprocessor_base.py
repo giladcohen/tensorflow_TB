@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from lib.base.agent_base import AgentBase
+import numpy as np
 
 class PreProcessorBase(AgentBase):
     __metaclass__ = ABCMeta
@@ -13,6 +14,8 @@ class PreProcessorBase(AgentBase):
         self.flip_image         = self.prm.train.data_augmentation.FLIP_IMAGE
         self.drift_x            = self.prm.train.data_augmentation.DRIFT_X
         self.drift_y            = self.prm.train.data_augmentation.DRIFT_Y
+
+        self.rand_gen = np.random.RandomState(prm.SUPERSEED)
 
         self.assert_config()
 
