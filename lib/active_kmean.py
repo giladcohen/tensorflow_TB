@@ -13,7 +13,7 @@ def center_updater(init, fixed_centers, n_fixed):
 
 '''Testing new class'''
 class KMeansWrapper(KMeans):
-    def __init__(self, name, prm, fixed_centers, *args, **kwargs):
+    def __init__(self, name, prm, fixed_centers, random_state, *args, **kwargs):
         super(KMeansWrapper, self).__init__(*args, **kwargs)
         self.name = name
         self.prm = prm
@@ -21,6 +21,7 @@ class KMeansWrapper(KMeans):
 
         self.fixed_centers = fixed_centers
         self.n_fixed = fixed_centers.shape[0]
+        self.random_state = random_state
         self.init = 'random'
         self.n_init = 1
         self.verbose = True

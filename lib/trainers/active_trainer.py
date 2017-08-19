@@ -25,6 +25,7 @@ class ActiveTrainer(ClassificationTrainer):
         self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
         self.num_fc_neurons = self.model.num_fc_neurons
+        self.rand_gen = np.random.RandomState(self.prm.SUPERSEED)
 
         self.assert_config()
 
@@ -53,7 +54,8 @@ class ActiveTrainer(ClassificationTrainer):
             # prediction
             KM = KMeansWrapper(name='KMeansWrapper', prm=self.prm, \
                                fixed_centers=features_vec[self.dataset.train_dataset.pool], \
-                               n_clusters=lp + self.clusters)
+                               n_clusters=lp + self.clusters, \
+                               random_state=self.rand_gen)
             centers = KM.fit_predict_centers(features_vec)
             new_centers = centers[lp:(lp + self.clusters)]
             nbrs = NearestNeighbors(n_neighbors=1)
