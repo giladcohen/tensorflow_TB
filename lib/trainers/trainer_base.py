@@ -21,7 +21,7 @@ class TrainerBase(AgentBase):
         self.model   = model
         self.dataset = dataset
 
-        self.sess = None  # must be implemented in child
+        self.rand_gen = np.random.RandomState(self.prm.SUPERSEED)
 
         # train parameters only
         self.trainer               = self.prm.train.train_control.TRAINER  # just used for printing.
@@ -48,6 +48,9 @@ class TrainerBase(AgentBase):
             self._activate_eval = False
         else:
             self._activate_eval = True
+
+        # set seed
+        tf.set_random_seed(self.prm.SUPERSEED)
 
         # agents
         self.sess = None

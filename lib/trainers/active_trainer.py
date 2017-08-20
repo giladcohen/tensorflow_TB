@@ -25,7 +25,6 @@ class ActiveTrainer(ClassificationTrainer):
         self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
         self.num_fc_neurons = self.model.num_fc_neurons
-        self.rand_gen = np.random.RandomState(self.prm.SUPERSEED)
 
         self.assert_config()
 
