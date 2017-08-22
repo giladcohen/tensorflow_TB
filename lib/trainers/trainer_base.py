@@ -40,6 +40,7 @@ class TrainerBase(AgentBase):
         if self.eval_steps is None:
             self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
             self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
+        self.debug_mode            = self.prm.DEBUG_MODE
 
         # variables
         self.global_step    = 0
@@ -61,7 +62,8 @@ class TrainerBase(AgentBase):
         self.model.build_graph()
         self.print_model_info()
 
-        # setting file writers
+        # setting file writers and saver
+        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
         self.summary_writer_train = tf.summary.FileWriter(self.train_dir)  # for training
         self.summary_writer_eval  = tf.summary.FileWriter(self.eval_dir)   # for evaluation
         self.tb_logger_eval = TBLogger(self.summary_writer_eval)
@@ -82,6 +84,7 @@ class TrainerBase(AgentBase):
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
         self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
         self.log.info(' SKIP_FIRST_EVALUATION: {}'.format(self.skip_first_evaluation))
+        self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
         self.retention.print_stats()
         self.learning_rate_hook.print_stats()
 
