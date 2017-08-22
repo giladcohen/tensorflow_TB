@@ -46,10 +46,10 @@ class ActiveTrainer(ClassificationTrainer):
         # here we have learning rate <= min_learning_rate AND lp < CAP - need to choose next CLUSTERS labels
         # saving model at this stage:
         if self.debug_mode:
-            self.log('Saving model_ref for global_step={} with pool size={}'.format(self.global_step, lp))
+            self.log.info('Saving model_ref for global_step={} with pool size={}'.format(self.global_step, lp))
             checkpoint_file = os.path.join(self.checkpoint_dir, 'model_pool_{}.ckpt'.format(lp))
             pool_info_file  = os.path.join(self.root_dir, 'pool_info_{}'.format(lp))
-            self.saver.save(self.sess,
+            self.saver.save(self.get_session(self.sess),
                             checkpoint_file,
                             global_step=self.global_step)
             self.dataset.train_dataset.save_pool_data(pool_info_file)

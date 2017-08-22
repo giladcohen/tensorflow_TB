@@ -63,7 +63,7 @@ class TrainerBase(AgentBase):
         self.print_model_info()
 
         # setting file writers and saver
-        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
+        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')  # use get_session for Session object
         self.summary_writer_train = tf.summary.FileWriter(self.train_dir)  # for training
         self.summary_writer_eval  = tf.summary.FileWriter(self.eval_dir)   # for evaluation
         self.tb_logger_eval = TBLogger(self.summary_writer_eval)
@@ -194,3 +194,15 @@ class TrainerBase(AgentBase):
     def eval_step(self):
         '''Implementing one evaluation step.'''
         pass
+
+    def get_session(self, sess):
+        """
+        Bypassing tensorflow issue:
+        https://github.com/tensorflow/tensorflow/issues/8425
+        :param sess: Monitored session
+        :return: Session object
+        """
+        session = sess
+        while type(session).__name__ != 'Session':
+            session = session._sess
+        return session
