@@ -115,12 +115,12 @@ class ActiveTrainer(ClassificationTrainer):
 
             # debug
             features_tmp = np.array(features_vec[b:e])
-            if np.sum(features_tmp == -1) == 0:
-                err_str = 'feature_vec equals -1 for [b:e]=[{}:{}].'.format(b, e)
+            if np.sum(features_tmp == -1) >= self.eval_batch_size:
+                err_str = 'feature_vec equals -1 at least {} times for [b:e]=[{}:{}].'.format(self.eval_batch_size,b,e)
                 print_numpy(features_tmp)
                 self.log.error(err_str)
                 raise AssertionError(err_str)
-            
+
         assert total_samples == self.dataset.train_dataset.size, \
             'total_samples equals {} instead of {}'.format(total_samples, self.dataset.train_dataset.size)
         self.dataset.train_dataset.to_preprocess = True

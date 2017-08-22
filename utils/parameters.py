@@ -36,7 +36,7 @@ class Parameters(parser_utils.FrozenClass):
         root_section = 'self'
         config.add_section(root_section)
         self.set_to_config(do_save_none, root_section, config, 'DEBUG_MODE', self.DEBUG_MODE)
-        self.set_to_config(do_save_none, root_section, config, 'SUPERSEED', self.DEBUG_MODE)
+        self.set_to_config(do_save_none, root_section, config, 'SUPERSEED',  self.SUPERSEED)
 
         self.network.save_to_ini(do_save_none, root_section, config)
         self.dataset.save_to_ini(do_save_none, root_section, config)
