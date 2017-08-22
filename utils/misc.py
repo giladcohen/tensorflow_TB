@@ -6,6 +6,7 @@ import numpy as np
 from keras.datasets import cifar10
 import cv2
 import os
+import contextlib
 
 def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
     """Converts numpy data in the form:
@@ -72,3 +73,20 @@ def query_yes_no(question, default="yes"):
         else:
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
+
+def print_numpy(arr):
+    """
+    :param arr: numpy array
+    :return: no return
+    """
+    @contextlib.contextmanager
+    def printoptions(*args, **kwargs):
+        original = np.get_printoptions()
+        np.set_printoptions(*args, **kwargs)
+        try:
+            yield
+        finally:
+            np.set_printoptions(**original)
+
+    with printoptions(precision=3, suppress=True, formatter={'float': '{: 0.3f}'.format}):
+        print(arr)

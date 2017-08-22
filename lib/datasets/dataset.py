@@ -74,6 +74,6 @@ class DataSet(DataSetBase):
         :return: no return.
         """
         images, labels = self.indices_to_data(self.pool)
-        np.savetxt(file_name + '_pool.txt', self.pool)
+        np.savetxt(file_name + '_pool.txt', self.pool, fmt='%0d')
         np.save(file_name + '_images.npy', images)
-        np.savetxt(file_name + '_labels.txt', labels)
+        np.savetxt(file_name + '_labels.txt', labels, fmt='%0d')

@@ -8,6 +8,7 @@ from lib.active_kmean import KMeansWrapper
 import numpy as np
 from math import ceil
 import os
+from utils.misc import print_numpy
 
 
 class ActiveTrainer(ClassificationTrainer):
@@ -111,7 +112,15 @@ class ActiveTrainer(ClassificationTrainer):
             features_vec[b:e] = np.reshape(net['pool_out'], (e - b, self.num_fc_neurons))
             total_samples += images.shape[0]
             self.log.info('Storing completed: {}%'.format(int(100.0 * e / self.dataset.train_dataset.size)))
-        assert np.sum(features_vec == -1) == 0
+
+            # debug
+            features_tmp = np.array(features_vec[b:e])
+            if np.sum(features_tmp == -1) == 0:
+                err_str = 'feature_vec equals -1 for [b:e]=[{}:{}].'.format(b, e)
+                print_numpy(features_tmp)
+                self.log.error(err_str)
+                raise AssertionError(err_str)
+            
         assert total_samples == self.dataset.train_dataset.size, \
             'total_samples equals {} instead of {}'.format(total_samples, self.dataset.train_dataset.size)
         self.dataset.train_dataset.to_preprocess = True
