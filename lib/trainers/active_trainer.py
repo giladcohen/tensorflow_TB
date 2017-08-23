@@ -109,7 +109,7 @@ class ActiveTrainer(ClassificationTrainer):
             net = self.sess.run(self.model.net, feed_dict={self.model.images     : images,
                                                            self.model.labels     : labels,
                                                            self.model.is_training: False})
-            features_vec[b:e] = np.reshape(net['pool_out'], (e - b, self.num_fc_neurons))
+            features_vec[b:e] = np.reshape(net['embedding_layer'], (e - b, self.num_fc_neurons))
             total_samples += images.shape[0]
             self.log.info('Storing completed: {}%'.format(int(100.0 * e / self.dataset.train_dataset.size)))
 

@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from lib.models.classifier_model import ClassifierModel
 from lib.models.layers import *
 import six
-
+import tensorflow.contrib.slim as slim
 
 class ResNet(ClassifierModel):
     """Implementing an image classifier using a ResNet architecture
@@ -16,11 +16,12 @@ class ResNet(ClassifierModel):
     def __init__(self, *args, **kwargs):
         super(ResNet, self).__init__(*args, **kwargs)
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
-        self.num_fc_neurons = 640
+        self.normalize_embedding = self.prm.network.NORMALIZE_EMBEDDING
 
     def print_stats(self):
         super(ResNet, self).print_stats()
         self.log.info(' NUM_RESIDUAL_UNITS: {}'.format(self.num_residual_units))
+        self.log.info(' NORMALIZE_EMBEDDING: {}'.format(self.normalize_embedding))
 
     def _build_inference(self):
         """building the inference model of ResNet"""
@@ -54,8 +55,11 @@ class ResNet(ClassifierModel):
             x = tf.layers.batch_normalization(x, training=self.is_training, name='pre_pool_bn')
             x = relu(x, self.relu_leakiness)
             x = global_avg_pool(x)
-            x = self.add_fc_layers(x)
-            self.net['pool_out'] = x
+            x = self.post_pool_operations(x)
+            if self.normalize_embedding:
+                x = slim.unit_norm(x, dim=1, scope='normalize_vec')
+                variable_summaries('embedding', x)
+            self.net['embedding_layer'] = x
             self.logits = fully_connected(x, self.num_classes)
 
     def _residual(self, x, out_filter, stride, activate_before_residual=False):
@@ -92,7 +96,7 @@ class ResNet(ClassifierModel):
         return x
 
     @abstractmethod
-    def add_fc_layers(self, x):
+    def post_pool_operations(self, x):
         """Building the fully connected layers of the resnet model.
         Calculating self.logits"""
         pass
