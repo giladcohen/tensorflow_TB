@@ -118,3 +118,15 @@ def plot_embedding(X, Y, title=None):
     plt.xticks([]), plt.yticks([])
     if title is not None:
         plt.title(title)
+
+def plot_embedding2(vis_x, vis_y, c, title=None):
+    plt.figure()
+    plt.scatter(vis_x, vis_y, c=c, cmap=plt.cm.get_cmap("jet", 10))
+    plt.colorbar(ticks=range(10))
+    # plt.colorbar(ticks=['airplane', 'automobile', 'bird',
+    #                     'cat', 'deer', 'dog', 'frog', 'horse',
+    #                     'ship', 'truck'])
+    plt.clim(-0.5, 9.5)
+    if title is not None:
+        plt.title(title)
+    plt.show()

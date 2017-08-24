@@ -1,7 +1,7 @@
 '''This function builds the input pool for the active learning algorithm'''
 from __future__ import division
 
-from sklearn.cluster import KMeans, k_means_
+from sklearn.cluster import k_means_
 from sklearn.cluster.k_means_ import *
 import lib.logger.logger as logger
 import numpy as np

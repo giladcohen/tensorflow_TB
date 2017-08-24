@@ -91,7 +91,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.IMAGE_HEIGHT = None                       # integer: Image height at network input
         self.IMAGE_WIDTH = None                        # integer: Image width at network input
         self.NUM_RESIDUAL_UNITS = None                 # integer: number of residual modules in a ResNet model
-        self.NUM_FC_NEURONS = None                     # integer: number of fully connected neurons before classifier
+        self.EMBEDDING_DIMS = None                     # integer: number of fully connected neurons before classifier
         self.BATCH_NORMALIZE_EMBEDDING = None          # boolean: whether or not to apply batch normalization before the embedding activation
         self.NORMALIZE_EMBEDDING = None                # boolean: whether or not to normalize the embedded space
 
@@ -112,7 +112,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'IMAGE_HEIGHT'              , self.IMAGE_HEIGHT)
         self.set_to_config(do_save_none, section_name, config, 'IMAGE_WIDTH'               , self.IMAGE_WIDTH)
         self.set_to_config(do_save_none, section_name, config, 'NUM_RESIDUAL_UNITS'        , self.NUM_RESIDUAL_UNITS)
-        self.set_to_config(do_save_none, section_name, config, 'NUM_FC_NEURONS'            , self.NUM_FC_NEURONS)
+        self.set_to_config(do_save_none, section_name, config, 'EMBEDDING_DIMS'            , self.EMBEDDING_DIMS)
         self.set_to_config(do_save_none, section_name, config, 'BATCH_NORMALIZE_EMBEDDING' , self.BATCH_NORMALIZE_EMBEDDING)
         self.set_to_config(do_save_none, section_name, config, 'NORMALIZE_EMBEDDING'       , self.NORMALIZE_EMBEDDING)
 
@@ -129,7 +129,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_HEIGHT'              , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'IMAGE_WIDTH'               , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'NUM_RESIDUAL_UNITS'        , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_FC_NEURONS'            , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'EMBEDDING_DIMS'            , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'BATCH_NORMALIZE_EMBEDDING' , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'NORMALIZE_EMBEDDING'       , bool)
 
@@ -262,8 +262,6 @@ class ParametersTrainDataAugmentation(parser_utils.FrozenClass):
     def __init__(self):
         super(ParametersTrainDataAugmentation, self).__init__()
 
-        self.DATA_AUGMENTATION  = None   # boolean: whether to do data augmentation in pre-processing of images
-        self.LABEL_AUGMENTATION = None   # boolean: whether to do label augmentation (on top of data augmentation) in pre-processing
         self.FLIP_IMAGE         = None   # boolean: whether to randomly flip images due to augmentation
         self.DRIFT_X            = None   # int: drift x for augmentation, e.g. 45
         self.DRIFT_Y            = None   # int: drift y for image augmentation, e.g. 20
@@ -275,16 +273,12 @@ class ParametersTrainDataAugmentation(parser_utils.FrozenClass):
 
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
-        self.set_to_config(do_save_none, section_name, config, 'DATA_AUGMENTATION' , self.DATA_AUGMENTATION)
-        self.set_to_config(do_save_none, section_name, config, 'LABEL_AUGMENTATION', self.LABEL_AUGMENTATION)
         self.set_to_config(do_save_none, section_name, config, 'FLIP_IMAGE'        , self.FLIP_IMAGE)
         self.set_to_config(do_save_none, section_name, config, 'DRIFT_X'           , self.DRIFT_X)
         self.set_to_config(do_save_none, section_name, config, 'DRIFT_Y'           , self.DRIFT_Y)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
-        self.parse_from_config(self,override_mode, section_name, parser,'DATA_AUGMENTATION' , bool)
-        self.parse_from_config(self,override_mode, section_name, parser,'LABEL_AUGMENTATION', bool)
         self.parse_from_config(self,override_mode, section_name, parser,'FLIP_IMAGE'        , bool)
         self.parse_from_config(self,override_mode, section_name, parser,'DRIFT_X'           , int)
         self.parse_from_config(self,override_mode, section_name, parser,'DRIFT_Y'           , int)
@@ -307,7 +301,6 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.EVALS_IN_EPOCH        = None  # integer: number of evaluation steps within an epoch
         self.RETENTION_SIZE        = None  # integer: the number of last scores to remember
         self.MIN_LEARNING_RATE     = None  # float: minimal learning rate before choosing new labels in active training
-        self.CHOICE_OF_NEW_LABELS  = None  # string: method to chose new labels in active learning. e.g.: kmeans/random
         self.SKIP_FIRST_EVALUATION = None  # boolean: whether or not to skip the first evaluation in the training
 
         self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
@@ -333,7 +326,6 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'       , self.EVALS_IN_EPOCH)
         self.set_to_config(do_save_none, section_name, config, 'RETENTION_SIZE'       , self.RETENTION_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'MIN_LEARNING_RATE'    , self.MIN_LEARNING_RATE)
-        self.set_to_config(do_save_none, section_name, config, 'CHOICE_OF_NEW_LABELS' , self.CHOICE_OF_NEW_LABELS)
         self.set_to_config(do_save_none, section_name, config, 'SKIP_FIRST_EVALUATION', self.SKIP_FIRST_EVALUATION)
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
@@ -354,7 +346,6 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'RETENTION_SIZE'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'MIN_LEARNING_RATE'    , float)
-        self.parse_from_config(self, override_mode, section_name, parser, 'CHOICE_OF_NEW_LABELS' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'SKIP_FIRST_EVALUATION', bool)
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)

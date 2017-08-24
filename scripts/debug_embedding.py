@@ -2,6 +2,8 @@ from __future__ import division
 
 import os
 import sys
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="3"
 
 cwd = os.getcwd() # tensorflow-TB
 sys.path.insert(0, cwd)
@@ -14,6 +16,7 @@ from lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
 import numpy as np
 from sklearn import manifold
+from sklearn.decomposition import PCA
 from math import ceil
 from utils.misc import *
 
@@ -56,8 +59,8 @@ ckpt_state = tf.train.get_checkpoint_state(prm.train.train_control.CHECKPOINT_DI
 saver.restore(sess, ckpt_state.model_checkpoint_path)
 
 # get all train/eval features
-embedding_dims = 640  # FIXME(gilad): should be: prm.network.NUM_FC_NEURONS
-eval_batch_size = 100
+embedding_dims = prm.network.EMBEDDING_DIMS
+eval_batch_size = prm.train.train_control.EVAL_BATCH_SIZE
 
 def collect_features(dataset):
     """Collecting all the features from the last layer (before the classifier) in the train_set/validation_set"""
@@ -102,7 +105,21 @@ validation_labels   = validation_dataset.labels
 tsne = manifold.TSNE(n_components=2, init='pca', random_state=0)
 train_embedding_tnse      = tsne.fit_transform(train_features)
 validation_embedding_tnse = tsne.fit_transform(validation_features)
-plot_embedding(train_embedding_tnse, train_labels, "t-SNE train set embedding")
-plot_embedding(validation_embedding_tnse, validation_labels, "t-SNE validation set embedding")
+
+plot_embedding2(vis_x=train_embedding_tnse[:,0],
+                vis_y=train_embedding_tnse[:,1],
+                c=train_labels,
+                title='CIFAR-10 train set embedding (TSNE)')
+plot_embedding2(vis_x=validation_embedding_tnse[:,0],
+                vis_y=validation_embedding_tnse[:,1],
+                c=validation_labels,
+                title='CIFAR-10 validation set embedding (TSNE)')
 
 # compute PCA
+pca = PCA(n_components=2)
+train_embedding_pca = pca.fit_transform(train_features)
+validation_embedding_pca = pca.fit_transform(validation_features)
+plot_embedding2(vis_x=train_embedding_pca[:,0],
+                vis_y=train_embedding_pca[:,1],
+                c=train_labels,
+                title='CIFAR-10 train set embedding (PCA)')

@@ -17,11 +17,13 @@ class ResNet(ClassifierModel):
         super(ResNet, self).__init__(*args, **kwargs)
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
         self.normalize_embedding = self.prm.network.NORMALIZE_EMBEDDING
+        self.embedding_dims = self.prm.network.EMBEDDING_DIMS
 
     def print_stats(self):
         super(ResNet, self).print_stats()
         self.log.info(' NUM_RESIDUAL_UNITS: {}'.format(self.num_residual_units))
         self.log.info(' NORMALIZE_EMBEDDING: {}'.format(self.normalize_embedding))
+        self.log.info(' EMBEDDING_DIMS: {}'.format(self.embedding_dims))
 
     def _build_inference(self):
         """building the inference model of ResNet"""
