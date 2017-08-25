@@ -22,8 +22,8 @@ class AllCentersKMeans(KMeans):
         self.fixed_centers = fixed_centers
         self.n_fixed = fixed_centers.shape[0]
         self.init = 'random'
-        self.n_init = 100
-        self.verbose = True
+        self.n_init = 25
+        self.verbose = False
         self.assert_config()
 
     def __str__(self):
@@ -40,6 +40,7 @@ class AllCentersKMeans(KMeans):
 
         best_centers, best_labels, best_inertia, best_n_iter = None, None, None, None
         for it in range(self.n_init):
+            self.log.info('calculating KMeans number #{} out of {}...'.format(it+1, self.n_init))
             centers, labels, _, n_iter = \
                 k_means(
                 X, n_clusters=self.n_clusters, init=self.init,
@@ -50,13 +51,14 @@ class AllCentersKMeans(KMeans):
                 return_n_iter=True)
             centers = center_updater(centers, self.fixed_centers, self.n_fixed)
             inertia = np.sum((X - centers[labels]) ** 2, dtype=np.float64)
-
+            self.log.info('Done calculating. Inertia={}, n_iters={}'.format(inertia, n_iter))
             if best_inertia is None or inertia < best_inertia:
                 best_centers = centers.copy()
                 best_labels = labels.copy()
                 best_inertia = inertia
                 best_n_iter = n_iter
 
+        self.log.info('best_inertia={}, best_n_iter={}'.format(best_inertia, best_n_iter))
         self.cluster_centers_ = best_centers
         self.labels_          = best_labels
         self.inertia_         = best_inertia

@@ -5,6 +5,7 @@ from __future__ import print_function
 from lib.trainers.active_trainer_base import ActiveTrainerBase
 from lib.all_centers_kmeans import AllCentersKMeans
 from sklearn.neighbors import NearestNeighbors
+from operator import itemgetter
 
 
 class AllCentersTrainer(ActiveTrainerBase):
@@ -13,8 +14,17 @@ class AllCentersTrainer(ActiveTrainerBase):
 
         # analyzing (evaluation)
         features_vec = self.collect_features('train')
+        labeled_features_vec   = features_vec[self.dataset.train_dataset.pool]
+        labeled_features_vec_dict = dict(zip(range(labeled_features_vec.shape[0]), self.dataset.train_dataset.pool))
+        unlabeled_features_vec = features_vec[self.dataset.train_dataset.available_samples]
+        unlabeled_features_vec_dict = dict(zip(range(unlabeled_features_vec.shape[0]), self.dataset.train_dataset.available_samples))
+
+        self.log.info('building kNN space only for the unlabeled train features')
+        nbrs = NearestNeighbors(n_neighbors=1)
+        nbrs.fit(unlabeled_features_vec)
 
         # prediction
+        self.log.info('performing K-Means for all train features. K={}'.format(lp + self.clusters))
         KM = AllCentersKMeans(name='AllCentersKMean', prm=self.prm,
                               fixed_centers=features_vec[self.dataset.train_dataset.pool],
                               n_clusters=lp + self.clusters,
@@ -22,19 +32,8 @@ class AllCentersTrainer(ActiveTrainerBase):
         KM.fit(features_vec)
         centers = KM.cluster_centers_
         new_centers = centers[lp:(lp + self.clusters)]
-        nbrs = NearestNeighbors(n_neighbors=1)
-        nbrs.fit(features_vec)
-        indices = nbrs.kneighbors(new_centers, return_distance=False)  # get indices of NNs of new centers
-        indices = indices.T[0].tolist()
+        unlabeled_indices = nbrs.kneighbors(new_centers, return_distance=False)  # get indices of NNs of new centers
+        unlabeled_indices = unlabeled_indices.T[0].tolist()
+        new_indices = [unlabeled_features_vec_dict.values()[i] for i in unlabeled_indices]
 
-        # exclude existing labels in pool
-        already_pooled_cnt = 0  # number of indices of samples that we added to pool already
-        for myItem in indices:
-            if myItem in self.dataset.train_dataset.pool:
-                already_pooled_cnt += 1
-                indices.remove(myItem)
-                self.log.info('Removing value {} from indices because it already exists in pool'.format(myItem))
-        self.log.info('{} indices were already in pool. Randomized indices will be chosen instead of them'.format(
-            already_pooled_cnt))
-        self.dataset.train_dataset.update_pool(indices=indices)
-        self.dataset.train_dataset.update_pool(clusters=already_pooled_cnt)
+        return new_indices

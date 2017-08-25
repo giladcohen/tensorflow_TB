@@ -42,17 +42,26 @@ class ActiveTrainerBase(ClassificationTrainer):
         # here we have learning rate <= min_learning_rate AND lp < CAP - need to choose next CLUSTERS labels
         # saving model at this stage:
         self.debug_ops()
-
-        self.log.info('Adding {} new labels to train dataset using method: {}.'.format(self.clusters, self.choice_of_new_labels))
-        self.select_new_samples()
+        self.log.info('Adding {} new labels to train dataset.'.format(self.clusters))
+        new_indices = self.select_new_samples()  # select new indices
+        self.add_new_samples(new_indices)        # add new indices to train dataset
+        self.debug_ops()
 
     @abstractmethod
     def select_new_samples(self):
         """
         Selecting new sampled to label
-        :return: no return
+        :return: list of indices to add to train dataset
         """
         pass
+
+    def add_new_samples(self, indices):
+        """
+        Adding indices to train dataset
+        :param indices: list of indices to add to train dataset
+        :return: no return
+        """
+        self.dataset.train_dataset.update_pool(indices=indices)
 
     def collect_features(self, dataset_type='train'):
         """Collecting all the embedding features (before the classifier) in the dataset
