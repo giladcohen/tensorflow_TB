@@ -22,7 +22,7 @@ class AllCentersKMeans(KMeans):
         self.fixed_centers = fixed_centers
         self.n_fixed = fixed_centers.shape[0]
         self.init = 'random'
-        self.n_init = 25
+        self.n_init = 10
         self.verbose = False
         self.assert_config()
 

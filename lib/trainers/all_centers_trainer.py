@@ -5,7 +5,6 @@ from __future__ import print_function
 from lib.trainers.active_trainer_base import ActiveTrainerBase
 from lib.all_centers_kmeans import AllCentersKMeans
 from sklearn.neighbors import NearestNeighbors
-from operator import itemgetter
 
 
 class AllCentersTrainer(ActiveTrainerBase):

@@ -27,9 +27,9 @@ class ClassCentersTrainer(ActiveTrainerBase):
         # prediction
         self.log.info('performing K-Means only for the labeled train features. K={}'.format(num_classes))
         KM = KMeans(n_clusters=num_classes,
-                    n_init=90,
+                    n_init=100,
                     random_state=self.rand_gen,
-                    n_jobs=9)
+                    n_jobs=10)
         KM.fit(labeled_features_vec)
 
         self.log.info('for each center, find {} new K-MEANS using only the unlabeled data that correspond to it'.format(delta))
@@ -54,9 +54,9 @@ class ClassCentersTrainer(ActiveTrainerBase):
 
             self.log.info('building K-Means model for cluster {} and finding its sub clusters'.format(cluster_id))
             KM = KMeans(n_clusters=delta,
-                        n_init=30,
+                        n_init=100,
                         random_state=self.rand_gen,
-                        n_jobs=-5)
+                        n_jobs=10)
             KM.fit(unlabeled_features_for_cluster)
             sub_centers = KM.cluster_centers_
             unlabeled_indices = nbrs.kneighbors(sub_centers, return_distance=False)  # get indices of NNs of new centers

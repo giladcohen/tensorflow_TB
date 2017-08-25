@@ -7,5 +7,5 @@ from lib.trainers.active_trainer_base import ActiveTrainerBase
 
 class RandomSamplerTrainer(ActiveTrainerBase):
     def select_new_samples(self):
-        self.dataset.train_dataset.update_pool()
+        return None  # will result in random selection of samples
 

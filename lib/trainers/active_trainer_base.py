@@ -8,6 +8,7 @@ import numpy as np
 from math import ceil
 import os
 from utils.misc import print_numpy
+from sklearn.decomposition import PCA
 
 
 class ActiveTrainerBase(ClassificationTrainer):
@@ -24,6 +25,9 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
         self.embedding_dims = self.model.embedding_dims
+        self.pca_reduction = self.prm.train.train_control.PCA_REDUCTION
+        self.pca_embedding_dims = self.prm.train.train_control.PCA_EMBEDDING_DIMS
+        self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 
     def train_step(self):
         '''Implementing one training step'''
@@ -110,11 +114,18 @@ class ActiveTrainerBase(ClassificationTrainer):
             'total_samples equals {} instead of {}'.format(total_samples, dataset.size)
         if dataset_type == 'train':
             dataset.to_preprocess = True
+
+        if self.pca_reduction:
+            self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.embedding_dims, self.pca_embedding_dims))
+            features_vec = self.pca.fit_transform(features_vec)
         return features_vec
 
     def print_stats(self):
         super(ActiveTrainerBase, self).print_stats()
         self.log.info(' MIN_LEARNING_RATE: {}'.format(self.min_learning_rate))
+        self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
+        self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
+
 
     def debug_ops(self):
         lp = self.dataset.train_dataset.pool_size()

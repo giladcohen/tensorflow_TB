@@ -302,6 +302,8 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.RETENTION_SIZE        = None  # integer: the number of last scores to remember
         self.MIN_LEARNING_RATE     = None  # float: minimal learning rate before choosing new labels in active training
         self.SKIP_FIRST_EVALUATION = None  # boolean: whether or not to skip the first evaluation in the training
+        self.PCA_REDUCTION         = None  # boolean: whether or not to use PCA reduction
+        self.PCA_EMBEDDING_DIMS    = None  # integer: PCA dimensions
 
         self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
 
@@ -327,6 +329,8 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'RETENTION_SIZE'       , self.RETENTION_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'MIN_LEARNING_RATE'    , self.MIN_LEARNING_RATE)
         self.set_to_config(do_save_none, section_name, config, 'SKIP_FIRST_EVALUATION', self.SKIP_FIRST_EVALUATION)
+        self.set_to_config(do_save_none, section_name, config, 'PCA_REDUCTION'        , self.PCA_REDUCTION)
+        self.set_to_config(do_save_none, section_name, config, 'PCA_EMBEDDING_DIMS'   , self.PCA_EMBEDDING_DIMS)
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
 
@@ -347,6 +351,8 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'RETENTION_SIZE'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'MIN_LEARNING_RATE'    , float)
         self.parse_from_config(self, override_mode, section_name, parser, 'SKIP_FIRST_EVALUATION', bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'PCA_REDUCTION'        , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'PCA_EMBEDDING_DIMS'   , int)
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
 
