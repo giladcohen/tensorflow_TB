@@ -88,7 +88,8 @@ class ActiveTrainerBase(ClassificationTrainer):
         dataset.to_preprocess = False
         batch_count     = int(ceil(dataset.size / self.eval_batch_size))
         last_batch_size =          dataset.size % self.eval_batch_size
-        features_vec = -1.0 * np.ones((dataset.size, self.embedding_dims), dtype=np.float32)
+        features_vec    = -1.0 * np.ones((dataset.size, self.embedding_dims), dtype=np.float32)
+        predictions_vec = -1.0 * np.ones((dataset.size, self.model.num_classes), dtype=np.float32)
         total_samples = 0  # for debug
 
         self.log.info('start storing feature maps for the entire {} set.'.format(str(dataset)))
@@ -99,20 +100,14 @@ class ActiveTrainerBase(ClassificationTrainer):
             else:
                 e = i * self.eval_batch_size + last_batch_size
             images, labels = dataset.get_mini_batch(indices=range(b, e))
-            net = self.sess.run(self.model.net, feed_dict={self.model.images     : images,
-                                                           self.model.labels     : labels,
-                                                           self.model.is_training: False})
-            features_vec[b:e] = np.reshape(net['embedding_layer'], (e - b, self.embedding_dims))
+            net, predictions = self.sess.run([self.model.net, self.model.predictions_prob],
+                                feed_dict={self.model.images     : images,
+                                           self.model.labels     : labels,
+                                           self.model.is_training: False})
+            features_vec[b:e]    = np.reshape(net['embedding_layer'], (e - b, self.embedding_dims))
+            predictions_vec[b:e] = np.reshape(predictions, (e - b, self.model.num_classes))
             total_samples += images.shape[0]
             self.log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
-
-            # debug
-            features_tmp = np.array(features_vec[b:e])
-            if np.sum(features_tmp == -1) >= self.eval_batch_size:
-                err_str = 'feature_vec equals -1 at least {} times for [b:e]=[{}:{}].'.format(self.eval_batch_size,b,e)
-                print_numpy(features_tmp)
-                self.log.error(err_str)
-                raise AssertionError(err_str)
 
         assert total_samples == dataset.size, \
             'total_samples equals {} instead of {}'.format(total_samples, dataset.size)
@@ -122,7 +117,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         if self.pca_reduction:
             self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.embedding_dims, self.pca_embedding_dims))
             features_vec = self.pca.fit_transform(features_vec)
-        return features_vec
+        return features_vec, predictions_vec
 
     def print_stats(self):
         super(ActiveTrainerBase, self).print_stats()

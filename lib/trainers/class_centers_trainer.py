@@ -14,7 +14,7 @@ class ClassCentersTrainer(ActiveTrainerBase):
         delta = self.dataset.train_dataset.clusters // num_classes
 
         # analyzing (evaluation)
-        features_vec = self.collect_features('train')
+        features_vec, _ = self.collect_features('train')
         labeled_features_vec   = features_vec[self.dataset.train_dataset.pool]
         labeled_features_vec_dict = dict(zip(range(labeled_features_vec.shape[0]), self.dataset.train_dataset.pool))
         unlabeled_features_vec = features_vec[self.dataset.train_dataset.available_samples]

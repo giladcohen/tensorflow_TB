@@ -6,6 +6,7 @@ from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.random_sampler_trainer import RandomSamplerTrainer
 from lib.trainers.all_centers_trainer import AllCentersTrainer
 from lib.trainers.class_centers_trainer import ClassCentersTrainer
+from lib.trainers.most_uncertained_trainer import MostUncertainedTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
@@ -75,10 +76,11 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_trainer(self, model, dataset):
-        available_trainers = {'simple'         : ClassificationTrainer,
-                              'random_sampler' : RandomSamplerTrainer,
-                              'all_centers'    : AllCentersTrainer,
-                              'class_centers'  : ClassCentersTrainer}
+        available_trainers = {'simple'           : ClassificationTrainer,
+                              'random_sampler'   : RandomSamplerTrainer,
+                              'all_centers'      : AllCentersTrainer,
+                              'class_centers'    : ClassCentersTrainer,
+                              'most_uncertained' : MostUncertainedTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))

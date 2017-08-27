@@ -11,7 +11,8 @@ class ClassifierModel(ModelBase):
         self.num_classes  = self.prm.network.NUM_CLASSES
         self.image_height = self.prm.network.IMAGE_HEIGHT
         self.image_width  = self.prm.network.IMAGE_WIDTH
-        self.xent_cost    = None    # contribution of cross entropy to loss
+        self.xent_cost    = None     # contribution of cross entropy to loss
+        self.predictions_prob = None # output of the classifier softmax
 
     def print_stats(self):
         super(ClassifierModel, self).print_stats()
@@ -26,8 +27,8 @@ class ClassifierModel(ModelBase):
 
     def _build_interpretation(self):
         '''Interprets the logits'''
-        predictions_prob = tf.nn.softmax(self.logits)
-        self.predictions = tf.cast(tf.argmax(predictions_prob, axis=1), tf.int32)
+        self.predictions_prob = tf.nn.softmax(self.logits)
+        self.predictions = tf.cast(tf.argmax(self.predictions_prob, axis=1), tf.int32)
         self.score       = tf.reduce_mean(tf.to_float(tf.equal(self.predictions, self.labels)))
 
     def add_fidelity_loss(self):
