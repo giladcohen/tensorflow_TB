@@ -18,7 +18,7 @@ class MostUncertainedTrainer(ActiveTrainerBase):
         #prediction
         self.log.info('Calculating the uncertainy score vector')
         u_vec = self.uncertainty_score(unlabeled_predictions_vec)
-        unlabeled_predictions_indices = u_vec.argsort()[:, -self.dataset.train_dataset.clusters:]
+        unlabeled_predictions_indices = u_vec.argsort()[-self.dataset.train_dataset.clusters:]
         new_indices = [unlabeled_predictions_vec_dict.values()[i] for i in unlabeled_predictions_indices]
 
         return new_indices
