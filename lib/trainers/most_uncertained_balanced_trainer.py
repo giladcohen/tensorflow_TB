@@ -13,7 +13,8 @@ class MostUncertainedBalancedTrainer(ActiveTrainerBase):
         self.num_classes = self.model.num_classes
 
         # creating a numpy matrix that partitions the labels with different rows
-        self.class_samples = np.empty(shape=[self.num_classes, int(self.dataset.train_dataset.size / self.num_classes)])
+        self.class_samples = np.empty(shape=[self.num_classes, int(self.dataset.train_dataset.size / self.num_classes)],
+                                      dtype=np.int32)
         for cls in xrange(self.num_classes):
             self.class_samples[cls] = np.argwhere(self.dataset.train_dataset.labels == cls).ravel()
 
@@ -54,7 +55,7 @@ class MostUncertainedBalancedTrainer(ActiveTrainerBase):
             candidate_index = unlabeled_predictions_vec_dict[unlabeled_predictions_indices[i]]
             label = self.dataset.train_dataset.labels[candidate_index]
             if class_counter[label] > 0:
-                new_indices += candidate_index
+                new_indices += [candidate_index]
                 class_counter[label] -= 1
                 cnt += 1
             i -= 1
