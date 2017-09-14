@@ -15,7 +15,7 @@ class MostUncertainedBalancedTrainer(ActiveTrainerBase):
         # creating a numpy matrix that partitions the labels with different rows
         self.class_samples = np.empty(shape=[self.num_classes, int(self.dataset.train_dataset.size / self.num_classes)])
         for cls in xrange(self.num_classes):
-            self.class_samples[cls] = np.argwhere(self.dataset.train_dataset.labels == cls)
+            self.class_samples[cls] = np.argwhere(self.dataset.train_dataset.labels == cls).ravel()
 
     def train_step(self):
         '''Implementing one training step'''
@@ -29,7 +29,7 @@ class MostUncertainedBalancedTrainer(ActiveTrainerBase):
     def select_init_samples(self):
         tmp_pool = []
         for cls in xrange(self.num_classes):
-            tmp_pool += self.rand_gen.choice(self.class_samples[cls], int(self.clusters / self.num_classes), replace=False)
+            tmp_pool += self.rand_gen.choice(self.class_samples[cls], int(self.clusters / self.num_classes), replace=False).tolist()
         self.add_new_samples(tmp_pool)
 
     def select_new_samples(self):
