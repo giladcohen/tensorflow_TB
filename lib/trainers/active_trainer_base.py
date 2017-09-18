@@ -20,7 +20,12 @@ class ActiveTrainerBase(ClassificationTrainer):
 
     def __init__(self, *args, **kwargs):
         super(ActiveTrainerBase, self).__init__(*args, **kwargs)
-        self.min_learning_rate     = self.prm.train.train_control.MIN_LEARNING_RATE
+        self.min_learning_rate          = self.prm.train.train_control.MIN_LEARNING_RATE
+        self.annotation_rule            = self.prm.train.train_control.ANNOTATION_RULE
+        self.steps_for_new_annotations  = self.prm.train.train_control.STEPS_FOR_NEW_ANNOTATIONS
+        self.steps_for_new_annotations_dict = {}
+        for step in self.steps_for_new_annotations:
+            self.steps_for_new_annotations_dict[step] = False
 
         self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
@@ -38,7 +43,7 @@ class ActiveTrainerBase(ClassificationTrainer):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        if self.learning_rate_hook.get_lrn_rate() >= self.min_learning_rate or lp == self.cap:
+        if not self.to_annotate():
             # learning rate has not reached below the minimal value, or we reached the CAP - train normally
             super(ActiveTrainerBase, self).train_step()
             return
@@ -124,7 +129,8 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.log.info(' MIN_LEARNING_RATE: {}'.format(self.min_learning_rate))
         self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
-
+        self.log.info(' ANNOTATION_RULE: {}'.format(self.annotation_rule))
+        self.log.info(' STEPS_FOR_NEW_ANNOTATIONS: {}'.format(self.steps_for_new_annotations))
 
     def debug_ops(self):
         lp = self.dataset.train_dataset.pool_size()
@@ -136,3 +142,22 @@ class ActiveTrainerBase(ClassificationTrainer):
                             checkpoint_file,
                             global_step=self.global_step)
             self.dataset.train_dataset.save_pool_data(pool_info_file)
+
+    def to_annotate(self):
+        """
+        :return: boolean. Whether or not to start an annotation phase
+        """
+        lp = self.dataset.train_dataset.pool_size()
+        if self.annotation_rule == 'small_learning_rate':
+            ret = self.learning_rate_hook.get_lrn_rate() < self.min_learning_rate and lp < self.cap
+        elif self.annotation_rule == 'fixed_epochs':
+            if self.global_step in self.steps_for_new_annotations_dict and not self.steps_for_new_annotations_dict[self.global_step]:
+                ret = True
+                self.steps_for_new_annotations_dict[self.global_step] = True
+            else:
+                ret = False
+        else:
+            err_str = 'annotation_rule={} is not supported'.format(self.annotation_rule)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+        return ret

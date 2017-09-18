@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import configparser
 import utils.ini_parsers as parser_utils
+import numpy as np
 
 
 class Parameters(parser_utils.FrozenClass):
@@ -301,9 +302,11 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.EVALS_IN_EPOCH        = None  # integer: number of evaluation steps within an epoch
         self.RETENTION_SIZE        = None  # integer: the number of last scores to remember
         self.MIN_LEARNING_RATE     = None  # float: minimal learning rate before choosing new labels in active training
+        self.STEPS_FOR_NEW_ANNOTATIONS = None # integer: global steps to add annotations
         self.SKIP_FIRST_EVALUATION = None  # boolean: whether or not to skip the first evaluation in the training
         self.PCA_REDUCTION         = None  # boolean: whether or not to use PCA reduction
         self.PCA_EMBEDDING_DIMS    = None  # integer: PCA dimensions
+        self.ANNOTATION_RULE       = None  # The rule for adding new annotations in active learning
 
         self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
 
@@ -328,9 +331,11 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'       , self.EVALS_IN_EPOCH)
         self.set_to_config(do_save_none, section_name, config, 'RETENTION_SIZE'       , self.RETENTION_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'MIN_LEARNING_RATE'    , self.MIN_LEARNING_RATE)
+        self.set_to_config(do_save_none, section_name, config, 'STEPS_FOR_NEW_ANNOTATIONS' , self.STEPS_FOR_NEW_ANNOTATIONS)
         self.set_to_config(do_save_none, section_name, config, 'SKIP_FIRST_EVALUATION', self.SKIP_FIRST_EVALUATION)
         self.set_to_config(do_save_none, section_name, config, 'PCA_REDUCTION'        , self.PCA_REDUCTION)
         self.set_to_config(do_save_none, section_name, config, 'PCA_EMBEDDING_DIMS'   , self.PCA_EMBEDDING_DIMS)
+        self.set_to_config(do_save_none, section_name, config, 'ANNOTATION_RULE'      , self.ANNOTATION_RULE)
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
 
@@ -350,9 +355,11 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'RETENTION_SIZE'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'MIN_LEARNING_RATE'    , float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'STEPS_FOR_NEW_ANNOTATIONS' , np.array)
         self.parse_from_config(self, override_mode, section_name, parser, 'SKIP_FIRST_EVALUATION', bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'PCA_REDUCTION'        , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'PCA_EMBEDDING_DIMS'   , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'ANNOTATION_RULE'      , str)
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
 
