@@ -387,8 +387,9 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         super(ParametersTrainControlLearningRateSetter, self).__init__()
 
         self.LEARNING_RATE_SETTER          = None  # string: Name of the learning rate setter
-        self.SCHEDULED_EPOCHS              = None  # list: the epochs in which the learning rate is decreased
-        self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_EPOCHS
+        self.SCHEDULED_STEPS               = None  # list: the epochs in which the learning rate is decreased
+        self.USE_FIXED_EPOCHS              = None  # boolean: use epochs instead of global steps
+        self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_STEPS
         self.DECAY_REFRACTORY_STEPS        = None  # integer: number of training steps after decaying the learning
                                                    # rate in which no new decay can be utilized
         self.LEARNING_RATE_RESET           = None  # float: reset value of learning rate
@@ -401,7 +402,8 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
         self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE_SETTER'     , self.LEARNING_RATE_SETTER)
-        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_EPOCHS'         , self.SCHEDULED_EPOCHS)
+        self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_STEPS'          , self.SCHEDULED_STEPS)
+        self.set_to_config(do_save_none, section_name, config, 'USE_FIXED_EPOCHS'         , self.USE_FIXED_EPOCHS)
         self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_LEARNING_RATES' , self.SCHEDULED_LEARNING_RATES)
         self.set_to_config(do_save_none, section_name, config, 'DECAY_REFRACTORY_STEPS'   , self.DECAY_REFRACTORY_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE_RESET'      , self.LEARNING_RATE_RESET)
@@ -409,8 +411,8 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_SETTER'        , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_EPOCHS'            , list)
-        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , list)
-        self.parse_from_config(self, override_mode, section_name, parser, 'DECAY_REFRACTORY_STEPS'      , list)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_STEPS'             , np.array)
+        self.parse_from_config(self, override_mode, section_name, parser, 'USE_FIXED_EPOCHS'            , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , np.array)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DECAY_REFRACTORY_STEPS'      , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_RESET'         , float)
-
