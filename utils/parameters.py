@@ -147,6 +147,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.TRAIN_SET_SIZE = None                           # integer: train set size
         self.VALIDATION_SET_SIZE = None                      # integer: validation set size
         self.TRAIN_IMAGES_DIR = None                         # string: path to train images dir
+        self.TAGGED_IMAGES_DIR = None                        # string: path to the tagged images dir:file for active learning
         self.TRAIN_LABELS_FILE = None                        # string: path to train labels file
         self.VALIDATION_IMAGES_DIR = None                    # string: path to validation images dir
         self.VALIDATION_LABELS_FILE = None                   # string: path to validation labels file
@@ -167,6 +168,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_SET_SIZE'        , self.TRAIN_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE'   , self.VALIDATION_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_IMAGES_DIR'      , self.TRAIN_IMAGES_DIR)
+        self.set_to_config(do_save_none, section_name, config, 'TAGGED_IMAGES_DIR'     , self.TAGGED_IMAGES_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_LABELS_FILE'     , self.TRAIN_LABELS_FILE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_IMAGES_DIR' , self.VALIDATION_IMAGES_DIR)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_LABELS_FILE', self.VALIDATION_LABELS_FILE)
@@ -182,6 +184,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE'   , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR'      , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TAGGED_IMAGES_DIR'     , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE'     , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_LABELS_FILE', str)

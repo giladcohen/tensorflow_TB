@@ -11,7 +11,6 @@ class ParkingDataSet(DataSetBase):
     def set_additional_config(self):
         self.H = self.prm.network.pre_processing.IMAGE_HEIGHT
         self.W = self.prm.network.pre_processing.IMAGE_WIDTH
-        self.clusters  = self.prm.dataset.CLUSTERS
         self.cap       = self.prm.dataset.CAP  # must not be None
 
         self.num_classes = self.prm.network.NUM_CLASSES
