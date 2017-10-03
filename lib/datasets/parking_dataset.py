@@ -26,13 +26,7 @@ class ParkingDataSet(DataSetBase):
         self.create_labels_dict()
 
     def assert_config(self):
-        if self.cap is None:
-            err_str = self.__str__() + ': CAP cannot be None'
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-        if self.init_size is None:
-            self.log.warning(self.__str__() + 'Initialized with INIT_SIZE=None. Setting INIT_SIZE=CAP ({})'.format(self.cap))
-            self.init_size = self.cap
+        pass
 
     def create_images_list(self):
         """creates list of images in the dataset:
@@ -104,7 +98,7 @@ class ParkingDataSet(DataSetBase):
             index = indices[i]
             image_file      = self.image_fnames[index]
             base_image_file = self.base_image_fnames[index]
-            label           = self.labels_dict[base_image_file]['parking_available']
+            label           = self.labels_dict[base_image_file]['park_available']
             image  = img_to_mat(image_file, as_rgb=True)
             image, scale, labels = self.preprocessor.process(image, label, with_augmentation=self.to_preprocess)
             images_out[i] = image

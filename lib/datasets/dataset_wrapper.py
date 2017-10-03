@@ -20,11 +20,11 @@ class DatasetWrapper(object):
         self.train_set_size         = self.prm.dataset.TRAIN_SET_SIZE
         self.validation_set_size    = self.prm.dataset.VALIDATION_SET_SIZE
         self.train_images_dir       = self.prm.dataset.TRAIN_IMAGES_DIR
-        self.train_labels_file      = self.prm.dataset.TRAIN_LABELS_FILE
+        #self.train_labels_file      = self.prm.dataset.TRAIN_LABELS_FILE
         self.validation_images_dir  = self.prm.dataset.VALIDATION_IMAGES_DIR
-        self.validation_labels_file = self.prm.dataset.VALIDATION_LABELS_FILE
+        #self.validation_labels_file = self.prm.dataset.VALIDATION_LABELS_FILE
 
-        self.verify_dataset()
+        #self.verify_dataset()
 
     def __str__(self):
         return self.name
@@ -37,9 +37,9 @@ class DatasetWrapper(object):
         self.log.info(' TRAIN_SET_SIZE: {}'.format(self.train_set_size))
         self.log.info(' VALIDATION_SET_SIZE: {}'.format(self.validation_set_size))
         self.log.info(' TRAIN_IMAGES_DIR: {}'.format(self.train_images_dir))
-        self.log.info(' TRAIN_LABELS_FILE: {}'.format(self.train_labels_file))
+        #self.log.info(' TRAIN_LABELS_FILE: {}'.format(self.train_labels_file))
         self.log.info(' VALIDATION_IMAGES_DIR: {}'.format(self.validation_images_dir))
-        self.log.info(' VALIDATION_LABELS_FILE: {}'.format(self.validation_labels_file))
+        #self.log.info(' VALIDATION_LABELS_FILE: {}'.format(self.validation_labels_file))
 
         self.train_dataset.print_stats()
         self.validation_dataset.print_stats()

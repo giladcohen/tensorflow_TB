@@ -32,7 +32,7 @@ class PreProcessorBase(AgentBase):
             raise ValueError(err_str)
 
     @abstractmethod
-    def process(self, images, labels):
+    def process(self, images, labels, with_augmentation):
         """processing batch of images and labels"""
         if images.shape[0] != labels.shape[0]:
             err_str = 'process: number of images ({}) does not match number of labels ({})'.format(images.shape[0], labels.shape[0])

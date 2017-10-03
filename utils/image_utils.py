@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 def img_to_mat(image_file , as_rgb=False):
     out = cv2.imread(image_file).astype(np.float64, copy=False)

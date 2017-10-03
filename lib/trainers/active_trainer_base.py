@@ -27,7 +27,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         for step in self.steps_for_new_annotations:
             self.steps_for_new_annotations_dict[step] = False
 
-        self.clusters  = self.dataset.train_dataset.clusters
+        #self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
         self.embedding_dims = self.model.embedding_dims
         self.pca_reduction = self.prm.train.train_control.PCA_REDUCTION
@@ -51,7 +51,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         # here we have learning rate <= min_learning_rate AND lp < CAP - need to choose next CLUSTERS labels
         # saving model at this stage:
         self.debug_ops()
-        self.log.info('Adding {} new labels to train dataset.'.format(self.clusters))
+        #self.log.info('Adding {} new labels to train dataset.'.format(self.clusters))
         new_indices = self.select_new_samples()  # select new indices
         self.add_new_samples(new_indices)        # add new indices to train dataset
         self.debug_ops()

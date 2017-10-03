@@ -6,29 +6,28 @@ expected_scale = ()
 
 class ParkProcessor(PreProcessorBase):
 
-    def process(self, images, labels):
+    def process(self, image, label, with_augmentation):
         """processing batch of images and labels"""
-        super(ParkProcessor, self).process(images, labels)
+        # super(ParkProcessor, self).process(images, labels, with_augmentation)
         # There is no need for label augmentation for classification task
         # Therefore self.label_augmentation is not used here. It will be used for preprocessing
         # other tasks such as detection/segmentation
-        images_aug = np.empty(shape=[images.shape[0],
-                                     self.prm.network.IMAGE_HEIGHT,
-                                     self.prm.network.IMAGE_WIDTH,
-                                     3],
-                              dtype=np.uint8)
-        labels_aug = np.empty(shape=[len(labels)], dtype=np.int)
+        # images_aug = np.empty(shape=[image.shape[0],
+        #                              self.prm.network.IMAGE_HEIGHT,
+        #                              self.prm.network.IMAGE_WIDTH,
+        #                              3],
+        #                       dtype=np.uint8)
+        # labels_aug = np.empty(shape=[len(label)], dtype=np.int)
 
-        for i in xrange(images.shape[0]):
-            image_orig = images[i]
-            label      = labels[i]
+        image_orig = image
 
-            # scaling
-            image, scale, orig_dims = scale_img(image_orig, self.prm.network.IMAGE_WIDTH, self.prm.network.IMAGE_HEIGHT)
-            assert orig_dims == (1280, 720), 'The original dims are ({},{})'.format(orig_dims[0], orig_dims[1])
-            H, W, D = image.shape
+        # scaling
+        image, scale, orig_dims = scale_img(image_orig, self.prm.network.IMAGE_WIDTH, self.prm.network.IMAGE_HEIGHT)
+        assert orig_dims == (1280, 720), 'The original dims are ({},{})'.format(orig_dims[0], orig_dims[1])
+        H, W, D = image.shape
 
-            # augmentation
+        # augmentation
+        if with_augmentation:
             min_drift_x = -self.drift_x
             max_drift_x =  self.drift_x
             min_drift_y = -self.drift_y
@@ -45,7 +44,7 @@ class ParkProcessor(PreProcessorBase):
             if self.flip_image and self.rand_gen.randint(2) > 0.5:
                 image = image[:, ::-1, :]
 
-            images_aug[i] = image
-            labels_aug[i] = label  # for classification task
+        images_aug = image
+        labels_aug = label  # for classification task
 
         return images_aug, labels_aug
