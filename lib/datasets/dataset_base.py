@@ -34,6 +34,7 @@ class DataSetBase(AgentBase):
             self.log.error(err_str)
             raise NameError(err_str)
 
+        self.set_additional_config()
         self.pool = None  # list of indices which can be chosen for a batch
         self.minibatch_server = MiniBatchServer(self.name + '_MiniBatchServer', self.prm)  # server used for non stochastic mini batches
 
@@ -52,3 +53,6 @@ class DataSetBase(AgentBase):
         """Must be called immidiately after __init__"""
         self.pool = range(self.size)  # list of indices which can be chosen for a batch
         self.minibatch_server.set_pool(self.pool)
+
+    def set_additional_config(self):
+        pass

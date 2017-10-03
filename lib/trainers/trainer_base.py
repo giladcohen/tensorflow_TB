@@ -66,7 +66,8 @@ class TrainerBase(AgentBase):
         self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')  # use get_session for Session object
         self.summary_writer_train = tf.summary.FileWriter(self.train_dir)  # for training
         self.summary_writer_eval  = tf.summary.FileWriter(self.eval_dir)   # for evaluation
-        self.tb_logger_eval = TBLogger(self.summary_writer_eval)
+        self.tb_logger_train = TBLogger(self.summary_writer_train)
+        self.tb_logger_eval  = TBLogger(self.summary_writer_eval)
 
     def print_stats(self):
         '''print basic train parameters'''
