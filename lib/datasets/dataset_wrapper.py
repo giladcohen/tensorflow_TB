@@ -50,29 +50,29 @@ class DatasetWrapper(object):
     def get_mini_batch_validate(self, *args, **kwargs):
         return self.validation_dataset.get_mini_batch(*args, **kwargs)
 
-    def verify_dataset(self):
-        if self.train_images_dir       is None or \
-           self.train_labels_file      is None or \
-           self.validation_images_dir  is None or \
-           self.validation_labels_file is None or \
-           self.dataset_dir            is None:
-            err_str = 'One or more of the train/validation paths is None'
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-
-        dirname = os.path.dirname
-        if dirname(self.train_images_dir)       != self.dataset_dir or \
-           dirname(self.train_labels_file)      != self.dataset_dir or \
-           dirname(self.validation_images_dir)  != self.dataset_dir or \
-           dirname(self.validation_labels_file) != self.dataset_dir:
-            err_str = 'One or more of the train/validation paths is not in {}'.format(self.dataset_dir)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-
-        if not os.path.exists(self.dataset_dir):
-            os.makedirs(self.train_images_dir)
-            os.makedirs(self.validation_images_dir)
-            self.log.info('Creating {} dataset into {}. This may take a while'.format(self.dataset_name, self.dataset_dir))
-            misc.save_cifar10_to_disk(self.train_images_dir, self.train_labels_file,
-                                      self.validation_images_dir, self.validation_labels_file)
-            self.log.info('dataset {} was successfully written to {}.'.format(self.dataset_name, self.dataset_dir))
+    # def verify_dataset(self):
+    #     if self.train_images_dir       is None or \
+    #        self.train_labels_file      is None or \
+    #        self.validation_images_dir  is None or \
+    #        self.validation_labels_file is None or \
+    #        self.dataset_dir            is None:
+    #         err_str = 'One or more of the train/validation paths is None'
+    #         self.log.error(err_str)
+    #         raise AssertionError(err_str)
+    #
+    #     dirname = os.path.dirname
+    #     if dirname(self.train_images_dir)       != self.dataset_dir or \
+    #        dirname(self.train_labels_file)      != self.dataset_dir or \
+    #        dirname(self.validation_images_dir)  != self.dataset_dir or \
+    #        dirname(self.validation_labels_file) != self.dataset_dir:
+    #         err_str = 'One or more of the train/validation paths is not in {}'.format(self.dataset_dir)
+    #         self.log.error(err_str)
+    #         raise AssertionError(err_str)
+    #
+    #     if not os.path.exists(self.dataset_dir):
+    #         os.makedirs(self.train_images_dir)
+    #         os.makedirs(self.validation_images_dir)
+    #         self.log.info('Creating {} dataset into {}. This may take a while'.format(self.dataset_name, self.dataset_dir))
+    #         misc.save_cifar10_to_disk(self.train_images_dir, self.train_labels_file,
+    #                                   self.validation_images_dir, self.validation_labels_file)
+    #         self.log.info('dataset {} was successfully written to {}.'.format(self.dataset_name, self.dataset_dir))

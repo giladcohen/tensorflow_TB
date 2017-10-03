@@ -15,7 +15,9 @@ from lib.models.wide_resnet_28_10 import WideResNet_28_10
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
 from lib.datasets.dataset import DataSet
 from lib.datasets.active_dataset import ActiveDataSet
-
+from lib.datasets.parking_dataset import ParkingDataSet
+from lib.trainers.parking_trainer import ParkingTrainer
+from lib.preprocessors.park_preprocessor import ParkProcessor
 
 class Factories(object):
     """Class which encapsulate all factories in the TB"""
@@ -31,7 +33,9 @@ class Factories(object):
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
 
     def get_train_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': ActiveDataSet}
+        available_datasets = {'cifar10': DataSet,
+                              'active_cifar10': ActiveDataSet,
+                              'parking': ParkingDataSet}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
             dataset.initialize_pool()
@@ -43,7 +47,9 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_validation_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': DataSet}
+        available_datasets = {'cifar10': DataSet,
+                              'active_cifar10': DataSet,
+                              'parking': ParkingDataSet}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
             dataset.initialize_pool()
@@ -66,7 +72,8 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_preprocessor(self):
-        available_preprocessors = {'preprocessor_drift_flip': PreProcessor}
+        available_preprocessors = {'preprocessor_drift_flip': PreProcessor,
+                                   'parking': ParkProcessor}
         if self.preprocessor in available_preprocessors:
             preprocessor = available_preprocessors[self.preprocessor](self.preprocessor, self.prm)
             self.log.info('get_preprocessor: returning ' + str(preprocessor))
@@ -82,7 +89,8 @@ class Factories(object):
                               'all_centers'               : AllCentersTrainer,
                               'class_centers'             : ClassCentersTrainer,
                               'most_uncertained'          : MostUncertainedTrainer,
-                              'most_uncertained_balanced' : MostUncertainedBalancedTrainer}
+                              'most_uncertained_balanced' : MostUncertainedBalancedTrainer,
+                              'parking'                   : ParkingTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
