@@ -19,14 +19,14 @@ class DataSetBase(AgentBase):
             self.size          = self.prm.dataset.TRAIN_SET_SIZE
             self.batch_size    = self.prm.train.train_control.TRAIN_BATCH_SIZE
             self.images_dir    = self.prm.dataset.TRAIN_IMAGES_DIR
-            self.labels_file   = self.prm.dataset.TRAIN_LABELS_FILE
+            #self.labels_file   = self.prm.dataset.TRAIN_LABELS_FILE
             self.to_preprocess = True
             self.stochastic    = self.prm.dataset.STOCHASTIC
         elif 'validation' in name:
             self.size          = self.prm.dataset.VALIDATION_SET_SIZE
             self.batch_size    = self.prm.train.train_control.EVAL_BATCH_SIZE
             self.images_dir    = self.prm.dataset.VALIDATION_IMAGES_DIR
-            self.labels_file   = self.prm.dataset.VALIDATION_LABELS_FILE
+            #self.labels_file   = self.prm.dataset.VALIDATION_LABELS_FILE
             self.to_preprocess = False
             self.stochastic    = False  # TODO(gilad): Currently not in use. Deploy for eval_step in trainer
         else:
