@@ -50,9 +50,6 @@ class TrainerBase(AgentBase):
         else:
             self._activate_eval = True
 
-        # set seed
-        tf.set_random_seed(self.prm.SUPERSEED)
-
         # agents
         self.sess = None
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks

@@ -38,6 +38,7 @@ def get_params(train_config):
     return prm
 
 def train(prm):
+    tf.set_random_seed(prm.SUPERSEED)
     factories = Factories(prm)
 
     model        = factories.get_model()

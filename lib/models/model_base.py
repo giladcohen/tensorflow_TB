@@ -76,6 +76,7 @@ class ModelBase(AgentBase):
         self.optimizer          = tf.contrib.framework.model_variable(
             name='optimizer', dtype=tf.string, shape=[],
             initializer=tf.constant_initializer(self.prm.network.optimization.OPTIMIZER), trainable=False)
+        self.init_op = tf.global_variables_initializer()
 
     def _set_params(self):
         self.assign_ops['lrn_rate'] = self.lrn_rate.assign(self.prm.network.optimization.LEARNING_RATE)

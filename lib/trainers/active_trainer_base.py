@@ -56,9 +56,10 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.add_new_samples(new_indices)        # add new indices to train dataset
         self.debug_ops()
 
-        # reset learning rate to initial value
+        # reset learning rate to initial value, retention memory and model weights
         self.learning_rate_hook.reset_learning_rate()
         self.retention.reset_memory()
+        self.sess.run(self.model.init_op)
 
     @abstractmethod
     def select_new_samples(self):
