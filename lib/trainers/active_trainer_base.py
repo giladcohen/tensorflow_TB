@@ -7,7 +7,6 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from math import ceil
 import os
-from utils.misc import print_numpy
 from sklearn.decomposition import PCA
 
 
@@ -57,9 +56,9 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.debug_ops()
 
         # reset learning rate to initial value, retention memory and model weights
+        self.init_weights()
         self.learning_rate_hook.reset_learning_rate()
         self.retention.reset_memory()
-        self.sess.run(self.model.init_op)
 
     @abstractmethod
     def select_new_samples(self):
@@ -162,3 +161,12 @@ class ActiveTrainerBase(ClassificationTrainer):
             self.log.error(err_str)
             raise AssertionError(err_str)
         return ret
+
+    def init_weights(self):
+        self.log.info('Start initializing weight in global step={}'.format(self.global_step))
+        self.get_session(self.sess).run(self.model.init_op)
+        self.log.info('Done initializing weight in global step={}'.format(self.global_step))
+        # with tf.Session() as sess:
+        #     self.log.info("Start initializing model weights.")
+        #     sess.run(self.model.init_op)
+        #     self.log.info("Done initializing model weights.")
