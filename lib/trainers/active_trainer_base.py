@@ -164,9 +164,15 @@ class ActiveTrainerBase(ClassificationTrainer):
 
     def init_weights(self):
         self.log.info('Start initializing weight in global step={}'.format(self.global_step))
+        # save global step and learning rate
+        dummy_feed_dict = self._get_dummy_feed()
+        [global_step, lrn_rate] = self.sess.run([self.model.global_step, self.model.lrn_rate], feed_dict=dummy_feed_dict)
+        assert global_step == self.global_step, 'global_step={} and self.global_step={}'.format(global_step, self.global_step)  #debug
+
+        # initialize all weights
         self.get_session(self.sess).run(self.model.init_op)
         self.log.info('Done initializing weight in global step={}'.format(self.global_step))
-        # with tf.Session() as sess:
-        #     self.log.info("Start initializing model weights.")
-        #     sess.run(self.model.init_op)
-        #     self.log.info("Done initializing model weights.")
+
+        # restore model global rate and learning rate
+        self.get_session(self.sess).run([self.model.global_step.assign(self.global_step), self.model.lrn_rate.assign(lrn_rate)])
+        self.log.info('Done restoring global_step ({}) and learning rate ({})'.format(self.global_step, lrn_rate))
