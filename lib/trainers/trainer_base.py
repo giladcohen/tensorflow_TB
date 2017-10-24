@@ -52,6 +52,7 @@ class TrainerBase(AgentBase):
 
         # agents
         self.sess = None
+        self.sess_unmonitored = None  # for operations that cannot/shouldn't run on the monitored session
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks
         self.retention = Retention('Retention', self.prm)  # for logging and setting lrn rate
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.retention)
@@ -117,6 +118,8 @@ class TrainerBase(AgentBase):
             save_checkpoint_secs=self.checkpoint_secs,
             config=tf.ConfigProto(allow_soft_placement=True))
 
+        self.sess_unmonitored = self.get_session(self.sess)
+
         self.set_params()
 
         while not self.sess.should_stop():
@@ -145,9 +148,11 @@ class TrainerBase(AgentBase):
         # collecting the model values stored previously in the model:
         dummy_feed_dict = self._get_dummy_feed() # tensorflow complains "no placeholder value" without this dummy feed
         [self.global_step, lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
-            self.sess.run([self.model.global_step, self.model.lrn_rate, self.model.xent_rate,
-                           self.model.weight_decay_rate, self.model.relu_leakiness, self.model.optimizer],
-                           feed_dict=dummy_feed_dict)
+            self.sess_unmonitored.run([self.model.global_step, self.model.lrn_rate, self.model.xent_rate,
+                        self.model.weight_decay_rate, self.model.relu_leakiness, self.model.optimizer])
+            #self.sess.run([self.model.global_step, self.model.lrn_rate, self.model.xent_rate,
+            #                self.model.weight_decay_rate, self.model.relu_leakiness, self.model.optimizer],
+            #                feed_dict=dummy_feed_dict)
         assign_ops = []
         if not np.isclose(lrn_rate, self.prm.network.optimization.LEARNING_RATE):
             assign_ops.append(self.model.assign_ops['lrn_rate'])
@@ -169,7 +174,7 @@ class TrainerBase(AgentBase):
             assign_ops.append(self.model.assign_ops['optimizer'])
             self.log.warning('changing model.optimizer from {} to {}'.
                              format(optimizer, self.prm.network.optimization.OPTIMIZER))
-        self.sess.run(assign_ops, feed_dict=dummy_feed_dict)
+        self.sess_unmonitored.run(assign_ops)
 
     def _get_dummy_feed(self):
         """Getting dummy feed to bypass tensorflow (possible bug?) complaining about no placeholder value"""
