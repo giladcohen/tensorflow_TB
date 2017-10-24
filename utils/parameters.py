@@ -294,6 +294,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.ROOT_DIR              = None  # string: path to root dir that contain train/validation dirs
         self.TRAIN_DIR             = None  # string: path to train dir
         self.EVAL_DIR              = None  # string: path to validation dir
+        self.PREDICTION_DIR        = None  # string: path to prediction dir
         self.CHECKPOINT_DIR        = None  # string: path to checkpoint dir
         self.SUMMARY_STEPS         = None  # integer: training steps to collect summary
         self.CHECKPOINT_SECS       = None  # integer: number of seconds to save new checkpoint
@@ -323,6 +324,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'ROOT_DIR'             , self.ROOT_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_DIR'            , self.TRAIN_DIR)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_DIR'             , self.EVAL_DIR)
+        self.set_to_config(do_save_none, section_name, config, 'PREDICTION_DIR'       , self.PREDICTION_DIR)
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_DIR'       , self.CHECKPOINT_DIR)
         self.set_to_config(do_save_none, section_name, config, 'SUMMARY_STEPS'        , self.SUMMARY_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_SECS'      , self.CHECKPOINT_SECS)
@@ -347,6 +349,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'ROOT_DIR'             , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_DIR'            , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_DIR'             , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'PREDICTION_DIR'       , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_DIR'       , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'SUMMARY_STEPS'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_SECS'      , int)

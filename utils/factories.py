@@ -86,6 +86,7 @@ class Factories(object):
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
+            trainer.build()
             return trainer
         else:
             err_str = 'get_trainer: trainer {} was not found. Available trainers are: {}'.format(self.trainer, available_trainers.keys())

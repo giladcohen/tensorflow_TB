@@ -58,7 +58,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         # reset learning rate to initial value, retention memory and model weights
         self.init_weights()
         self.learning_rate_hook.reset_learning_rate()
-        self.retention.reset_memory()
+        self.validation_retention.reset_memory()
 
     @abstractmethod
     def select_new_samples(self):
@@ -105,8 +105,8 @@ class ActiveTrainerBase(ClassificationTrainer):
             else:
                 e = i * self.eval_batch_size + last_batch_size
             images, labels = dataset.get_mini_batch(indices=range(b, e))
-            net, predictions = self.sess.run([self.model.net, self.model.predictions_prob],
-                                feed_dict={self.model.images     : images,
+            net, predictions = self.train_session.run([self.model.net, self.model.predictions_prob],
+                                                      feed_dict={self.model.images     : images,
                                            self.model.labels     : labels,
                                            self.model.is_training: False})
             features_vec[b:e]    = np.reshape(net['embedding_layer'], (e - b, self.embedding_dims))
@@ -138,7 +138,7 @@ class ActiveTrainerBase(ClassificationTrainer):
             self.log.info('Saving model_ref for global_step={} with pool size={}'.format(self.global_step, lp))
             checkpoint_file = os.path.join(self.checkpoint_dir, 'model_pool_{}.ckpt'.format(lp))
             pool_info_file = os.path.join(self.root_dir, 'pool_info_{}'.format(lp))
-            self.saver.save(self.get_session(self.sess),
+            self.saver.save(self.get_session(self.train_session),
                             checkpoint_file,
                             global_step=self.global_step)
             self.dataset.train_dataset.save_pool_data(pool_info_file)
@@ -165,7 +165,6 @@ class ActiveTrainerBase(ClassificationTrainer):
     def init_weights(self):
         self.log.info('Start initializing weight in global step={}'.format(self.global_step))
         # save global step
-        dummy_feed_dict = self._get_dummy_feed()
         # global_step = self.sess.run(self.model.global_step, feed_dict=dummy_feed_dict)
         global_step = self.sess_unmonitored.run(self.model.global_step)
         assert global_step == self.global_step, 'global_step={} and self.global_step={}'.format(global_step, self.global_step)  #debug
