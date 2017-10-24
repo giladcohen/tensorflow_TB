@@ -81,7 +81,6 @@ class ModelBase(AgentBase):
 
     def _set_params(self):
         self.assign_ops['global_step_ow'] =  self.global_step.assign(self.global_step_ph)
-        self.assign_ops['lrn_rate_ow'] =  self.lrn_rate.assign(self.lrn_rate_ph)
         self.assign_ops['lrn_rate'] = self.lrn_rate.assign(self.prm.network.optimization.LEARNING_RATE)
         self.assign_ops['xent_rate'] = self.xent_rate.assign(self.prm.network.optimization.XENTROPY_RATE)
         self.assign_ops['weight_decay_rate'] = self.weight_decay_rate.assign(self.prm.network.optimization.WEIGHT_DECAY_RATE)
@@ -92,8 +91,7 @@ class ModelBase(AgentBase):
     def _set_placeholders(self):
         '''Setting up inputs for the network'''
         self.is_training = tf.placeholder(tf.bool)
-        self.global_step_ph = tf.placeholder(tf.int32)
-        self.lrn_rate_ph = tf.placeholder(tf.float32)
+        self.global_step_ph = tf.placeholder(tf.int64)
 
     @abstractmethod
     def _build_inference(self):
