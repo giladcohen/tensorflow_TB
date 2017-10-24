@@ -52,7 +52,7 @@ class TrainerBase(AgentBase):
 
         # agents
         self.sess = None
-        self.sess_unmonitored = None  # for operations that cannot/shouldn't run on the monitored session
+        self.sess_unmonitored = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))  # for operations that cannot/shouldn't run on the monitored session
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks
         self.retention = Retention('Retention', self.prm)  # for logging and setting lrn rate
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.retention)
@@ -117,8 +117,6 @@ class TrainerBase(AgentBase):
             chief_only_hooks=[summary_hook],
             save_checkpoint_secs=self.checkpoint_secs,
             config=tf.ConfigProto(allow_soft_placement=True))
-
-        self.sess_unmonitored = self.get_session(self.sess)
 
         self.set_params()
 

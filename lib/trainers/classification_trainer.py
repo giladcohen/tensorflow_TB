@@ -37,7 +37,7 @@ class ClassificationTrainer(TrainerBase):
             else:
                 e = i * self.eval_batch_size + self.last_eval_batch_size
             images, labels = self.dataset.get_mini_batch_validate(indices=range(b, e))
-            (summaries, loss, train_step, predictions) = self.sess.run(
+            (summaries, loss, train_step, predictions) = self.sess_unmonitored.run(
                 [self.model.summaries, self.model.cost,
                  self.model.global_step, self.model.predictions],
                 feed_dict={self.model.images     : images,
