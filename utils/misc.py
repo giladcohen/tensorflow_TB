@@ -130,3 +130,15 @@ def plot_embedding2(vis_x, vis_y, c, title=None):
     if title is not None:
         plt.title(title)
     plt.show()
+
+def get_plain_session(sess):
+    """
+    Bypassing tensorflow issue:
+    https://github.com/tensorflow/tensorflow/issues/8425
+    :param sess: Monitored session
+    :return: Session object
+    """
+    session = sess
+    while type(session).__name__ != 'Session':
+        session = session._sess
+    return session

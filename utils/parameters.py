@@ -216,7 +216,8 @@ class ParametersNetworkSystem(parser_utils.FrozenClass):
     def __init__(self):
         super(ParametersNetworkSystem, self).__init__()
 
-        self.RELU_LEAKINESS = None                 # float: The leakiness of the ReLU activation
+        self.RELU_LEAKINESS    = None                 # float: The leakiness of the ReLU activation
+        self.DROPOUT_KEEP_PROB = None                 # float: The probability to keep neurons after the global pooling
 
         self._freeze()
 
@@ -225,11 +226,14 @@ class ParametersNetworkSystem(parser_utils.FrozenClass):
 
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
-        self.set_to_config(do_save_none, section_name, config, 'RELU_LEAKINESS', self.RELU_LEAKINESS)
+        self.set_to_config(do_save_none, section_name, config, 'RELU_LEAKINESS'   , self.RELU_LEAKINESS)
+        self.set_to_config(do_save_none, section_name, config, 'DROPOUT_KEEP_PROB', self.DROPOUT_KEEP_PROB)
+
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
-        self.parse_from_config(self, override_mode, section_name, parser, 'RELU_LEAKINESS', float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'RELU_LEAKINESS'   , float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DROPOUT_KEEP_PROB', float)
 
 class ParametersNetworkOptimization(parser_utils.FrozenClass):
     def __init__(self):

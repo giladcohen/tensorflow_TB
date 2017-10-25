@@ -21,9 +21,20 @@ class ResNet(ClassifierModel):
 
     def print_stats(self):
         super(ResNet, self).print_stats()
+        self.log.info(' DROPOUT_KEEP_PROB: {}'.format(self.prm.network.system.DROPOUT_KEEP_PROB))
         self.log.info(' NUM_RESIDUAL_UNITS: {}'.format(self.num_residual_units))
         self.log.info(' NORMALIZE_EMBEDDING: {}'.format(self.normalize_embedding))
         self.log.info(' EMBEDDING_DIMS: {}'.format(self.embedding_dims))
+
+    def _init_params(self):
+        super(ResNet, self)._init_params()
+        self.dropout_keep_prob = tf.contrib.framework.model_variable(
+            name='dropout_keep_prob', dtype=tf.float32, shape=[],
+            initializer=tf.constant_initializer(self.prm.network.system.DROPOUT_KEEP_PROB), trainable=False)
+
+    def _set_params(self):
+        super(ResNet, self)._set_params()
+        self.assign_ops['dropout_keep_prob'] = self.dropout_keep_prob.assign(self.prm.network.system.DROPOUT_KEEP_PROB)
 
     def _build_inference(self):
         """building the inference model of ResNet"""
@@ -58,6 +69,7 @@ class ResNet(ClassifierModel):
             x = relu(x, self.relu_leakiness)
             x = global_avg_pool(x)
             x = self.post_pool_operations(x)
+            x = tf.nn.dropout(x, keep_prob=self.dropout_keep_prob)
             if self.normalize_embedding:
                 x = slim.unit_norm(x, dim=1, scope='normalize_vec')
                 variable_summaries('embedding', x)

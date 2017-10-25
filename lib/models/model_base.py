@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from lib.base.agent_base import AgentBase
 
-
 class ModelBase(AgentBase):
     __metaclass__ = ABCMeta
     """base model class for NNs"""

@@ -8,6 +8,7 @@ import tensorflow as tf
 from lib.base.agent_base import AgentBase
 from lib.base.collections import TRAIN_SUMMARIES
 import utils
+from utils.misc import get_plain_session
 from lib.retention import Retention
 from utils.tensorboard_logging import TBLogger
 
@@ -44,7 +45,7 @@ class TrainerBase(AgentBase):
         self.debug_mode            = self.prm.DEBUG_MODE
 
         # variables
-        self.global_step    = 0
+        self.global_step = -1
         if self.skip_first_evaluation:
             self.log.info('skipping evaluation for global_step=0')
             self._activate_eval = False
@@ -55,6 +56,8 @@ class TrainerBase(AgentBase):
         """
         Building all trainer agents: train/validation/test sessions, file writers, retentions, hooks, etc.
         """
+        self.mode = None  # current mode: 'train'/'validation'/'prediction'
+        self.sess = None  # current session, for training/validation/prediction
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks
         self.model.build_graph()
         self.print_model_info()
@@ -67,8 +70,13 @@ class TrainerBase(AgentBase):
         self.build_train_env()
         self.build_prediction_env()
 
-        #FIXME(gilad): Remove the dependancy in validation_retention and move into build_train_env
-        self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.validation_retention)
+        # creating train monitored session for automatically initializing the graph, running 'begin' function for
+        # all hooks and using scaffold to finalize the graph. If there is a checkpoint already in the checkpoint_dir,
+        # then it recovers the weights on the graph. Closing this session immediately after.
+        self.finalize_graph()
+
+        # Allow overwriting some parameters and optimizer on the graph from new parameter file.
+        self.set_params()
 
     def build_train_env(self):
         self.log.info("Starting building the train environment")
@@ -128,25 +136,8 @@ class TrainerBase(AgentBase):
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('score', self.model.score))
 
     def train(self):
-
-        # creating train monitored session for automatically initializing the graph, running 'begin' function for
-        # all hooks and using scaffold to finalize the graph. If there is a checkpoint already in the checkpoint_dir,
-        # then it recovers the weights on the graph. Closing this session immediately after.
-        self.finalize_graph()
-
-        # Allow overwriting some parameters and optimizer on the graph from new parameter file.
-        self.set_params()
-
-        train_session = tf.train.MonitoredTrainingSession(
-            checkpoint_dir=self.checkpoint_dir,
-            hooks=self.train_session_hooks,
-            save_checkpoint_secs=self.checkpoint_secs,
-            config=tf.ConfigProto(allow_soft_placement=True))
-
-        print('DEBUG: hey!')
-        
         while True:
-            if self.global_step % self.eval_steps == 0 and self._activate_eval:
+            if self.to_eval():
                 self.eval_step()
                 self._activate_eval = False
             else:
@@ -154,12 +145,8 @@ class TrainerBase(AgentBase):
                 self._activate_eval = True
 
     def finalize_graph(self):
-        with tf.train.MonitoredTrainingSession(
-            checkpoint_dir=self.checkpoint_dir,
-            hooks=self.train_session_hooks,
-            save_checkpoint_secs=self.checkpoint_secs,
-            config=tf.ConfigProto(allow_soft_placement=True)) as train_session:
-            self.global_step = train_session.run(self.model.global_step, feed_dict=self._get_dummy_feed())
+        self.sess = self.get_session('train')
+        self.global_step = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
 
     def print_model_info(self):
         param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
@@ -178,37 +165,35 @@ class TrainerBase(AgentBase):
         #FIXME(gilad): automate this function for all names: model_variables[i].op.name
         #model_variables = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)
 
-        with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-            ckpt_state = tf.train.get_checkpoint_state(self.prm.train.train_control.CHECKPOINT_DIR)
-            self.saver.restore(sess, ckpt_state.model_checkpoint_path)
+        self.sess = self.get_session('prediction')
 
-            [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
-                sess.run([self.model.lrn_rate, self.model.xent_rate,
-                          self.model.weight_decay_rate, self.model.relu_leakiness, self.model.optimizer])
+        [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
+            self.sess.run([self.model.lrn_rate, self.model.xent_rate, self.model.weight_decay_rate,
+                           self.model.relu_leakiness, self.model.optimizer])
 
-            assign_ops = []
-            if not np.isclose(lrn_rate, self.prm.network.optimization.LEARNING_RATE):
-                assign_ops.append(self.model.assign_ops['lrn_rate'])
-                self.log.warning('changing model.lrn_rate from {} to {}'.
-                                 format(lrn_rate, self.prm.network.optimization.LEARNING_RATE))
-            if not np.isclose(xent_rate, self.prm.network.optimization.XENTROPY_RATE):
-                assign_ops.append(self.model.assign_ops['xent_rate'])
-                self.log.warning('changing model.xent_rate from {} to {}'.
-                                 format(xent_rate, self.prm.network.optimization.XENTROPY_RATE))
-            if not np.isclose(weight_decay_rate, self.prm.network.optimization.WEIGHT_DECAY_RATE):
-                assign_ops.append(self.model.assign_ops['weight_decay_rate'])
-                self.log.warning('changing model.weight_decay_rate from {} to {}'.
-                                 format(weight_decay_rate, self.prm.network.optimization.WEIGHT_DECAY_RATE))
-            if not np.isclose(relu_leakiness, self.prm.network.system.RELU_LEAKINESS):
-                assign_ops.append(self.model.assign_ops['relu_leakiness'])
-                self.log.warning('changing model.relu_leakiness from {} to {}'.
-                                 format(relu_leakiness, self.prm.network.system.RELU_LEAKINESS))
-            if optimizer != self.prm.network.optimization.OPTIMIZER:
-                assign_ops.append(self.model.assign_ops['optimizer'])
-                self.log.warning('changing model.optimizer from {} to {}'.
-                                 format(optimizer, self.prm.network.optimization.OPTIMIZER))
-            sess.run(assign_ops)
-            self.saver.save(sess, 'model.ckpt')
+        assign_ops = []
+        if not np.isclose(lrn_rate, self.prm.network.optimization.LEARNING_RATE):
+            assign_ops.append(self.model.assign_ops['lrn_rate'])
+            self.log.warning('changing model.lrn_rate from {} to {}'.
+                             format(lrn_rate, self.prm.network.optimization.LEARNING_RATE))
+        if not np.isclose(xent_rate, self.prm.network.optimization.XENTROPY_RATE):
+            assign_ops.append(self.model.assign_ops['xent_rate'])
+            self.log.warning('changing model.xent_rate from {} to {}'.
+                             format(xent_rate, self.prm.network.optimization.XENTROPY_RATE))
+        if not np.isclose(weight_decay_rate, self.prm.network.optimization.WEIGHT_DECAY_RATE):
+            assign_ops.append(self.model.assign_ops['weight_decay_rate'])
+            self.log.warning('changing model.weight_decay_rate from {} to {}'.
+                             format(weight_decay_rate, self.prm.network.optimization.WEIGHT_DECAY_RATE))
+        if not np.isclose(relu_leakiness, self.prm.network.system.RELU_LEAKINESS):
+            assign_ops.append(self.model.assign_ops['relu_leakiness'])
+            self.log.warning('changing model.relu_leakiness from {} to {}'.
+                             format(relu_leakiness, self.prm.network.system.RELU_LEAKINESS))
+        if optimizer != self.prm.network.optimization.OPTIMIZER:
+            assign_ops.append(self.model.assign_ops['optimizer'])
+            self.log.warning('changing model.optimizer from {} to {}'.
+                             format(optimizer, self.prm.network.optimization.OPTIMIZER))
+
+        self.sess.run(assign_ops)
 
     def _get_dummy_feed(self):
         """Getting dummy feed to bypass tensorflow (possible bug?) complaining about no placeholder value"""
@@ -228,14 +213,43 @@ class TrainerBase(AgentBase):
         '''Implementing one evaluation step.'''
         pass
 
-    def get_session(self, sess):
+    def get_session(self, mode):
         """
-        Bypassing tensorflow issue:
-        https://github.com/tensorflow/tensorflow/issues/8425
-        :param sess: Monitored session
-        :return: Session object
+        Returns a training/validation/prediction session.
+        :param mode:  string of 'train'/'validation'/'prediction'
+        :return: session or monitored session
         """
-        session = sess
-        while type(session).__name__ != 'Session':
-            session = session._sess
-        return session
+
+        if self.sess is None:
+            # This should be the case only in the first time we call this function
+            assert self.mode is None, 'sess in None but mode={}'.format(self.mode)
+            self.log.info('Session is None at global_step={}.'.format(self.global_step))
+        elif mode == self.mode:
+            # do nothing
+            return self.sess
+        else:
+            self.log.info('Saving checkpoint before closing current {} session at global_step={}'.format(mode, self.global_step))
+            self.saver.save(get_plain_session(self.sess), 'model.ckpt')
+            self.log.info('Closing current {} session at global_step={}'.format(self.mode, self.global_step))
+            self.sess.close()
+
+        self.log.info('Starting new {} session for global_step={}'.format(mode, self.global_step))
+        if mode == 'train':
+            sess = tf.train.MonitoredTrainingSession(
+                checkpoint_dir=self.checkpoint_dir,
+                hooks=self.train_session_hooks,
+                save_checkpoint_secs=self.checkpoint_secs,
+                config=tf.ConfigProto(allow_soft_placement=True))
+        elif mode == 'validation' or mode == 'prediction':
+            sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+            self.saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_dir))
+        else:
+            err_str = 'mode {} is not expected in get_session()'.format(mode)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
+        self.mode = mode
+        return sess
+
+    def to_eval(self):
+        return self.global_step % self.eval_steps == 0 and self._activate_eval

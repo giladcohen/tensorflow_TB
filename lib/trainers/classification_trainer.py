@@ -20,15 +20,17 @@ class ClassificationTrainer(TrainerBase):
 
     def train_step(self):
         '''Implementing one training step'''
+        self.sess = self.get_session('train')
         images, labels = self.dataset.get_mini_batch_train()
-        _ , self.global_step = self.train_session.run([self.model.train_op, self.model.global_step],
-                                                      feed_dict={self.model.images: images,
-                                                        self.model.labels: labels,
-                                                        self.model.is_training: True})
+        _ , self.global_step = self.sess.run([self.model.train_op, self.model.global_step],
+                                              feed_dict={self.model.images: images,
+                                                         self.model.labels: labels,
+                                                         self.model.is_training: True})
 
     def eval_step(self):
         '''Implementing one evaluation step.'''
         self.log.info('start running eval within training. global_step={}'.format(self.global_step))
+        self.sess = self.get_session('validation')
         total_samples, total_score = 0, 0
         for i in range(self.eval_batch_count):
             b = i * self.eval_batch_size
@@ -37,7 +39,7 @@ class ClassificationTrainer(TrainerBase):
             else:
                 e = i * self.eval_batch_size + self.last_eval_batch_size
             images, labels = self.dataset.get_mini_batch_validate(indices=range(b, e))
-            (summaries, loss, train_step, predictions) = self.sess_unmonitored.run(
+            (summaries, loss, train_step, predictions) = self.sess.run(
                 [self.model.summaries, self.model.cost,
                  self.model.global_step, self.model.predictions],
                 feed_dict={self.model.images     : images,
