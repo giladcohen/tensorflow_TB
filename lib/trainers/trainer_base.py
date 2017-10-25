@@ -231,6 +231,11 @@ class TrainerBase(AgentBase):
             self.log.info('Saving checkpoint before closing current {} session at global_step={}'.format(mode, self.global_step))
             self.saver.save(get_plain_session(self.sess), 'model.ckpt')
             self.log.info('Closing current {} session at global_step={}'.format(self.mode, self.global_step))
+
+            # DEBUG
+            global_step = self.sess.run(self.model.global_step)
+            print('DEBUG1: global_step = {}'.format(global_step))
+            # END DEBUG
             self.sess.close()
 
         self.log.info('Starting new {} session for global_step={}'.format(mode, self.global_step))
@@ -240,6 +245,11 @@ class TrainerBase(AgentBase):
                 hooks=self.train_session_hooks,
                 save_checkpoint_secs=self.checkpoint_secs,
                 config=tf.ConfigProto(allow_soft_placement=True))
+
+            #DEBUG
+            global_step = sess.run(self.model.global_step)
+            print('DEBUG2: global_step = {}'.format(global_step))
+            # END DEBUG
         elif mode == 'validation' or mode == 'prediction':
             sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             self.saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_dir))
