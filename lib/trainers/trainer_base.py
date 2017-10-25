@@ -228,7 +228,7 @@ class TrainerBase(AgentBase):
             # do nothing
             return self.sess
         else:
-            self.log.info('Saving checkpoint before closing current {} session at global_step={}'.format(mode, self.global_step))
+            self.log.info('Saving checkpoint before closing current {} session at global_step={}'.format(self.mode, self.global_step))
             self.saver.save(get_plain_session(self.sess), 'model.ckpt')
             self.log.info('Closing current {} session at global_step={}'.format(self.mode, self.global_step))
             self.sess.close()
