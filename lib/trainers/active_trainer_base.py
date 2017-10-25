@@ -148,6 +148,10 @@ class ActiveTrainerBase(ClassificationTrainer):
         """
         :return: boolean. Whether or not to start an annotation phase
         """
+
+        if not self._activate_annot:
+            return False
+
         lp = self.dataset.train_dataset.pool_size()
         if self.annotation_rule == 'small_learning_rate':
             ret = self.learning_rate_hook.get_lrn_rate() < self.min_learning_rate and lp < self.cap
