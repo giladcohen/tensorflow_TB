@@ -20,12 +20,10 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
         if self._reset_lrn_rate is None:
             self.log.warning('LEARNING_RATE_RESET is None. Setting LEARNING_RATE_RESET=LEARNING_RATE')
             self._reset_lrn_rate = self.prm.network.optimization.LEARNING_RATE
+        self._lrn_rate = self._init_lrn_rate
 
     def __str__(self):
         return self.name
-
-    def begin(self):
-        self._lrn_rate = self._init_lrn_rate
 
     def before_run(self, run_context):
         return tf.train.SessionRunArgs(

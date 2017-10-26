@@ -48,16 +48,16 @@ class DataSet(DataSetBase):
 
     def get_mini_batch(self, batch_size=None, indices=None):
         if indices is not None:
-            return self.get_indices(indices)
+            return self.indices_to_data(indices)
         if batch_size is None:
             batch_size = self.batch_size
         if self.stochastic:
-            indices = np.random.choice(self.pool, batch_size, replace=False)
+            indices = self.rand_gen.choice(self.pool, batch_size, replace=False)
         else:
             indices = self.minibatch_server.get_mini_batch(batch_size)
-        return self.get_indices(indices)
+        return self.indices_to_data(indices)
 
-    def get_indices(self, indices):
+    def indices_to_data(self, indices):
         batch_size = len(indices)
         images = np.empty([batch_size, self.H, self.W, 3], np.uint8)
         labels = self.labels[indices]
@@ -67,3 +67,13 @@ class DataSet(DataSetBase):
         if self.to_preprocess:
             images, labels = self.preprocessor.process(images, labels)
         return images, labels
+
+    def save_pool_data(self, file_name):
+        """
+        :param file_name: File name prefix to save the pool info into it
+        :return: no return.
+        """
+        images, labels = self.indices_to_data(self.pool)
+        np.savetxt(file_name + '_pool.txt', self.pool, fmt='%0d')
+        np.save(file_name + '_images.npy', images)
+        np.savetxt(file_name + '_labels.txt', labels, fmt='%0d')

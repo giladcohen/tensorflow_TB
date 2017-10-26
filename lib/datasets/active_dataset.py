@@ -1,6 +1,7 @@
 import numpy as np
 from lib.datasets.dataset import DataSet
 
+
 class ActiveDataSet(DataSet):
 
     def __init__(self, *args, **kwargs):
@@ -8,6 +9,7 @@ class ActiveDataSet(DataSet):
         self.init_size = self.prm.dataset.INIT_SIZE
         self.clusters  = self.prm.dataset.CLUSTERS
         self.cap       = self.prm.dataset.CAP  # must not be None
+
         self.assert_config()
 
     def assert_config(self):
@@ -35,7 +37,7 @@ class ActiveDataSet(DataSet):
             indices = self.available_samples
             self.log.warning('Adding {} indices instead of {} to pool. pool is full'.format(len(indices), clusters))
         else:
-            indices = np.random.choice(self.available_samples, clusters, replace=False)
+            indices = self.rand_gen.choice(self.available_samples, clusters, replace=False)
             indices = indices.tolist()
         self.update_pool_with_indices(indices)
 

@@ -41,6 +41,4 @@ class Retention(AgentBase):
 
     def reset_memory(self):
         self.log.info('Reseting ' + self.__str__() + ' memory')
-        self.best_score = 0.0
-        self.best_score_step = 0
         self.memory = [0.0] * self.retention_size

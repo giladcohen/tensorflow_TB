@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from lib.datasets.minibatch_server import MiniBatchServer
 from lib.base.agent_base import AgentBase
+import numpy as np
 
 
 class DataSetBase(AgentBase):
@@ -11,6 +12,8 @@ class DataSetBase(AgentBase):
         super(DataSetBase, self).__init__(name)
         self.prm = prm
         self.preprocessor = preprocessor
+
+        self.rand_gen = np.random.RandomState(prm.SUPERSEED)
 
         if 'train' in name:
             self.size          = self.prm.dataset.TRAIN_SET_SIZE
@@ -32,7 +35,7 @@ class DataSetBase(AgentBase):
             raise NameError(err_str)
 
         self.pool = None  # list of indices which can be chosen for a batch
-        self.minibatch_server = MiniBatchServer(self.name + '_MiniBatchServer')  # server used for non stochastic mini batches
+        self.minibatch_server = MiniBatchServer(self.name + '_MiniBatchServer', self.prm)  # server used for non stochastic mini batches
 
     def print_stats(self):
         self.log.info(self.__str__() +' parameters:')

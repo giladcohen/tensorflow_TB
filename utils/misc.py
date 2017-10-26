@@ -6,6 +6,9 @@ import numpy as np
 from keras.datasets import cifar10
 import cv2
 import os
+import contextlib
+import matplotlib.pyplot as plt
+from matplotlib import offsetbox
 
 def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
     """Converts numpy data in the form:
@@ -72,3 +75,70 @@ def query_yes_no(question, default="yes"):
         else:
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
+
+def print_numpy(arr):
+    """
+    :param arr: numpy array
+    :return: no return
+    """
+    @contextlib.contextmanager
+    def printoptions(*args, **kwargs):
+        original = np.get_printoptions()
+        np.set_printoptions(*args, **kwargs)
+        try:
+            yield
+        finally:
+            np.set_printoptions(**original)
+
+    with printoptions(precision=3, suppress=True, formatter={'float': '{: 0.3f}'.format}):
+        print(arr)
+
+def plot_embedding(X, Y, title=None):
+    x_min, x_max = np.min(X, 0), np.max(X, 0)
+    X = (X - x_min) / (x_max - x_min)
+    plt.figure()
+    ax = plt.subplot(111)
+    for i in range(X.shape[0]):
+        plt.text(X[i, 0], X[i, 1], str(Y[i]),
+                 color=plt.cm.Set1(Y[i] / 10.),
+                 fontdict={'weight': 'bold', 'size': 9})
+    if hasattr(offsetbox, 'AnnotationBbox'):
+        ## only print thumbnails with matplotlib > 1.0
+        shown_images = np.array([[1., 1.]])  # just something big
+        for i in range(X.shape[0]):
+            dist = np.sum((X[i] - shown_images) ** 2, 1)
+            if np.min(dist) < 4e-3:
+                ## don't show points that are too close
+                continue
+            shown_images = np.r_[shown_images, [X[i]]]
+            imagebox = offsetbox.AnnotationBbox(
+                offsetbox.OffsetImage(X[i], cmap=plt.cm.gray_r),
+                X[i])
+            ax.add_artist(imagebox)
+    plt.xticks([]), plt.yticks([])
+    if title is not None:
+        plt.title(title)
+
+def plot_embedding2(vis_x, vis_y, c, title=None):
+    plt.figure()
+    plt.scatter(vis_x, vis_y, c=c, cmap=plt.cm.get_cmap("jet", 10))
+    plt.colorbar(ticks=range(10))
+    # plt.colorbar(ticks=['airplane', 'automobile', 'bird',
+    #                     'cat', 'deer', 'dog', 'frog', 'horse',
+    #                     'ship', 'truck'])
+    plt.clim(-0.5, 9.5)
+    if title is not None:
+        plt.title(title)
+    plt.show()
+
+def get_plain_session(sess):
+    """
+    Bypassing tensorflow issue:
+    https://github.com/tensorflow/tensorflow/issues/8425
+    :param sess: Monitored session
+    :return: Session object
+    """
+    session = sess
+    while type(session).__name__ != 'Session':
+        session = session._sess
+    return session

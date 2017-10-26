@@ -3,7 +3,11 @@ from __future__ import division
 import lib.logger.logger as logger
 from lib.preprocessors.preprocessor import PreProcessor
 from lib.trainers.classification_trainer import ClassificationTrainer
-from lib.trainers.active_trainer import ActiveTrainer
+from lib.trainers.random_sampler_trainer import RandomSamplerTrainer
+from lib.trainers.all_centers_trainer import AllCentersTrainer
+from lib.trainers.class_centers_trainer import ClassCentersTrainer
+from lib.trainers.most_uncertained_trainer import MostUncertainedTrainer
+from lib.trainers.most_uncertained_balanced_trainer import MostUncertainedBalancedTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
@@ -73,10 +77,16 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_trainer(self, model, dataset):
-        available_trainers = {'simple': ClassificationTrainer, 'active': ActiveTrainer}
+        available_trainers = {'simple'                    : ClassificationTrainer,
+                              'random_sampler'            : RandomSamplerTrainer,
+                              'all_centers'               : AllCentersTrainer,
+                              'class_centers'             : ClassCentersTrainer,
+                              'most_uncertained'          : MostUncertainedTrainer,
+                              'most_uncertained_balanced' : MostUncertainedBalancedTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
+            trainer.build()
             return trainer
         else:
             err_str = 'get_trainer: trainer {} was not found. Available trainers are: {}'.format(self.trainer, available_trainers.keys())

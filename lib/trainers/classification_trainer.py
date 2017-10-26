@@ -20,15 +20,17 @@ class ClassificationTrainer(TrainerBase):
 
     def train_step(self):
         '''Implementing one training step'''
+        self.sess = self.get_session('train')
         images, labels = self.dataset.get_mini_batch_train()
         _ , self.global_step = self.sess.run([self.model.train_op, self.model.global_step],
-                                             feed_dict={self.model.images: images,
-                                                        self.model.labels: labels,
-                                                        self.model.is_training: True})
+                                              feed_dict={self.model.images: images,
+                                                         self.model.labels: labels,
+                                                         self.model.is_training: True})
 
     def eval_step(self):
         '''Implementing one evaluation step.'''
         self.log.info('start running eval within training. global_step={}'.format(self.global_step))
+        self.sess = self.get_session('validation')
         total_samples, total_score = 0, 0
         for i in range(self.eval_batch_count):
             b = i * self.eval_batch_size
@@ -49,14 +51,14 @@ class ClassificationTrainer(TrainerBase):
         if total_samples != self.dataset.validation_dataset.size:
             self.log.error('total_samples equals {} instead of {}'.format(total_samples, self.dataset.validation_set.size))
         score = total_score / total_samples
-        self.retention.add_score(score, train_step)
+        self.validation_retention.add_score(score, train_step)
 
         self.tb_logger_eval.log_scalar('score', score, train_step)
-        self.tb_logger_eval.log_scalar('best score', self.retention.get_best_score(), train_step)
+        self.tb_logger_eval.log_scalar('best score', self.validation_retention.get_best_score(), train_step)
         self.summary_writer_eval.add_summary(summaries, train_step)
         self.summary_writer_eval.flush()
         self.log.info('EVALUATION (step={}): loss: {}, score: {}, best score: {}' \
-                      .format(train_step, loss, score, self.retention.get_best_score()))
+                      .format(train_step, loss, score, self.validation_retention.get_best_score()))
 
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()
