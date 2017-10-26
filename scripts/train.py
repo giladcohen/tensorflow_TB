@@ -47,13 +47,10 @@ def train(prm):
     preprocessor = factories.get_preprocessor()
     preprocessor.print_stats() #debug
 
-    train_dataset      = factories.get_train_dataset(preprocessor)
-    validation_dataset = factories.get_validation_dataset(preprocessor)
+    dataset = factories.get_dataset(preprocessor)
+    dataset.print_stats() #debug
 
-    dataset_wrapper =  DatasetWrapper(prm.dataset.DATASET_NAME + '_wrapper', prm, train_dataset, validation_dataset)
-    dataset_wrapper.print_stats()
-
-    trainer      = factories.get_trainer(model, dataset_wrapper)
+    trainer      = factories.get_trainer(model, dataset)
     trainer.print_stats() #debug
 
     trainer.train()

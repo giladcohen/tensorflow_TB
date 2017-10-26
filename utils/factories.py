@@ -13,6 +13,7 @@ from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.models.wide_resnet_28_10 import WideResNet_28_10
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
+from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.datasets.dataset import DataSet
 from lib.datasets.active_dataset import ActiveDataSet
 
@@ -30,27 +31,24 @@ class Factories(object):
         self.architecture         = self.prm.network.ARCHITECTURE
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
 
-    def get_train_dataset(self, preprocessor):
+    def get_dataset(self, preprocessor):
         available_datasets = {'cifar10': DataSet, 'active_cifar10': ActiveDataSet}
         if self.dataset_name in available_datasets:
-            dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
-            dataset.initialize_pool()
-            self.log.info('get_train_dataset: returning ' + str(dataset))
-            return dataset
-        else:
-            err_str = 'get_train_dataset: dataset {} was not found. Available datasets are: {}'.format(self.dataset_name, available_datasets.keys())
-            self.log.error(err_str)
-            raise AssertionError(err_str)
+            dataset = DatasetWrapper(self.dataset_name + '_wrapper', self.prm)
 
-    def get_validation_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': DataSet}
-        if self.dataset_name in available_datasets:
-            dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
-            dataset.initialize_pool()
-            self.log.info('get_validation_dataset: returning ' + str(dataset))
+            train_dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
+            train_dataset.initialize_pool()
+            dataset.set_train_dataset(train_dataset)
+            self.log.info('get_train_dataset: returning ' + str(train_dataset))
+
+            validation_dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
+            validation_dataset.initialize_pool()
+            dataset.set_validation_dataset(validation_dataset)
+            self.log.info('get_validation_dataset: returning ' + str(validation_dataset))
+
             return dataset
         else:
-            err_str = 'get_validation_dataset: dataset {} was not found. Available datasets are: {}'.format(self.dataset_name, available_datasets.keys())
+            err_str = 'get_dataset: dataset {} was not found. Available datasets are: {}'.format(self.dataset_name, available_datasets.keys())
             self.log.error(err_str)
             raise AssertionError(err_str)
 
