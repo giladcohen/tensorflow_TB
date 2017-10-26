@@ -228,8 +228,6 @@ class TrainerBase(AgentBase):
             # do nothing
             return self.sess
         else:
-            self.log.info('Saving checkpoint before closing current {} session at global_step={}'.format(self.mode, self.global_step))
-            # self.saver.save(get_plain_session(self.sess), 'model.ckpt')
             self.log.info('Closing current {} session at global_step={}'.format(self.mode, self.global_step))
             self.sess.close()
 
@@ -248,11 +246,7 @@ class TrainerBase(AgentBase):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        # DEBUG
-        # debug_global_step = sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
-        # print('DEBUG2: global_step = {}. mode={}. prev_mode={}'.format(debug_global_step, mode, self.mode))
-        # END DEBUG
-
+        self.log.info('DEBUG: global_step = {}. mode={}. prev_mode={}'.format(self.global_step, mode, self.mode))
         self.mode = mode
         return sess
 

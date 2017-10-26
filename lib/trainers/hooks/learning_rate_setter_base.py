@@ -25,9 +25,6 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
     def __str__(self):
         return self.name
 
-    # def begin(self):
-    #     self._lrn_rate = self._init_lrn_rate
-
     def before_run(self, run_context):
         return tf.train.SessionRunArgs(
             self.model.global_step,  # Asks for global step value.
