@@ -110,7 +110,7 @@ class ActiveTrainerBase(ClassificationTrainer):
                                                               self.model.labels           : labels,
                                                               self.model.is_training      : False,
                                                               self.model.dropout_keep_prob: dropout_keep_prob})
-            features_vec[b:e]    = np.reshape(features['embedding_layer'], (e - b, self.embedding_dims))
+            features_vec[b:e]    = np.reshape(features, (e - b, self.embedding_dims))
             predictions_vec[b:e] = np.reshape(predictions, (e - b, self.model.num_classes))
             total_samples += images.shape[0]
             self.log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
