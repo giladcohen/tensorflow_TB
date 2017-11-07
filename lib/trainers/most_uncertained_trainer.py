@@ -13,13 +13,13 @@ class MostUncertainedTrainer(ActiveTrainerBase):
         _, predictions_vec = self.collect_features('train')
 
         unlabeled_predictions_vec = predictions_vec[self.dataset.train_dataset.available_samples]
-        unlabeled_predictions_vec_dict = dict(zip(range(unlabeled_predictions_vec.shape[0]), self.dataset.train_dataset.available_samples))
+        unlabeled_vec_dict = dict(zip(range(unlabeled_predictions_vec.shape[0]), self.dataset.train_dataset.available_samples))
 
         #prediction
         self.log.info('Calculating the uncertainy score vector')
         u_vec = self.uncertainty_score(unlabeled_predictions_vec)
         unlabeled_predictions_indices = u_vec.argsort()[-self.dataset.train_dataset.clusters:]
-        new_indices = [unlabeled_predictions_vec_dict.values()[i] for i in unlabeled_predictions_indices]
+        new_indices = [unlabeled_vec_dict.values()[i] for i in unlabeled_predictions_indices]
 
         return new_indices
 
