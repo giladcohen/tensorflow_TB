@@ -9,10 +9,13 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import log_loss
 
 
-class CrossEntropyTrainer(ActiveTrainerBase):
-
+class CrossEntropyTrainer2(ActiveTrainerBase):
+    """
+    The difference between CrossEntropyTrainer2 and CrossEntropyTrainer is that in '2' the GT for the
+    cross entropy is the network prediction instead of the KNN prediction
+    """
     def __init__(self, *args, **kwargs):
-        super(CrossEntropyTrainer, self).__init__(*args, **kwargs)
+        super(CrossEntropyTrainer2, self).__init__(*args, **kwargs)
         self.num_classes = self.model.num_classes
 
     def select_new_samples(self):
@@ -36,14 +39,14 @@ class CrossEntropyTrainer(ActiveTrainerBase):
         # prediction
         self.log.info('Calculating the estimated labels probability based on KNN')
         estimated_labels_vec = nbrs.predict_proba(unlabeled_features_vec)
-        u_vec = self.uncertainty_score(estimated_labels_vec, unlabeled_predictions_vec)
+        u_vec = self.uncertainty_score(estimated_labels_vec, unlabeled_predictions_vec)  # FIXME(gilad): use parent class
 
         unlabeled_predictions_indices = u_vec.argsort()[-self.dataset.train_dataset.clusters:]
         new_indices = [unlabeled_vec_dict.values()[i] for i in unlabeled_predictions_indices]
 
         return new_indices
 
-    def uncertainty_score(self, y_pred_knn, y_pred_dnn):
+    def uncertainty_score(self, y_pred_dnn, y_pred_knn):
         """
         Calculates the uncertainty score based on the hamming loss of arr1 and arr2
         :param y_pred_knn: np.float32 array of the KNN probability
