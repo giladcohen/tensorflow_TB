@@ -11,6 +11,8 @@ from lib.trainers.most_uncertained_balanced_trainer import MostUncertainedBalanc
 from lib.trainers.cross_entropy_trainer import CrossEntropyTrainer
 from lib.trainers.cross_entropy_trainer2 import CrossEntropyTrainer2
 from lib.trainers.kmeans_on_most_uncertained_trainer import KMeansOnMostUncertainedTrainer
+from lib.trainers.knn_dnn_correlation_trainer import KnnDnnCorrelationTrainer
+from lib.trainers.most_uncertained_knn_trainer import MostUncertainedKnnTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
@@ -86,7 +88,9 @@ class Factories(object):
                               'most_uncertained_balanced'  : MostUncertainedBalancedTrainer,
                               'cross_entropy'              : CrossEntropyTrainer,
                               'cross_entropy2'             : CrossEntropyTrainer2,
-                              'kmeans_on_most_uncertained' : KMeansOnMostUncertainedTrainer}
+                              'kmeans_on_most_uncertained' : KMeansOnMostUncertainedTrainer,
+                              'knn_dnn_correlation'        : KnnDnnCorrelationTrainer,
+                              'most_uncertained_knn'       : MostUncertainedKnnTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
