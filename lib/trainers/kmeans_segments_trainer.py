@@ -9,7 +9,7 @@ from sklearn.metrics import log_loss
 import numpy as np
 
 
-class KMeansSegments(ActiveTrainerBase):
+class KMeansSegmentsTrainer(ActiveTrainerBase):
 
     def select_new_samples(self):
         self.num_classes = self.model.num_classes
