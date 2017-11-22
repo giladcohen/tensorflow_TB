@@ -32,7 +32,8 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
         segments = KM.predict(unlabeled_features_vec)
         unique, counts = np.unique(segments, return_counts=True)  # debug
         clusters_dict = dict(zip(unique, counts))                 # debug
-        assert len(unique) == 100, 'the length of unique must equal 100 (number of segments'
+        self.log.info('clusters_dict is: {}'.format(clusters_dict))
+        assert len(unique) == 100, 'the length of unique must equal 100 (number of segments) but it is {} instead'.format(len(unique))
 
         new_indices = []
         for segment_id in range(100):
@@ -42,7 +43,7 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
 
             # debug
             if features_for_segment.shape[0] < 10:
-                err_str = 'unlabeled_features_for_segment (segment_id={}) has less than {} elements'.format(segment_id, 10)
+                err_str = 'unlabeled_features_for_segment (segment_id={}) has only {} elements'.format(segment_id, features_for_segment.shape[0])
                 self.log.error(err_str)
                 raise AssertionError(err_str)
             if features_for_segment.shape[0] != clusters_dict[segment_id]:
@@ -62,7 +63,7 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
 
         return new_indices
 
-# debug
+# # debug
 # from __future__ import absolute_import
 # from __future__ import division
 # from __future__ import print_function
@@ -92,6 +93,7 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
 # segments = KM.predict(unlabeled_features_vec)
 # unique, counts = np.unique(segments, return_counts=True)  # debug
 # clusters_dict = dict(zip(unique, counts))                 # debug
+# print('clusters_dict is: {}'.format(clusters_dict))
 # assert len(unique) == 100, 'the length of unique must equal 100 (number of segments'
 #
 # new_indices = []
@@ -102,7 +104,7 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
 #
 #     # debug
 #     if features_for_segment.shape[0] < 10:
-#         err_str = 'unlabeled_features_for_segment (segment_id={}) has less than {} elements'.format(segment_id, 10)
+#         err_str = 'unlabeled_features_for_segment (segment_id={}) has only {} elements'.format(segment_id, features_for_segment.shape[ 0])
 #         raise AssertionError(err_str)
 #     if features_for_segment.shape[0] != clusters_dict[segment_id]:
 #         err_str = 'unlabeled_features_for_segment (segment_id={}) has {} elements instead of {}' \
