@@ -13,16 +13,16 @@ from lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
 from utils.misc import query_yes_no
 
-logging = logging_config()
-
-logging.disable(logging.DEBUG)
-log = logger.get_logger('main')
-
 def get_params(train_config):
     """get params and save them to root dir"""
     prm = Parameters()
     prm.override(train_config)
     parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'parameters.ini')
+    log_file       = os.path.join(prm.train.train_control.ROOT_DIR, 'minirunt.log')
+
+    logging = logging_config(log_file)
+    logging.disable(logging.DEBUG)
+    log = logger.get_logger('main')
 
     ret = True
     if os.path.isfile(parameter_file):
@@ -62,8 +62,7 @@ if __name__ == "__main__":
 
     train_config = args.c
     if not os.path.isfile(train_config):
-        log.error('Can not find file: {}'.format(train_config))
-        exit(-1)
+        raise AssertionError('Can not find file: {}'.format(train_config))
 
     prm = get_params(train_config)
 
