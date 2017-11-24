@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import warnings
 
 cwd = os.getcwd() # tensorflow-TB
 sys.path.insert(0, cwd)
@@ -20,13 +21,9 @@ def get_params(train_config):
     parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'parameters.ini')
     log_file       = os.path.join(prm.train.train_control.ROOT_DIR, 'minirunt.log')
 
-    logging = logging_config(log_file)
-    logging.disable(logging.DEBUG)
-    log = logger.get_logger('main')
-
     ret = True
     if os.path.isfile(parameter_file):
-        log.warning('Parameter file {} already exists'.format(parameter_file))
+        warnings.warn('Parameter file {} already exists'.format(parameter_file))
         ret = query_yes_no('Overwrite parameter file?')
 
     if ret:
@@ -34,6 +31,9 @@ def get_params(train_config):
         if not os.path.exists(dir):
             os.makedirs(dir)
         prm.save(parameter_file)
+
+    logging = logging_config(log_file)
+    logging.disable(logging.DEBUG)
 
     return prm
 
