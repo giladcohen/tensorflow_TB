@@ -44,7 +44,7 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
             budget_dict[segment_id] = int(np.round(selection_prob * clusters_dict[segment_id]))
 
         budget_sum_pre = np.sum(budget_dict.values())
-        self.log.info('budget_dict before updating is: {}\n the sum is {}'.format(budget_dict), budget_sum_pre)  # debug
+        self.log.info('budget_dict before updating is: {}\n the sum is {}'.format(budget_dict, budget_sum_pre))  # debug
 
         if np.sum(budget_sum_pre) == 1000:
             pass
@@ -60,7 +60,7 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
                     budget_dict[max_id] -= 1
 
         budget_sum_post = np.sum(budget_dict.values())
-        self.log.info('budget_dict after updating is: {}\n the sum is {}'.format(budget_dict), budget_sum_post)  # debug
+        self.log.info('budget_dict after updating is: {}\n the sum is {}'.format(budget_dict, budget_sum_post))  # debug
         if budget_sum_post != 1000:
             err_str = 'sum(budget_dict) equals {} instead of 1000'.format(budget_sum_post)
             self.log.error(err_str)
