@@ -88,15 +88,18 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
             u_vec = np.linalg.norm(diff_vec, ord=1, axis=1)
 
             self.log.info('Finding the farthest samples from the center of segment_id={}'.format(segment_id))
-            farthest_segment_indices = u_vec.argsort()[-budget_dict[segment_id]:]
-            farthest_indices = segment_indices[farthest_segment_indices]
-            new_indices_tmp =  [unlabeled_vec_dict.values()[i] for i in farthest_indices]
-            new_indices += new_indices_tmp
-            if len(new_indices_tmp) != budget_dict[segment_id]:
-                err_str = 'for segment_id={} len(new_indices_tmp) equals {} instead of budget_dict[segment_id]={}'\
-                    .format(segment_id, len(new_indices_tmp), budget_dict[segment_id])
-                self.log.error(err_str)
-                raise AssertionError(err_str)
+            if budget_dict[segment_id] > 0:
+                farthest_segment_indices = u_vec.argsort()[-budget_dict[segment_id]:]
+                farthest_indices = segment_indices[farthest_segment_indices]
+                new_indices_tmp =  [unlabeled_vec_dict.values()[i] for i in farthest_indices]
+                new_indices += new_indices_tmp
+                if len(new_indices_tmp) != budget_dict[segment_id]:
+                    err_str = 'for segment_id={} len(new_indices_tmp) equals {} instead of budget_dict[segment_id]={}'\
+                        .format(segment_id, len(new_indices_tmp), budget_dict[segment_id])
+                    self.log.error(err_str)
+                    raise AssertionError(err_str)
+            else:
+                self.log.info('for segment_id={} no new samples are chosen because budget_dict[segment_id] = 0'.format(segment_id))
 
         return new_indices
 
