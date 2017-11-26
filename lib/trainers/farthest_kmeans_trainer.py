@@ -30,7 +30,7 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
                     n_jobs=10)
         KM.fit(labeled_features_vec)
 
-        self.log.info('for each center, find 10 new farthest samples')
+        self.log.info('for each center, find new farthest samples')
         centers  = KM.cluster_centers_
         segments = KM.predict(unlabeled_features_vec)
         counts = np.bincount(segments, minlength=100)
@@ -43,10 +43,13 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
         for segment_id in range(100):
             budget_dict[segment_id] = int(np.round(selection_prob * clusters_dict[segment_id]))
 
-        if np.sum(budget_dict.values()) == 1000:
+        budget_sum_pre = np.sum(budget_dict.values())
+        self.log.info('budget_dict before updating is: {}\n the sum is {}'.format(budget_dict), budget_sum_pre)  # debug
+
+        if np.sum(budget_sum_pre) == 1000:
             pass
         else:
-            to_increase = np.sum(budget_dict.values()) < 1000
+            to_increase = budget_sum_pre < 1000
             while np.sum(budget_dict.values()) != 1000:
                 max_id = max(budget_dict, key=budget_dict.get)
                 self.log.info('changing the budget from segment_id={} from {}. to_increase={}'
@@ -55,6 +58,13 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
                     budget_dict[max_id] += 1
                 else:
                     budget_dict[max_id] -= 1
+
+        budget_sum_post = np.sum(budget_dict.values())
+        self.log.info('budget_dict after updating is: {}\n the sum is {}'.format(budget_dict), budget_sum_post)  # debug
+        if budget_sum_post != 1000:
+            err_str = 'sum(budget_dict) equals {} instead of 1000'.format(budget_sum_post)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
 
         new_indices = []
         for segment_id in range(100):
@@ -77,11 +87,16 @@ class FarthestKMeansTrainer(ActiveTrainerBase):
             diff_vec = features_for_segment - center
             u_vec = np.linalg.norm(diff_vec, ord=1, axis=1)
 
-            self.log.info('Finding the 10 farthest samples from the center of segment_id={}'.format(segment_id))
+            self.log.info('Finding the farthest samples from the center of segment_id={}'.format(segment_id))
             farthest_segment_indices = u_vec.argsort()[-budget_dict[segment_id]:]
             farthest_indices = segment_indices[farthest_segment_indices]
             new_indices_tmp =  [unlabeled_vec_dict.values()[i] for i in farthest_indices]
             new_indices += new_indices_tmp
+            if len(new_indices_tmp) != budget_dict[segment_id]:
+                err_str = 'for segment_id={} len(new_indices_tmp) equals {} instead of budget_dict[segment_id]={}'\
+                    .format(segment_id, len(new_indices_tmp), budget_dict[segment_id])
+                self.log.error(err_str)
+                raise AssertionError(err_str)
 
         return new_indices
 
