@@ -15,6 +15,7 @@ from lib.trainers.knn_dnn_correlation_trainer import KnnDnnCorrelationTrainer
 from lib.trainers.most_uncertained_knn_trainer import MostUncertainedKnnTrainer
 from lib.trainers.farthest_uncertained_samples_trainer import FarthestUncertainedSamplesTrainer
 from lib.trainers.kmeans_segments_trainer import KMeansSegmentsTrainer
+from lib.trainers.kmeans_segments_most_uncertained_knn import  KMeansSegmentsMostUncertainedKNNTrainer
 from lib.trainers.kmeans_segments_dynamic_trainer import KMeansSegmentsDynamicTrainer
 from lib.trainers.farthest_kmeans_trainer import FarthestKMeansTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
@@ -98,6 +99,7 @@ class Factories(object):
                               'farthest_uncertained_samples' : FarthestUncertainedSamplesTrainer,
                               'kmeans_segments'              : KMeansSegmentsTrainer,
                               'farthest_kmeans'              : FarthestKMeansTrainer,
+                              'kmeans_segments_most_uncertained_knn': KMeansSegmentsMostUncertainedKNNTrainer,
                               'kmeans_segments_dynamic'      : KMeansSegmentsDynamicTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
