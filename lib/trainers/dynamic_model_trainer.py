@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from lib.trainers.active_trainer_base import ActiveTrainerBase
 import numpy as np
+import tensorflow as tf
 
 
 class DynamicModelTrainer(ActiveTrainerBase):
@@ -44,6 +45,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.log.info('getting a new model for lp={}. resnet_filters={} and weight_decay_rate={}'
                       .format(lp, resnet_filters, weight_decay_rate))
 
+        tf.reset_default_graph()
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
         self.embedding_dims = resnet_filters[-1]
@@ -55,13 +57,11 @@ class DynamicModelTrainer(ActiveTrainerBase):
 
         # just to re-initialize the graph
         self.sess = self.get_session('train')
-        global_step_tmp = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
-        if global_step_tmp not in [self.global_step - 1, self.global_step, self.global_step + 1]:
-            err_str = 'global_step_tmp is {} but self.global_step is {}'.format(global_step_tmp, self.global_step)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
+        _ = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
+
+        self.log.info('resetting the global_step to={}'.format(self.global_step))
+        self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
 
         self.log.info('setting new weight_decay_rate={}'.format(weight_decay_rate))
         self.sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict={self.model.weight_decay_rate_ph: weight_decay_rate})
         self.log.info('Done restoring global_step ({})'.format(self.global_step))
-
