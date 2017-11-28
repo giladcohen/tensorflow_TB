@@ -26,13 +26,13 @@ class DynamicModelTrainer(ActiveTrainerBase):
         lp = self.dataset.train_dataset.pool_size()
         # [16, 160, 320, 640] for 50k samples. for 1k: [1, 3, 6, 13]. weight_decay for 1k: 0.0390625
         if lp == 2000:
-            resnet_filters    = np.array([1, 6, 13, 26])
+            resnet_filters    = np.array([2, 6, 14, 26])
             weight_decay_rate = 0.01953125
         elif lp == 3000:
-            resnet_filters = np.array([1, 10, 19, 38])
+            resnet_filters = np.array([2, 10, 20, 38])
             weight_decay_rate = 0.01302083333
         elif lp == 4000:
-            resnet_filters = np.array([1, 13, 26, 51])
+            resnet_filters = np.array([2, 14, 26, 52])
             weight_decay_rate = 0.009765625
         elif lp == 5000:
             resnet_filters = np.array([2, 16, 32, 64])
