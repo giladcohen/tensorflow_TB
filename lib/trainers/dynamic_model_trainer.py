@@ -24,7 +24,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
 
     def update_model(self):
         lp = self.dataset.train_dataset.pool_size()
-        # [16, 160, 320, 640] for 50k samples. for 1k: [1, 3, 6, 13]. weight_decay for 1k: 0.0390625
+        # [16, 160, 320, 640] for 50k samples. for 1k: [2, 4, 6, 14]. weight_decay for 1k: 0.0390625
         if lp == 2000:
             resnet_filters    = np.array([2, 6, 14, 26])
             weight_decay_rate = 0.01953125
