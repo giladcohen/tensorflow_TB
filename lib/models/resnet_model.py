@@ -18,6 +18,7 @@ class ResNet(ClassifierModel):
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
         self.normalize_embedding = self.prm.network.NORMALIZE_EMBEDDING
         self.embedding_dims = self.prm.network.EMBEDDING_DIMS
+        self.resnet_filters = self.prm.network.RESNET_FILTERS
 
     def print_stats(self):
         super(ResNet, self).print_stats()
@@ -25,6 +26,7 @@ class ResNet(ClassifierModel):
         self.log.info(' NUM_RESIDUAL_UNITS: {}'.format(self.num_residual_units))
         self.log.info(' NORMALIZE_EMBEDDING: {}'.format(self.normalize_embedding))
         self.log.info(' EMBEDDING_DIMS: {}'.format(self.embedding_dims))
+        self.log.info(' RESNET_FILTERS: {}'.format(self.resnet_filters))
 
     def _init_params(self):
         super(ResNet, self)._init_params()
@@ -44,7 +46,7 @@ class ResNet(ClassifierModel):
 
         strides = [1, 2, 2]
         activate_before_residual = [True, False, False]
-        filters = [16, 160, 320, 640] #WRN28-10
+        filters = self.resnet_filters  #WRN28-10
 
         with tf.variable_scope('unit_1_0'):
             x = self._residual(x, filters[1], stride_arr(strides[0]), activate_before_residual[0])

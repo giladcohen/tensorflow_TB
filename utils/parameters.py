@@ -95,6 +95,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.EMBEDDING_DIMS = None                     # integer: number of fully connected neurons before classifier
         self.BATCH_NORMALIZE_EMBEDDING = None          # boolean: whether or not to apply batch normalization before the embedding activation
         self.NORMALIZE_EMBEDDING = None                # boolean: whether or not to normalize the embedded space
+        self.RESNET_FILTERS = None                     # numpy: the number of filters in the resnet bloks
 
         self.pre_processing = ParametersNetworkPreProcessing()
         self.system         = ParametersNetworkSystem()
@@ -116,6 +117,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'EMBEDDING_DIMS'            , self.EMBEDDING_DIMS)
         self.set_to_config(do_save_none, section_name, config, 'BATCH_NORMALIZE_EMBEDDING' , self.BATCH_NORMALIZE_EMBEDDING)
         self.set_to_config(do_save_none, section_name, config, 'NORMALIZE_EMBEDDING'       , self.NORMALIZE_EMBEDDING)
+        self.set_to_config(do_save_none, section_name, config, 'RESNET_FILTERS'            , self.RESNET_FILTERS)
 
         self.pre_processing.save_to_ini(do_save_none, section_name, config)
         self.system.save_to_ini(do_save_none, section_name, config)
@@ -133,6 +135,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'EMBEDDING_DIMS'            , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'BATCH_NORMALIZE_EMBEDDING' , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'NORMALIZE_EMBEDDING'       , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'RESNET_FILTERS'            , np.array)
 
         self.pre_processing.set_from_file(override_mode, section_name, parser)
         self.system.set_from_file(override_mode, section_name, parser)

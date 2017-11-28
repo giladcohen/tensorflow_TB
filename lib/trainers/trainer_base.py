@@ -43,6 +43,7 @@ class TrainerBase(AgentBase):
             self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
             self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
         self.debug_mode            = self.prm.DEBUG_MODE
+        self.Factories = utils.factories.Factories(self.prm)  # to get hooks
 
         # variables
         self.global_step = -1
@@ -58,7 +59,6 @@ class TrainerBase(AgentBase):
         """
         self.mode = None  # current mode: 'train'/'validation'/'prediction'
         self.sess = None  # current session, for training/validation/prediction
-        self.Factories = utils.factories.Factories(self.prm)  # to get hooks
         self.model.build_graph()
         self.print_model_info()
         self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')  # use get_session for Session object
