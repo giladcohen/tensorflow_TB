@@ -16,4 +16,4 @@ class GlobalStepCheckpointSaverHook(tf.train.CheckpointSaverHook):
     def after_run(self, run_context, run_values):
         global_step = run_values.results
         if global_step in self._steps_to_save:
-            self._save(global_step, run_context.session)
+            self._save(run_context.session, global_step)
