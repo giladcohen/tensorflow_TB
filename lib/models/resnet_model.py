@@ -1,4 +1,3 @@
-from abc import ABCMeta, abstractmethod
 from lib.models.classifier_model import ClassifierModel
 from lib.models.layers import *
 import six
@@ -11,7 +10,6 @@ class ResNet(ClassifierModel):
     https://arxiv.org/pdf/1512.03385v1.pdf
     https://arxiv.org/pdf/1605.07146v1.pdf
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, *args, **kwargs):
         super(ResNet, self).__init__(*args, **kwargs)
@@ -77,7 +75,7 @@ class ResNet(ClassifierModel):
                 x = slim.unit_norm(x, dim=1, scope='normalize_vec')
                 variable_summaries('embedding', x)
             self.net['embedding_layer'] = x
-            self.logits = fully_connected(x, self.num_classes)
+            self.logits = self.calculate_logits(x)
 
     def _residual(self, x, out_filter, stride, activate_before_residual=False):
         """Residual unit with 2 sub layers."""
@@ -112,8 +110,8 @@ class ResNet(ClassifierModel):
         self.log.info('image after unit %s', x.get_shape())
         return x
 
-    @abstractmethod
     def post_pool_operations(self, x):
-        """Building the fully connected layers of the resnet model.
-        Calculating self.logits"""
-        pass
+        return x
+
+    def calculate_logits(self, x):
+        return fully_connected(x, self.num_classes)

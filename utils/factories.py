@@ -23,8 +23,9 @@ from lib.trainers.kmeans_segments_knn_dnn_correlation_trainer import KMeansSegme
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
-from lib.models.wide_resnet_28_10 import WideResNet_28_10
+from lib.models.resnet_model import ResNet
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
+from lib.models.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.datasets.dataset import DataSet
 from lib.datasets.active_dataset import ActiveDataSet
@@ -65,7 +66,9 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_model(self):
-        available_networks = {'Wide-Resnet-28-10': WideResNet_28_10, 'Wide-Resnet-28-10_plus_fc': WideResNet_28_10_plus_fc}
+        available_networks = {'Wide-Resnet-28-10'              : ResNet,
+                              'Wide-Resnet-28-10_plus_fc'      : WideResNet_28_10_plus_fc,
+                              'Wide-Resnet-28-10_pool_classes' : WideResNet_28_10_pool_classes}
         if self.architecture in available_networks:
             model = available_networks[self.architecture](self.architecture, self.prm)
             self.log.info('get_model: returning ' + str(model))
