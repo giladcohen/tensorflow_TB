@@ -8,8 +8,8 @@ import tensorflow as tf
 from lib.base.agent_base import AgentBase
 from lib.base.collections import TRAIN_SUMMARIES
 import utils
-from utils.misc import get_plain_session
 from lib.retention import Retention
+from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
 from utils.tensorboard_logging import TBLogger
 
 
@@ -35,9 +35,10 @@ class TrainerBase(AgentBase):
         self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
         self.summary_steps         = self.prm.train.train_control.SUMMARY_STEPS
         self.checkpoint_secs       = self.prm.train.train_control.CHECKPOINT_SECS
+        self.checkpoint_steps      = self.prm.train.train_control.CHECKPOINT_STEPS
         self.logger_steps          = self.prm.train.train_control.LOGGER_STEPS
-        self.eval_steps = self.prm.train.train_control.EVAL_STEPS
-        self.evals_in_epoch = self.prm.train.train_control.EVALS_IN_EPOCH
+        self.eval_steps            = self.prm.train.train_control.EVAL_STEPS
+        self.evals_in_epoch        = self.prm.train.train_control.EVALS_IN_EPOCH
         self.skip_first_evaluation = self.prm.train.train_control.SKIP_FIRST_EVALUATION
         if self.eval_steps is None:
             self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
@@ -97,7 +98,14 @@ class TrainerBase(AgentBase):
                      'loss': self.model.cost,
                      'score': self.model.score},
             every_n_iter=self.logger_steps)
-        self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook]
+
+        checkpoint_hook = GlobalStepCheckpointSaverHook(steps_to_save=self.checkpoint_steps,
+                                                        checkpoint_dir=self.checkpoint_dir,
+                                                        save_steps=10000000000,  # dummy number to prevent error
+                                                        saver=self.saver,
+                                                        checkpoint_basename='model_scheduled.ckpt')
+
+        self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook]
 
     def build_validation_env(self):
         self.log.info("Starting building the validation environment")
@@ -124,6 +132,7 @@ class TrainerBase(AgentBase):
         self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
         self.log.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
         self.log.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
+        self.log.info(' CHECKPOINT_STEPS: {}'.format(self.checkpoint_steps))
         self.log.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
         self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
