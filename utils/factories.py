@@ -19,6 +19,7 @@ from lib.trainers.kmeans_segments_most_uncertained_knn import  KMeansSegmentsMos
 from lib.trainers.kmeans_segments_balanced_trainer import KMeansSegmentsBalancedTrainer
 from lib.trainers.kmeans_segments_dynamic_trainer import KMeansSegmentsDynamicTrainer
 from lib.trainers.farthest_kmeans_trainer import FarthestKMeansTrainer
+from lib.trainers.kmeans_segments_knn_dnn_correlation_trainer import KMeansSegmentsKnnDnnCorrelationTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
@@ -86,23 +87,24 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_trainer(self, model, dataset):
-        available_trainers = {'simple'                       : ClassificationTrainer,
-                              'random_sampler'               : RandomSamplerTrainer,
-                              'all_centers'                  : AllCentersTrainer,
-                              'class_centers'                : ClassCentersTrainer,
-                              'most_uncertained'             : MostUncertainedTrainer,
-                              'most_uncertained_balanced'    : MostUncertainedBalancedTrainer,
-                              'cross_entropy'                : CrossEntropyTrainer,
-                              'cross_entropy2'               : CrossEntropyTrainer2,
-                              'kmeans_on_most_uncertained'   : KMeansOnMostUncertainedTrainer,
-                              'knn_dnn_correlation'          : KnnDnnCorrelationTrainer,
-                              'most_uncertained_knn'         : MostUncertainedKnnTrainer,
-                              'farthest_uncertained_samples' : FarthestUncertainedSamplesTrainer,
-                              'kmeans_segments'              : KMeansSegmentsTrainer,
-                              'kmeans_segments_balanced'     : KMeansSegmentsBalancedTrainer,
-                              'farthest_kmeans'              : FarthestKMeansTrainer,
-                              'kmeans_segments_most_uncertained_knn': KMeansSegmentsMostUncertainedKNNTrainer,
-                              'kmeans_segments_dynamic'      : KMeansSegmentsDynamicTrainer}
+        available_trainers = {'simple'                               : ClassificationTrainer,
+                              'random_sampler'                       : RandomSamplerTrainer,
+                              'all_centers'                          : AllCentersTrainer,
+                              'class_centers'                        : ClassCentersTrainer,
+                              'most_uncertained'                     : MostUncertainedTrainer,
+                              'most_uncertained_balanced'            : MostUncertainedBalancedTrainer,
+                              'cross_entropy'                        : CrossEntropyTrainer,
+                              'cross_entropy2'                       : CrossEntropyTrainer2,
+                              'kmeans_on_most_uncertained'           : KMeansOnMostUncertainedTrainer,
+                              'knn_dnn_correlation'                  : KnnDnnCorrelationTrainer,
+                              'most_uncertained_knn'                 : MostUncertainedKnnTrainer,
+                              'farthest_uncertained_samples'         : FarthestUncertainedSamplesTrainer,
+                              'kmeans_segments'                      : KMeansSegmentsTrainer,
+                              'kmeans_segments_balanced'             : KMeansSegmentsBalancedTrainer,
+                              'farthest_kmeans'                      : FarthestKMeansTrainer,
+                              'kmeans_segments_most_uncertained_knn' : KMeansSegmentsMostUncertainedKNNTrainer,
+                              'kmeans_segments_dynamic'              : KMeansSegmentsDynamicTrainer,
+                              'kmeans_segments_knn_dnn_correlation'  : KMeansSegmentsKnnDnnCorrelationTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
