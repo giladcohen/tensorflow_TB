@@ -12,6 +12,8 @@ class GlobalStepCheckpointSaverHook(tf.train.CheckpointSaverHook):
             steps_to_save = []
         self._steps_to_save = steps_to_save
 
+    def before_run(self, run_context):  # pylint: disable=unused-argument
+        return tf.train.SessionRunArgs(self._global_step_tensor)
 
     def after_run(self, run_context, run_values):
         global_step = run_values.results
