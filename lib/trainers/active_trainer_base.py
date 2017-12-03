@@ -136,12 +136,7 @@ class ActiveTrainerBase(ClassificationTrainer):
     def debug_ops(self):
         if self.debug_mode:
             lp = self.dataset.train_dataset.pool_size()
-            self.log.info('Saving model_ref for global_step={} with pool size={}'.format(self.global_step, lp))
-            checkpoint_file = os.path.join(self.checkpoint_dir, 'model_pool_{}.ckpt'.format(lp))
             pool_info_file  = os.path.join(self.root_dir      , 'pool_info_{}'.format(lp))
-            self.saver.save(get_plain_session(self.sess),
-                            checkpoint_file,
-                            global_step=self.global_step)
             self.dataset.train_dataset.save_pool_data(pool_info_file)
 
     def to_annotate(self):
