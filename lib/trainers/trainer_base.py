@@ -99,11 +99,13 @@ class TrainerBase(AgentBase):
                      'score': self.model.score},
             every_n_iter=self.logger_steps)
 
-        checkpoint_hook = GlobalStepCheckpointSaverHook(steps_to_save=self.checkpoint_steps,
+        checkpoint_hook = GlobalStepCheckpointSaverHook(name='global_step_checkpoint_saver_hook',
+                                                        prm=self.prm,
+                                                        model=self.model,
+                                                        steps_to_save=self.checkpoint_steps,
                                                         checkpoint_dir=self.checkpoint_dir,
-                                                        save_steps=10000000000,  # dummy number to prevent error
                                                         saver=self.saver,
-                                                        checkpoint_basename='model_scheduled.ckpt')
+                                                        checkpoint_basename='model_schedule.ckpt')
 
         self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook]
 
