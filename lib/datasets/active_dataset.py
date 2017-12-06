@@ -85,5 +85,6 @@ class ActiveDataSet(DataSet):
         self.log.info('Restoring pool indices from file: {}'.format(latest_pool_file))
         with open(latest_pool_file) as f:
             pool_indices = f.read().splitlines()
+        pool_indices = map(int, pool_indices)
 
         return pool_indices
