@@ -30,7 +30,7 @@ class WideResNet_28_10_pool_classes2(ResNet):
 
     def add_fidelity_loss(self):
         with tf.variable_scope('xent_cost'):
-            labels_one_hot = tf.one_hot(self.labels, depth=10, on_value=1, off_value=0)
+            labels_one_hot = tf.one_hot(self.labels, depth=self.num_classes, on_value=1, off_value=0)
             xent_cost = tf.losses.log_loss(labels=labels_one_hot, predictions=self.predictions_prob)
             xent_cost = tf.reduce_mean(xent_cost, name='cross_entropy_mean')
             self.xent_cost = tf.multiply(self.xent_rate, xent_cost)

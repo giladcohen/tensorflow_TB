@@ -160,10 +160,6 @@ class ActiveTrainerBase(ClassificationTrainer):
 
     def init_weights(self):
         self.log.info('Start initializing weight in global step={}'.format(self.global_step))
-        # save global step
-        # global_step = self.sess.run(self.model.global_step, feed_dict=dummy_feed_dict)
-        # global_step = self.sess.run(self.model.global_step)
-        # assert global_step == self.global_step, 'global_step={} and self.global_step={}'.format(global_step, self.global_step)  #debug
 
         # initialize all weights
         self.sess.run(self.model.init_op)
