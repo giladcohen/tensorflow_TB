@@ -14,9 +14,6 @@ class WideResNet_28_10_pool_classes2(ResNet):
     def calculate_logits(self, x):
         """generate 5 output neurons for every class - later unite them to a single node for a softmax"""
         logits = fully_connected(x, 5 * self.num_classes)
-        # splits = tf.split(x, num_or_size_splits=self.num_classes, axis=1)
-        # max_splits = [tf.reduce_max(splits[cls], axis=1, keep_dims=True) for cls in xrange(self.num_classes)]
-        # logits = tf.concat(max_splits, axis=1)
         return logits
 
     def _build_interpretation(self):
@@ -24,7 +21,8 @@ class WideResNet_28_10_pool_classes2(ResNet):
         softmax_out = tf.nn.softmax(self.logits)  # 5 * num_classes vector
         splits = tf.split(softmax_out, num_or_size_splits=self.num_classes, axis=1)
         max_splits = [tf.reduce_max(splits[cls], axis=1, keep_dims=True) for cls in xrange(self.num_classes)]
-        softmax_out_norm = slim.unit_norm(max_splits, dim=1, scope='normalize_softmax')
+        softmax_out_pooled = tf.concat(max_splits, axis=1)
+        softmax_out_norm = slim.unit_norm(softmax_out_pooled, dim=1, scope='normalize_softmax')
 
         self.predictions_prob = softmax_out_norm
         self.predictions = tf.argmax(self.predictions_prob, axis=1, output_type=tf.int32)
