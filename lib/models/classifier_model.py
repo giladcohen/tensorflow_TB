@@ -28,7 +28,7 @@ class ClassifierModel(ModelBase):
     def _build_interpretation(self):
         '''Interprets the logits'''
         self.predictions_prob = tf.nn.softmax(self.logits)
-        self.predictions = tf.cast(tf.argmax(self.predictions_prob, axis=1), tf.int32)
+        self.predictions = tf.argmax(self.predictions_prob, axis=1, output_type=tf.int32)
         self.score       = tf.reduce_mean(tf.to_float(tf.equal(self.predictions, self.labels)))
 
     def add_fidelity_loss(self):
