@@ -93,16 +93,13 @@ class DynamicModelTrainer(ActiveTrainerBase):
         # sess.close()
 
         sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-        images, labels = self.dataset.get_mini_batch_train(indices=[0])
         sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
                  feed_dict={self.model.global_step_ph: self.global_step,
-                            self.model.weight_decay_rate_ph: self.weight_decay_rate,
-                            self.model.images: images,
-                            self.model.labels: labels,
-                            self.model.is_training: False})
+                            self.model.weight_decay_rate_ph: self.weight_decay_rate})
 
+        images, labels = self.dataset.get_mini_batch_train(indices=[0])
         self.sess = self.get_session('train')
-        global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate])
+        global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate], feed_dict=self._get_dummy_feed())
         if global_step != self.global_step:
             err_str = 'returned global_step={} is different than self.global_step={}'.format(global_step, self.global_step)
             self.log.error(err_str)
