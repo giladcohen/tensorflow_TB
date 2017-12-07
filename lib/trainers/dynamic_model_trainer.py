@@ -43,7 +43,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.model.resnet_filters = resnet_filters
         self.embedding_dims = resnet_filters[-1]
 
-        self._activate_eval = False  # cannot evaluate fresh model without assigning model variables. train first.
+        # self._activate_eval = False  # cannot evaluate fresh model without assigning model variables. train first.
         self.build()
         self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
 
