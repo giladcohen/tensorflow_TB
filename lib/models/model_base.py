@@ -114,6 +114,7 @@ class ModelBase(AgentBase):
     def add_weight_decay(self):
         with tf.variable_scope('wd_cost'):
             self.wd_cost = self._decay()
+            tf.summary.scalar('wd_cost', self.wd_cost)
             wd_assert_op = tf.verify_tensor_all_finite(self.wd_cost, 'wd_cost contains NaN or Inf')
             tf.add_to_collection('losses', self.wd_cost)
             tf.add_to_collection('assertions', wd_assert_op)

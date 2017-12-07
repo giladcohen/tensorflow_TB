@@ -163,7 +163,8 @@ class TrainerBase(AgentBase):
         param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
             tf.get_default_graph(),
             tfprof_options=tf.contrib.tfprof.model_analyzer.TRAINABLE_VARS_PARAMS_STAT_OPTIONS)
-        self.log.info('total_params: {}\n'.format(param_stats.total_parameters))
+        self.total_parameters = param_stats.total_parameters
+        self.log.info('total_params: {}\n'.format(self.total_parameters))
 
         tf.contrib.tfprof.model_analyzer.print_model_analysis(
             tf.get_default_graph(),
