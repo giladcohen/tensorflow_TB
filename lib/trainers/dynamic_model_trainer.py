@@ -52,11 +52,11 @@ class DynamicModelTrainer(ActiveTrainerBase):
         tf.reset_default_graph()
         update_ops_collection = tf.get_collection_ref(tf.GraphKeys.UPDATE_OPS)
         assertions_collection = tf.get_collection_ref('assertions')
-        losses                = tf.get_collection_ref('losses')
+        losses_collection     = tf.get_collection_ref('losses')
 
-        del update_ops_collection
-        del assertions_collection
-        del losses
+        del update_ops_collection[:]
+        del assertions_collection[:]
+        del losses_collection[:]
 
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
