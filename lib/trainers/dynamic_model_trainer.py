@@ -5,6 +5,9 @@ from __future__ import print_function
 from lib.trainers.active_trainer_base import ActiveTrainerBase
 import numpy as np
 import tensorflow as tf
+from lib.retention import Retention
+from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
+from utils.tensorboard_logging import TBLogger
 
 
 class DynamicModelTrainer(ActiveTrainerBase):
@@ -25,6 +28,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
 
     def update_model(self):
         lp = self.dataset.train_dataset.pool_size()
+        global_step_copy = self.global_step
         # [16, 160, 320, 640] for 50k samples. for 1k: [2, 4, 6, 14]. weight_decay for 1k: 0.0390625
         if lp == 2000:
             resnet_filters    = np.array([2, 6, 14, 26])
@@ -58,18 +62,23 @@ class DynamicModelTrainer(ActiveTrainerBase):
         del assertions_collection[:]
         del losses_collection[:]
 
+        self.build()
+
+
+
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
         self.embedding_dims = resnet_filters[-1]
         self._activate_eval = False  # cannot evaluate fresh model without assigning model variables. train first.
-        self.mode = None
-        self.sess = None
-        self.model.build_graph()
-        self.print_model_info()
+        # self.mode = None
+        # self.sess = None
+        # self.model.build_graph()
+        # self.print_model_info()
 
         # just to re-initialize the graph
-        self.sess = self.get_session('train')
-        _ = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
+        # self.sess = self.get_session('train')
+        # _ = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
+        self.global_step = global_step_copy
 
         self.log.info('resetting the global_step to={}'.format(self.global_step))
         self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
@@ -114,3 +123,34 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.log.info('DEBUG: global_step = {}. mode={}. prev_mode={}'.format(self.global_step, mode, self.mode))
         self.mode = mode
         return sess
+
+    def build_train_env(self):
+        self.log.info("Starting building the train environment")
+        self.train_retention = Retention('retention_train', self.prm)  #TODO(gilad): Incorporate. Not in use
+        self.summary_writer_train = tf.summary.FileWriter(self.train_dir)
+        self.tb_logger_train = TBLogger(self.summary_writer_train)
+        self.get_train_summaries()
+
+        summary_hook = tf.train.SummarySaverHook(
+            save_steps=self.summary_steps,
+            summary_writer=self.summary_writer_train,
+            summary_op=tf.summary.merge([self.model.summaries] + tf.get_collection(TRAIN_SUMMARIES))
+        )
+        logging_hook = tf.train.LoggingTensorHook(
+            tensors={'step': self.model.global_step,
+                     'loss_xent': self.model.xent_cost,
+                     'loss_wd': self.model.wd_cost,
+                     'loss': self.model.cost,
+                     'score': self.model.score},
+            every_n_iter=self.logger_steps)
+
+        lp = self.dataset.train_dataset.pool_size()
+        checkpoint_hook = GlobalStepCheckpointSaverHook(name='global_step_checkpoint_saver_hook',
+                                                        prm=self.prm,
+                                                        model=self.model,
+                                                        steps_to_save=self.checkpoint_steps,
+                                                        checkpoint_dir=self.checkpoint_dir + '_' + str(lp),
+                                                        saver=self.saver,
+                                                        checkpoint_basename='model_schedule.ckpt')
+
+        self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook]
