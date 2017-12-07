@@ -5,6 +5,7 @@ from __future__ import print_function
 from lib.trainers.active_trainer_base import ActiveTrainerBase
 import numpy as np
 import tensorflow as tf
+from lib.base.collections import TRAIN_SUMMARIES
 from lib.retention import Retention
 from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
 from utils.tensorboard_logging import TBLogger
@@ -62,12 +63,11 @@ class DynamicModelTrainer(ActiveTrainerBase):
         del assertions_collection[:]
         del losses_collection[:]
 
-        self.build()
-
-
-
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
+
+        self.build()
+
         self.embedding_dims = resnet_filters[-1]
         self._activate_eval = False  # cannot evaluate fresh model without assigning model variables. train first.
         # self.mode = None
