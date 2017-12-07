@@ -55,19 +55,19 @@ class DynamicModelTrainer(ActiveTrainerBase):
                       .format(lp, resnet_filters, weight_decay_rate, self.pca_embedding_dims))
 
         tf.reset_default_graph()
-        update_ops_collection      = tf.get_collection_ref(tf.GraphKeys.UPDATE_OPS)
-        assertions_collection      = tf.get_collection_ref('assertions')
-        losses_collection          = tf.get_collection_ref('losses')
-        train_summaries_collection = tf.get_collection_ref(TRAIN_SUMMARIES)
-
-        # debug
-        self.log.info(' update_ops_collection = {}\n assertions_collection = {}\n'
-                      ' losses_collection = {}\n train_summaries_collection = {}'
-                      .format(update_ops_collection, assertions_collection, losses_collection, train_summaries_collection))
-
-        del update_ops_collection[:]
-        del assertions_collection[:]
-        del losses_collection[:]
+        # update_ops_collection      = tf.get_collection_ref(tf.GraphKeys.UPDATE_OPS)
+        # assertions_collection      = tf.get_collection_ref('assertions')
+        # losses_collection          = tf.get_collection_ref('losses')
+        # train_summaries_collection = tf.get_collection_ref(TRAIN_SUMMARIES)
+        #
+        # # debug
+        # self.log.info(' update_ops_collection = {}\n assertions_collection = {}\n'
+        #               ' losses_collection = {}\n train_summaries_collection = {}'
+        #               .format(update_ops_collection, assertions_collection, losses_collection, train_summaries_collection))
+        #
+        # del update_ops_collection[:]
+        # del assertions_collection[:]
+        # del losses_collection[:]
 
         # overwrite the global step
         self.log.info('overwriting graph\'s global step to {}'.format(self.global_step))
@@ -89,6 +89,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.sess = None
         self.model.build_graph()
         self.print_model_info()
+        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
 
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.validation_retention)
         self.build_train_env()
