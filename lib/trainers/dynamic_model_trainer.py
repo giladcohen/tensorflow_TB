@@ -63,25 +63,32 @@ class DynamicModelTrainer(ActiveTrainerBase):
         del assertions_collection[:]
         del losses_collection[:]
 
+        # overwrite the global step
+        self.log.info('overwriting graph\'s global step to {}'.format(self.global_step))
+        global_step_tensor = tf.train.get_or_create_global_step()
+        update_global_step = global_step_tensor.assign(self.global_step)
+        sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+        sess.run(update_global_step)
+        sess.close()
+
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
 
-        self.build()
-
         self.embedding_dims = resnet_filters[-1]
         self._activate_eval = False  # cannot evaluate fresh model without assigning model variables. train first.
-        # self.mode = None
-        # self.sess = None
-        # self.model.build_graph()
-        # self.print_model_info()
+        self.mode = None
+        self.sess = None
+        self.model.build_graph()
+        self.print_model_info()
+
+        self.build_train_env()
 
         # just to re-initialize the graph
         # self.sess = self.get_session('train')
         # _ = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
-        self.global_step = global_step_copy
-
-        self.log.info('resetting the global_step to={}'.format(self.global_step))
-        self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
+        #
+        # self.log.info('resetting the global_step to={}'.format(self.global_step))
+        # self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
 
         self.log.info('setting new weight_decay_rate={}'.format(weight_decay_rate))
         self.sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict={self.model.weight_decay_rate_ph: weight_decay_rate})

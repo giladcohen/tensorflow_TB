@@ -60,7 +60,7 @@ class ModelBase(AgentBase):
 
     def _init_params(self):
         """Initialize params that may be changed from two training sessions"""
-        self.global_step        = tf.contrib.framework.get_or_create_global_step()
+        self.global_step        = tf.train.get_or_create_global_step()
         self.lrn_rate           = tf.contrib.framework.model_variable(
             name='learning_rate', dtype=tf.float32, shape=[],
             initializer=tf.constant_initializer(self.prm.network.optimization.LEARNING_RATE), trainable=False)
