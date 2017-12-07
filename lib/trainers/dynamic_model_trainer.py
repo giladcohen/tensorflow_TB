@@ -70,15 +70,15 @@ class DynamicModelTrainer(ActiveTrainerBase):
         # del losses_collection[:]
 
         # overwrite the global step
-        self.log.info('overwriting graph\'s global step to {}'.format(self.global_step))
-        global_step_tensor = tf.train.get_or_create_global_step()
-        update_global_step = global_step_tensor.assign(self.global_step)
-        sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-        sess.run(update_global_step)
+        # self.log.info('overwriting graph\'s global step to {}'.format(self.global_step))
+        # global_step_tensor = tf.train.get_or_create_global_step()
+        # update_global_step = global_step_tensor.assign(self.global_step)
+        # sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+        # sess.run(update_global_step)
 
         # debug
-        global_step_value = sess.run(global_step_tensor)
-        self.log.info('DEBUG: global_step_value = {}'.format(global_step_value))
+        # global_step_value = sess.run(global_step_tensor)
+        # self.log.info('DEBUG: global_step_value = {}'.format(global_step_value))
 
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
@@ -93,15 +93,23 @@ class DynamicModelTrainer(ActiveTrainerBase):
 
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.validation_retention)
         self.build_train_env()
-        sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
-        sess.close()
+        # sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
+        # sess.close()
 
-        self.finalize_graph()  # to create the new monitored session and feeding initial dummy dict
-        self.log.info('DEBUG: global_step after finalizing graph = {}'.format(self.global_step))
-
-        self.sess = self.get_session('prediction')
+        # self.finalize_graph()  # to create the new monitored session and feeding initial dummy dict
         self.log.info('setting new weight_decay_rate={}'.format(weight_decay_rate))
-        self.sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict={self.model.weight_decay_rate_ph: weight_decay_rate})
+        self.sess = self.get_session('train')
+        images, labels = self.dataset.get_mini_batch_train(indices=[0])
+        self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
+                 feed_dict={self.model.global_step_ph: self.global_step,
+                            self.model.weight_decay_rate_ph: weight_decay_rate
+                            self.model.images: images,
+                            self.model.is_training: False})
+
+        # self.log.info('DEBUG: global_step after finalizing graph = {}'.format(self.global_step))
+        # self.sess = self.get_session('prediction')
+        # self.log.info('setting new weight_decay_rate={}'.format(weight_decay_rate))
+        # self.sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict={self.model.weight_decay_rate_ph: weight_decay_rate})
         self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
 
     def get_session(self, mode):
