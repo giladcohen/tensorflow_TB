@@ -105,7 +105,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
                 config=tf.ConfigProto(allow_soft_placement=True))
         elif mode == 'validation' or mode == 'prediction':
             sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-            self.saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_dir))
+            self.saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_dir + '_' + str(lp)))
         else:
             err_str = 'mode {} is not expected in get_session()'.format(mode)
             self.log.error(err_str)
