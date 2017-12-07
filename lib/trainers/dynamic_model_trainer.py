@@ -50,6 +50,14 @@ class DynamicModelTrainer(ActiveTrainerBase):
                       .format(lp, resnet_filters, weight_decay_rate, self.pca_embedding_dims))
 
         tf.reset_default_graph()
+        update_ops_collection = tf.get_collection_ref(tf.GraphKeys.UPDATE_OPS)
+        assertions_collection = tf.get_collection_ref('assertions')
+        losses                = tf.get_collection_ref('losses')
+
+        del update_ops_collection
+        del assertions_collection
+        del losses
+
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
         self.embedding_dims = resnet_filters[-1]
