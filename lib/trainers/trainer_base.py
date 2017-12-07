@@ -47,7 +47,7 @@ class TrainerBase(AgentBase):
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks
 
         # variables
-        self.global_step = -1
+        self.global_step = 0
         if self.skip_first_evaluation:
             self.log.info('skipping evaluation for global_step=0')
             self._activate_eval = False
