@@ -81,15 +81,16 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.print_model_info()
 
         self.build_train_env()
+        self.finalize_graph()  # to create the new monitored session and feeding initial dummy dict
 
         # just to re-initialize the graph
         # self.log.info('resetting the global_step to={}'.format(self.global_step))
         # self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
 
+        self.sess = self.get_session('prediction')
         self.log.info('setting new weight_decay_rate={}'.format(weight_decay_rate))
-        sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict={self.model.weight_decay_rate_ph: weight_decay_rate})
-        self.log.info('Done restoring global_step ({})'.format(self.global_step))
-        sess.close()
+        self.sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict={self.model.weight_decay_rate_ph: weight_decay_rate})
+        self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
 
     def get_session(self, mode):
         """
