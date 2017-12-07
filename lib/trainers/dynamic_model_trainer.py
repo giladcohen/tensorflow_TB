@@ -101,10 +101,11 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.sess = self.get_session('train')
         images, labels = self.dataset.get_mini_batch_train(indices=[0])
         self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
-                 feed_dict={self.model.global_step_ph: self.global_step,
-                            self.model.weight_decay_rate_ph: weight_decay_rate
-                            self.model.images: images,
-                            self.model.is_training: False})
+                      feed_dict={self.model.global_step_ph: self.global_step,
+                                 self.model.weight_decay_rate_ph: weight_decay_rate,
+                                 self.model.images: images,
+                                 self.model.labels: labels,
+                                 self.model.is_training: False})
 
         # self.log.info('DEBUG: global_step after finalizing graph = {}'.format(self.global_step))
         # self.sess = self.get_session('prediction')
