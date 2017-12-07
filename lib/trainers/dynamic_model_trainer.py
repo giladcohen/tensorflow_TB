@@ -29,21 +29,25 @@ class DynamicModelTrainer(ActiveTrainerBase):
         if lp == 2000:
             resnet_filters    = np.array([2, 6, 14, 26])
             weight_decay_rate = 0.01953125
+            self.pca_embedding_dims = 5
         elif lp == 3000:
             resnet_filters = np.array([2, 10, 20, 38])
             weight_decay_rate = 0.01302083333
+            self.pca_embedding_dims = 8
         elif lp == 4000:
             resnet_filters = np.array([2, 14, 26, 52])
             weight_decay_rate = 0.009765625
+            self.pca_embedding_dims = 10
         elif lp == 5000:
             resnet_filters = np.array([2, 16, 32, 64])
             weight_decay_rate = 0.0078125
+            self.pca_embedding_dims = 13
         else:
             err_str = 'pool size is {}. This is not possible'.format(lp)
             self.log.error(err_str)
             raise AssertionError(err_str)
-        self.log.info('getting a new model for lp={}. resnet_filters={} and weight_decay_rate={}'
-                      .format(lp, resnet_filters, weight_decay_rate))
+        self.log.info('getting a new model for lp={}. resnet_filters={}. weight_decay_rate={}. pca_embedding_dims={}'
+                      .format(lp, resnet_filters, weight_decay_rate, self.pca_embedding_dims))
 
         tf.reset_default_graph()
         self.model = self.Factories.get_model()
