@@ -20,6 +20,7 @@ from lib.trainers.kmeans_segments_balanced_trainer import KMeansSegmentsBalanced
 from lib.trainers.kmeans_segments_dynamic_trainer import KMeansSegmentsDynamicTrainer
 from lib.trainers.farthest_kmeans_trainer import FarthestKMeansTrainer
 from lib.trainers.kmeans_segments_knn_dnn_correlation_trainer import KMeansSegmentsKnnDnnCorrelationTrainer
+from lib.trainers.knn_dnn_correlation_dynamic_trainer import KnnDnnCorrelationDynamicTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
@@ -56,7 +57,7 @@ class Factories(object):
             self.log.info('get_train_dataset: returning ' + str(train_dataset))
 
             validation_dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
-            validation_dataset.initialize_pool()
+            #validation_dataset.initialize_pool()
             dataset.set_validation_dataset(validation_dataset)
             self.log.info('get_validation_dataset: returning ' + str(validation_dataset))
 
@@ -109,7 +110,8 @@ class Factories(object):
                               'farthest_kmeans'                      : FarthestKMeansTrainer,
                               'kmeans_segments_most_uncertained_knn' : KMeansSegmentsMostUncertainedKNNTrainer,
                               'kmeans_segments_dynamic'              : KMeansSegmentsDynamicTrainer,
-                              'kmeans_segments_knn_dnn_correlation'  : KMeansSegmentsKnnDnnCorrelationTrainer}
+                              'kmeans_segments_knn_dnn_correlation'  : KMeansSegmentsKnnDnnCorrelationTrainer,
+                              'knn_dnn_correlation_dynamic'          : KnnDnnCorrelationDynamicTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
