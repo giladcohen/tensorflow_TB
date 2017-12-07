@@ -77,12 +77,10 @@ class DynamicModelTrainer(ActiveTrainerBase):
                       .format(lp, resnet_filters, weight_decay_rate, pca_embedding_dims))
         return resnet_filters, weight_decay_rate, pca_embedding_dims
 
-                                                        # checkpoint_dir=self.checkpoint_dir + '_' + str(lp),
-
     def get_train_summaries(self):
         super(DynamicModelTrainer, self).get_train_summaries()
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('weight_decay_rate', self.model.weight_decay_rate))
-        tf.add_to_collection(TRAIN_SUMMARIES, self.tb_logger_train.log_scalar('total_parameters', self.total_parameters, self.global_step))
+        # tf.add_to_collection(TRAIN_SUMMARIES, self.tb_logger_train.log_scalar('total_parameters', self.total_parameters, self.global_step))
 
     def finalize_graph(self):
         self.sess = self.get_session('train')
