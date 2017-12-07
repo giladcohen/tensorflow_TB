@@ -51,23 +51,24 @@ class DynamicModelTrainer(ActiveTrainerBase):
         :return: resnet filters, weight decay rate and the dims of the PCA embedding space
         """
         lp = self.dataset.train_dataset.pool_size()
-        # [16, 160, 320, 640] for 50k samples. for 1k: [2, 4, 6, 14]. weight_decay for 1k: 0.0390625
+        # [16, 160, 320, 640] for 50k samples.
+        # for 1k: [16, 22, 44, 88]. weight_decay for 1k: 0.0390625. pca_embedding_dims = 18
         if lp == 2000:
-            resnet_filters    = np.array([2, 6, 14, 26])
+            resnet_filters    = np.array([16, 32, 64, 128])
             weight_decay_rate = 0.01953125
-            pca_embedding_dims = 5
+            pca_embedding_dims = 26
         elif lp == 3000:
-            resnet_filters = np.array([2, 10, 20, 38])
+            resnet_filters = np.array([16, 40, 80, 160])
             weight_decay_rate = 0.01302083333
-            pca_embedding_dims = 8
+            pca_embedding_dims = 32
         elif lp == 4000:
-            resnet_filters = np.array([2, 14, 26, 52])
+            resnet_filters = np.array([16, 44, 88, 176])
             weight_decay_rate = 0.009765625
-            pca_embedding_dims = 10
+            pca_embedding_dims = 35
         elif lp == 5000:
-            resnet_filters = np.array([2, 16, 32, 64])
+            resnet_filters = np.array([16, 50, 100, 200])
             weight_decay_rate = 0.0078125
-            pca_embedding_dims = 13
+            pca_embedding_dims = 40
         else:
             err_str = 'pool size is {}. This is not possible'.format(lp)
             self.log.error(err_str)
