@@ -77,3 +77,40 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.log.info('setting new weight_decay_rate={}'.format(weight_decay_rate))
         self.sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict={self.model.weight_decay_rate_ph: weight_decay_rate})
         self.log.info('Done restoring global_step ({})'.format(self.global_step))
+
+    def get_session(self, mode):
+        """
+        Returns a training/validation/prediction session.
+        :param mode:  string of 'train'/'validation'/'prediction'
+        :return: session or monitored session
+        """
+        lp = self.dataset.train_dataset.pool_size()
+        if self.sess is None:
+            # This should be the case only in the first time we call this function
+            assert self.mode is None, 'sess in None but mode={}'.format(self.mode)
+            self.log.info('Session is None at global_step={}.'.format(self.global_step))
+        elif mode == self.mode:
+            # do nothing
+            return self.sess
+        else:
+            self.log.info('Closing current {} session at global_step={}'.format(self.mode, self.global_step))
+            self.sess.close()
+
+        self.log.info('Starting new {} session for global_step={}'.format(mode, self.global_step))
+        if mode == 'train':
+            sess = tf.train.MonitoredTrainingSession(
+                checkpoint_dir=self.checkpoint_dir + '_' + str(lp),
+                hooks=self.train_session_hooks,
+                save_checkpoint_secs=self.checkpoint_secs,
+                config=tf.ConfigProto(allow_soft_placement=True))
+        elif mode == 'validation' or mode == 'prediction':
+            sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+            self.saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_dir))
+        else:
+            err_str = 'mode {} is not expected in get_session()'.format(mode)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
+        self.log.info('DEBUG: global_step = {}. mode={}. prev_mode={}'.format(self.global_step, mode, self.mode))
+        self.mode = mode
+        return sess
