@@ -93,11 +93,11 @@ class DynamicModelTrainer(ActiveTrainerBase):
 
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.validation_retention)
         self.build_train_env()
-        self.finalize_graph()  # to create the new monitored session and feeding initial dummy dict
+        sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
+        sess.close()
 
-        # just to re-initialize the graph
-        # self.log.info('resetting the global_step to={}'.format(self.global_step))
-        # self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
+        self.finalize_graph()  # to create the new monitored session and feeding initial dummy dict
+        self.log.info('DEBUG: global_step after finalizing graph = {}'.format(self.global_step))
 
         self.sess = self.get_session('prediction')
         self.log.info('setting new weight_decay_rate={}'.format(weight_decay_rate))
