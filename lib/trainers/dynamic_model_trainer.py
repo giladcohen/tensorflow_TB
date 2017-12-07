@@ -80,6 +80,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.model.build_graph()
         self.print_model_info()
 
+        self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.validation_retention)
         self.build_train_env()
         self.finalize_graph()  # to create the new monitored session and feeding initial dummy dict
 
