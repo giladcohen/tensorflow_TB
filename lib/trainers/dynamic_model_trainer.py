@@ -86,11 +86,11 @@ class DynamicModelTrainer(ActiveTrainerBase):
         # overwrite the global step
         self.log.info('overwriting graph\'s values: global_step={}, weight_decay_rate={}'
                       .format(self.global_step, self.weight_decay_rate))
-        # global_step_tensor = tf.train.get_or_create_global_step()
-        # update_global_step = global_step_tensor.assign(self.global_step)
-        # sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-        # sess.run(update_global_step)
-        # sess.close()
+        global_step_tensor = tf.train.get_or_create_global_step()
+        update_global_step = global_step_tensor.assign(self.global_step)
+        sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+        sess.run(update_global_step)
+        sess.close()
 
         # sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
         # sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
@@ -105,13 +105,14 @@ class DynamicModelTrainer(ActiveTrainerBase):
                      self.model.is_training         : False}
 
         self.sess = self.get_session('train')
-        self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
-                      feed_dict=feed_dict)
-        global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate], feed_dict=feed_dict)
+        global_step = self.sess.run(self.model.global_step, feed_dict=feed_dict)
         if global_step != self.global_step:
             err_str = 'returned global_step={} is different than self.global_step={}'.format(global_step, self.global_step)
             self.log.error(err_str)
             raise AssertionError(err_str)
+
+        self.sess.run(self.model.assign_ops['weight_decay_rate_ow'], feed_dict=feed_dict)
+        weight_decay_rate = self.sess.run(self.model.weight_decay_rate, feed_dict=feed_dict)
         if weight_decay_rate != self.weight_decay_rate:
             err_str = 'returned weight_decay_rate={} is different than self.weight_decay_rate={}'.format(weight_decay_rate, self.weight_decay_rate)
             self.log.error(err_str)
