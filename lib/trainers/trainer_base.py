@@ -36,10 +36,14 @@ class TrainerBase(AgentBase):
         self.summary_steps         = self.prm.train.train_control.SUMMARY_STEPS
         self.checkpoint_secs       = self.prm.train.train_control.CHECKPOINT_SECS
         self.checkpoint_steps      = self.prm.train.train_control.CHECKPOINT_STEPS
+        self.last_step             = self.prm.train.train_control.LAST_STEP
         self.logger_steps          = self.prm.train.train_control.LOGGER_STEPS
         self.eval_steps            = self.prm.train.train_control.EVAL_STEPS
         self.evals_in_epoch        = self.prm.train.train_control.EVALS_IN_EPOCH
         self.skip_first_evaluation = self.prm.train.train_control.SKIP_FIRST_EVALUATION
+        if self.last_step is None:
+            self.log.warning('LAST_STEP is None. Setting LAST_STEP=1000000')
+            self.last_step = 1000000
         if self.eval_steps is None:
             self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
             self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
@@ -107,7 +111,9 @@ class TrainerBase(AgentBase):
                                                         saver=self.saver,
                                                         checkpoint_basename='model_schedule.ckpt')
 
-        self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook]
+        stop_at_step_hook = tf.train.StopAtStepHook(last_step=self.last_step)
+
+        self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook, stop_at_step_hook]
 
     def build_validation_env(self):
         self.log.info("Starting building the validation environment")
@@ -135,6 +141,7 @@ class TrainerBase(AgentBase):
         self.log.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
         self.log.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
         self.log.info(' CHECKPOINT_STEPS: {}'.format(self.checkpoint_steps))
+        self.log.info(' LAST_STEP: {}'.format(self.last_step))
         self.log.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
         self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
@@ -154,6 +161,8 @@ class TrainerBase(AgentBase):
             else:
                 self.train_step()
                 self._activate_eval = True
+                if self.sess.should_stop():
+                    self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def finalize_graph(self):
         self.sess = self.get_session('train')

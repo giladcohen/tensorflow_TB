@@ -45,6 +45,8 @@ class ActiveTrainerBase(ClassificationTrainer):
                 self.train_step()
                 self._activate_annot = True
                 self._activate_eval  = True
+                if self.sess.should_stop():
+                    self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def annot_step(self):
         '''Implementing one annotation step'''

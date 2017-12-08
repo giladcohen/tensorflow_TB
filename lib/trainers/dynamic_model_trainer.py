@@ -6,9 +6,6 @@ from lib.trainers.active_trainer_base import ActiveTrainerBase
 import numpy as np
 import tensorflow as tf
 from lib.base.collections import TRAIN_SUMMARIES
-from lib.retention import Retention
-from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
-from utils.tensorboard_logging import TBLogger
 import os
 
 
@@ -32,6 +29,8 @@ class DynamicModelTrainer(ActiveTrainerBase):
                 self.train_step()
                 self._activate_annot = True
                 self._activate_eval  = True
+                if self.sess.should_stop():
+                    self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def update_model(self):
         """Updating the model - increasing the model parameters to accommodate larger pool"""
@@ -80,10 +79,9 @@ class DynamicModelTrainer(ActiveTrainerBase):
     def get_train_summaries(self):
         super(DynamicModelTrainer, self).get_train_summaries()
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('weight_decay_rate', self.model.weight_decay_rate))
-        # tf.add_to_collection(TRAIN_SUMMARIES, self.tb_logger_train.log_scalar('total_parameters', self.total_parameters, self.global_step))
 
     def finalize_graph(self):
-        # overwrite the global step
+        # overwrite the global step and weight decay rate
         self.log.info('overwriting graph\'s values: global_step={}, weight_decay_rate={}'
                       .format(self.global_step, self.weight_decay_rate))
 
