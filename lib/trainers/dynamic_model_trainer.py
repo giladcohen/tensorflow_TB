@@ -31,6 +31,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
                 self._activate_eval  = True
                 if self.sess.should_stop():
                     self.log.info('Stop training at global_step={}'.format(self.global_step))
+                    break
 
     def update_model(self):
         """Updating the model - increasing the model parameters to accommodate larger pool"""

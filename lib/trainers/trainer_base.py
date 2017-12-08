@@ -163,6 +163,7 @@ class TrainerBase(AgentBase):
                 self._activate_eval = True
                 if self.sess.should_stop():
                     self.log.info('Stop training at global_step={}'.format(self.global_step))
+                    break
 
     def finalize_graph(self):
         self.sess = self.get_session('train')
