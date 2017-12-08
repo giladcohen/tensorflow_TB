@@ -106,14 +106,12 @@ class DynamicModelTrainer(ActiveTrainerBase):
 
         self.sess = self.get_session('train')
         self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']], feed_dict=feed_dict)
-
-        global_step = self.sess.run(self.model.global_step, feed_dict=feed_dict)
+        global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate], feed_dict=feed_dict)
+        
         if global_step != self.global_step:
             err_str = 'returned global_step={} is different than self.global_step={}'.format(global_step, self.global_step)
             self.log.error(err_str)
             raise AssertionError(err_str)
-
-        weight_decay_rate = self.sess.run(self.model.weight_decay_rate, feed_dict=feed_dict)
         if weight_decay_rate != self.weight_decay_rate:
             err_str = 'returned weight_decay_rate={} is different than self.weight_decay_rate={}'.format(weight_decay_rate, self.weight_decay_rate)
             self.log.error(err_str)

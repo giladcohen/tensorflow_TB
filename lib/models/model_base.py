@@ -83,7 +83,7 @@ class ModelBase(AgentBase):
         self.assign_ops['lrn_rate'] = self.lrn_rate.assign(self.prm.network.optimization.LEARNING_RATE)
         self.assign_ops['xent_rate'] = self.xent_rate.assign(self.prm.network.optimization.XENTROPY_RATE)
         self.assign_ops['weight_decay_rate'] = self.weight_decay_rate.assign(self.prm.network.optimization.WEIGHT_DECAY_RATE)
-        self.assign_ops['weight_decay_rate_ow'] = self.global_step.assign(self.weight_decay_rate_ph)
+        self.assign_ops['weight_decay_rate_ow'] = self.weight_decay_rate.assign(self.weight_decay_rate_ph)
         self.assign_ops['relu_leakiness'] = self.relu_leakiness.assign(self.prm.network.system.RELU_LEAKINESS)
         self.assign_ops['optimizer'] = self.optimizer.assign(self.prm.network.optimization.OPTIMIZER)
 
