@@ -55,7 +55,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
         # for 1k: [16, 22, 44, 88]. weight_decay for 1k: 0.0390625. pca_embedding_dims = 18
         if lp == 2000:
             resnet_filters    = np.array([16, 32, 64, 128])
-            weight_decay_rate = 0.01953125
+            weight_decay_rate = 0.014
             pca_embedding_dims = 26
         elif lp == 3000:
             resnet_filters = np.array([16, 40, 80, 160])

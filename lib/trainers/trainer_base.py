@@ -184,8 +184,6 @@ class TrainerBase(AgentBase):
         """Overriding model's parameters if necessary.
         collecting the model values stored previously in the model.
         """
-        #FIXME(gilad): automate this function for all names: model_variables[i].op.name
-        #model_variables = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES)
 
         self.sess = self.get_session('prediction')
 
