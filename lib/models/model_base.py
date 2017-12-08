@@ -92,7 +92,7 @@ class ModelBase(AgentBase):
         '''Setting up inputs for the network'''
         self.is_training = tf.placeholder(tf.bool)
         self.global_step_ph = tf.placeholder(tf.int64)
-        self.weight_decay_rate_ph = tf.placeholder(tf.int64)
+        self.weight_decay_rate_ph = tf.placeholder(tf.float32)
 
     @abstractmethod
     def _build_inference(self):
