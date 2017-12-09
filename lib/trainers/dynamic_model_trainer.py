@@ -77,10 +77,6 @@ class DynamicModelTrainer(ActiveTrainerBase):
                       .format(lp, resnet_filters, weight_decay_rate, pca_embedding_dims))
         return resnet_filters, weight_decay_rate, pca_embedding_dims
 
-    def get_train_summaries(self):
-        super(DynamicModelTrainer, self).get_train_summaries()
-        tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('weight_decay_rate', self.model.weight_decay_rate))
-
     def finalize_graph(self):
         # overwrite the global step and weight decay rate
         self.log.info('overwriting graph\'s values: global_step={}, weight_decay_rate={}'

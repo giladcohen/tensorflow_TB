@@ -152,6 +152,7 @@ class TrainerBase(AgentBase):
 
     def get_train_summaries(self):
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('score', self.model.score))
+        tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('weight_decay_rate', self.model.weight_decay_rate))
 
     def train(self):
         while True:
