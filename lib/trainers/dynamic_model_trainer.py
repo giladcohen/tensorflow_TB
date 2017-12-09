@@ -55,19 +55,19 @@ class DynamicModelTrainer(ActiveTrainerBase):
         # for 1k: [16, 22, 44, 88]. weight_decay for 1k: 0.0390625. pca_embedding_dims = 18
         if lp == 2000:
             resnet_filters    = np.array([16, 32, 64, 128])
-            weight_decay_rate = 0.014
+            weight_decay_rate = 0.007
             pca_embedding_dims = 26
         elif lp == 3000:
             resnet_filters = np.array([16, 40, 80, 160])
-            weight_decay_rate = 0.01302083333
+            weight_decay_rate = 0.004
             pca_embedding_dims = 32
         elif lp == 4000:
             resnet_filters = np.array([16, 44, 88, 176])
-            weight_decay_rate = 0.009765625
+            weight_decay_rate = 0.0035
             pca_embedding_dims = 35
         elif lp == 5000:
             resnet_filters = np.array([16, 50, 100, 200])
-            weight_decay_rate = 0.0078125
+            weight_decay_rate = 0.0026
             pca_embedding_dims = 40
         else:
             err_str = 'pool size is {}. This is not possible'.format(lp)
