@@ -23,6 +23,7 @@ from lib.trainers.kmeans_segments_knn_dnn_correlation_trainer import KMeansSegme
 from lib.trainers.knn_dnn_correlation_dynamic_trainer import KnnDnnCorrelationDynamicTrainer
 from lib.trainers.random_sampler_dynamic_trainer import RandomSamplerDynamicTrainer
 from lib.trainers.most_uncertained_dynamic_trainer import MostUncertainedDynamicTrainer
+from lib.trainers.kmeans_segments_knn_dnn_correlation_dynamic_trainer import KMeansSegmentsKnnDnnCorrelationDynamicTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
@@ -115,7 +116,8 @@ class Factories(object):
                               'kmeans_segments_knn_dnn_correlation'  : KMeansSegmentsKnnDnnCorrelationTrainer,
                               'knn_dnn_correlation_dynamic'          : KnnDnnCorrelationDynamicTrainer,
                               'random_sampler_dynamic'               : RandomSamplerDynamicTrainer,
-                              'most_uncertained_dynamic'             : MostUncertainedDynamicTrainer}
+                              'most_uncertained_dynamic'             : MostUncertainedDynamicTrainer,
+                              'kmeans_segments_knn_dnn_correlation_dynamic' : KMeansSegmentsKnnDnnCorrelationDynamicTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
