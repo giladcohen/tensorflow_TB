@@ -37,5 +37,5 @@ class TrainSummarySaverHook(tf.train.SummarySaverHook):
         is_training = run_values.results["is_training"]
         if not is_training:
             return
-        super(TrainSummarySaverHook, self).after_run(self, run_context, run_values)
+        super(TrainSummarySaverHook, self).after_run(run_context, run_values)
 

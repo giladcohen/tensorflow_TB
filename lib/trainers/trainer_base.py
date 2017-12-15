@@ -99,16 +99,23 @@ class TrainerBase(AgentBase):
         self.tb_logger_train = TBLogger(self.summary_writer_train)
         self.get_train_summaries()
 
-        summary_hook = TrainSummarySaverHook(
-            name='train_summary_saver_hook',
-            prm=self.prm,
-            model=self.model,
+        # summary_hook = TrainSummarySaverHook(
+        #     name='train_summary_saver_hook',
+        #     prm=self.prm,
+        #     model=self.model,
+        #     save_steps=self.summary_steps,
+        #     summary_writer=self.summary_writer_train,
+        #     summary_op=tf.summary.merge(inputs=[self.model.summaries],
+        #                                 collections=[TRAIN_SUMMARIES])
+        # )
+
+        summary_hook = tf.train.SummarySaverHook(
             save_steps=self.summary_steps,
             summary_writer=self.summary_writer_train,
             summary_op=tf.summary.merge(inputs=[self.model.summaries],
                                         collections=[TRAIN_SUMMARIES])
         )
-
+        
         logging_hook = tf.train.LoggingTensorHook(
             tensors={'step': self.model.global_step,
                      'loss_xent': self.model.xent_cost,
@@ -198,7 +205,8 @@ class TrainerBase(AgentBase):
 
         [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
             self.sess.run([self.model.lrn_rate, self.model.xent_rate, self.model.weight_decay_rate,
-                           self.model.relu_leakiness, self.model.optimizer])
+                           self.model.relu_leakiness, self.model.optimizer],
+                          feed_dict=self._get_dummy_feed())
 
         assign_ops = []
         if not np.isclose(lrn_rate, self.prm.network.optimization.LEARNING_RATE):
@@ -222,7 +230,7 @@ class TrainerBase(AgentBase):
             self.log.warning('changing model.optimizer from {} to {}'.
                              format(optimizer, self.prm.network.optimization.OPTIMIZER))
 
-        self.sess.run(assign_ops)
+        self.sess.run(assign_ops, feed_dict=self._get_dummy_feed())
 
     def _get_dummy_feed(self):
         """Getting dummy feed to bypass tensorflow (possible bug?) complaining about no placeholder value"""
