@@ -222,7 +222,7 @@ class TrainerBase(AgentBase):
             self.log.warning('changing model.optimizer from {} to {}'.
                              format(optimizer, self.prm.network.optimization.OPTIMIZER))
 
-        self.sess.run(assign_ops, feed_dict={self.model.is_training: False})
+        self.sess.run(assign_ops, feed_dict=self._get_dummy_feed())
 
     def _get_dummy_feed(self):
         """Getting dummy feed to bypass tensorflow (possible bug?) complaining about no placeholder value"""
