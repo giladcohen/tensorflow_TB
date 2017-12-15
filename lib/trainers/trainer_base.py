@@ -99,20 +99,13 @@ class TrainerBase(AgentBase):
         self.tb_logger_train = TBLogger(self.summary_writer_train)
         self.get_train_summaries()
 
-        # summary_hook = TrainSummarySaverHook(
-        #     name='train_summary_saver_hook',
-        #     prm=self.prm,
-        #     model=self.model,
-        #     save_steps=self.summary_steps,
-        #     summary_writer=self.summary_writer_train,
-        #     summary_op=tf.summary.merge(inputs=[self.model.summaries],
-        #                                 collections=[TRAIN_SUMMARIES])
-        # )
-
-        summary_hook = tf.train.SummarySaverHook(
+        summary_hook = TrainSummarySaverHook(
+            name='train_summary_saver_hook',
+            prm=self.prm,
+            model=self.model,
             save_steps=self.summary_steps,
             summary_writer=self.summary_writer_train,
-            summary_op=tf.summary.merge([self.model.summaries] + [TRAIN_SUMMARIES])
+            summary_op=tf.summary.merge([self.model.summaries] + tf.get_collection(TRAIN_SUMMARIES))
         )
 
         logging_hook = tf.train.LoggingTensorHook(
@@ -229,7 +222,7 @@ class TrainerBase(AgentBase):
             self.log.warning('changing model.optimizer from {} to {}'.
                              format(optimizer, self.prm.network.optimization.OPTIMIZER))
 
-        self.sess.run(assign_ops, feed_dict=self._get_dummy_feed())
+        self.sess.run(assign_ops, feed_dict={self.model.is_training: False})
 
     def _get_dummy_feed(self):
         """Getting dummy feed to bypass tensorflow (possible bug?) complaining about no placeholder value"""
