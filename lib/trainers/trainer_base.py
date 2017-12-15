@@ -112,10 +112,9 @@ class TrainerBase(AgentBase):
         summary_hook = tf.train.SummarySaverHook(
             save_steps=self.summary_steps,
             summary_writer=self.summary_writer_train,
-            summary_op=tf.summary.merge(inputs=[self.model.summaries],
-                                        collections=[TRAIN_SUMMARIES])
+            summary_op=tf.summary.merge([self.model.summaries] + [TRAIN_SUMMARIES])
         )
-        
+
         logging_hook = tf.train.LoggingTensorHook(
             tensors={'step': self.model.global_step,
                      'loss_xent': self.model.xent_cost,
