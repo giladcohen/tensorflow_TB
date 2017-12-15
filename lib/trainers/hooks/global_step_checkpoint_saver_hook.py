@@ -1,5 +1,5 @@
 """
-This hook saves checkpoints both after X seconds and at specific global steps
+This hook saves checkpoints at specific global steps
 """
 from __future__ import division
 from __future__ import absolute_import

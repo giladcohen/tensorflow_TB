@@ -8,7 +8,6 @@ import numpy as np
 from math import ceil
 import os
 from sklearn.decomposition import PCA
-from utils.misc import get_plain_session
 
 
 class ActiveTrainerBase(ClassificationTrainer):
@@ -34,7 +33,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         self._activate_annot = True
 
     def train(self):
-        while True:
+        while not self.sess.should_stop():
             if self.to_annotate():
                 self.annot_step()
                 self._activate_annot = False
@@ -45,14 +44,11 @@ class ActiveTrainerBase(ClassificationTrainer):
                 self.train_step()
                 self._activate_annot = True
                 self._activate_eval  = True
-                if self.sess.should_stop():
-                    self.log.info('Stop training at global_step={}'.format(self.global_step))
-                    break
+        self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def annot_step(self):
         '''Implementing one annotation step'''
         self.log.info('Adding {} new labels to train dataset.'.format(self.clusters))
-        self.sess = self.get_session('prediction')
         self.debug_ops()
         new_indices = self.select_new_samples()  # select new indices
         self.add_new_samples(new_indices)        # add new indices to train dataset

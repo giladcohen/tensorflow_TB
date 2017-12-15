@@ -10,6 +10,7 @@ from lib.base.collections import TRAIN_SUMMARIES
 import utils
 from lib.retention import Retention
 from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
+from lib.trainers.hooks.train_summary_saver_hook import TrainSummarySaverHook
 from utils.tensorboard_logging import TBLogger
 
 
@@ -62,18 +63,27 @@ class TrainerBase(AgentBase):
         """
         Building all trainer agents: train/validation/test sessions, file writers, retentions, hooks, etc.
         """
-        self.mode = None  # current mode: 'train'/'validation'/'prediction'
-        self.sess = None  # current session, for training/validation/prediction
         self.model.build_graph()
         self.print_model_info()
-        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')  # use get_session for Session object
+        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
 
-        self.build_validation_env()
-        #FIXME(gilad): Remove the dependancy in validation_retention and move into build_train_env
+        # Retention for train/validation stats
+        self.train_retention = Retention('retention_train', self.prm)
+        self.validation_retention = Retention('retention_validation', self.prm)
+
+        # TODO(gilad): consider using train retention to the learning rate hook, if also necessary in the future
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.validation_retention)
 
         self.build_train_env()
+        self.build_validation_env()
         self.build_prediction_env()
+
+        # create session
+        self.sess = tf.train.MonitoredTrainingSession(
+            checkpoint_dir=self.checkpoint_dir,
+            hooks=self.train_session_hooks,
+            save_checkpoint_secs=self.checkpoint_secs,
+            config=tf.ConfigProto(allow_soft_placement=True))
 
         # creating train monitored session for automatically initializing the graph, running 'begin' function for
         # all hooks and using scaffold to finalize the graph. If there is a checkpoint already in the checkpoint_dir,
@@ -85,16 +95,20 @@ class TrainerBase(AgentBase):
 
     def build_train_env(self):
         self.log.info("Starting building the train environment")
-        self.train_retention = Retention('retention_train', self.prm)  #TODO(gilad): Incorporate. Not in use
         self.summary_writer_train = tf.summary.FileWriter(self.train_dir)
         self.tb_logger_train = TBLogger(self.summary_writer_train)
         self.get_train_summaries()
 
-        summary_hook = tf.train.SummarySaverHook(
+        summary_hook = TrainSummarySaverHook(
+            name='train_summary_saver_hook',
+            prm=self.prm,
+            model=self.model,
             save_steps=self.summary_steps,
             summary_writer=self.summary_writer_train,
-            summary_op=tf.summary.merge([self.model.summaries] + tf.get_collection(TRAIN_SUMMARIES))
+            summary_op=tf.summary.merge(inputs=[self.model.summaries],
+                                        collections=[TRAIN_SUMMARIES])
         )
+
         logging_hook = tf.train.LoggingTensorHook(
             tensors={'step': self.model.global_step,
                      'loss_xent': self.model.xent_cost,
@@ -117,13 +131,11 @@ class TrainerBase(AgentBase):
 
     def build_validation_env(self):
         self.log.info("Starting building the validation environment")
-        self.validation_retention = Retention('retention_validation', self.prm)
         self.summary_writer_eval = tf.summary.FileWriter(self.eval_dir)
         self.tb_logger_eval = TBLogger(self.summary_writer_eval)
 
     def build_prediction_env(self):
         self.log.info("Starting building the prediction environment")
-        self.prediction_retention = Retention('retention_prediction', self.prm)
         self.summary_writer_pred = tf.summary.FileWriter(self.pred_dir)
         self.tb_logger_pred = TBLogger(self.summary_writer_pred)
 
@@ -155,19 +167,16 @@ class TrainerBase(AgentBase):
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('weight_decay_rate', self.model.weight_decay_rate))
 
     def train(self):
-        while True:
+        while not self.sess.should_stop():
             if self.to_eval():
                 self.eval_step()
                 self._activate_eval = False
             else:
                 self.train_step()
                 self._activate_eval = True
-                if self.sess.should_stop():
-                    self.log.info('Stop training at global_step={}'.format(self.global_step))
-                    break
+        self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def finalize_graph(self):
-        self.sess = self.get_session('train')
         self.global_step = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
 
     def print_model_info(self):
@@ -182,11 +191,10 @@ class TrainerBase(AgentBase):
             tfprof_options=tf.contrib.tfprof.model_analyzer.FLOAT_OPS_OPTIONS)
 
     def set_params(self):
-        """Overriding model's parameters if necessary.
+        """
+        Overriding model's parameters if necessary.
         collecting the model values stored previously in the model.
         """
-
-        self.sess = self.get_session('prediction')
 
         [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
             self.sess.run([self.model.lrn_rate, self.model.xent_rate, self.model.weight_decay_rate,
@@ -233,43 +241,6 @@ class TrainerBase(AgentBase):
     def eval_step(self):
         '''Implementing one evaluation step.'''
         pass
-
-    def get_session(self, mode):
-        """
-        Returns a training/validation/prediction session.
-        :param mode:  string of 'train'/'validation'/'prediction'
-        :return: session or monitored session
-        """
-
-        if self.sess is None:
-            # This should be the case only in the first time we call this function
-            assert self.mode is None, 'sess in None but mode={}'.format(self.mode)
-            self.log.info('Session is None at global_step={}.'.format(self.global_step))
-        elif mode == self.mode:
-            # do nothing
-            return self.sess
-        else:
-            self.log.info('Closing current {} session at global_step={}'.format(self.mode, self.global_step))
-            self.sess.close()
-
-        self.log.info('Starting new {} session for global_step={}'.format(mode, self.global_step))
-        if mode == 'train':
-            sess = tf.train.MonitoredTrainingSession(
-                checkpoint_dir=self.checkpoint_dir,
-                hooks=self.train_session_hooks,
-                save_checkpoint_secs=self.checkpoint_secs,
-                config=tf.ConfigProto(allow_soft_placement=True))
-        elif mode == 'validation' or mode == 'prediction':
-            sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-            self.saver.restore(sess, tf.train.latest_checkpoint(self.checkpoint_dir))
-        else:
-            err_str = 'mode {} is not expected in get_session()'.format(mode)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-
-        self.log.info('DEBUG: global_step = {}. mode={}. prev_mode={}'.format(self.global_step, mode, self.mode))
-        self.mode = mode
-        return sess
 
     def to_eval(self):
         return self.global_step % self.eval_steps == 0 and self._activate_eval

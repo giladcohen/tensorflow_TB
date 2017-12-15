@@ -17,7 +17,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
         self.weight_decay_rate = self.prm.network.optimization.WEIGHT_DECAY_RATE
 
     def train(self):
-        while True:
+        while not self.sess.should_stop():
             if self.to_annotate():
                 self.annot_step()
                 self.update_model()
@@ -29,9 +29,7 @@ class DynamicModelTrainer(ActiveTrainerBase):
                 self.train_step()
                 self._activate_annot = True
                 self._activate_eval  = True
-                if self.sess.should_stop():
-                    self.log.info('Stop training at global_step={}'.format(self.global_step))
-                    break
+        self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def update_model(self):
         """Updating the model - increasing the model parameters to accommodate larger pool"""
@@ -89,18 +87,8 @@ class DynamicModelTrainer(ActiveTrainerBase):
                      self.model.labels              : labels,
                      self.model.is_training         : False}
 
-        self.sess = self.get_session('train')
         self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']], feed_dict=feed_dict)
-        global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate], feed_dict=feed_dict)
-
-        if global_step != self.global_step:
-            err_str = 'returned global_step={} is different than self.global_step={}'.format(global_step, self.global_step)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-        if not np.isclose(weight_decay_rate, self.weight_decay_rate):
-            err_str = 'returned weight_decay_rate={} is different than self.weight_decay_rate={}'.format(weight_decay_rate, self.weight_decay_rate)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
+        # global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate], feed_dict=feed_dict)
 
     def set_params(self):
         pass
