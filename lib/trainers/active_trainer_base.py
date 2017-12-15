@@ -161,12 +161,17 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.log.info('Start initializing weight in global step={}'.format(self.global_step))
 
         # initialize all weights
-        self.sess.run(self.model.init_op, feed_dict={self.model.is_training: False})
+        self.sess.run(self.model.init_op, feed_dict=self._get_dummy_feed())
         self.log.info('Done initializing weight in global step={}'.format(self.global_step))
 
         # restore model global_step
-        self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step,
-                                                                          self.model.is_training: False})
+        images, labels = self.dataset.get_mini_batch_train(indices=[0])
+        feed_dict = {self.model.global_step_ph      : self.global_step,
+                     self.model.images              : images,
+                     self.model.labels              : labels,
+                     self.model.is_training         : False}
+        self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict=feed_dict)
+
         self.log.info('Done restoring global_step ({})'.format(self.global_step))
 
     def set_params(self):
