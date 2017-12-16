@@ -185,4 +185,4 @@ class ActiveTrainerBase(ClassificationTrainer):
             assign_ops.append(self.model.assign_ops['dropout_keep_prob'])
             self.log.warning('changing model.dropout_keep_prob from {} to {}'.
                              format(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB))
-        self.sess.run(assign_ops)
+        self.sess.run(assign_ops, feed_dict=self._get_dummy_feed())
