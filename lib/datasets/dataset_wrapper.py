@@ -73,7 +73,8 @@ class DatasetWrapper(object):
             os.makedirs(self.train_images_dir)
             os.makedirs(self.validation_images_dir)
             self.log.info('Creating {} dataset into {}. This may take a while'.format(self.dataset_name, self.dataset_dir))
-            misc.save_cifar10_to_disk(self.train_images_dir, self.train_labels_file,
+            misc.save_dataset_to_disk(self.dataset_name,
+                                      self.train_images_dir, self.train_labels_file,
                                       self.validation_images_dir, self.validation_labels_file)
             self.log.info('dataset {} was successfully written to {}.'.format(self.dataset_name, self.dataset_dir))
 

@@ -51,7 +51,10 @@ class Factories(object):
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
 
     def get_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': ActiveDataSet}
+        available_datasets = {'cifar10'         : DataSet,
+                              'cifar100'        : DataSet,
+                              'active_cifar10'  : ActiveDataSet,
+                              'active_cifar100' : ActiveDataSet}
         if self.dataset_name in available_datasets:
             dataset = DatasetWrapper(self.dataset_name + '_wrapper', self.prm)
 
