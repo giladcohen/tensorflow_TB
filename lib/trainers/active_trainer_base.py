@@ -180,7 +180,7 @@ class ActiveTrainerBase(ClassificationTrainer):
     def set_params(self):
         super(ActiveTrainerBase, self).set_params()
         assign_ops = []
-        dropout_keep_prob = self.sess.run(self.model.dropout_keep_prob)
+        dropout_keep_prob = self.sess.run(self.model.dropout_keep_prob, feed_dict=self._get_dummy_feed())
         if not np.isclose(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB):
             assign_ops.append(self.model.assign_ops['dropout_keep_prob'])
             self.log.warning('changing model.dropout_keep_prob from {} to {}'.
