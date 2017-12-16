@@ -22,6 +22,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.min_learning_rate          = self.prm.train.train_control.MIN_LEARNING_RATE
         self.annotation_rule            = self.prm.train.train_control.ANNOTATION_RULE
         self.steps_for_new_annotations  = self.prm.train.train_control.STEPS_FOR_NEW_ANNOTATIONS
+        self.init_after_annot           = self.prm.train.train_control.INIT_AFTER_ANNOT
 
         self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
@@ -55,7 +56,8 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.debug_ops()
 
         # reset learning rate to initial value, retention memory and model weights
-        self.init_weights()
+        if self.init_after_annot:
+            self.init_weights()
         self.learning_rate_hook.reset_learning_rate()
         self.validation_retention.reset_memory()
 
@@ -131,6 +133,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
         self.log.info(' ANNOTATION_RULE: {}'.format(self.annotation_rule))
         self.log.info(' STEPS_FOR_NEW_ANNOTATIONS: {}'.format(self.steps_for_new_annotations))
+        self.log.info(' INIT_AFTER_ANNOT: {}'.format(self.init_after_annot))
 
     def debug_ops(self):
         if self.debug_mode:
