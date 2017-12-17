@@ -161,11 +161,11 @@ class ActiveTrainerBase(ClassificationTrainer):
         return ret
 
     def init_weights(self):
-        self.log.info('Start initializing weight in global step={}'.format(self.global_step))
+        self.log.info('Start initializing weights in global step={}'.format(self.global_step))
 
         # initialize all weights
         self.sess.run(self.model.init_op, feed_dict=self._get_dummy_feed())
-        self.log.info('Done initializing weight in global step={}'.format(self.global_step))
+        self.log.info('Done initializing weights in global step={}'.format(self.global_step))
 
         # restore model global_step
         images, labels = self.dataset.get_mini_batch_train(indices=[0])
