@@ -1,4 +1,3 @@
-from abc import ABCMeta, abstractmethod
 from lib.models.classifier_model import ClassifierModel
 from lib.models.layers import *
 import six
@@ -11,13 +10,13 @@ class ResNet(ClassifierModel):
     https://arxiv.org/pdf/1512.03385v1.pdf
     https://arxiv.org/pdf/1605.07146v1.pdf
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, *args, **kwargs):
         super(ResNet, self).__init__(*args, **kwargs)
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
         self.normalize_embedding = self.prm.network.NORMALIZE_EMBEDDING
         self.embedding_dims = self.prm.network.EMBEDDING_DIMS
+        self.resnet_filters = self.prm.network.RESNET_FILTERS
 
     def print_stats(self):
         super(ResNet, self).print_stats()
@@ -25,6 +24,7 @@ class ResNet(ClassifierModel):
         self.log.info(' NUM_RESIDUAL_UNITS: {}'.format(self.num_residual_units))
         self.log.info(' NORMALIZE_EMBEDDING: {}'.format(self.normalize_embedding))
         self.log.info(' EMBEDDING_DIMS: {}'.format(self.embedding_dims))
+        self.log.info(' RESNET_FILTERS: {}'.format(self.resnet_filters))
 
     def _init_params(self):
         super(ResNet, self)._init_params()
@@ -38,13 +38,14 @@ class ResNet(ClassifierModel):
 
     def _build_inference(self):
         """building the inference model of ResNet"""
+        filters = self.resnet_filters
         with tf.variable_scope('init'):
             x = tf.map_fn(tf.image.per_image_standardization, self.images)
-            x = conv('init_conv', x, 3, 16, stride_arr(1))
+            x = conv('init_conv', x, 3, filters[0], stride_arr(1))
 
         strides = [1, 2, 2]
         activate_before_residual = [True, False, False]
-        filters = [16, 160, 320, 640] #WRN28-10
+        filters = self.resnet_filters  #WRN28-10
 
         with tf.variable_scope('unit_1_0'):
             x = self._residual(x, filters[1], stride_arr(strides[0]), activate_before_residual[0])
@@ -74,7 +75,7 @@ class ResNet(ClassifierModel):
                 x = slim.unit_norm(x, dim=1, scope='normalize_vec')
                 variable_summaries('embedding', x)
             self.net['embedding_layer'] = x
-            self.logits = fully_connected(x, self.num_classes)
+            self.logits = self.calculate_logits(x)
 
     def _residual(self, x, out_filter, stride, activate_before_residual=False):
         """Residual unit with 2 sub layers."""
@@ -109,8 +110,8 @@ class ResNet(ClassifierModel):
         self.log.info('image after unit %s', x.get_shape())
         return x
 
-    @abstractmethod
     def post_pool_operations(self, x):
-        """Building the fully connected layers of the resnet model.
-        Calculating self.logits"""
-        pass
+        return x
+
+    def calculate_logits(self, x):
+        return fully_connected(x, self.num_classes)

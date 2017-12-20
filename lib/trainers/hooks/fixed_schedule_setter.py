@@ -8,8 +8,8 @@ class FixedScheduleSetter(LearningRateSetterBase):
 
         self.scheduled_steps         = self.prm.train.train_control.learning_rate_setter.SCHEDULED_STEPS
         self.use_fixed_epochs        = self.prm.train.train_control.learning_rate_setter.USE_FIXED_EPOCHS
-        self.scheduled_reaning_rates = self.prm.train.train_control.learning_rate_setter.SCHEDULED_LEARNING_RATES
-        self.all_learning_rates      = [self._init_lrn_rate] + self.scheduled_reaning_rates # all learning rates
+        self.scheduled_learning_rates = self.prm.train.train_control.learning_rate_setter.SCHEDULED_LEARNING_RATES
+        self.all_learning_rates      = [self._init_lrn_rate] + self.scheduled_learning_rates # all learning rates
 
         self.train_batch_size = self.trainset_dataset.batch_size
         self.train_set_size   = self.trainset_dataset.pool_size()
@@ -40,13 +40,13 @@ class FixedScheduleSetter(LearningRateSetterBase):
         super(FixedScheduleSetter, self).print_stats()
         self.log.info(' SCHEDULED_STEPS: {}'.format(self.scheduled_steps))
         self.log.info(' USE_FIXED_EPOCHS: {}'.format(self.use_fixed_epochs))
-        self.log.info(' SCHEDULED_LEARNING_RATES: {}'.format(self.scheduled_reaning_rates))
+        self.log.info(' SCHEDULED_LEARNING_RATES: {}'.format(self.scheduled_learning_rates))
         self.log.info(' ALL_LEARNING_RATES: {}'.format(self.all_learning_rates))
         self.log.info(' [DEBUG]: Using in hook: train_batch_size={}, train_set_size={}'.format(self.train_batch_size, self.train_set_size))
 
     def assert_config(self):
-        if len(self.scheduled_steps) != len(self.scheduled_reaning_rates):
-            err_str = 'SCHEDULED_STEPS ({}) and SCHEDULED_LEARNING_RATES ({}) must have the same lengths'.format(self.scheduled_steps, self.scheduled_reaning_rates)
+        if len(self.scheduled_steps) != len(self.scheduled_learning_rates):
+            err_str = 'SCHEDULED_STEPS ({}) and SCHEDULED_LEARNING_RATES ({}) must have the same lengths'.format(self.scheduled_steps, self.scheduled_learning_rates)
             self.log.error(err_str)
             raise AssertionError(err_str)
         if self.use_fixed_epochs is None:

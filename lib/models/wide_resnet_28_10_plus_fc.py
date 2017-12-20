@@ -1,7 +1,5 @@
-from lib.models.wide_resnet_28_10 import ResNet
-import tensorflow.contrib.slim as slim
+from lib.models.resnet_model import ResNet
 from lib.models.layers import *
-
 
 class WideResNet_28_10_plus_fc(ResNet):
 

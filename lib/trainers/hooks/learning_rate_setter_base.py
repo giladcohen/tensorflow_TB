@@ -26,9 +26,12 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
         return self.name
 
     def before_run(self, run_context):
-        return tf.train.SessionRunArgs(
-            self.model.global_step,  # Asks for global step value.
-            feed_dict={self.model.lrn_rate: self._lrn_rate})  # Sets learning rate
+        if hasattr(run_context.original_args.fetches, 'name') and run_context.original_args.fetches.name == 'init_set_params/init':  # ad hoc code to prevent error when initializing
+            # don't feed the learning rate
+            return tf.train.SessionRunArgs(self.model.global_step)
+        else:
+            # feed the learning rate
+            return tf.train.SessionRunArgs(self.model.global_step, feed_dict={self.model.lrn_rate: self._lrn_rate})
 
     def print_stats(self):
         self.log.info('Learning Rate Setter parameters:')

@@ -60,7 +60,7 @@ class ModelBase(AgentBase):
 
     def _init_params(self):
         """Initialize params that may be changed from two training sessions"""
-        self.global_step        = tf.contrib.framework.get_or_create_global_step()
+        self.global_step        = tf.train.get_or_create_global_step()
         self.lrn_rate           = tf.contrib.framework.model_variable(
             name='learning_rate', dtype=tf.float32, shape=[],
             initializer=tf.constant_initializer(self.prm.network.optimization.LEARNING_RATE), trainable=False)
@@ -79,10 +79,11 @@ class ModelBase(AgentBase):
         self.init_op = tf.global_variables_initializer()
 
     def _set_params(self):
-        self.assign_ops['global_step_ow'] =  self.global_step.assign(self.global_step_ph)
+        self.assign_ops['global_step_ow'] = self.global_step.assign(self.global_step_ph)
         self.assign_ops['lrn_rate'] = self.lrn_rate.assign(self.prm.network.optimization.LEARNING_RATE)
         self.assign_ops['xent_rate'] = self.xent_rate.assign(self.prm.network.optimization.XENTROPY_RATE)
         self.assign_ops['weight_decay_rate'] = self.weight_decay_rate.assign(self.prm.network.optimization.WEIGHT_DECAY_RATE)
+        self.assign_ops['weight_decay_rate_ow'] = self.weight_decay_rate.assign(self.weight_decay_rate_ph)
         self.assign_ops['relu_leakiness'] = self.relu_leakiness.assign(self.prm.network.system.RELU_LEAKINESS)
         self.assign_ops['optimizer'] = self.optimizer.assign(self.prm.network.optimization.OPTIMIZER)
 
@@ -91,6 +92,7 @@ class ModelBase(AgentBase):
         '''Setting up inputs for the network'''
         self.is_training = tf.placeholder(tf.bool)
         self.global_step_ph = tf.placeholder(tf.int64)
+        self.weight_decay_rate_ph = tf.placeholder(tf.float32)
 
     @abstractmethod
     def _build_inference(self):
@@ -112,6 +114,7 @@ class ModelBase(AgentBase):
     def add_weight_decay(self):
         with tf.variable_scope('wd_cost'):
             self.wd_cost = self._decay()
+            tf.summary.scalar('wd_cost', self.wd_cost)
             wd_assert_op = tf.verify_tensor_all_finite(self.wd_cost, 'wd_cost contains NaN or Inf')
             tf.add_to_collection('losses', self.wd_cost)
             tf.add_to_collection('assertions', wd_assert_op)

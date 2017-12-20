@@ -8,11 +8,31 @@ from lib.trainers.all_centers_trainer import AllCentersTrainer
 from lib.trainers.class_centers_trainer import ClassCentersTrainer
 from lib.trainers.most_uncertained_trainer import MostUncertainedTrainer
 from lib.trainers.most_uncertained_balanced_trainer import MostUncertainedBalancedTrainer
+from lib.trainers.cross_entropy_trainer import CrossEntropyTrainer
+from lib.trainers.cross_entropy_trainer2 import CrossEntropyTrainer2
+from lib.trainers.kmeans_on_most_uncertained_trainer import KMeansOnMostUncertainedTrainer
+from lib.trainers.knn_dnn_correlation_trainer import KnnDnnCorrelationTrainer
+from lib.trainers.most_uncertained_knn_trainer import MostUncertainedKnnTrainer
+from lib.trainers.farthest_uncertained_samples_trainer import FarthestUncertainedSamplesTrainer
+from lib.trainers.kmeans_segments_trainer import KMeansSegmentsTrainer
+from lib.trainers.kmeans_segments_most_uncertained_knn import  KMeansSegmentsMostUncertainedKNNTrainer
+from lib.trainers.kmeans_segments_balanced_trainer import KMeansSegmentsBalancedTrainer
+from lib.trainers.kmeans_segments_dynamic_trainer import KMeansSegmentsDynamicTrainer
+from lib.trainers.farthest_kmeans_trainer import FarthestKMeansTrainer
+from lib.trainers.kmeans_segments_knn_dnn_correlation_trainer import KMeansSegmentsKnnDnnCorrelationTrainer
+from lib.trainers.knn_dnn_correlation_dynamic_trainer import KnnDnnCorrelationDynamicTrainer
+from lib.trainers.random_sampler_dynamic_trainer import RandomSamplerDynamicTrainer
+from lib.trainers.most_uncertained_dynamic_trainer import MostUncertainedDynamicTrainer
+from lib.trainers.kmeans_segments_knn_dnn_correlation_dynamic_trainer import KMeansSegmentsKnnDnnCorrelationDynamicTrainer
+from lib.trainers.most_uncertained_knn_dynamic_trainer import MostUncertainedKnnDynamicTrainer
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
-from lib.models.wide_resnet_28_10 import WideResNet_28_10
+from lib.models.resnet_model import ResNet
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
+from lib.models.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
+from lib.models.wide_resnet_28_10_pool_classes2 import WideResNet_28_10_pool_classes2
+from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.datasets.dataset import DataSet
 from lib.datasets.active_dataset import ActiveDataSet
 
@@ -30,32 +50,35 @@ class Factories(object):
         self.architecture         = self.prm.network.ARCHITECTURE
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
 
-    def get_train_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': ActiveDataSet}
+    def get_dataset(self, preprocessor):
+        available_datasets = {'cifar10'         : DataSet,
+                              'cifar100'        : DataSet,
+                              'active_cifar10'  : ActiveDataSet,
+                              'active_cifar100' : ActiveDataSet}
         if self.dataset_name in available_datasets:
-            dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
-            dataset.initialize_pool()
-            self.log.info('get_train_dataset: returning ' + str(dataset))
-            return dataset
-        else:
-            err_str = 'get_train_dataset: dataset {} was not found. Available datasets are: {}'.format(self.dataset_name, available_datasets.keys())
-            self.log.error(err_str)
-            raise AssertionError(err_str)
+            dataset = DatasetWrapper(self.dataset_name + '_wrapper', self.prm)
 
-    def get_validation_dataset(self, preprocessor):
-        available_datasets = {'cifar10': DataSet, 'active_cifar10': DataSet}
-        if self.dataset_name in available_datasets:
-            dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
-            dataset.initialize_pool()
-            self.log.info('get_validation_dataset: returning ' + str(dataset))
+            train_dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
+            train_dataset.initialize_pool()
+            dataset.set_train_dataset(train_dataset)
+            self.log.info('get_train_dataset: returning ' + str(train_dataset))
+
+            validation_dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
+            #validation_dataset.initialize_pool()
+            dataset.set_validation_dataset(validation_dataset)
+            self.log.info('get_validation_dataset: returning ' + str(validation_dataset))
+
             return dataset
         else:
-            err_str = 'get_validation_dataset: dataset {} was not found. Available datasets are: {}'.format(self.dataset_name, available_datasets.keys())
+            err_str = 'get_dataset: dataset {} was not found. Available datasets are: {}'.format(self.dataset_name, available_datasets.keys())
             self.log.error(err_str)
             raise AssertionError(err_str)
 
     def get_model(self):
-        available_networks = {'Wide-Resnet-28-10': WideResNet_28_10, 'Wide-Resnet-28-10_plus_fc': WideResNet_28_10_plus_fc}
+        available_networks = {'Wide-Resnet-28-10'               : ResNet,
+                              'Wide-Resnet-28-10_plus_fc'       : WideResNet_28_10_plus_fc,
+                              'Wide-Resnet-28-10_pool_classes'  : WideResNet_28_10_pool_classes,
+                              'Wide-Resnet-28-10_pool_classes2' : WideResNet_28_10_pool_classes2}
         if self.architecture in available_networks:
             model = available_networks[self.architecture](self.architecture, self.prm)
             self.log.info('get_model: returning ' + str(model))
@@ -77,12 +100,29 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_trainer(self, model, dataset):
-        available_trainers = {'simple'                    : ClassificationTrainer,
-                              'random_sampler'            : RandomSamplerTrainer,
-                              'all_centers'               : AllCentersTrainer,
-                              'class_centers'             : ClassCentersTrainer,
-                              'most_uncertained'          : MostUncertainedTrainer,
-                              'most_uncertained_balanced' : MostUncertainedBalancedTrainer}
+        available_trainers = {'simple'                               : ClassificationTrainer,
+                              'random_sampler'                       : RandomSamplerTrainer,
+                              'all_centers'                          : AllCentersTrainer,
+                              'class_centers'                        : ClassCentersTrainer,
+                              'most_uncertained'                     : MostUncertainedTrainer,
+                              'most_uncertained_balanced'            : MostUncertainedBalancedTrainer,
+                              'cross_entropy'                        : CrossEntropyTrainer,
+                              'cross_entropy2'                       : CrossEntropyTrainer2,
+                              'kmeans_on_most_uncertained'           : KMeansOnMostUncertainedTrainer,
+                              'knn_dnn_correlation'                  : KnnDnnCorrelationTrainer,
+                              'most_uncertained_knn'                 : MostUncertainedKnnTrainer,
+                              'farthest_uncertained_samples'         : FarthestUncertainedSamplesTrainer,
+                              'kmeans_segments'                      : KMeansSegmentsTrainer,
+                              'kmeans_segments_balanced'             : KMeansSegmentsBalancedTrainer,
+                              'farthest_kmeans'                      : FarthestKMeansTrainer,
+                              'kmeans_segments_most_uncertained_knn' : KMeansSegmentsMostUncertainedKNNTrainer,
+                              'kmeans_segments_dynamic'              : KMeansSegmentsDynamicTrainer,
+                              'kmeans_segments_knn_dnn_correlation'  : KMeansSegmentsKnnDnnCorrelationTrainer,
+                              'knn_dnn_correlation_dynamic'          : KnnDnnCorrelationDynamicTrainer,
+                              'random_sampler_dynamic'               : RandomSamplerDynamicTrainer,
+                              'most_uncertained_dynamic'             : MostUncertainedDynamicTrainer,
+                              'kmeans_segments_knn_dnn_correlation_dynamic' : KMeansSegmentsKnnDnnCorrelationDynamicTrainer,
+                              'most_uncertained_knn_dynamic'         : MostUncertainedKnnDynamicTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
@@ -94,7 +134,8 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_learning_rate_setter(self, model, trainset_dataset, retention):
-        available_setters = {'fixed': LearningRateSetterBase, 'fixed_schedule': FixedScheduleSetter,
+        available_setters = {'fixed': LearningRateSetterBase,
+                             'fixed_schedule': FixedScheduleSetter,
                              'decay_by_score': DecayByScoreSetter}
         if self.learning_rate_setter in available_setters:
             setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model, trainset_dataset, retention)

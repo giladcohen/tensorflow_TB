@@ -1,5 +1,7 @@
 import numpy as np
 from lib.datasets.dataset import DataSet
+import os
+import glob
 
 
 class ActiveDataSet(DataSet):
@@ -22,10 +24,16 @@ class ActiveDataSet(DataSet):
             self.init_size = self.cap
 
     def initialize_pool(self):
-        self.log.info('Initializing pool with {} random values'.format(self.init_size))
         self.pool = []
         self.available_samples = range(self.size)
-        self.update_pool(clusters=self.init_size)
+
+        pool_indices = self.restore_from_file()
+        if pool_indices is not None:
+            self.log.info('Restoring pool with {} indices'.format(len(pool_indices)))
+            self.update_pool(indices=pool_indices)
+        else:
+            self.log.info('Initializing pool with {} random values'.format(self.init_size))
+            self.update_pool(clusters=self.init_size)
 
     def update_pool(self, clusters=None, indices=None):
         """Indices must be None or list"""
@@ -63,3 +71,20 @@ class ActiveDataSet(DataSet):
             err_str = 'update_pool_with_indices: pool size ({}) surpassed cap ({})'.format(self.pool_size(), self.cap)
             self.log.error(err_str)
             raise AssertionError(err_str)
+
+    def restore_from_file(self):
+        """
+        Check if a previous pool list exists. If so, restores the pool from the file and returns the indices as list.
+        Otherwise, returns None.
+        :return: list of indices or None
+        """
+        pool_files = glob.glob(os.path.join(self.prm.train.train_control.ROOT_DIR, 'pool_info_*_pool.txt'))
+        if len(pool_files) == 0:
+            return None
+        latest_pool_file = sorted(pool_files)[-1]
+        self.log.info('Restoring pool indices from file: {}'.format(latest_pool_file))
+        with open(latest_pool_file) as f:
+            pool_indices = f.read().splitlines()
+        pool_indices = map(int, pool_indices)
+
+        return pool_indices

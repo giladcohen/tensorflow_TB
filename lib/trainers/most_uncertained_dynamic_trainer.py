@@ -2,11 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.active_trainer_base import ActiveTrainerBase
 import numpy as np
+from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
 
-
-class MostUncertainedTrainer(ActiveTrainerBase):
+class MostUncertainedDynamicTrainer(DynamicModelTrainer):
     def select_new_samples(self):
 
         # analyzing (evaluation)
@@ -16,7 +15,7 @@ class MostUncertainedTrainer(ActiveTrainerBase):
         unlabeled_vec_dict = dict(zip(range(unlabeled_predictions_vec.shape[0]), self.dataset.train_dataset.available_samples))
 
         #prediction
-        self.log.info('Calculating the uncertainty score vector')
+        self.log.info('Calculating the uncertainy score vector')
         u_vec = self.uncertainty_score(unlabeled_predictions_vec)
         unlabeled_predictions_indices = u_vec.argsort()[-self.dataset.train_dataset.clusters:]
         new_indices = [unlabeled_vec_dict.values()[i] for i in unlabeled_predictions_indices]

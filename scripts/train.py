@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import warnings
 
 cwd = os.getcwd() # tensorflow-TB
 sys.path.insert(0, cwd)
@@ -13,20 +14,16 @@ from lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
 from utils.misc import query_yes_no
 
-logging = logging_config()
-
-logging.disable(logging.DEBUG)
-log = logger.get_logger('main')
-
 def get_params(train_config):
     """get params and save them to root dir"""
     prm = Parameters()
     prm.override(train_config)
     parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'parameters.ini')
+    log_file       = os.path.join(prm.train.train_control.ROOT_DIR, 'minirunt.log')
 
     ret = True
     if os.path.isfile(parameter_file):
-        log.warning('Parameter file {} already exists'.format(parameter_file))
+        warnings.warn('Parameter file {} already exists'.format(parameter_file))
         ret = query_yes_no('Overwrite parameter file?')
 
     if ret:
@@ -34,6 +31,9 @@ def get_params(train_config):
         if not os.path.exists(dir):
             os.makedirs(dir)
         prm.save(parameter_file)
+
+    logging = logging_config(log_file)
+    logging.disable(logging.DEBUG)
 
     return prm
 
@@ -47,13 +47,10 @@ def train(prm):
     preprocessor = factories.get_preprocessor()
     preprocessor.print_stats() #debug
 
-    train_dataset      = factories.get_train_dataset(preprocessor)
-    validation_dataset = factories.get_validation_dataset(preprocessor)
+    dataset = factories.get_dataset(preprocessor)
+    dataset.print_stats() #debug
 
-    dataset_wrapper =  DatasetWrapper(prm.dataset.DATASET_NAME + '_wrapper', prm, train_dataset, validation_dataset)
-    dataset_wrapper.print_stats()
-
-    trainer      = factories.get_trainer(model, dataset_wrapper)
+    trainer      = factories.get_trainer(model, dataset)
     trainer.print_stats() #debug
 
     trainer.train()
@@ -65,8 +62,7 @@ if __name__ == "__main__":
 
     train_config = args.c
     if not os.path.isfile(train_config):
-        log.error('Can not find file: {}'.format(train_config))
-        exit(-1)
+        raise AssertionError('Can not find file: {}'.format(train_config))
 
     prm = get_params(train_config)
 

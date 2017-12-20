@@ -3,7 +3,7 @@ from __future__ import division
 
 import sys
 import numpy as np
-from keras.datasets import cifar10
+from keras.datasets import cifar10, cifar100
 import cv2
 import os
 import contextlib
@@ -29,10 +29,17 @@ def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
         out[i*record_bytes:(i+1)*record_bytes] = np.array(list(label) + list(r) + list(g) + list(b), np.uint8)
     out.tofile(save_file)
 
-def save_cifar10_to_disk(train_data_dir, train_labels_file, test_data_dir, test_labels_file):
-    """Saving CIFAR10 train/test data to specified dirs
-       Saving CIFAR10 train/test labels to specified files"""
-    (X_train, Y_train), (X_test, Y_test) = cifar10.load_data()
+def save_dataset_to_disk(dataset_name, train_data_dir, train_labels_file, test_data_dir, test_labels_file):
+    """Saving CIFAR10/100 train/test data to specified dirs
+       Saving CIFAR10/100 train/test labels to specified files"""
+    if 'cifar100' in dataset_name:
+        dataset = cifar100
+    elif 'cifar10' in dataset_name:
+        dataset = cifar10
+    else:
+        raise AssertionError('dataset {} is not supported'.format(dataset_name))
+
+    (X_train, Y_train), (X_test, Y_test) = dataset.load_data()
     np.savetxt(train_labels_file, Y_train, fmt='%0d')
     np.savetxt(test_labels_file,  Y_test,  fmt='%0d')
     for i in range(X_train.shape[0]):

@@ -95,6 +95,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.EMBEDDING_DIMS = None                     # integer: number of fully connected neurons before classifier
         self.BATCH_NORMALIZE_EMBEDDING = None          # boolean: whether or not to apply batch normalization before the embedding activation
         self.NORMALIZE_EMBEDDING = None                # boolean: whether or not to normalize the embedded space
+        self.RESNET_FILTERS = None                     # numpy: the number of filters in the resnet bloks
 
         self.pre_processing = ParametersNetworkPreProcessing()
         self.system         = ParametersNetworkSystem()
@@ -116,6 +117,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'EMBEDDING_DIMS'            , self.EMBEDDING_DIMS)
         self.set_to_config(do_save_none, section_name, config, 'BATCH_NORMALIZE_EMBEDDING' , self.BATCH_NORMALIZE_EMBEDDING)
         self.set_to_config(do_save_none, section_name, config, 'NORMALIZE_EMBEDDING'       , self.NORMALIZE_EMBEDDING)
+        self.set_to_config(do_save_none, section_name, config, 'RESNET_FILTERS'            , self.RESNET_FILTERS)
 
         self.pre_processing.save_to_ini(do_save_none, section_name, config)
         self.system.save_to_ini(do_save_none, section_name, config)
@@ -133,6 +135,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'EMBEDDING_DIMS'            , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'BATCH_NORMALIZE_EMBEDDING' , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'NORMALIZE_EMBEDDING'       , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'RESNET_FILTERS'            , np.array)
 
         self.pre_processing.set_from_file(override_mode, section_name, parser)
         self.system.set_from_file(override_mode, section_name, parser)
@@ -302,16 +305,19 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.CHECKPOINT_DIR        = None  # string: path to checkpoint dir
         self.SUMMARY_STEPS         = None  # integer: training steps to collect summary
         self.CHECKPOINT_SECS       = None  # integer: number of seconds to save new checkpoint
+        self.CHECKPOINT_STEPS      = None  # np.array: global_steps where the parameters are saved
+        self.LAST_STEP             = None  # integer: number of training steps before the training session stops.
         self.LOGGER_STEPS          = None  # integer: number of training steps to output log string to shell
         self.EVAL_STEPS            = None  # integer: number of training steps from one evaluation to the next
         self.EVALS_IN_EPOCH        = None  # integer: number of evaluation steps within an epoch
         self.RETENTION_SIZE        = None  # integer: the number of last scores to remember
         self.MIN_LEARNING_RATE     = None  # float: minimal learning rate before choosing new labels in active training
-        self.STEPS_FOR_NEW_ANNOTATIONS = None # integer: global steps to add annotations
         self.SKIP_FIRST_EVALUATION = None  # boolean: whether or not to skip the first evaluation in the training
         self.PCA_REDUCTION         = None  # boolean: whether or not to use PCA reduction
         self.PCA_EMBEDDING_DIMS    = None  # integer: PCA dimensions
         self.ANNOTATION_RULE       = None  # The rule for adding new annotations in active learning
+        self.STEPS_FOR_NEW_ANNOTATIONS = None # integer: global steps to add annotations
+        self.INIT_AFTER_ANNOT      = None  # Whether or not to initialize network weights after annotation phase
 
         self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
 
@@ -332,16 +338,19 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_DIR'       , self.CHECKPOINT_DIR)
         self.set_to_config(do_save_none, section_name, config, 'SUMMARY_STEPS'        , self.SUMMARY_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_SECS'      , self.CHECKPOINT_SECS)
+        self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_STEPS'     , self.CHECKPOINT_STEPS)
+        self.set_to_config(do_save_none, section_name, config, 'LAST_STEP'            , self.LAST_STEP)
         self.set_to_config(do_save_none, section_name, config, 'LOGGER_STEPS'         , self.LOGGER_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_STEPS'           , self.EVAL_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'       , self.EVALS_IN_EPOCH)
         self.set_to_config(do_save_none, section_name, config, 'RETENTION_SIZE'       , self.RETENTION_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'MIN_LEARNING_RATE'    , self.MIN_LEARNING_RATE)
-        self.set_to_config(do_save_none, section_name, config, 'STEPS_FOR_NEW_ANNOTATIONS' , self.STEPS_FOR_NEW_ANNOTATIONS)
         self.set_to_config(do_save_none, section_name, config, 'SKIP_FIRST_EVALUATION', self.SKIP_FIRST_EVALUATION)
         self.set_to_config(do_save_none, section_name, config, 'PCA_REDUCTION'        , self.PCA_REDUCTION)
         self.set_to_config(do_save_none, section_name, config, 'PCA_EMBEDDING_DIMS'   , self.PCA_EMBEDDING_DIMS)
         self.set_to_config(do_save_none, section_name, config, 'ANNOTATION_RULE'      , self.ANNOTATION_RULE)
+        self.set_to_config(do_save_none, section_name, config, 'STEPS_FOR_NEW_ANNOTATIONS' , self.STEPS_FOR_NEW_ANNOTATIONS)
+        self.set_to_config(do_save_none, section_name, config, 'INIT_AFTER_ANNOT'     , self.INIT_AFTER_ANNOT)
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
 
@@ -357,16 +366,19 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_DIR'       , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'SUMMARY_STEPS'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_SECS'      , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_STEPS'     , np.array)
+        self.parse_from_config(self, override_mode, section_name, parser, 'LAST_STEP'            , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOGGER_STEPS'         , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_STEPS'           , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'RETENTION_SIZE'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'MIN_LEARNING_RATE'    , float)
-        self.parse_from_config(self, override_mode, section_name, parser, 'STEPS_FOR_NEW_ANNOTATIONS' , np.array)
         self.parse_from_config(self, override_mode, section_name, parser, 'SKIP_FIRST_EVALUATION', bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'PCA_REDUCTION'        , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'PCA_EMBEDDING_DIMS'   , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'ANNOTATION_RULE'      , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'STEPS_FOR_NEW_ANNOTATIONS' , np.array)
+        self.parse_from_config(self, override_mode, section_name, parser, 'INIT_AFTER_ANNOT'     , bool)
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
 

@@ -8,11 +8,11 @@ class DatasetWrapper(object):
     """Wrapper which hold both the trainset and the validation set for cifar-10"""
     #FIXME(gilad): consider using parent class for other datasets
 
-    def __init__(self, name, prm, train_dataset, validation_dataset):
+    def __init__(self, name, prm):
         self.name = name
         self.prm = prm
-        self.train_dataset      = train_dataset
-        self.validation_dataset = validation_dataset
+        self.train_dataset      = None
+        self.validation_dataset = None
         self.log = logger.get_logger(name)
 
         self.dataset_name           = self.prm.dataset.DATASET_NAME
@@ -73,6 +73,13 @@ class DatasetWrapper(object):
             os.makedirs(self.train_images_dir)
             os.makedirs(self.validation_images_dir)
             self.log.info('Creating {} dataset into {}. This may take a while'.format(self.dataset_name, self.dataset_dir))
-            misc.save_cifar10_to_disk(self.train_images_dir, self.train_labels_file,
+            misc.save_dataset_to_disk(self.dataset_name,
+                                      self.train_images_dir, self.train_labels_file,
                                       self.validation_images_dir, self.validation_labels_file)
             self.log.info('dataset {} was successfully written to {}.'.format(self.dataset_name, self.dataset_dir))
+
+    def set_train_dataset(self, train_dataset):
+        self.train_dataset = train_dataset
+
+    def set_validation_dataset(self, validation_dataset):
+        self.validation_dataset = validation_dataset

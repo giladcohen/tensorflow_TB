@@ -28,7 +28,7 @@ class ClassifierModel(ModelBase):
     def _build_interpretation(self):
         '''Interprets the logits'''
         self.predictions_prob = tf.nn.softmax(self.logits)
-        self.predictions = tf.cast(tf.argmax(self.predictions_prob, axis=1), tf.int32)
+        self.predictions = tf.argmax(self.predictions_prob, axis=1, output_type=tf.int32)
         self.score       = tf.reduce_mean(tf.to_float(tf.equal(self.predictions, self.labels)))
 
     def add_fidelity_loss(self):
@@ -36,6 +36,7 @@ class ClassifierModel(ModelBase):
             xent_cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.logits, labels=self.labels)
             xent_cost = tf.reduce_mean(xent_cost, name='cross_entropy_mean')
             self.xent_cost = tf.multiply(self.xent_rate, xent_cost)
+            tf.summary.scalar('xent_cost', self.xent_cost)
             xent_assert_op = tf.verify_tensor_all_finite(self.xent_cost, 'xent_cost contains NaN or Inf')
             tf.add_to_collection('losses', self.xent_cost)
             tf.add_to_collection('assertions', xent_assert_op)

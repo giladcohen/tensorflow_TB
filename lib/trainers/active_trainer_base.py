@@ -8,7 +8,6 @@ import numpy as np
 from math import ceil
 import os
 from sklearn.decomposition import PCA
-from utils.misc import get_plain_session
 
 
 class ActiveTrainerBase(ClassificationTrainer):
@@ -23,6 +22,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.min_learning_rate          = self.prm.train.train_control.MIN_LEARNING_RATE
         self.annotation_rule            = self.prm.train.train_control.ANNOTATION_RULE
         self.steps_for_new_annotations  = self.prm.train.train_control.STEPS_FOR_NEW_ANNOTATIONS
+        self.init_after_annot           = self.prm.train.train_control.INIT_AFTER_ANNOT
 
         self.clusters  = self.dataset.train_dataset.clusters
         self.cap       = self.dataset.train_dataset.cap
@@ -34,7 +34,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         self._activate_annot = True
 
     def train(self):
-        while True:
+        while not self.sess.should_stop():
             if self.to_annotate():
                 self.annot_step()
                 self._activate_annot = False
@@ -45,18 +45,19 @@ class ActiveTrainerBase(ClassificationTrainer):
                 self.train_step()
                 self._activate_annot = True
                 self._activate_eval  = True
+        self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def annot_step(self):
         '''Implementing one annotation step'''
         self.log.info('Adding {} new labels to train dataset.'.format(self.clusters))
-        self.sess = self.get_session('prediction')
         self.debug_ops()
         new_indices = self.select_new_samples()  # select new indices
         self.add_new_samples(new_indices)        # add new indices to train dataset
         self.debug_ops()
 
         # reset learning rate to initial value, retention memory and model weights
-        self.init_weights()
+        if self.init_after_annot:
+            self.init_weights()
         self.learning_rate_hook.reset_learning_rate()
         self.validation_retention.reset_memory()
 
@@ -110,7 +111,7 @@ class ActiveTrainerBase(ClassificationTrainer):
                                                               self.model.labels           : labels,
                                                               self.model.is_training      : False,
                                                               self.model.dropout_keep_prob: dropout_keep_prob})
-            features_vec[b:e]    = np.reshape(features['embedding_layer'], (e - b, self.embedding_dims))
+            features_vec[b:e]    = np.reshape(features, (e - b, self.embedding_dims))
             predictions_vec[b:e] = np.reshape(predictions, (e - b, self.model.num_classes))
             total_samples += images.shape[0]
             self.log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
@@ -132,16 +133,12 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
         self.log.info(' ANNOTATION_RULE: {}'.format(self.annotation_rule))
         self.log.info(' STEPS_FOR_NEW_ANNOTATIONS: {}'.format(self.steps_for_new_annotations))
+        self.log.info(' INIT_AFTER_ANNOT: {}'.format(self.init_after_annot))
 
     def debug_ops(self):
         if self.debug_mode:
             lp = self.dataset.train_dataset.pool_size()
-            self.log.info('Saving model_ref for global_step={} with pool size={}'.format(self.global_step, lp))
-            checkpoint_file = os.path.join(self.checkpoint_dir, 'model_pool_{}.ckpt'.format(lp))
             pool_info_file  = os.path.join(self.root_dir      , 'pool_info_{}'.format(lp))
-            self.saver.save(get_plain_session(self.sess),
-                            checkpoint_file,
-                            global_step=self.global_step)
             self.dataset.train_dataset.save_pool_data(pool_info_file)
 
     def to_annotate(self):
@@ -164,26 +161,28 @@ class ActiveTrainerBase(ClassificationTrainer):
         return ret
 
     def init_weights(self):
-        self.log.info('Start initializing weight in global step={}'.format(self.global_step))
-        # save global step
-        # global_step = self.sess.run(self.model.global_step, feed_dict=dummy_feed_dict)
-        # global_step = self.sess.run(self.model.global_step)
-        # assert global_step == self.global_step, 'global_step={} and self.global_step={}'.format(global_step, self.global_step)  #debug
+        self.log.info('Start initializing weights in global step={}'.format(self.global_step))
 
         # initialize all weights
-        self.sess.run(self.model.init_op)
-        self.log.info('Done initializing weight in global step={}'.format(self.global_step))
+        self.sess.run(self.model.init_op, feed_dict=self._get_dummy_feed())
+        self.log.info('Done initializing weights in global step={}'.format(self.global_step))
 
         # restore model global_step
-        self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
+        images, labels = self.dataset.get_mini_batch_train(indices=[0])
+        feed_dict = {self.model.global_step_ph      : self.global_step,
+                     self.model.images              : images,
+                     self.model.labels              : labels,
+                     self.model.is_training         : False}
+        self.sess.run(self.model.assign_ops['global_step_ow'], feed_dict=feed_dict)
+
         self.log.info('Done restoring global_step ({})'.format(self.global_step))
 
     def set_params(self):
         super(ActiveTrainerBase, self).set_params()
         assign_ops = []
-        dropout_keep_prob = self.sess.run(self.model.dropout_keep_prob)
+        dropout_keep_prob = self.sess.run(self.model.dropout_keep_prob, feed_dict=self._get_dummy_feed())
         if not np.isclose(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB):
             assign_ops.append(self.model.assign_ops['dropout_keep_prob'])
             self.log.warning('changing model.dropout_keep_prob from {} to {}'.
                              format(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB))
-        self.sess.run(assign_ops)
+        self.sess.run(assign_ops, feed_dict=self._get_dummy_feed())
