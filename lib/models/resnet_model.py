@@ -72,10 +72,10 @@ class ResNet(ClassifierModel):
             x = self.post_pool_operations(x)
             x = tf.nn.dropout(x, keep_prob=self.dropout_keep_prob)
             if self.normalize_embedding:
-                x = slim.unit_norm(x, dim=1, scope='normalize_vec')
+                x = tf.nn.l2_normalize(x, dim=1, name='normalize_vec')  # was x = slim.unit_norm(x, dim=1, scope='normalize_vec')
                 variable_summaries('embedding', x)
             self.net['embedding_layer'] = x
-            self.logits = self.calculate_logits(x)
+            self.net['logits'] = self.calculate_logits(x)
 
     def _residual(self, x, out_filter, stride, activate_before_residual=False):
         """Residual unit with 2 sub layers."""
@@ -115,3 +115,4 @@ class ResNet(ClassifierModel):
 
     def calculate_logits(self, x):
         return fully_connected(x, self.num_classes)
+

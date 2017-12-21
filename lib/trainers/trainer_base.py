@@ -110,7 +110,7 @@ class TrainerBase(AgentBase):
 
         logging_hook = tf.train.LoggingTensorHook(
             tensors={'step': self.model.global_step,
-                     'loss_xent': self.model.xent_cost,
+                     'loss-loss_wd': self.model.cost - self.model.wd_cost,
                      'loss_wd': self.model.wd_cost,
                      'loss': self.model.cost,
                      'score': self.model.score},

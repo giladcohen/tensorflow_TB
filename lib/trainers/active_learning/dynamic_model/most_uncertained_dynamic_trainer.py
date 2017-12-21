@@ -3,7 +3,9 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
+
 from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
+
 
 class MostUncertainedDynamicTrainer(DynamicModelTrainer):
     def select_new_samples(self):

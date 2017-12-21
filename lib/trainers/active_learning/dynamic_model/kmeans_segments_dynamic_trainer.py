@@ -2,11 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
-from sklearn.cluster import KMeans
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import log_loss
 import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.metrics import log_loss
+from sklearn.neighbors import KNeighborsClassifier
+
+from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
 
 
 class KMeansSegmentsDynamicTrainer(DynamicModelTrainer):

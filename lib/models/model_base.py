@@ -21,7 +21,6 @@ class ModelBase(AgentBase):
         self.train_op = None       # training operation
         self.cost = None           # total objective to decrease - input to train_op
         self.wd_cost = None        # weight decay cost
-        self.logits = None         # output of network - used to calculate cost
         self.predictions = None    # predictions of the network
         self.score = None          # total score of the network
         self.summaries = None      # summaries collected from the entire graph
@@ -96,7 +95,7 @@ class ModelBase(AgentBase):
 
     @abstractmethod
     def _build_inference(self):
-        '''build the inference model and sets self.logits'''
+        '''build the inference model and sets self.net'''
         pass
 
     def _build_interpretation(self):
@@ -108,7 +107,7 @@ class ModelBase(AgentBase):
         self.add_weight_decay()
         self.add_fidelity_loss()
         with tf.control_dependencies(tf.get_collection('assertions')):
-            self.cost = tf.add_n(tf.get_collection('losses'), name='total_loss')
+            self.cost = tf.add_n(tf.get_collection(tf.GraphKeys.LOSSES), name='total_loss')
             tf.summary.scalar('cost', self.cost)
 
     def add_weight_decay(self):
@@ -116,7 +115,7 @@ class ModelBase(AgentBase):
             self.wd_cost = self._decay()
             tf.summary.scalar('wd_cost', self.wd_cost)
             wd_assert_op = tf.verify_tensor_all_finite(self.wd_cost, 'wd_cost contains NaN or Inf')
-            tf.add_to_collection('losses', self.wd_cost)
+            tf.add_to_collection(tf.GraphKeys.LOSSES, self.wd_cost)
             tf.add_to_collection('assertions', wd_assert_op)
 
     @abstractmethod

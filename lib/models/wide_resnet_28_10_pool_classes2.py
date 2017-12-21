@@ -18,7 +18,7 @@ class WideResNet_28_10_pool_classes2(ResNet):
 
     def _build_interpretation(self):
         '''Interprets the logits'''
-        softmax_out = tf.nn.softmax(self.logits)  # 5 * num_classes vector
+        softmax_out = tf.nn.softmax(self.net['logits'])  # 5 * num_classes vector
         splits = tf.split(softmax_out, num_or_size_splits=self.num_classes, axis=1)
         max_splits = [tf.reduce_max(splits[cls], axis=1, keep_dims=True) for cls in xrange(self.num_classes)]
         softmax_out_pooled = tf.concat(max_splits, axis=1)
@@ -35,5 +35,5 @@ class WideResNet_28_10_pool_classes2(ResNet):
             xent_cost = tf.reduce_mean(xent_cost, name='cross_entropy_mean')
             self.xent_cost = tf.multiply(self.xent_rate, xent_cost)
             xent_assert_op = tf.verify_tensor_all_finite(self.xent_cost, 'xent_cost contains NaN or Inf')
-            tf.add_to_collection('losses', self.xent_cost)
+            tf.add_to_collection(tf.GraphKeys.LOSSES, self.xent_cost)
             tf.add_to_collection('assertions', xent_assert_op)
