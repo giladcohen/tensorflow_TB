@@ -88,7 +88,6 @@ class DynamicModelTrainer(ActiveTrainerBase):
                      self.model.is_training         : False}
 
         self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']], feed_dict=feed_dict)
-        # global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate], feed_dict=feed_dict)
 
     def set_params(self):
         pass

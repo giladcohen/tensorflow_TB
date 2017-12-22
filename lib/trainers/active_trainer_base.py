@@ -164,7 +164,9 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.log.info('Start initializing weights in global step={}'.format(self.global_step))
 
         # initialize all weights
+        self.learning_rate_hook.feed_lrn_rate = False
         self.sess.run(self.model.init_op, feed_dict=self._get_dummy_feed())
+        self.learning_rate_hook.feed_lrn_rate = True
         self.log.info('Done initializing weights in global step={}'.format(self.global_step))
 
         # restore model global_step
