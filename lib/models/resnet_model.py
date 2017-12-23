@@ -1,7 +1,6 @@
 from lib.models.classifier_model import ClassifierModel
 from lib.models.layers import *
 import six
-import tensorflow.contrib.slim as slim
 
 class ResNet(ClassifierModel):
     """Implementing an image classifier using a ResNet architecture
@@ -72,7 +71,7 @@ class ResNet(ClassifierModel):
             x = self.post_pool_operations(x)
             x = tf.nn.dropout(x, keep_prob=self.dropout_keep_prob)
             if self.normalize_embedding:
-                x = tf.nn.l2_normalize(x, dim=1, name='normalize_vec')  # was x = slim.unit_norm(x, dim=1, scope='normalize_vec')
+                x = tf.nn.l2_normalize(x, axis=1, name='normalize_vec')  # was x = slim.unit_norm(x, dim=1, scope='normalize_vec')
                 variable_summaries('embedding', x)
             self.net['embedding_layer'] = x
             self.net['logits'] = self.calculate_logits(x)

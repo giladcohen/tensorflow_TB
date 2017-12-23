@@ -5,6 +5,7 @@ from lib.datasets.active_dataset import ActiveDataSet
 from lib.datasets.dataset import DataSet
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.models.resnet_model import ResNet
+from lib.models.dml_resnet_model import DMLResNet
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
 from lib.models.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
 from lib.models.wide_resnet_28_10_pool_classes2 import WideResNet_28_10_pool_classes2
@@ -32,6 +33,7 @@ from lib.trainers.active_learning.most_uncertained_knn_trainer import MostUncert
 from lib.trainers.active_learning.most_uncertained_trainer import MostUncertainedTrainer
 from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTrainer
 from lib.trainers.classification_trainer import ClassificationTrainer
+from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
@@ -76,6 +78,7 @@ class Factories(object):
 
     def get_model(self):
         available_networks = {'Wide-Resnet-28-10'               : ResNet,
+                              'DML-Wide-Resnet-28-10'           : DMLResNet,
                               'Wide-Resnet-28-10_plus_fc'       : WideResNet_28_10_plus_fc,
                               'Wide-Resnet-28-10_pool_classes'  : WideResNet_28_10_pool_classes,
                               'Wide-Resnet-28-10_pool_classes2' : WideResNet_28_10_pool_classes2}
@@ -101,6 +104,7 @@ class Factories(object):
 
     def get_trainer(self, model, dataset):
         available_trainers = {'simple'                               : ClassificationTrainer,
+                              'dml'                                  : DMLClassificationTrainer,
                               'random_sampler'                       : RandomSamplerTrainer,
                               'all_centers'                          : AllCentersTrainer,
                               'class_centers'                        : ClassCentersTrainer,

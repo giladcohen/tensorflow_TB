@@ -48,10 +48,10 @@ class ModelBase(AgentBase):
             self._set_params()
         with tf.variable_scope('inference'):
             self._build_inference()
-        with tf.variable_scope('interpretation'):
-            self._build_interpretation()
         with tf.variable_scope('loss'):
             self._build_loss()
+        with tf.variable_scope('interpretation'):
+            self._build_interpretation()
         with tf.variable_scope('training'):
             self._build_train_op()
         with tf.variable_scope('summaries'):

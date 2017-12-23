@@ -242,10 +242,11 @@ class ParametersNetworkOptimization(parser_utils.FrozenClass):
     def __init__(self):
         super(ParametersNetworkOptimization, self).__init__()
 
-        self.LEARNING_RATE     =  None   # float: e.g. 0.1
-        self.XENTROPY_RATE     = None    # float: e.g. 1.0
-        self.WEIGHT_DECAY_RATE = None    # float: e.g. 0.00078125
-        self.OPTIMIZER         = None    # string: name of optimizer, e.g. 'MOM'
+        self.LEARNING_RATE         = None    # float: e.g. 0.1
+        self.XENTROPY_RATE         = None    # float: e.g. 1.0
+        self.DML_MARGIN_MULTIPLIER = None    # float: the DML margin to calculate the loss. e.g. 1.0
+        self.WEIGHT_DECAY_RATE     = None    # float: e.g. 0.00078125
+        self.OPTIMIZER             = None    # string: name of optimizer, e.g. 'MOM'
 
         self._freeze()
 
@@ -254,17 +255,19 @@ class ParametersNetworkOptimization(parser_utils.FrozenClass):
 
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
-        self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE'    , self.LEARNING_RATE)
-        self.set_to_config(do_save_none, section_name, config, 'XENTROPY_RATE'    , self.XENTROPY_RATE)
-        self.set_to_config(do_save_none, section_name, config, 'WEIGHT_DECAY_RATE', self.WEIGHT_DECAY_RATE)
-        self.set_to_config(do_save_none, section_name, config, 'OPTIMIZER'        , self.OPTIMIZER)
+        self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE'        , self.LEARNING_RATE)
+        self.set_to_config(do_save_none, section_name, config, 'XENTROPY_RATE'        , self.XENTROPY_RATE)
+        self.set_to_config(do_save_none, section_name, config, 'DML_MARGIN_MULTIPLIER', self.DML_MARGIN_MULTIPLIER)
+        self.set_to_config(do_save_none, section_name, config, 'WEIGHT_DECAY_RATE'    , self.WEIGHT_DECAY_RATE)
+        self.set_to_config(do_save_none, section_name, config, 'OPTIMIZER'            , self.OPTIMIZER)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
-        self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE'    , float)
-        self.parse_from_config(self, override_mode, section_name, parser, 'XENTROPY_RATE'    , float)
-        self.parse_from_config(self, override_mode, section_name, parser, 'WEIGHT_DECAY_RATE', float)
-        self.parse_from_config(self, override_mode, section_name, parser, 'OPTIMIZER'        , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE'        , float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'XENTROPY_RATE'        , float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DML_MARGIN_MULTIPLIER', float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'WEIGHT_DECAY_RATE'    , float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'OPTIMIZER'            , str)
 
 class ParametersTrainDataAugmentation(parser_utils.FrozenClass):
     def __init__(self):
