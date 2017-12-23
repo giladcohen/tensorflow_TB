@@ -158,6 +158,8 @@ class ModelBase(AgentBase):
             optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
         elif self.optimizer_name == 'SGD':
             optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
+        elif self.optimizer_name == 'RMSPROP':
+            optimizer = tf.train.RMSPropOptimizer(self.lrn_rate)
         else:
             err_str = 'optimizer_name ({}) is not supported'.format(self.optimizer_name)
             self.log.error(err_str)
