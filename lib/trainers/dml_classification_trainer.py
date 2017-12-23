@@ -32,7 +32,7 @@ class DMLClassificationTrainer(ClassificationTrainer):
         '''Implementing one evaluation step.'''
         self.log.info('start running eval within training. global_step={}'.format(self.global_step))
         train_size       = self.dataset.train_dataset.pool_size()
-        validation_size  = self.dataset.validation_dataset.pool_size()
+        validation_size  = self.dataset.validation_dataset.size
 
         X_train    = self.collect_features(dataset_type='train')
         _, y_train = self.dataset.get_mini_batch_train(indices=range(train_size))
