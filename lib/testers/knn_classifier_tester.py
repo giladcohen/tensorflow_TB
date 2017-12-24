@@ -193,4 +193,4 @@ class KNNClassifierTester(AgentBase):
         if dataset_type == 'train':
             dataset.to_preprocess = True
 
-        return fetches_np
+        return tuple(fetches_np)
