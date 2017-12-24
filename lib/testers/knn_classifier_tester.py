@@ -63,7 +63,7 @@ class KNNClassifierTester(AgentBase):
         test_size  = self.dataset.validation_dataset.size
 
         self.log.info('Collecting {} train set embedding features'.format(train_size))
-        X_train_features = \
+        (X_train_features, ) = \
             self.collect_features(
                 fetches=[self.model.net['embedding_layer']],
                 dataset_type='train'
@@ -71,7 +71,7 @@ class KNNClassifierTester(AgentBase):
         _, y_train = self.dataset.get_mini_batch_train(indices=range(train_size))
 
         self.log.info('Collecting {} test set embedding features and DNN predictions'.format(test_size))
-        X_test_features, X_test_dnn_predictions_prob = \
+        (X_test_features, X_test_dnn_predictions_prob) = \
             self.collect_features(
                 fetches=[self.model.net['embedding_layer'], self.model.predictions_prob],
                 dataset_type='validation'
