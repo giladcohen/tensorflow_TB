@@ -463,6 +463,7 @@ class ParametersTestControl(parser_utils.FrozenClass):
         super(ParametersTestControl, self).__init__()
 
         self.TESTER                = None  # string: tester to use. e.g. knn_classifier
+        self.CHECKPOINT_FILE       = None  # string: The checkpoint file name to read. e.g. model.ckpt-50000
         self.KNN_NEIGHBORS         = None  # integer: number of knn neighbors, e.g. 200
         self.KNN_P_NORM            = None  # integer: knn norm. L1 or L2, e.g. 2
         self.KNN_JOBS              = None  # integer: number of KNN n_jobs, should be the number of available CPUs
@@ -476,6 +477,7 @@ class ParametersTestControl(parser_utils.FrozenClass):
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
         self.set_to_config(do_save_none, section_name, config, 'TESTER'               , self.TESTER)
+        self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_FILE'      , self.CHECKPOINT_FILE)
         self.set_to_config(do_save_none, section_name, config, 'KNN_NEIGHBORS'        , self.KNN_NEIGHBORS)
         self.set_to_config(do_save_none, section_name, config, 'KNN_P_NORM'           , self.KNN_P_NORM)
         self.set_to_config(do_save_none, section_name, config, 'KNN_JOBS'             , self.KNN_JOBS)
@@ -484,6 +486,7 @@ class ParametersTestControl(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'TESTER'          , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_FILE' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_NEIGHBORS'   , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_P_NORM'      , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_JOBS'        , int)

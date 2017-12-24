@@ -21,13 +21,7 @@ class KNNClassifierTester(AgentBase):
         self.dataset = dataset
 
         self.rand_gen = np.random.RandomState(self.prm.SUPERSEED)
-
-        # testing parameters
-        self.tester          = self.prm.test.test_control.TESTER         # just used for printing.
-        self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
-        self.knn_p_norm      = self.prm.test.test_control.KNN_P_NORM
-        self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
-        self.dump_net        = self.prm.test.test_control.DUMP_NET
+        self.debug_mode = self.prm.DEBUG_MODE
 
         self.eval_batch_size       = self.prm.train.train_control.EVAL_BATCH_SIZE
         self.root_dir              = self.prm.train.train_control.ROOT_DIR
@@ -35,7 +29,14 @@ class KNNClassifierTester(AgentBase):
         self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
-        self.debug_mode = self.prm.DEBUG_MODE
+
+        # testing parameters
+        self.tester          = self.prm.test.test_control.TESTER         # just used for printing.
+        self.checkpoint_file = self.prm.test.test_control.CHECKPOINT_FILE
+        self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
+        self.knn_p_norm      = self.prm.test.test_control.KNN_P_NORM
+        self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
+        self.dump_net        = self.prm.test.test_control.DUMP_NET
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
         self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=self.knn_p_norm, n_jobs=self.knn_jobs)
@@ -53,8 +54,7 @@ class KNNClassifierTester(AgentBase):
         self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
 
         # restore checkpoint
-        ckpt_state = tf.train.get_checkpoint_state(self.checkpoint_dir)
-        self.saver.restore(self.sess, ckpt_state.model_checkpoint_path)
+        self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
 
         self.log.info('Done building tester {}'.format(str(self)))
 
@@ -132,18 +132,19 @@ class KNNClassifierTester(AgentBase):
     def print_stats(self):
         '''print basic test parameters'''
         self.log.info('Test parameters:')
-        self.log.info(' TESTER: {}'.format(self.tester))
-        self.log.info(' KNN_NEIGHBORS: {}'.format(self.knn_neighbors))
-        self.log.info(' KNN_P_NORM: {}'.format(self.knn_p_norm))
-        self.log.info(' KNN_JOBS: {}'.format(self.knn_jobs))
-        self.log.info(' DUMP_NET: {}'.format(self.dump_net))
+        self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
         self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
         self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
         self.log.info(' PREDICTION_DIR: {}'.format(self.pred_dir))
         self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
         self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
-        self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
+        self.log.info(' TESTER: {}'.format(self.tester))
+        self.log.info(' CHECKPOINT_FILE: {}'.format(self.checkpoint_file))
+        self.log.info(' KNN_NEIGHBORS: {}'.format(self.knn_neighbors))
+        self.log.info(' KNN_P_NORM: {}'.format(self.knn_p_norm))
+        self.log.info(' KNN_JOBS: {}'.format(self.knn_jobs))
+        self.log.info(' DUMP_NET: {}'.format(self.dump_net))
 
     def collect_features(self, fetches, dataset_type, dropout_keep_prob=1.0):
         """Collecting all fetches from the DNN in the dataset
