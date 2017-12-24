@@ -76,7 +76,7 @@ class KNNClassifierTester(AgentBase):
                 fetches=[self.model.net['embedding_layer'], self.model.predictions_prob],
                 dataset_type='validation'
             )
-        _, y_test = self.dataset.get_mini_batch_train(indices=range(test_size))
+        _, y_test = self.dataset.get_mini_batch_validate(indices=range(test_size))
 
         if self.pca_reduction:
             self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.model.embedding_dims, self.pca_embedding_dims))
@@ -108,7 +108,7 @@ class KNNClassifierTester(AgentBase):
             self.log.info('Dumping train features into disk:\n{}\n{}\n{})'
                           .format(train_features_file, test_features_file, test_dnn_predictions_prob_file))
             np.save(train_features_file           , X_train_features)
-            np.save(X_test_features               , X_test_features)
+            np.save(test_features_file            , X_test_features)
             np.save(test_dnn_predictions_prob_file, X_test_dnn_predictions_prob)
 
         self.log.info('Tester {} is done'.format(str(self)))
