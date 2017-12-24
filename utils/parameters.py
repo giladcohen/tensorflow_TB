@@ -15,6 +15,7 @@ class Parameters(parser_utils.FrozenClass):
         self.network = ParametersNetwork()
         self.dataset = ParametersDataset()
         self.train   = ParametersTrain()
+        self.test    = ParametersTest()
 
         self._freeze()  # no new attributes after this point.
 
@@ -23,9 +24,6 @@ class Parameters(parser_utils.FrozenClass):
         Save  parameters. Undefined parameters (with None value) are saved with value = None
         :param out_file: Path to file to be saved
         """
-        #----------------------------------
-        # dataset section
-        #----------------------------------
         self.log.info('Configuration saved to file: {}'.format(out_file))
 
         # add the settings to the structure of the file, and lets write it out...
@@ -41,7 +39,8 @@ class Parameters(parser_utils.FrozenClass):
 
         self.network.save_to_ini(do_save_none, root_section, config)
         self.dataset.save_to_ini(do_save_none, root_section, config)
-        self.train.save_to_ini(do_save_none,   root_section, config)
+        self.train.save_to_ini(do_save_none  , root_section, config)
+        self.test.save_to_ini(do_save_none   , root_section, config)
 
         # Writing our configuration file to 'example.cfg'
         with open(out_file, 'wb') as configfile:
@@ -81,6 +80,7 @@ class Parameters(parser_utils.FrozenClass):
         self.network.set_from_file(override_mode, root_section, parser)
         self.dataset.set_from_file(override_mode, root_section, parser)
         self.train.set_from_file(override_mode,   root_section, parser)
+        self.test.set_from_file(override_mode,    root_section, parser)
 
 class ParametersNetwork(parser_utils.FrozenClass):
     def __init__(self):
@@ -438,3 +438,53 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , np.array)
         self.parse_from_config(self, override_mode, section_name, parser, 'DECAY_REFRACTORY_STEPS'      , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_RESET'         , float)
+
+class ParametersTest(parser_utils.FrozenClass):
+    def __init__(self):
+        super(ParametersTest, self).__init__()
+
+        self.test_control = ParametersTestControl()
+
+        self._freeze()
+
+    def name(self):
+        return 'test'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.test_control.save_to_ini(do_save_none    , section_name, config)
+
+    def set_from_file(self,override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.test_control.set_from_file(override_mode    , section_name, parser)
+
+class ParametersTestControl(parser_utils.FrozenClass):
+    def __init__(self):
+        super(ParametersTestControl, self).__init__()
+
+        self.TESTER                = None  # string: tester to use. e.g. knn_classifier
+        self.KNN_NEIGHBORS         = None  # integer: number of knn neighbors, e.g. 200
+        self.KNN_P_NORM            = None  # integer: knn norm. L1 or L2, e.g. 2
+        self.KNN_JOBS              = None  # integer: number of KNN n_jobs, should be the number of available CPUs
+        self.DUMP_NET              = None  # boolean: whether or not to dump the net signals to disk
+
+        self._freeze()
+
+    def name(self):
+        return 'test_control'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.set_to_config(do_save_none, section_name, config, 'TESTER'               , self.TESTER)
+        self.set_to_config(do_save_none, section_name, config, 'KNN_NEIGHBORS'        , self.KNN_NEIGHBORS)
+        self.set_to_config(do_save_none, section_name, config, 'KNN_P_NORM'           , self.KNN_P_NORM)
+        self.set_to_config(do_save_none, section_name, config, 'KNN_JOBS'             , self.KNN_JOBS)
+        self.set_to_config(do_save_none, section_name, config, 'DUMP_NET'             , self.DUMP_NET)
+
+    def set_from_file(self, override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.parse_from_config(self, override_mode, section_name, parser, 'TESTER'          , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'KNN_NEIGHBORS'   , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'KNN_P_NORM'      , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'KNN_JOBS'        , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DUMP_NET'        , bool)

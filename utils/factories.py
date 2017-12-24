@@ -37,6 +37,7 @@ from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
+from lib.testers.knn_classifier_tester import KNNClassifierTester
 
 
 class Factories(object):
@@ -51,6 +52,7 @@ class Factories(object):
         self.trainer              = self.prm.train.train_control.TRAINER
         self.architecture         = self.prm.network.ARCHITECTURE
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
+        self.tester               = self.prm.test.test_control.TESTER
 
     def get_dataset(self, preprocessor):
         available_datasets = {'cifar10'         : DataSet,
@@ -134,6 +136,18 @@ class Factories(object):
             return trainer
         else:
             err_str = 'get_trainer: trainer {} was not found. Available trainers are: {}'.format(self.trainer, available_trainers.keys())
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
+    def get_tester(self, model, dataset):
+        available_testers = {'knn_classifier' : KNNClassifierTester}
+        if self.tester in available_testers:
+            tester = available_testers[self.tester](self.tester, self.prm, model, dataset)
+            self.log.info('get_tester: returning ' + str(tester))
+            tester.build()
+            return tester
+        else:
+            err_str = 'get_tester: tester {} was not found. Available testers are: {}'.format(self.tester, available_testers.keys())
             self.log.error(err_str)
             raise AssertionError(err_str)
 

@@ -34,10 +34,10 @@ class DMLClassificationTrainer(ClassificationTrainer):
         train_size       = 5000 #self.dataset.train_dataset.pool_size()
         validation_size  = 500  #self.dataset.validation_dataset.size
 
-        X_train    = self.collect_features(dataset_type='train', num_samples=train_size)
+        X_train    = self.collect_features(dataset_type='train')
         _, y_train = self.dataset.get_mini_batch_train(indices=range(train_size))
 
-        X_test    = self.collect_features(dataset_type='validation', num_samples=validation_size)
+        X_test    = self.collect_features(dataset_type='validation')
         _, y_test = self.dataset.get_mini_batch_validate(indices=range(validation_size))
 
         self.log.info('Fitting KNN model...')
@@ -68,28 +68,24 @@ class DMLClassificationTrainer(ClassificationTrainer):
                                                      self.model.is_training: False})
         return summaries, loss
 
-    def collect_features(self, dataset_type, num_samples, dropout_keep_prob=1.0):
+    def collect_features(self, dataset_type, dropout_keep_prob=1.0):
         """Collecting all the embedding features in the dataset
         :param dataset_type: 'train' or 'validation'
         :return: feature vectors (embedding)
         """
         if dataset_type == 'train':
             dataset = self.dataset.train_dataset
-            #size = dataset.pool_size()
-            size = num_samples
         elif dataset_type == 'validation':
             dataset = self.dataset.validation_dataset
-            #size = dataset.size
-            size = num_samples
         else:
             err_str = 'dataset_type={} is not supported'.format(dataset_type)
             self.log.error(err_str)
             raise AssertionError(err_str)
 
         dataset.to_preprocess = False
-        batch_count     = int(ceil(size / self.eval_batch_size))
-        last_batch_size =          size % self.eval_batch_size
-        features_vec    = -1.0 * np.ones((size, self.model.embedding_dims), dtype=np.float32)
+        batch_count     = int(ceil(dataset.size / self.eval_batch_size))
+        last_batch_size =          dataset.size % self.eval_batch_size
+        features_vec    = -1.0 * np.ones((dataset.size, self.model.embedding_dims), dtype=np.float32)
         total_samples = 0  # for debug
 
         self.log.info('start storing feature maps for the entire {} set.'.format(str(dataset)))
@@ -107,22 +103,19 @@ class DMLClassificationTrainer(ClassificationTrainer):
                                                 self.model.dropout_keep_prob: dropout_keep_prob})
             features_vec[b:e]    = np.reshape(features, (e - b, self.model.embedding_dims))
             total_samples += images.shape[0]
-            self.log.info('Storing completed: {}%'.format(int(100.0 * e / size)))
+            self.log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
 
-        assert total_samples == size, 'total_samples equals {} instead of {}'.format(total_samples, size)
+        assert total_samples == dataset.size, 'total_samples equals {} instead of {}'.format(total_samples, dataset.size)
         if dataset_type == 'train':
             dataset.to_preprocess = True
 
+        # FIXME(gilad): move pca transform after the collection of the features like in knn_classifier_tester
         if self.pca_reduction:
             self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.model.embedding_dims, self.pca_embedding_dims))
-            features_vec = self.pca.fit_transform(features_vec)
+            if dataset_type == 'train':
+                features_vec = self.pca.fit_transform(features_vec)
+            else:
+                features_vec = self.pca.transform(features_vec)
 
         return features_vec
-
-
-
-
-    def get_train_summaries(self):
-        tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('score', self.model.score))  # FIXME(gilad) : implement KNN score
-        tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('weight_decay_rate', self.model.weight_decay_rate))
 

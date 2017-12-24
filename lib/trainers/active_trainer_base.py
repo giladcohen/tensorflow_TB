@@ -121,9 +121,13 @@ class ActiveTrainerBase(ClassificationTrainer):
         if dataset_type == 'train':
             dataset.to_preprocess = True
 
+        #FIXME(gilad): move pca transform after the collection of the features like in knn_classifier_tester
         if self.pca_reduction:
             self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.embedding_dims, self.pca_embedding_dims))
-            features_vec = self.pca.fit_transform(features_vec)
+            if dataset_type == 'train':
+                features_vec = self.pca.fit_transform(features_vec)
+            else:
+                features_vec = self.pca.transform(features_vec)
         return features_vec, predictions_vec
 
     def print_stats(self):

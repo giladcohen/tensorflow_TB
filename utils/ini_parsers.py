@@ -44,7 +44,8 @@ class IniParser(object):
             else:
                 if val_as_str == 'None':
                     val = None
-            setattr(obj_instance, key, val)
+            if val is not None:
+                setattr(obj_instance, key, val)
         except:
             # key do not exist: error in load mode and O.K. in override mode
             if not override_mode:
