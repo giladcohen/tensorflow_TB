@@ -197,7 +197,8 @@ def collect_features(agent, dataset_type, fetches, feed_dict):
             partial_feed_dict = {model.images: images,
                                  model.labels: labels,
                                  model.is_training: False}
-            fetches_out = sess.run(fetches=fetches, feed_dict=partial_feed_dict.update(feed_dict))
+            tmp_feed_dict = partial_feed_dict.update(feed_dict)
+            fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
             for i in xrange(len(fetches)):
                 fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b, fetches_dims[i]))
             log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
