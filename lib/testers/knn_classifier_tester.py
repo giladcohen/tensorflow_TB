@@ -10,7 +10,8 @@ from utils.tensorboard_logging import TBLogger
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import normalized_mutual_info_score
-from math import ceil
+from utils.misc import collect_features
+
 
 class KNNClassifierTester(AgentBase):
 
@@ -64,17 +65,21 @@ class KNNClassifierTester(AgentBase):
 
         self.log.info('Collecting {} train set embedding features'.format(train_size))
         (X_train_features, ) = \
-            self.collect_features(
+            collect_features(
+                agent=self,
+                dataset_type='train',
                 fetches=[self.model.net['embedding_layer']],
-                dataset_type='train'
+                feed_dict={self.model.dropout_keep_prob: 1.0}
             )
         _, y_train = self.dataset.get_mini_batch_train(indices=range(train_size))
 
         self.log.info('Collecting {} test set embedding features and DNN predictions'.format(test_size))
         (X_test_features, X_test_dnn_predictions_prob) = \
-            self.collect_features(
+            collect_features(
+                agent=self,
+                dataset_type='validation',
                 fetches=[self.model.net['embedding_layer'], self.model.predictions_prob],
-                dataset_type='validation'
+                feed_dict={self.model.dropout_keep_prob: 1.0}
             )
         _, y_test = self.dataset.get_mini_batch_validate(indices=range(test_size))
 
@@ -145,52 +150,3 @@ class KNNClassifierTester(AgentBase):
         self.log.info(' KNN_P_NORM: {}'.format(self.knn_p_norm))
         self.log.info(' KNN_JOBS: {}'.format(self.knn_jobs))
         self.log.info(' DUMP_NET: {}'.format(self.dump_net))
-
-    def collect_features(self, fetches, dataset_type, dropout_keep_prob=1.0):
-        """Collecting all fetches from the DNN in the dataset
-        :param fetches: list of all the fetches to sample from the DNN.
-        :param dataset_type: 'train' or 'validation'
-        :return: feature vectors (embedding)
-        """
-
-        # Assuming all fetches are 1D. Otherwise code needs to be rewritten
-        fetches_dims = [fetches[i].get_shape().as_list()[-1] for i in xrange(len(fetches))]
-
-        if dataset_type == 'train':
-            dataset = self.dataset.train_dataset
-        elif dataset_type == 'validation':
-            dataset = self.dataset.validation_dataset
-        else:
-            err_str = 'dataset_type={} is not supported'.format(dataset_type)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-
-        dataset.to_preprocess = False
-        batch_count     = int(ceil(dataset.size / self.eval_batch_size))
-        last_batch_size =          dataset.size % self.eval_batch_size
-        fetches_np = [-1.0 * np.ones((dataset.size, fetches_dims[i]), dtype=np.float32) for i in xrange(len(fetches))]
-        total_samples = 0  # for debug
-
-        self.log.info('start storing feature maps for the entire {} set.'.format(str(dataset)))
-        for i in range(batch_count):
-            b = i * self.eval_batch_size
-            if i < (batch_count - 1) or (last_batch_size == 0):
-                e = (i + 1) * self.eval_batch_size
-            else:
-                e = i * self.eval_batch_size + last_batch_size
-            images, labels = dataset.get_mini_batch(indices=range(b, e))
-            fetches_out = self.sess.run(fetches,
-                                        feed_dict={self.model.images           : images,
-                                                   self.model.labels           : labels,
-                                                   self.model.is_training      : False,
-                                                   self.model.dropout_keep_prob: dropout_keep_prob})
-            for i in xrange(len(fetches)):
-                fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b, fetches_dims[i]))
-            total_samples += images.shape[0]
-            self.log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
-
-        assert total_samples == dataset.size, 'total_samples equals {} instead of {}'.format(total_samples, dataset.size)
-        if dataset_type == 'train':
-            dataset.to_preprocess = True
-
-        return tuple(fetches_np)

@@ -1,5 +1,7 @@
 '''This code converts a numpy image to .bin in the same format of cifar10'''
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 import sys
 import numpy as np
@@ -9,6 +11,7 @@ import os
 import contextlib
 import matplotlib.pyplot as plt
 from matplotlib import offsetbox
+from math import ceil
 
 def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
     """Converts numpy data in the form:
@@ -149,3 +152,57 @@ def get_plain_session(sess):
     while type(session).__name__ != 'Session':
         session = session._sess
     return session
+
+def collect_features(agent, dataset_type, fetches, feed_dict):
+        """Collecting all fetches from the DNN in the dataset (train/validation/test)
+        :param agent: The agent (trainer/tester).
+                      Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
+                      The agent must have a model with images and labels.  # This should be updated for all models
+        :param dataset_type: 'train' or 'validation'
+        :param fetches: list of all the fetches to sample from the DNN.
+        :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
+        :return: fetches, as numpy float32.
+        """
+
+        batch_size = agent.eval_batch_size
+        log        = agent.log
+        sess       = agent.sess
+        model      = agent.model
+
+        if dataset_type == 'train':
+            dataset = agent.dataset.train_dataset
+        elif dataset_type == 'validation':
+            dataset = agent.dataset.validation_dataset
+        else:
+            err_str = 'dataset_type={} is not supported'.format(dataset_type)
+            log.error(err_str)
+            raise AssertionError(err_str)
+        dataset.to_preprocess = False
+
+        # Assuming all fetches are 1D. Otherwise code needs to be rewritten
+        fetches_dims = [fetches[i].get_shape().as_list()[-1] for i in xrange(len(fetches))]
+
+        batch_count     = int(ceil(dataset.size / batch_size))
+        last_batch_size =          dataset.size % batch_size
+        fetches_np = [-1.0 * np.ones((dataset.size, fetches_dims[i]), dtype=np.float32) for i in xrange(len(fetches))]
+
+        log.info('start storing fetches for the entire {} set.'.format(str(dataset)))
+        for i in range(batch_count):
+            b = i * batch_size
+            if i < (batch_count - 1) or (last_batch_size == 0):
+                e = (i + 1) * batch_size
+            else:
+                e = i * batch_size + last_batch_size
+            images, labels = dataset.get_mini_batch(indices=range(b, e))
+            partial_feed_dict = {model.images: images,
+                                 model.labels: labels,
+                                 model.is_training: False}
+            fetches_out = sess.run(fetches=fetches, feed_dict=partial_feed_dict.update(feed_dict))
+            for i in xrange(len(fetches)):
+                fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b, fetches_dims[i]))
+            log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
+
+        if dataset_type == 'train':
+            dataset.to_preprocess = True
+
+        return tuple(fetches_np)
