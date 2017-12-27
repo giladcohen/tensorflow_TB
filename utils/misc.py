@@ -153,7 +153,7 @@ def get_plain_session(sess):
         session = session._sess
     return session
 
-def collect_features(agent, dataset_type, fetches, feed_dict):
+def collect_features(agent, dataset_type, fetches, feed_dict=None):
         """Collecting all fetches from the DNN in the dataset (train/validation/test)
         :param agent: The agent (trainer/tester).
                       Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
@@ -163,6 +163,8 @@ def collect_features(agent, dataset_type, fetches, feed_dict):
         :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
         :return: fetches, as numpy float32.
         """
+        if feed_dict is None:
+            feed_dict = {}
 
         batch_size = agent.eval_batch_size
         log        = agent.log
@@ -184,7 +186,7 @@ def collect_features(agent, dataset_type, fetches, feed_dict):
 
         batch_count     = int(ceil(dataset.size / batch_size))
         last_batch_size =          dataset.size % batch_size
-        fetches_np = [-1.0 * np.ones((dataset.size, fetches_dims[i]), dtype=np.float32) for i in xrange(len(fetches))]
+        fetches_np = [np.empty((dataset.size, fetches_dims[i]), dtype=np.float32) for i in xrange(len(fetches))]
 
         log.info('start storing fetches for the entire {} set.'.format(str(dataset)))
         for i in range(batch_count):
