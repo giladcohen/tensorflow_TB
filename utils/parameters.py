@@ -301,6 +301,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.TRAINER               = None  # string: trainer to use. e.g. passive
         self.TRAIN_BATCH_SIZE      = None  # integer: batch size for training, e.g. 200
         self.EVAL_BATCH_SIZE       = None  # integer: batch size for evaluating, e.g. 2200
+        self.NUM_EVAL_SAMPLES      = None  # integer: number of samples to evaluate, instead of the entire dataset
         self.ROOT_DIR              = None  # string: path to root dir that contain train/validation dirs
         self.TRAIN_DIR             = None  # string: path to train dir
         self.EVAL_DIR              = None  # string: path to validation dir
@@ -335,6 +336,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'TRAINER'              , self.TRAINER)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_BATCH_SIZE'     , self.TRAIN_BATCH_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_BATCH_SIZE'      , self.EVAL_BATCH_SIZE)
+        self.set_to_config(do_save_none, section_name, config, 'NUM_EVAL_SAMPLES'     , self.NUM_EVAL_SAMPLES)
         self.set_to_config(do_save_none, section_name, config, 'ROOT_DIR'             , self.ROOT_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_DIR'            , self.TRAIN_DIR)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_DIR'             , self.EVAL_DIR)
@@ -364,6 +366,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAINER'              , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_BATCH_SIZE'     , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_BATCH_SIZE'      , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_EVAL_SAMPLES'     , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'ROOT_DIR'             , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_DIR'            , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_DIR'             , str)

@@ -33,7 +33,8 @@ class DMLClassificationTrainer(ClassificationTrainer):
             agent=self,
             dataset_type='validation',
             fetches=[self.model.score],
-            feed_dict={self.model.dropout_keep_prob: 1.0})
+            feed_dict={self.model.dropout_keep_prob: 1.0},
+            num_samples=self.num_eval_samples)
 
         # sample loss/summaries for only the first batch
         (summaries, loss) = self.sample_eval_stats()

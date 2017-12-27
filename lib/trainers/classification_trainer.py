@@ -16,6 +16,7 @@ class ClassificationTrainer(TrainerBase):
 
     def __init__(self, *args, **kwargs):
         super(ClassificationTrainer, self).__init__(*args, **kwargs)
+        self.num_eval_samples     = self.prm.train.train_control.NUM_EVAL_SAMPLES
         self.eval_batch_count     = int(ceil(self.dataset.validation_dataset.size / self.eval_batch_size))
         self.last_eval_batch_size =          self.dataset.validation_dataset.size % self.eval_batch_size
 
@@ -62,6 +63,7 @@ class ClassificationTrainer(TrainerBase):
 
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()
+        self.log.info(' NUM_EVAL_SAMPLES: {}'.format(self.num_eval_samples))
         self.log.info(' EVAL_BATCH_COUNT: {}'.format(self.eval_batch_count))
         self.log.info(' LAST_EVAL_BATCH_SIZE: {}'.format(self.last_eval_batch_size))
 
