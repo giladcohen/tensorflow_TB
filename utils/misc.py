@@ -210,6 +210,63 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None):
 
         return tuple(fetches_np)
 
+def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
+    """Collecting all fetches from the DNN in the dataset (train/validation/test)
+    This function supports aggregation and averaging of 1d signals (scalelr per minibatch) in the network
+    :param agent: The agent (trainer/tester).
+                  Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
+                  The agent must have a model with images and labels.  # This should be updated for all models
+    :param dataset_type: 'train' or 'validation'
+    :param fetches: list of all the fetches to sample from the DNN.
+    :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
+    :return: fetches, as numpy float32.
+    """
+    if feed_dict is None:
+        feed_dict = {}
+
+    batch_size = agent.eval_batch_size
+    log = agent.log
+    sess = agent.sess
+    model = agent.model
+
+    if dataset_type == 'train':
+        dataset = agent.dataset.train_dataset
+    elif dataset_type == 'validation':
+        dataset = agent.dataset.validation_dataset
+    else:
+        err_str = 'dataset_type={} is not supported'.format(dataset_type)
+        log.error(err_str)
+        raise AssertionError(err_str)
+    dataset.to_preprocess = False
+
+    batch_count     = int(ceil(dataset.size / batch_size))
+    last_batch_size =          dataset.size % batch_size
+
+    total_fetches_np = np.zeros(shape=(len(fetches)), dtype=np.float32)
+
+    log.info('start storing fetches for the entire {} set.'.format(str(dataset)))
+    for i in range(batch_count):
+        b = i * batch_size
+        if i < (batch_count - 1) or (last_batch_size == 0):
+            e = (i + 1) * batch_size
+        else:
+            e = i * batch_size + last_batch_size
+        images, labels = dataset.get_mini_batch(indices=range(b, e))
+        tmp_feed_dict = {model.images: images,
+                         model.labels: labels,
+                         model.is_training: False}
+        tmp_feed_dict.update(feed_dict)
+        fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
+        total_fetches_np[:] += fetches_out[:] * (e - b)
+        log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
+
+    fetches_np = total_fetches_np / dataset.size
+
+    if dataset_type == 'train':
+        dataset.to_preprocess = True
+
+    return tuple(fetches_np)
+
 def get_vars(*var_patt):
     """
     get all vars of model.

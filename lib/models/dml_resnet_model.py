@@ -1,7 +1,8 @@
 from abc import ABCMeta
 import tensorflow as tf
 from lib.models.resnet_model import ResNet
-from tensorflow.contrib.losses.python.metric_learning import cluster_loss
+#from tensorflow.contrib.losses.python.metric_learning import cluster_loss
+from lib.tf_alias.metric_loss_ops import cluster_loss
 
 class DMLResNet(ResNet):
     __metaclass__ = ABCMeta
@@ -30,9 +31,9 @@ class DMLResNet(ResNet):
     def add_fidelity_loss(self):
         with tf.variable_scope('cluster_cost'):
             labels_expanded = tf.expand_dims(self.labels, axis=-1, name='labels_expanded')
-            cluster_cost = cluster_loss(labels=labels_expanded,
-                                        embeddings=self.net['embedding_layer'],
-                                        margin_multiplier=self.dml_margin_multiplier)
+            cluster_cost, _ = cluster_loss(labels=labels_expanded,
+                                           embeddings=self.net['embedding_layer'],
+                                           margin_multiplier=self.dml_margin_multiplier)
             self.cluster_cost = tf.multiply(self.xent_rate, cluster_cost)  #TODO(gilad): think of better name here (not xent_rate)
             tf.summary.scalar('cluster_cost', self.cluster_cost)
             cluster_assert_op = tf.verify_tensor_all_finite(self.cluster_cost, 'cluster_cost contains NaN or Inf')
@@ -40,7 +41,10 @@ class DMLResNet(ResNet):
             tf.add_to_collection('assertions', cluster_assert_op)
 
     def _build_interpretation(self):
-        self.score = self.cluster_cost  # FIXME(gilad): The score should be the NMI
+        labels_expanded = tf.expand_dims(self.labels, axis=-1, name='labels_expanded')
+        _, self.score = cluster_loss(labels=labels_expanded,
+                                     embeddings=self.net['embedding_layer'],
+                                     margin_multiplier=self.dml_margin_multiplier)
 
     def calculate_logits(self, x):
         return None
