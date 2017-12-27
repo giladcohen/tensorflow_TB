@@ -34,7 +34,7 @@ class ClassificationTrainer(TrainerBase):
             collect_features(
                 agent=self,
                 dataset_type='validation',
-                fetches=[self.model.labels, self.model.net['logits'], self.model.cost],
+                fetches=[self.model.labels, self.model.predictions],
                 feed_dict={self.model.dropout_keep_prob: 1.0}
             )
         score = np.average(labels  == predictions)
