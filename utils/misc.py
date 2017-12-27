@@ -181,12 +181,11 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None):
             raise AssertionError(err_str)
         dataset.to_preprocess = False
 
-        # Assuming all fetches are 1D. Otherwise code needs to be rewritten
-        fetches_dims = [fetches[i].get_shape().as_list()[-1] for i in xrange(len(fetches))]
+        fetches_dims = [(batch_size,) + tuple(fetches[i].get_shape().as_list()[1:]) for i in xrange(len(fetches))]
 
         batch_count     = int(ceil(dataset.size / batch_size))
         last_batch_size =          dataset.size % batch_size
-        fetches_np = [np.empty((dataset.size, fetches_dims[i]), dtype=np.float32) for i in xrange(len(fetches))]
+        fetches_np = [np.empty(fetches_dims[i], dtype=np.float32) for i in xrange(len(fetches))]
 
         log.info('start storing fetches for the entire {} set.'.format(str(dataset)))
         for i in range(batch_count):

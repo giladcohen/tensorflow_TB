@@ -39,6 +39,7 @@ class KNNClassifierTester(AgentBase):
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
         self.dump_net        = self.prm.test.test_control.DUMP_NET
 
+        self.global_step = 0
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
         self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=self.knn_p_norm, n_jobs=self.knn_jobs)
 
@@ -53,6 +54,9 @@ class KNNClassifierTester(AgentBase):
 
         # create session
         self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+
+        # get global step
+        self.global_step = self.sess.run(self.model.global_step)
 
         # restore checkpoint
         self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
