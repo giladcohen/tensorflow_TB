@@ -201,7 +201,7 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None):
             tmp_feed_dict.update(feed_dict)
             fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
             for i in xrange(len(fetches)):
-                fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b, ) + fetches_dims[i][1:])
+                fetches_np[i][b:e] = fetches_out[i]
             log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
 
         if dataset_type == 'train':
