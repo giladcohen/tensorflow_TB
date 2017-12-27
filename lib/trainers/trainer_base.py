@@ -35,7 +35,6 @@ class TrainerBase(AgentBase):
         self.eval_dir              = self.prm.train.train_control.EVAL_DIR
         self.pred_dir              = self.prm.train.train_control.PREDICTION_DIR
         self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
-        self.checkpoint_ref        = self.prm.train.train_control.CHECKPOINT_REF
         self.summary_steps         = self.prm.train.train_control.SUMMARY_STEPS
         self.checkpoint_secs       = self.prm.train.train_control.CHECKPOINT_SECS
         self.checkpoint_steps      = self.prm.train.train_control.CHECKPOINT_STEPS
@@ -151,7 +150,6 @@ class TrainerBase(AgentBase):
         self.log.info(' EVAL_DIR: {}'.format(self.eval_dir))
         self.log.info(' PREDICTION_DIR: {}'.format(self.pred_dir))
         self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
-        self.log.info(' CHECKPOINT_REF: {}'.format(self.checkpoint_ref))
         self.log.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
         self.log.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
         self.log.info(' CHECKPOINT_STEPS: {}'.format(self.checkpoint_steps))
@@ -180,9 +178,6 @@ class TrainerBase(AgentBase):
 
     def finalize_graph(self):
         # optionally load checkpoint reference
-        if self.checkpoint_ref is not None:
-            self.log.info('loading pretrained checkpoint file from ref: {}'.format(self.checkpoint_ref))
-            self.saver.restore(get_plain_session(self.sess), self.checkpoint_ref)
         self.global_step = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
 
     def print_model_info(self):

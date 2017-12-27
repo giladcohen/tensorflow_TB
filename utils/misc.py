@@ -12,6 +12,7 @@ import contextlib
 import matplotlib.pyplot as plt
 from matplotlib import offsetbox
 from math import ceil
+import tensorflow as tf
 
 def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
     """Converts numpy data in the form:
@@ -208,3 +209,22 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None):
             dataset.to_preprocess = True
 
         return tuple(fetches_np)
+
+def get_vars(*var_patt):
+    """
+    get all vars of model.
+    var_patt: exclude of vars with specific pattern.
+    """
+    all_vars   = tf.global_variables()
+    vars       = []
+    other_vars = []
+    for v in all_vars:
+        found = False
+        for var in var_patt:
+            if var in v.name:
+                found = True
+        if found:
+            vars.append(v)
+        else:
+            other_vars.append(v)
+    return vars, other_vars
