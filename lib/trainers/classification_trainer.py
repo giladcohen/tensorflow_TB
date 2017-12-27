@@ -40,12 +40,7 @@ class ClassificationTrainer(TrainerBase):
         score = np.average(labels  == predictions)
 
         # sample loss/summaries for only the first batch
-        images, labels = self.dataset.get_mini_batch_validate(indices=range(self.eval_batch_size))
-        (summaries, loss) = self.sess.run([self.model.summaries, self.model.cost],
-                                          feed_dict={self.model.images           : images,
-                                                     self.model.labels           : labels,
-                                                     self.model.is_training      : False,
-                                                     self.model.dropout_keep_prob: 1.0})
+        (summaries, loss) = self.sample_eval_stats()
 
         self.validation_retention.add_score(score, self.global_step)
         self.tb_logger_eval.log_scalar('score', score, self.global_step)
@@ -54,6 +49,16 @@ class ClassificationTrainer(TrainerBase):
         self.summary_writer_eval.flush()
         self.log.info('EVALUATION (step={}): loss: {}, score: {}, best score: {}' \
                       .format(self.global_step, loss, score, self.validation_retention.get_best_score()))
+
+    def sample_eval_stats(self):
+        """Sampling validation summary and loss only for one eval batch."""
+        images, labels = self.dataset.get_mini_batch_validate(indices=range(self.eval_batch_size))
+        (summaries, loss) = self.sess.run([self.model.summaries, self.model.cost],
+                                          feed_dict={self.model.images: images,
+                                                     self.model.labels: labels,
+                                                     self.model.is_training: False,
+                                                     self.model.dropout_keep_prob: 1.0})
+        return summaries, loss
 
     def print_stats(self):
         super(ClassificationTrainer, self).print_stats()
