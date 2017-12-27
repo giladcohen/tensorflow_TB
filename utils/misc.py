@@ -257,7 +257,8 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
                          model.is_training: False}
         tmp_feed_dict.update(feed_dict)
         fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
-        total_fetches_np[:] += fetches_out[:] * (e - b)
+        for i in xrange(len(fetches)):
+            total_fetches_np[i] += fetches_out[i] * (e - b)
         log.info('Storing completed: {}%'.format(int(100.0 * e / dataset.size)))
 
     fetches_np = total_fetches_np / dataset.size
