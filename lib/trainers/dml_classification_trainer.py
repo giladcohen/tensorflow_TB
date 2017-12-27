@@ -29,12 +29,11 @@ class DMLClassificationTrainer(ClassificationTrainer):
     def eval_step(self):
         '''Implementing one evaluation step.'''
         self.log.info('start running eval within training. global_step={}'.format(self.global_step))
-        score = collect_features_1d(
+        (score,) = collect_features_1d(
             agent=self,
             dataset_type='validation',
             fetches=[self.model.score],
-            feed_dict={self.model.dropout_keep_prob: 1.0}
-        )
+            feed_dict={self.model.dropout_keep_prob: 1.0})
 
         # sample loss/summaries for only the first batch
         (summaries, loss) = self.sample_eval_stats()
