@@ -5,6 +5,7 @@ from __future__ import print_function
 from lib.trainers.classification_trainer import ClassificationTrainer
 from utils.misc import get_vars, get_plain_session, collect_features_1d
 import tensorflow as tf
+import os
 
 class DMLClassificationTrainer(ClassificationTrainer):
     """Implementing classification trainer for DML"""
@@ -17,14 +18,21 @@ class DMLClassificationTrainer(ClassificationTrainer):
         super(DMLClassificationTrainer, self).print_stats()
         self.log.info(' CHECKPOINT_REF: {}'.format(self.checkpoint_ref))
 
-    def finalize_graph(self):
+    def build_train_env(self):
+        super(DMLClassificationTrainer, self).build_train_env()
+
         # optionally load checkpoint reference
         if self.checkpoint_ref is not None:
-            self.log.info('loading pretrained checkpoint file from ref: {}'.format(self.checkpoint_ref))
+            # first, initialize all variables in the new graph
+            sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))  # use DML graph
+            self.log.info('checkpoint_ref was given. Initializing all weight in graph')
+            sess.run(self.model.init_op)
+            self.log.info('loading to graph pretrained checkpoint file from ref: {}'.format(self.checkpoint_ref))
             vars_to_ignore, vars_to_load = get_vars('RMSProp', 'dml_margin_multiplier', 'fully_connected')
             init_saver = tf.train.Saver(var_list=vars_to_load, name='init_saver', filename='model_ref')
-            init_saver.restore(get_plain_session(self.sess), self.checkpoint_ref)
-        self.global_step = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
+            init_saver.restore(sess, self.checkpoint_ref)
+            self.log.info('writing graph with all variables to current checkpoint dir {}'.format(self.checkpoint_dir))
+            self.saver.save(sess, os.path.join(self.checkpoint_dir, 'model.ckpt'))
 
     def eval_step(self):
         '''Implementing one evaluation step.'''
