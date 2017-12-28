@@ -48,8 +48,6 @@ class ModelBase(AgentBase):
             self._set_params()
         with tf.variable_scope('inference'):
             self._build_inference()
-        with tf.variable_scope('init_op'):
-            self.init_op = tf.global_variables_initializer()
         with tf.variable_scope('loss'):
             self._build_loss()
         with tf.variable_scope('interpretation'):
@@ -58,6 +56,8 @@ class ModelBase(AgentBase):
             self._build_train_op()
         with tf.variable_scope('summaries'):
             self.summaries = tf.summary.merge_all()
+        with tf.variable_scope('init_op'):
+            self.init_op = tf.global_variables_initializer()
 
     def _init_params(self):
         """Initialize params that may be changed from two training sessions"""
