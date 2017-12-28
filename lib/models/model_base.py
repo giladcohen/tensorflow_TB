@@ -48,6 +48,8 @@ class ModelBase(AgentBase):
             self._set_params()
         with tf.variable_scope('inference'):
             self._build_inference()
+        with tf.variable_scope('init_op'):
+            self.init_op = tf.global_variables_initializer()
         with tf.variable_scope('loss'):
             self._build_loss()
         with tf.variable_scope('interpretation'):
@@ -75,7 +77,6 @@ class ModelBase(AgentBase):
         self.optimizer          = tf.contrib.framework.model_variable(
             name='optimizer', dtype=tf.string, shape=[],
             initializer=tf.constant_initializer(self.prm.network.optimization.OPTIMIZER), trainable=False)
-        self.init_op = tf.global_variables_initializer()
 
     def _set_params(self):
         self.assign_ops['global_step_ow'] = self.global_step.assign(self.global_step_ph)
