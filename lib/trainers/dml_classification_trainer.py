@@ -32,6 +32,8 @@ class DMLClassificationTrainer(ClassificationTrainer):
             init_saver = tf.train.Saver(var_list=vars_to_load, name='init_saver', filename='model_ref')
             init_saver.restore(sess, self.checkpoint_ref)
             self.log.info('writing graph with all variables to current checkpoint dir {}'.format(self.checkpoint_dir))
+            if not os.path.exists(self.checkpoint_dir):
+                os.makedirs(self.checkpoint_dir)
             self.saver.save(sess, os.path.join(self.checkpoint_dir, 'model.ckpt'))
 
     def eval_step(self):
