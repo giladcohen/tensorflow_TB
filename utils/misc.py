@@ -277,12 +277,12 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None, num_sample
 
     return tuple(fetches_np)
 
-def get_vars(*var_patt):
+def get_vars(all_vars, *var_patt):
     """
     get all vars of model.
+    common usage for all_vars: all_vars=tf.global_variables()
     var_patt: exclude of vars with specific pattern.
     """
-    all_vars   = tf.global_variables()
     vars       = []
     other_vars = []
     for v in all_vars:

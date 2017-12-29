@@ -28,7 +28,12 @@ class DMLClassificationTrainer(ClassificationTrainer):
             self.log.info('checkpoint_ref was given. Initializing all weight in graph')
             sess.run(self.model.init_op)
             self.log.info('loading to graph pretrained checkpoint file from ref: {}'.format(self.checkpoint_ref))
-            vars_to_ignore, vars_to_load = get_vars('RMSProp', 'dml_margin_multiplier', 'fully_connected')
+            vars_to_ignore, vars_to_load = get_vars(tf.global_variables(),
+                                                    'RMSProp',
+                                                    'dml_margin_multiplier',
+                                                    'fully_connected',
+                                                    'unit_3_3',
+                                                    'unit_last')
             init_saver = tf.train.Saver(var_list=vars_to_load, name='init_saver', filename='model_ref')
             init_saver.restore(sess, self.checkpoint_ref)
             self.log.info('writing graph with all variables to current checkpoint dir {}'.format(self.checkpoint_dir))
