@@ -30,7 +30,7 @@ class DMLClassificationTrainer(ClassificationTrainer):
             self.log.info('loading to graph pretrained checkpoint file from ref: {}'.format(self.checkpoint_ref))
             vars_to_ignore, vars_to_load = get_vars(tf.global_variables(),
                                                     'RMSProp',
-                                                    'dml_margin_multiplier',
+                                                    'init_set_params',
                                                     'fully_connected',
                                                     'unit_3_3',
                                                     'unit_last')
