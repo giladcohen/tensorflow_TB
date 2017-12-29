@@ -50,21 +50,21 @@ class DMLResNet(ResNet):
     def calculate_logits(self, x):
         return None
 
-    def _build_train_op(self):
-        """Build trainers specific ops for the graph."""
-        tf.summary.scalar('learning_rate', self.lrn_rate)
-        vars_to_train, vars_to_ignore = get_vars(tf.trainable_variables(),
-                                                 'unit_3_3',
-                                                 'unit_last')
-        trainable_variables = vars_to_train
-
-        grads = tf.gradients(self.cost, trainable_variables)
-        optimizer = self._get_optimizer()
-
-        apply_op = optimizer.apply_gradients(
-            zip(grads, trainable_variables),
-            global_step=self.global_step, name='train_step')
-
-        self._extra_train_ops.extend(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
-        train_ops = [apply_op] + self._extra_train_ops
-        self.train_op = tf.group(*train_ops)
+    # def _build_train_op(self):
+    #     """Build trainers specific ops for the graph."""
+    #     tf.summary.scalar('learning_rate', self.lrn_rate)
+    #     vars_to_train, vars_to_ignore = get_vars(tf.trainable_variables(),
+    #                                              'unit_3_3',
+    #                                              'unit_last')
+    #     trainable_variables = vars_to_train
+    #
+    #     grads = tf.gradients(self.cost, trainable_variables)
+    #     optimizer = self._get_optimizer()
+    #
+    #     apply_op = optimizer.apply_gradients(
+    #         zip(grads, trainable_variables),
+    #         global_step=self.global_step, name='train_step')
+    #
+    #     self._extra_train_ops.extend(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
+    #     train_ops = [apply_op] + self._extra_train_ops
+    #     self.train_op = tf.group(*train_ops)

@@ -1027,5 +1027,6 @@ def cluster_loss(labels,
   summary.scalar('losses/score_pred', score_pred)
   summary.scalar('losses/' + margin_type, clustering_score_pred)
   summary.scalar('losses/score_gt', score_gt)
+  summary.scalar('losses/score_pred-score_gt', score_pred - score_gt)
 
   return clustering_loss, clustering_score_pred

@@ -31,9 +31,7 @@ class DMLClassificationTrainer(ClassificationTrainer):
             vars_to_ignore, vars_to_load = get_vars(tf.global_variables(),
                                                     'RMSProp',
                                                     'init_set_params',
-                                                    'fully_connected',
-                                                    'unit_3_3',
-                                                    'unit_last')
+                                                    'fully_connected')
             init_saver = tf.train.Saver(var_list=vars_to_load, name='init_saver', filename='model_ref')
             init_saver.restore(sess, self.checkpoint_ref)
             self.log.info('writing graph with all variables to current checkpoint dir {}'.format(self.checkpoint_dir))
