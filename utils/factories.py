@@ -68,9 +68,14 @@ class Factories(object):
             self.log.info('get_train_dataset: returning ' + str(train_dataset))
 
             validation_dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
-            #validation_dataset.initialize_pool()
             dataset.set_validation_dataset(validation_dataset)
             self.log.info('get_validation_dataset: returning ' + str(validation_dataset))
+
+            test_dataset = available_datasets[self.dataset_name](self.dataset_name + '_test', self.prm, preprocessor)
+            dataset.set_test_dataset(test_dataset)
+            self.log.info('get_test_dataset: returning ' + str(test_dataset))
+
+            dataset.split_train_validation()
 
             return dataset
         else:

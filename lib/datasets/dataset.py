@@ -15,46 +15,16 @@ class DataSet(DataSetBase):
         super(DataSet, self).__init__(*args, **kwargs)
         self.H = self.prm.network.IMAGE_HEIGHT
         self.W = self.prm.network.IMAGE_WIDTH
-        self.images_list = self.create_images_list()
-        self.labels = self.create_labels()
-
-    def create_images_list(self):
-        images_list = []
-        local_list = sorted(os.listdir(self.images_dir), key=numericalSort)
-        for file in local_list:
-            images_list.append(os.path.join(self.images_dir, file))
-        if len(images_list) != self.size:
-            err_str = self.__str__() + ': create_data_list: ' + \
-                      'number of images ({}) does not match self.size ({})'.format(len(images_list), self.size)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-        return images_list
-
-    def create_labels(self):
-        labels = -1 * np.ones([self.size], dtype=np.int)
-        tmp_list = open(self.labels_file).read().splitlines()
-        if len(tmp_list) != self.size:
-            err_str = self.__str__() + ': create_labels: ' + \
-                      'number of labels ({}) does not match self.size ({})'.format(len(tmp_list), self.size)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-        for i, val in enumerate(tmp_list):
-            labels[i] = int(val)
-        if np.sum(labels == -1) > 0:
-            err_str = self.__str__() + ': create_labels: Some labels contain -1 value. This should not happen'
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-        return labels
+        self.images_list = None
+        self.labels = None
 
     def get_mini_batch(self, batch_size=None, indices=None):
         if indices is not None:
             return self.indices_to_data(indices)
         if batch_size is None:
             batch_size = self.batch_size
-        if self.stochastic:
-            indices = self.rand_gen.choice(self.pool, batch_size, replace=False)
-        else:
-            indices = self.minibatch_server.get_mini_batch(batch_size)
+
+        indices = self.minibatch_server.get_mini_batch(batch_size)
         return self.indices_to_data(indices)
 
     def indices_to_data(self, indices):
@@ -77,3 +47,4 @@ class DataSet(DataSetBase):
         np.savetxt(file_name + '_pool.txt', self.pool, fmt='%0d')
         np.save(file_name + '_images.npy', images)
         np.savetxt(file_name + '_labels.txt', labels, fmt='%0d')
+

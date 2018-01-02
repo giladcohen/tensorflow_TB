@@ -159,7 +159,7 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None, num_samples=N
         :param agent: The agent (trainer/tester).
                       Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
                       The agent must have a model with images and labels.  # This should be updated for all models
-        :param dataset_type: 'train' or 'validation'
+        :param dataset_type: 'train', 'validation' or "test"
         :param fetches: list of all the fetches to sample from the DNN.
         :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
         :param num_samples: samples from the dataset to take instead of the entire dataset

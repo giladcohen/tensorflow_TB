@@ -20,7 +20,7 @@ class ActiveDataSet(DataSet):
             self.log.error(err_str)
             raise AssertionError(err_str)
         if self.init_size is None:
-            self.log.warning(self.__str__() + 'Initialized with INIT_SIZE=None. Setting INIT_SIZE=CAP ({})'.format(self.cap))
+            self.log.warning(str(self) + ' initialized with INIT_SIZE=None. Setting INIT_SIZE=CAP ({})'.format(self.cap))
             self.init_size = self.cap
 
     def initialize_pool(self):

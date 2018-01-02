@@ -149,11 +149,11 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.DATASET_DIR = None                              # string, dataset directory
         self.TRAIN_SET_SIZE = None                           # integer: train set size
         self.VALIDATION_SET_SIZE = None                      # integer: validation set size
+        self.TEST_SET_SIZE = None                            # integer: test set size
         self.TRAIN_IMAGES_DIR = None                         # string: path to train images dir
         self.TRAIN_LABELS_FILE = None                        # string: path to train labels file
-        self.VALIDATION_IMAGES_DIR = None                    # string: path to validation images dir
-        self.VALIDATION_LABELS_FILE = None                   # string: path to validation labels file
-        self.STOCHASTIC = None                               # boolean: get stochastic samples from the dataset
+        self.TEST_IMAGES_DIR = None                          # string: path to test images dir
+        self.TEST_LABELS_FILE = None                         # string: path to test labels file
         self.CLUSTERS = None                                 # integer: number of new clusters when updating active pool
         self.INIT_SIZE = None                                # integer: the initial pool size when dataset constructs
         self.CAP = None                                      # integer: maximum number of labels in active training
@@ -169,11 +169,11 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'DATASET_DIR'           , self.DATASET_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_SET_SIZE'        , self.TRAIN_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE'   , self.VALIDATION_SET_SIZE)
+        self.set_to_config(do_save_none, section_name, config, 'TEST_SET_SIZE'         , self.TEST_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_IMAGES_DIR'      , self.TRAIN_IMAGES_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_LABELS_FILE'     , self.TRAIN_LABELS_FILE)
-        self.set_to_config(do_save_none, section_name, config, 'VALIDATION_IMAGES_DIR' , self.VALIDATION_IMAGES_DIR)
-        self.set_to_config(do_save_none, section_name, config, 'VALIDATION_LABELS_FILE', self.VALIDATION_LABELS_FILE)
-        self.set_to_config(do_save_none, section_name, config, 'STOCHASTIC'            , self.STOCHASTIC)
+        self.set_to_config(do_save_none, section_name, config, 'TEST_IMAGES_DIR'       , self.TEST_IMAGES_DIR)
+        self.set_to_config(do_save_none, section_name, config, 'TEST_LABELS_FILE'      , self.TEST_LABELS_FILE)
         self.set_to_config(do_save_none, section_name, config, 'CLUSTERS'              , self.CLUSTERS)
         self.set_to_config(do_save_none, section_name, config, 'INIT_SIZE'             , self.INIT_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'CAP'                   , self.CAP)
@@ -184,11 +184,11 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_DIR'           , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE'   , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TEST_SET_SIZE'         , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR'      , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE'     , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_IMAGES_DIR' , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_LABELS_FILE', str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'STOCHASTIC'            , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TEST_IMAGES_DIR'       , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TEST_LABELS_FILE'      , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'CLUSTERS'              , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'INIT_SIZE'             , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CAP'                   , int)

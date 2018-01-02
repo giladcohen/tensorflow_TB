@@ -21,25 +21,25 @@ class DataSetBase(AgentBase):
             self.images_dir    = self.prm.dataset.TRAIN_IMAGES_DIR
             self.labels_file   = self.prm.dataset.TRAIN_LABELS_FILE
             self.to_preprocess = True
-            self.stochastic    = self.prm.dataset.STOCHASTIC
         elif 'validation' in name:
             self.size          = self.prm.dataset.VALIDATION_SET_SIZE
             self.batch_size    = self.prm.train.train_control.EVAL_BATCH_SIZE
-            self.images_dir    = self.prm.dataset.VALIDATION_IMAGES_DIR
-            self.labels_file   = self.prm.dataset.VALIDATION_LABELS_FILE
+            self.images_dir    = self.prm.dataset.TRAIN_IMAGES_DIR
+            self.labels_file   = self.prm.dataset.TRAIN_LABELS_FILE
             self.to_preprocess = False
-            self.stochastic    = False  # TODO(gilad): Currently not in use. Deploy for eval_step in trainer
+        elif 'test' in name:
+            self.size          = self.prm.dataset.TEST_SET_SIZE
+            self.batch_size    = self.prm.train.train_control.EVAL_BATCH_SIZE
+            self.images_dir    = self.prm.dataset.TEST_IMAGES_DIR
+            self.labels_file   = self.prm.dataset.TEST_LABELS_FILE
+            self.to_preprocess = False
         else:
             err_str = self.__str__() + ': __init__: name ({}) must include train or validation'.format(name)
             self.log.error(err_str)
             raise NameError(err_str)
 
         self.pool = None  # list of indices which can be chosen for a batch
-        self.minibatch_server = MiniBatchServer(self.name + '_MiniBatchServer', self.prm)  # server used for non stochastic mini batches
-
-    def print_stats(self):
-        self.log.info(self.__str__() +' parameters:')
-        self.log.info(' STOCHASTIC: {}'.format(self.stochastic))
+        self.minibatch_server = MiniBatchServer(self.name + '_MiniBatchServer', self.prm)
 
     @abstractmethod
     def get_mini_batch(self, batch_size=None):
@@ -49,6 +49,6 @@ class DataSetBase(AgentBase):
         return len(self.pool)
 
     def initialize_pool(self):
-        """Must be called immidiately after __init__"""
+        """Must be called immediately after __init__"""
         self.pool = range(self.size)  # list of indices which can be chosen for a batch
         self.minibatch_server.set_pool(self.pool)
