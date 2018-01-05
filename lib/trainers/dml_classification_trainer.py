@@ -60,7 +60,7 @@ class DMLClassificationTrainer(ClassificationTrainer):
             feed_dict={self.model.dropout_keep_prob: 1.0})
 
         # sample loss/summaries for only the first batch
-        (summaries, loss) = self.sample_stats()
+        (summaries, loss) = self.sample_stats(dataset_type='validation')
 
         self.validation_retention.add_score(score, self.global_step)
         self.tb_logger_validation.log_scalar('score', score, self.global_step)
