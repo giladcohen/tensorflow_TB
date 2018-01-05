@@ -45,5 +45,9 @@ class DMLResNet(ResNet):
             tf.add_to_collection(tf.GraphKeys.LOSSES, self.cluster_cost)
             tf.add_to_collection('assertions', cluster_assert_op)
 
+    def _build_interpretation(self):
+        '''Interprets the logits'''
+        pass
+
     def calculate_logits(self, x):
         return None
