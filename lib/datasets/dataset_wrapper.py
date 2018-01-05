@@ -216,20 +216,11 @@ class DatasetWrapper(AgentBase):
                     buffer_size=batch_size,
                     seed=self.prm.SUPERSEED,
                     reshuffle_each_iteration=True)
-                dataset = dataset.prefetch(2 * batch_size)
+                dataset = dataset.prefetch(5 * batch_size)
                 dataset = dataset.repeat()
 
             dataset = dataset.batch(batch_size)
 
-            # iterator = dataset.make_initializable_iterator()
-            # set runhok to initialize iterator
-            # iterator_initializer_hook = IteratorInitializerHook()
-            # iterator_initializer_hook.iterator_initializer_func = \
-            #     lambda sess: sess.run(
-            #         iterator.initializer,
-            #         feed_dict={self.model.images: images,
-            #                    self.model.labels: labels})
-            # return iterator, iterator_initializer_hook
             return dataset
 
     def get_mini_batch(self, dataset_type, sess):
