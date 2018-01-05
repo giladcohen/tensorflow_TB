@@ -21,19 +21,11 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
             self._reset_lrn_rate = self.prm.network.optimization.LEARNING_RATE
         self._lrn_rate = self._init_lrn_rate
 
-        self.feed_lrn_rate = True
-
     def __str__(self):
         return self.name
 
     def before_run(self, run_context):
-        # if hasattr(run_context.original_args.fetches, 'name') and run_context.original_args.fetches.name == 'init_set_params/init':  # ad hoc code to prevent error when initializing
-        if not self.feed_lrn_rate:
-            # don't feed the learning rate
-            return tf.train.SessionRunArgs(self.model.global_step)
-        else:
-            # feed the learning rate
-            return tf.train.SessionRunArgs(self.model.global_step, feed_dict={self.model.lrn_rate: self._lrn_rate})
+        return tf.train.SessionRunArgs(self.model.global_step, feed_dict={self.model.lrn_rate: self._lrn_rate})
 
     def print_stats(self):
         self.log.info('Learning Rate Setter parameters:')
@@ -50,3 +42,4 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
     def reset_learning_rate(self):
         self.log.info('Reseting learning rate to reset value')
         self.set_lrn_rate(self._reset_lrn_rate)
+

@@ -30,8 +30,7 @@ class ClassificationTrainer(TrainerBase):
                 agent=self,
                 dataset_type='validation',
                 fetches=[self.model.labels, self.model.predictions],
-                feed_dict={self.model.dropout_keep_prob: 1.0}
-            )
+                feed_dict={self.model.dropout_keep_prob: 1.0})
         score = np.average(labels == predictions)
 
         # sample loss/summaries for only the first batch
@@ -53,8 +52,7 @@ class ClassificationTrainer(TrainerBase):
                 agent=self,
                 dataset_type='test',
                 fetches=[self.model.labels, self.model.predictions],
-                feed_dict={self.model.dropout_keep_prob: 1.0}
-            )
+                feed_dict={self.model.dropout_keep_prob: 1.0})
         score = np.average(labels == predictions)
 
         # sample loss/summaries for only the first batch

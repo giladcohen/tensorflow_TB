@@ -10,12 +10,12 @@ class DecayByScoreSetter(LearningRateSetterBase):
     def __init__(self, *args, **kwargs):
         super(DecayByScoreSetter, self).__init__(*args, **kwargs)
 
-        self.decay_refractory_steps    = self.prm.train.train_control.learning_rate_setter.DECAY_REFRACTORY_STEPS
+        self.decay_refractory_steps    = self.prm.train.train_control.learning_rate_setter.LR_DECAY_REFRACTORY_STEPS
         self.global_step_of_last_decay = 0
 
     def print_stats(self):
         super(DecayByScoreSetter, self).print_stats()
-        self.log.info(' DECAY_REFRACTORY_STEPS: {}'.format(self.decay_refractory_steps))
+        self.log.info(' LR_DECAY_REFRACTORY_STEPS: {}'.format(self.decay_refractory_steps))
 
     def after_run(self, run_context, run_values):
         global_step = run_values.results

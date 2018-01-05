@@ -405,7 +405,7 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.SCHEDULED_STEPS               = None  # list: the epochs in which the learning rate is decreased
         self.USE_FIXED_EPOCHS              = None  # boolean: use epochs instead of global steps
         self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_STEPS
-        self.DECAY_REFRACTORY_STEPS        = None  # integer: number of training steps after decaying the learning
+        self.LR_DECAY_REFRACTORY_STEPS     = None  # integer: number of training steps after decaying the learning
                                                    # rate in which no new decay can be utilized
         self.LEARNING_RATE_RESET           = None  # float: reset value of learning rate
 
@@ -420,7 +420,7 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_STEPS'          , self.SCHEDULED_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'USE_FIXED_EPOCHS'         , self.USE_FIXED_EPOCHS)
         self.set_to_config(do_save_none, section_name, config, 'SCHEDULED_LEARNING_RATES' , self.SCHEDULED_LEARNING_RATES)
-        self.set_to_config(do_save_none, section_name, config, 'DECAY_REFRACTORY_STEPS'   , self.DECAY_REFRACTORY_STEPS)
+        self.set_to_config(do_save_none, section_name, config, 'LR_DECAY_REFRACTORY_STEPS', self.LR_DECAY_REFRACTORY_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'LEARNING_RATE_RESET'      , self.LEARNING_RATE_RESET)
 
     def set_from_file(self, override_mode, txt, parser):
@@ -429,8 +429,27 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_STEPS'             , np.array)
         self.parse_from_config(self, override_mode, section_name, parser, 'USE_FIXED_EPOCHS'            , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'SCHEDULED_LEARNING_RATES'    , np.array)
-        self.parse_from_config(self, override_mode, section_name, parser, 'DECAY_REFRACTORY_STEPS'      , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'LR_DECAY_REFRACTORY_STEPS'   , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LEARNING_RATE_RESET'         , float)
+
+class ParametersTrainControlMarginMultiplierSetter(parser_utils.FrozenClass):
+    def __init__(self):
+        super(ParametersTrainControlMarginMultiplierSetter, self).__init__()
+
+        self.MM_DECAY_REFRACTORY_STEPS     = None  # integer: number of training steps after decaying the margin
+                                                   # multiplier in which no new decay can be utilized
+        self._freeze()
+
+    def name(self):
+        return 'margin_multiplier_setter'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.set_to_config(do_save_none, section_name, config, 'MM_DECAY_REFRACTORY_STEPS', self.MM_DECAY_REFRACTORY_STEPS)
+
+    def set_from_file(self, override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.parse_from_config(self, override_mode, section_name, parser, 'MM_DECAY_REFRACTORY_STEPS'   , int)
 
 class ParametersTest(parser_utils.FrozenClass):
     def __init__(self):

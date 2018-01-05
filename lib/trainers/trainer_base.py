@@ -74,9 +74,6 @@ class TrainerBase(AgentBase):
         self.validation_retention = Retention('retention_validation', self.prm)
         self.test_retention       = Retention('retention_test'      , self.prm)
 
-        # TODO(gilad): consider using train retention to the learning rate hook, if also necessary in the future
-        self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.validation_retention)
-
         self.build_train_env()
         self.build_validation_env()
         self.build_test_env()
@@ -103,6 +100,8 @@ class TrainerBase(AgentBase):
         self.summary_writer_train = tf.summary.FileWriter(self.train_dir)
         self.tb_logger_train = TBLogger(self.summary_writer_train)
         self.get_train_summaries()
+
+        self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.validation_retention)
 
         summary_hook = TrainSummarySaverHook(
             name='train_summary_saver_hook',
