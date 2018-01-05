@@ -146,14 +146,9 @@ class ParametersDataset(parser_utils.FrozenClass):
         super(ParametersDataset, self).__init__()
 
         self.DATASET_NAME = None                             # string, dataset name. e.g.: "cifar10"
-        self.DATASET_DIR = None                              # string, dataset directory
         self.TRAIN_SET_SIZE = None                           # integer: train set size
         self.VALIDATION_SET_SIZE = None                      # integer: validation set size
         self.TEST_SET_SIZE = None                            # integer: test set size
-        self.TRAIN_IMAGES_DIR = None                         # string: path to train images dir
-        self.TRAIN_LABELS_FILE = None                        # string: path to train labels file
-        self.TEST_IMAGES_DIR = None                          # string: path to test images dir
-        self.TEST_LABELS_FILE = None                         # string: path to test labels file
         self.CLUSTERS = None                                 # integer: number of new clusters when updating active pool
         self.INIT_SIZE = None                                # integer: the initial pool size when dataset constructs
         self.CAP = None                                      # integer: maximum number of labels in active training
@@ -166,14 +161,9 @@ class ParametersDataset(parser_utils.FrozenClass):
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
         self.set_to_config(do_save_none, section_name, config, 'DATASET_NAME'          , self.DATASET_NAME)
-        self.set_to_config(do_save_none, section_name, config, 'DATASET_DIR'           , self.DATASET_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_SET_SIZE'        , self.TRAIN_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE'   , self.VALIDATION_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TEST_SET_SIZE'         , self.TEST_SET_SIZE)
-        self.set_to_config(do_save_none, section_name, config, 'TRAIN_IMAGES_DIR'      , self.TRAIN_IMAGES_DIR)
-        self.set_to_config(do_save_none, section_name, config, 'TRAIN_LABELS_FILE'     , self.TRAIN_LABELS_FILE)
-        self.set_to_config(do_save_none, section_name, config, 'TEST_IMAGES_DIR'       , self.TEST_IMAGES_DIR)
-        self.set_to_config(do_save_none, section_name, config, 'TEST_LABELS_FILE'      , self.TEST_LABELS_FILE)
         self.set_to_config(do_save_none, section_name, config, 'CLUSTERS'              , self.CLUSTERS)
         self.set_to_config(do_save_none, section_name, config, 'INIT_SIZE'             , self.INIT_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'CAP'                   , self.CAP)
@@ -181,14 +171,9 @@ class ParametersDataset(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME'          , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_DIR'           , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE'   , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TEST_SET_SIZE'         , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_IMAGES_DIR'      , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_LABELS_FILE'     , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TEST_IMAGES_DIR'       , str)
-        self.parse_from_config(self, override_mode, section_name, parser, 'TEST_LABELS_FILE'      , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'CLUSTERS'              , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'INIT_SIZE'             , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CAP'                   , int)
@@ -273,6 +258,7 @@ class ParametersTrainDataAugmentation(parser_utils.FrozenClass):
     def __init__(self):
         super(ParametersTrainDataAugmentation, self).__init__()
 
+        #FIXME(gilad): incorporate into dataset wrapper
         self.FLIP_IMAGE         = None   # boolean: whether to randomly flip images due to augmentation
         self.DRIFT_X            = None   # int: drift x for augmentation, e.g. 45
         self.DRIFT_Y            = None   # int: drift y for image augmentation, e.g. 20
@@ -301,10 +287,10 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.TRAINER               = None  # string: trainer to use. e.g. passive
         self.TRAIN_BATCH_SIZE      = None  # integer: batch size for training, e.g. 200
         self.EVAL_BATCH_SIZE       = None  # integer: batch size for evaluating, e.g. 2200
-        self.NUM_EVAL_SAMPLES      = None  # integer: number of samples to evaluate, instead of the entire dataset
         self.ROOT_DIR              = None  # string: path to root dir that contain train/validation dirs
         self.TRAIN_DIR             = None  # string: path to train dir
         self.EVAL_DIR              = None  # string: path to validation dir
+        self.TEST_DIR              = None  # string: path to test dir
         self.PREDICTION_DIR        = None  # string: path to prediction dir
         self.CHECKPOINT_DIR        = None  # string: path to checkpoint dir
         self.CHECKPOINT_REF        = None  # string: path to a checkpoint reference file to load
@@ -314,7 +300,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.LAST_STEP             = None  # integer: number of training steps before the training session stops.
         self.LOGGER_STEPS          = None  # integer: number of training steps to output log string to shell
         self.EVAL_STEPS            = None  # integer: number of training steps from one evaluation to the next
-        self.EVALS_IN_EPOCH        = None  # integer: number of evaluation steps within an epoch
+        self.TEST_STEPS            = None  # integer: number of training steps from one test to the next
         self.RETENTION_SIZE        = None  # integer: the number of last scores to remember
         self.MIN_LEARNING_RATE     = None  # float: minimal learning rate before choosing new labels in active training
         self.SKIP_FIRST_EVALUATION = None  # boolean: whether or not to skip the first evaluation in the training
@@ -336,10 +322,10 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'TRAINER'              , self.TRAINER)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_BATCH_SIZE'     , self.TRAIN_BATCH_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_BATCH_SIZE'      , self.EVAL_BATCH_SIZE)
-        self.set_to_config(do_save_none, section_name, config, 'NUM_EVAL_SAMPLES'     , self.NUM_EVAL_SAMPLES)
         self.set_to_config(do_save_none, section_name, config, 'ROOT_DIR'             , self.ROOT_DIR)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_DIR'            , self.TRAIN_DIR)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_DIR'             , self.EVAL_DIR)
+        self.set_to_config(do_save_none, section_name, config, 'TEST_DIR'             , self.TEST_DIR)
         self.set_to_config(do_save_none, section_name, config, 'PREDICTION_DIR'       , self.PREDICTION_DIR)
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_DIR'       , self.CHECKPOINT_DIR)
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_REF'       , self.CHECKPOINT_REF)
@@ -349,7 +335,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'LAST_STEP'            , self.LAST_STEP)
         self.set_to_config(do_save_none, section_name, config, 'LOGGER_STEPS'         , self.LOGGER_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_STEPS'           , self.EVAL_STEPS)
-        self.set_to_config(do_save_none, section_name, config, 'EVALS_IN_EPOCH'       , self.EVALS_IN_EPOCH)
+        self.set_to_config(do_save_none, section_name, config, 'TEST_STEPS'           , self.TEST_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'RETENTION_SIZE'       , self.RETENTION_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'MIN_LEARNING_RATE'    , self.MIN_LEARNING_RATE)
         self.set_to_config(do_save_none, section_name, config, 'SKIP_FIRST_EVALUATION', self.SKIP_FIRST_EVALUATION)
@@ -366,10 +352,10 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAINER'              , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_BATCH_SIZE'     , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_BATCH_SIZE'      , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_EVAL_SAMPLES'     , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'ROOT_DIR'             , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_DIR'            , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_DIR'             , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TEST_DIR'             , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'PREDICTION_DIR'       , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_DIR'       , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_REF'       , str)
@@ -379,7 +365,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'LAST_STEP'            , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOGGER_STEPS'         , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_STEPS'           , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'EVALS_IN_EPOCH'       , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'TEST_STEPS'           , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'RETENTION_SIZE'       , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'MIN_LEARNING_RATE'    , float)
         self.parse_from_config(self, override_mode, section_name, parser, 'SKIP_FIRST_EVALUATION', bool)
@@ -395,6 +381,7 @@ class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def __init__(self):
         parser_utils.FrozenClass.__init__(self)
 
+        # Not in use. Might be relevant someday if I wish to run with multiple preprocessing pipes.
         self.PREPROCESSOR = None     # string: preprocessor name. e.g. preprocessor_drift_flip
 
         self._freeze()

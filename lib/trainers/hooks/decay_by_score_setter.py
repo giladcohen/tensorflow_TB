@@ -10,13 +10,7 @@ class DecayByScoreSetter(LearningRateSetterBase):
     def __init__(self, *args, **kwargs):
         super(DecayByScoreSetter, self).__init__(*args, **kwargs)
 
-        self.decay_refractory_steps = self.prm.train.train_control.learning_rate_setter.DECAY_REFRACTORY_STEPS
-        if self.decay_refractory_steps is None:
-            self.log.warning('DECAY_REFRACTORY_STEPS is None. setting it to be EVAL_STEPS * RETENTION_SIZE ({} x {})' \
-                             .format(self.prm.train.train_control.EVAL_STEPS, self.prm.train.train_control.RETENTION_SIZE))
-            self.decay_refractory_steps = self.prm.train.train_control.EVAL_STEPS * \
-                                          self.prm.train.train_control.RETENTION_SIZE
-
+        self.decay_refractory_steps    = self.prm.train.train_control.learning_rate_setter.DECAY_REFRACTORY_STEPS
         self.global_step_of_last_decay = 0
 
     def print_stats(self):

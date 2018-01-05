@@ -14,15 +14,9 @@ class ClassificationTrainer(TrainerBase):
     """Implementing classification trainer
     Using the entire labeled trainset for training"""
 
-    def __init__(self, *args, **kwargs):
-        super(ClassificationTrainer, self).__init__(*args, **kwargs)
-        self.num_eval_samples     = self.prm.train.train_control.NUM_EVAL_SAMPLES
-        self.eval_batch_count     = int(ceil(self.dataset.validation_dataset.size / self.eval_batch_size))
-        self.last_eval_batch_size =          self.dataset.validation_dataset.size % self.eval_batch_size
-
     def train_step(self):
         '''Implementing one training step'''
-        images, labels = self.dataset.get_mini_batch_train()
+        images, labels = self.dataset.get_mini_batch('train', self.plain_sess)
         _ , self.global_step = self.sess.run([self.model.train_op, self.model.global_step],
                                               feed_dict={self.model.images: images,
                                                          self.model.labels: labels,
@@ -38,34 +32,60 @@ class ClassificationTrainer(TrainerBase):
                 fetches=[self.model.labels, self.model.predictions],
                 feed_dict={self.model.dropout_keep_prob: 1.0}
             )
-        score = np.average(labels  == predictions)
+        score = np.average(labels == predictions)
 
         # sample loss/summaries for only the first batch
-        (summaries, loss) = self.sample_eval_stats()
+        (summaries, loss) = self.sample_stats(dataset_type='validation')
 
         self.validation_retention.add_score(score, self.global_step)
-        self.tb_logger_eval.log_scalar('score', score, self.global_step)
-        self.tb_logger_eval.log_scalar('best score', self.validation_retention.get_best_score(), self.global_step)
-        self.summary_writer_eval.add_summary(summaries, self.global_step)
-        self.summary_writer_eval.flush()
+        self.tb_logger_validation.log_scalar('score', score, self.global_step)
+        self.tb_logger_validation.log_scalar('best score', self.validation_retention.get_best_score(), self.global_step)
+        self.summary_writer_validation.add_summary(summaries, self.global_step)
+        self.summary_writer_validation.flush()
         self.log.info('EVALUATION (step={}): loss: {}, score: {}, best score: {}' \
                       .format(self.global_step, loss, score, self.validation_retention.get_best_score()))
 
-    def sample_eval_stats(self):
-        """Sampling validation summary and loss only for one eval batch."""
-        images, labels = self.dataset.get_mini_batch_validate(indices=range(self.eval_batch_size))
-        (summaries, loss) = self.sess.run([self.model.summaries, self.model.cost],
+    def test_step(self):
+        '''Implementing one test step.'''
+        self.log.info('start running test within training. global_step={}'.format(self.global_step))
+        (labels, predictions) = \
+            collect_features(
+                agent=self,
+                dataset_type='test',
+                fetches=[self.model.labels, self.model.predictions],
+                feed_dict={self.model.dropout_keep_prob: 1.0}
+            )
+        score = np.average(labels == predictions)
+
+        # sample loss/summaries for only the first batch
+        (summaries, loss) = self.sample_stats(dataset_type='test')
+
+        self.test_retention.add_score(score, self.global_step)
+        self.tb_logger_test.log_scalar('score', score, self.global_step)
+        self.tb_logger_test.log_scalar('best score', self.test_retention.get_best_score(), self.global_step)
+        self.summary_writer_test.add_summary(summaries, self.global_step)
+        self.summary_writer_test.flush()
+        self.log.info('TEST (step={}): loss: {}, score: {}, best score: {}' \
+                      .format(self.global_step, loss, score, self.test_retention.get_best_score()))
+
+    def sample_stats(self, dataset_type):
+        """Sampling validation/test summary and loss only for one eval batch."""
+        if dataset_type == 'validation':
+            self.plain_sess.run(self.dataset.validation_iterator.initializer)
+        elif dataset_type == 'test':
+            self.plain_sess.run(self.dataset.test_iterator.initializer)
+        else:
+            err_str = 'sample_stats must be called only with dataset=validation/test, not {}'.format(dataset_type)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
+        images, labels = self.dataset.get_mini_batch(dataset_type, self.plain_sess)
+        (summaries, loss) = self.plain_sess.run([self.model.summaries, self.model.cost],
                                           feed_dict={self.model.images: images,
                                                      self.model.labels: labels,
                                                      self.model.is_training: False,
                                                      self.model.dropout_keep_prob: 1.0})
         return summaries, loss
-
-    def print_stats(self):
-        super(ClassificationTrainer, self).print_stats()
-        self.log.info(' NUM_EVAL_SAMPLES: {}'.format(self.num_eval_samples))
-        self.log.info(' EVAL_BATCH_COUNT: {}'.format(self.eval_batch_count))
-        self.log.info(' LAST_EVAL_BATCH_SIZE: {}'.format(self.last_eval_batch_size))
 
     def get_train_summaries(self):
         super(ClassificationTrainer, self).get_train_summaries()

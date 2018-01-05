@@ -64,10 +64,7 @@ def train(prm):
     model        = factories.get_model()
     model.print_stats() #debug
 
-    preprocessor = factories.get_preprocessor()
-    preprocessor.print_stats() #debug
-
-    dataset = factories.get_dataset(preprocessor)
+    dataset = factories.get_dataset()
     dataset.print_stats() #debug
 
     tester      = factories.get_tester(model, dataset)

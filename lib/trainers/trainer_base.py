@@ -12,8 +12,6 @@ from lib.retention import Retention
 from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
 from lib.trainers.hooks.train_summary_saver_hook import TrainSummarySaverHook
 from utils.tensorboard_logging import TBLogger
-from utils.misc import get_plain_session
-
 
 class TrainerBase(AgentBase):
     __metaclass__ = ABCMeta
@@ -34,6 +32,7 @@ class TrainerBase(AgentBase):
         self.train_dir             = self.prm.train.train_control.TRAIN_DIR
         self.eval_dir              = self.prm.train.train_control.EVAL_DIR
         self.pred_dir              = self.prm.train.train_control.PREDICTION_DIR
+        self.test_dir              = self.prm.train.train_control.TEST_DIR
         self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
         self.summary_steps         = self.prm.train.train_control.SUMMARY_STEPS
         self.checkpoint_secs       = self.prm.train.train_control.CHECKPOINT_SECS
@@ -41,14 +40,12 @@ class TrainerBase(AgentBase):
         self.last_step             = self.prm.train.train_control.LAST_STEP
         self.logger_steps          = self.prm.train.train_control.LOGGER_STEPS
         self.eval_steps            = self.prm.train.train_control.EVAL_STEPS
-        self.evals_in_epoch        = self.prm.train.train_control.EVALS_IN_EPOCH
+        self.test_steps            = self.prm.train.train_control.TEST_STEPS
+
         self.skip_first_evaluation = self.prm.train.train_control.SKIP_FIRST_EVALUATION
         if self.last_step is None:
             self.log.warning('LAST_STEP is None. Setting LAST_STEP=1000000')
             self.last_step = 1000000
-        if self.eval_steps is None:
-            self.log.warning('EVAL_STEPS is None. Setting EVAL_STEPS based on EVALS_IN_EPOCH (for initial pool size)')
-            self.eval_steps = int(self.dataset.train_dataset.pool_size() / (self.train_batch_size * self.evals_in_epoch))
         self.debug_mode            = self.prm.DEBUG_MODE
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks
 
@@ -57,26 +54,32 @@ class TrainerBase(AgentBase):
         if self.skip_first_evaluation:
             self.log.info('skipping evaluation for global_step=0')
             self._activate_eval = False
+            self._activate_test = False
         else:
             self._activate_eval = True
+            self._activate_test = True
 
     def build(self):
         """
         Building all trainer agents: train/validation/test sessions, file writers, retentions, hooks, etc.
         """
         self.model.build_graph()
+        self.dataset.build()
+
         # self.print_model_info()
         self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
 
         # Retention for train/validation stats
-        self.train_retention = Retention('retention_train', self.prm)
+        self.train_retention      = Retention('retention_train'     , self.prm)
         self.validation_retention = Retention('retention_validation', self.prm)
+        self.test_retention       = Retention('retention_test'      , self.prm)
 
         # TODO(gilad): consider using train retention to the learning rate hook, if also necessary in the future
-        self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.dataset.train_dataset, self.validation_retention)
+        self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.validation_retention)
 
         self.build_train_env()
         self.build_validation_env()
+        self.build_test_env()
         self.build_prediction_env()
 
         # create session
@@ -86,6 +89,7 @@ class TrainerBase(AgentBase):
             save_checkpoint_secs=self.checkpoint_secs,
             config=tf.ConfigProto(allow_soft_placement=True))
 
+        self.plain_sess = self.sess._tf_sess()
         # creating train monitored session for automatically initializing the graph, running 'begin' function for
         # all hooks and using scaffold to finalize the graph. If there is a checkpoint already in the checkpoint_dir,
         # then it recovers the weights on the graph. Closing this session immediately after.
@@ -131,8 +135,13 @@ class TrainerBase(AgentBase):
 
     def build_validation_env(self):
         self.log.info("Starting building the validation environment")
-        self.summary_writer_eval = tf.summary.FileWriter(self.eval_dir)
-        self.tb_logger_eval = TBLogger(self.summary_writer_eval)
+        self.summary_writer_validation = tf.summary.FileWriter(self.eval_dir)
+        self.tb_logger_validation = TBLogger(self.summary_writer_validation)
+
+    def build_test_env(self):
+        self.log.info("Starting building the test environment")
+        self.summary_writer_test = tf.summary.FileWriter(self.test_dir)
+        self.tb_logger_test = TBLogger(self.summary_writer_test)
 
     def build_prediction_env(self):
         self.log.info("Starting building the prediction environment")
@@ -148,6 +157,7 @@ class TrainerBase(AgentBase):
         self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
         self.log.info(' TRAIN_DIR: {}'.format(self.train_dir))
         self.log.info(' EVAL_DIR: {}'.format(self.eval_dir))
+        self.log.info(' TEST_DIR: {}'.format(self.test_dir))
         self.log.info(' PREDICTION_DIR: {}'.format(self.pred_dir))
         self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
         self.log.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
@@ -156,10 +166,11 @@ class TrainerBase(AgentBase):
         self.log.info(' LAST_STEP: {}'.format(self.last_step))
         self.log.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
-        self.log.info(' EVALS_IN_EPOCH: {}'.format(self.evals_in_epoch))
         self.log.info(' SKIP_FIRST_EVALUATION: {}'.format(self.skip_first_evaluation))
         self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
+        self.train_retention.print_stats()
         self.validation_retention.print_stats()
+        self.test_retention.print_stats()
         self.learning_rate_hook.print_stats()
 
     def get_train_summaries(self):
@@ -171,14 +182,18 @@ class TrainerBase(AgentBase):
             if self.to_eval():
                 self.eval_step()
                 self._activate_eval = False
+            elif self.to_test():
+                self.test_step()
+                self._activate_test = False
             else:
                 self.train_step()
                 self._activate_eval = True
+                self._activate_test = True
         self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def finalize_graph(self):
-        # optionally load checkpoint reference
-        self.global_step = self.sess.run(self.model.global_step, feed_dict=self._get_dummy_feed())
+        self.global_step = self.plain_sess.run(self.model.global_step)
+        self.dataset.set_handles(self.plain_sess)
 
     def print_model_info(self):
         param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
@@ -198,9 +213,8 @@ class TrainerBase(AgentBase):
         """
 
         [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
-            self.sess.run([self.model.lrn_rate, self.model.xent_rate, self.model.weight_decay_rate,
-                           self.model.relu_leakiness, self.model.optimizer],
-                          feed_dict=self._get_dummy_feed())
+            self.plain_sess.run([self.model.lrn_rate, self.model.xent_rate, self.model.weight_decay_rate,
+                           self.model.relu_leakiness, self.model.optimizer])
 
         assign_ops = []
         if not np.isclose(lrn_rate, self.prm.network.optimization.LEARNING_RATE):
@@ -224,17 +238,7 @@ class TrainerBase(AgentBase):
             self.log.warning('changing model.optimizer from {} to {}'.
                              format(optimizer, self.prm.network.optimization.OPTIMIZER))
 
-        self.learning_rate_hook.feed_lrn_rate = False
-        self.sess.run(assign_ops, feed_dict=self._get_dummy_feed())
-        self.learning_rate_hook.feed_lrn_rate = True
-
-    def _get_dummy_feed(self):
-        """Getting dummy feed to bypass tensorflow (possible bug?) complaining about no placeholder value"""
-        images, labels = self.dataset.get_mini_batch_train(indices=[0,1])
-        feed_dict = {self.model.images     : images,
-                     self.model.labels     : labels,
-                     self.model.is_training: False}
-        return feed_dict
+        self.plain_sess.run(assign_ops)
 
     @abstractmethod
     def train_step(self):
@@ -246,5 +250,13 @@ class TrainerBase(AgentBase):
         '''Implementing one evaluation step.'''
         pass
 
+    @abstractmethod
+    def test_step(self):
+        """Implementing one test step."""
+        pass
+
     def to_eval(self):
-        return self.global_step % self.eval_steps == 0 and self._activate_eval
+        return self.global_step % self.eval_steps == 0 and self._activate_eval and self.dataset.validation_set_size > 0
+
+    def to_test(self):
+        return self.global_step % self.test_steps == 0 and self._activate_test

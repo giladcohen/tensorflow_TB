@@ -1,15 +1,12 @@
 from __future__ import division
 
 import lib.logger.logger as logger
-from lib.datasets.active_dataset import ActiveDataSet
-from lib.datasets.dataset import DataSet
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.models.resnet_model import ResNet
 from lib.models.dml_resnet_model import DMLResNet
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
 from lib.models.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
 from lib.models.wide_resnet_28_10_pool_classes2 import WideResNet_28_10_pool_classes2
-from lib.preprocessors.preprocessor import PreProcessor
 from lib.trainers.active_learning.all_centers_trainer import AllCentersTrainer
 from lib.trainers.active_learning.class_centers_trainer import ClassCentersTrainer
 from lib.trainers.active_learning.cross_entropy_trainer import CrossEntropyTrainer
@@ -48,35 +45,16 @@ class Factories(object):
         self.prm = prm
 
         self.dataset_name         = self.prm.dataset.DATASET_NAME
-        self.preprocessor         = self.prm.network.pre_processing.PREPROCESSOR
         self.trainer              = self.prm.train.train_control.TRAINER
         self.architecture         = self.prm.network.ARCHITECTURE
         self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
         self.tester               = self.prm.test.test_control.TESTER
 
-    def get_dataset(self, preprocessor):
-        available_datasets = {'cifar10'         : DataSet,
-                              'cifar100'        : DataSet,
-                              'active_cifar10'  : ActiveDataSet,
-                              'active_cifar100' : ActiveDataSet}
+    def get_dataset(self):
+        available_datasets = {'cifar10'         : DatasetWrapper,
+                              'cifar100'        : DatasetWrapper}
         if self.dataset_name in available_datasets:
-            dataset = DatasetWrapper(self.dataset_name + '_wrapper', self.prm)
-
-            train_dataset = available_datasets[self.dataset_name](self.dataset_name + '_train', self.prm, preprocessor)
-            train_dataset.initialize_pool()
-            dataset.set_train_dataset(train_dataset)
-            self.log.info('get_train_dataset: returning ' + str(train_dataset))
-
-            validation_dataset = available_datasets[self.dataset_name](self.dataset_name + '_validation', self.prm, preprocessor)
-            dataset.set_validation_dataset(validation_dataset)
-            self.log.info('get_validation_dataset: returning ' + str(validation_dataset))
-
-            test_dataset = available_datasets[self.dataset_name](self.dataset_name + '_test', self.prm, preprocessor)
-            dataset.set_test_dataset(test_dataset)
-            self.log.info('get_test_dataset: returning ' + str(test_dataset))
-
-            dataset.split_train_validation()
-
+            dataset = available_datasets[self.dataset_name](self.dataset_name + '_dataset_wrapper', self.prm)
             return dataset
         else:
             err_str = 'get_dataset: dataset {} was not found. Available datasets are: {}'.format(self.dataset_name, available_datasets.keys())
@@ -95,17 +73,6 @@ class Factories(object):
             return model
         else:
             err_str = 'get_model: model {} was not found. Available models are: {}'.format(self.architecture, available_networks.keys())
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-
-    def get_preprocessor(self):
-        available_preprocessors = {'preprocessor_drift_flip': PreProcessor}
-        if self.preprocessor in available_preprocessors:
-            preprocessor = available_preprocessors[self.preprocessor](self.preprocessor, self.prm)
-            self.log.info('get_preprocessor: returning ' + str(preprocessor))
-            return preprocessor
-        else:
-            err_str = 'get_preprocessor: preprocessor {} was not found. Available preprocessors are: {}'.format(self.preprocessor, available_preprocessors.keys())
             self.log.error(err_str)
             raise AssertionError(err_str)
 
@@ -156,12 +123,12 @@ class Factories(object):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-    def get_learning_rate_setter(self, model, trainset_dataset, retention):
+    def get_learning_rate_setter(self, model, retention):
         available_setters = {'fixed': LearningRateSetterBase,
                              'fixed_schedule': FixedScheduleSetter,
                              'decay_by_score': DecayByScoreSetter}
         if self.learning_rate_setter in available_setters:
-            setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model, trainset_dataset, retention)
+            setter = available_setters[self.learning_rate_setter](self.learning_rate_setter, self.prm, model, retention)
             self.log.info('get_learning_rate_setter: returning ' + str(setter))
             return setter
         else:

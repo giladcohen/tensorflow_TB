@@ -47,15 +47,15 @@ class DMLClassificationTrainer(ClassificationTrainer):
             dataset_type='validation',
             fetches=[self.model.score],
             feed_dict={self.model.dropout_keep_prob: 1.0},
-            num_samples=self.num_eval_samples)
+            num_samples=self.dataset.validation_set_size)
 
         # sample loss/summaries for only the first batch
-        (summaries, loss) = self.sample_eval_stats()
+        (summaries, loss) = self.sample_stats()
 
         self.validation_retention.add_score(score, self.global_step)
-        self.tb_logger_eval.log_scalar('score', score, self.global_step)
-        self.tb_logger_eval.log_scalar('best score', self.validation_retention.get_best_score(), self.global_step)
-        self.summary_writer_eval.add_summary(summaries, self.global_step)
-        self.summary_writer_eval.flush()
+        self.tb_logger_validation.log_scalar('score', score, self.global_step)
+        self.tb_logger_validation.log_scalar('best score', self.validation_retention.get_best_score(), self.global_step)
+        self.summary_writer_validation.add_summary(summaries, self.global_step)
+        self.summary_writer_validation.flush()
         self.log.info('EVALUATION (step={}): loss: {}, score: {}, best score: {}' \
                       .format(self.global_step, loss, score, self.validation_retention.get_best_score()))

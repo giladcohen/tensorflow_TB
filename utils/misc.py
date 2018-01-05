@@ -154,7 +154,7 @@ def get_plain_session(sess):
         session = session._sess
     return session
 
-def collect_features(agent, dataset_type, fetches, feed_dict=None, num_samples=None):
+def collect_features(agent, dataset_type, fetches, feed_dict=None):
         """Collecting all fetches from the DNN in the dataset (train/validation/test)
         :param agent: The agent (trainer/tester).
                       Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
@@ -162,7 +162,6 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None, num_samples=N
         :param dataset_type: 'train', 'validation' or "test"
         :param fetches: list of all the fetches to sample from the DNN.
         :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
-        :param num_samples: samples from the dataset to take instead of the entire dataset
         :return: fetches, as numpy float32.
         """
         if feed_dict is None:
@@ -170,21 +169,22 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None, num_samples=N
 
         batch_size = agent.eval_batch_size
         log        = agent.log
-        sess       = agent.sess
+        sess       = agent.plain_sess
         model      = agent.model
+        dataset    = agent.dataset
 
         if dataset_type == 'train':
-            dataset = agent.dataset.train_dataset
+            num_samples = dataset.train_set_size
         elif dataset_type == 'validation':
-            dataset = agent.dataset.validation_dataset
+            num_samples = dataset.validation_set_size
+            sess.run(dataset.validation_iterator.initializer)
+        elif dataset_type == 'test':
+            num_samples = dataset.test_set_size
+            sess.run(dataset.test_iterator.initializer)
         else:
             err_str = 'dataset_type={} is not supported'.format(dataset_type)
             log.error(err_str)
             raise AssertionError(err_str)
-        if num_samples is None:
-            num_samples = dataset.size
-
-        dataset.to_preprocess = False
 
         fetches_dims = [(num_samples,) + tuple(fetches[i].get_shape().as_list()[1:]) for i in xrange(len(fetches))]
 
@@ -192,14 +192,14 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None, num_samples=N
         last_batch_size =          num_samples % batch_size
         fetches_np = [np.empty(fetches_dims[i], dtype=np.float32) for i in xrange(len(fetches))]
 
-        log.info('start storing 2d fetches for {} samples in {} set.'.format(num_samples, str(dataset)))
+        log.info('start storing 2d fetches for {} samples in the {} set.'.format(num_samples, dataset_type))
         for i in range(batch_count):
             b = i * batch_size
             if i < (batch_count - 1) or (last_batch_size == 0):
                 e = (i + 1) * batch_size
             else:
                 e = i * batch_size + last_batch_size
-            images, labels = dataset.get_mini_batch(indices=range(b, e))
+            images, labels = dataset.get_mini_batch(dataset_type, sess)
             tmp_feed_dict = {model.images: images,
                              model.labels: labels,
                              model.is_training: False}
@@ -209,12 +209,9 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None, num_samples=N
                 fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b,) + fetches_dims[i][1:])
             log.info('Storing completed: {}%'.format(int(100.0 * e / num_samples)))
 
-        if dataset_type == 'train':
-            dataset.to_preprocess = True
-
         return tuple(fetches_np)
 
-def collect_features_1d(agent, dataset_type, fetches, feed_dict=None, num_samples=None):
+def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
     """Collecting all fetches from the DNN in the dataset (train/validation/test)
     This function supports aggregation and averaging of 1d signals (scalelr per minibatch) in the network
     :param agent: The agent (trainer/tester).
@@ -223,7 +220,6 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None, num_sample
     :param dataset_type: 'train' or 'validation'
     :param fetches: list of all the fetches to sample from the DNN.
     :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
-    :param num_samples: samples from the dataset to take instead of the entire dataset
     :return: fetches, as numpy float32.
     """
 
@@ -232,35 +228,36 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None, num_sample
 
     batch_size = agent.eval_batch_size
     log = agent.log
-    sess = agent.sess
+    sess = agent.plain_sess
     model = agent.model
+    dataset = agent.dataset
 
     if dataset_type == 'train':
-        dataset = agent.dataset.train_dataset
+        num_samples = dataset.train_set_size
     elif dataset_type == 'validation':
-        dataset = agent.dataset.validation_dataset
+        num_samples = dataset.validation_set_size
+        sess.run(dataset.validation_iterator.initializer)
+    elif dataset_type == 'test':
+        num_samples = dataset.test_set_size
+        sess.run(dataset.test_iterator.initializer)
     else:
         err_str = 'dataset_type={} is not supported'.format(dataset_type)
         log.error(err_str)
         raise AssertionError(err_str)
-    if num_samples is None:
-        num_samples = dataset.size
-
-    dataset.to_preprocess = False
 
     batch_count     = int(ceil(num_samples / batch_size))
     last_batch_size =          num_samples % batch_size
 
     total_fetches_np = np.zeros(shape=(len(fetches)), dtype=np.float32)
 
-    log.info('start storing 1d fetches for {} samples in {} set.'.format(num_samples, str(dataset)))
+    log.info('start storing 1d fetches for {} samples in the {} set.'.format(num_samples, dataset_type))
     for i in range(batch_count):
         b = i * batch_size
         if i < (batch_count - 1) or (last_batch_size == 0):
             e = (i + 1) * batch_size
         else:
             e = i * batch_size + last_batch_size
-        images, labels = dataset.get_mini_batch(indices=range(b, e))
+        images, labels = dataset.get_mini_batch(dataset_type, sess)
         tmp_feed_dict = {model.images: images,
                          model.labels: labels,
                          model.is_training: False}
@@ -271,9 +268,6 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None, num_sample
         log.info('Storing completed: {}%'.format(int(100.0 * e / num_samples)))
 
     fetches_np = total_fetches_np / num_samples
-
-    if dataset_type == 'train':
-        dataset.to_preprocess = True
 
     return tuple(fetches_np)
 
@@ -295,3 +289,4 @@ def get_vars(all_vars, *var_patt):
         else:
             other_vars.append(v)
     return vars, other_vars
+
