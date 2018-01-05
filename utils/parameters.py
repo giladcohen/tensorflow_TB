@@ -310,7 +310,8 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.STEPS_FOR_NEW_ANNOTATIONS = None # integer: global steps to add annotations
         self.INIT_AFTER_ANNOT      = None  # Whether or not to initialize network weights after annotation phase
 
-        self.learning_rate_setter = ParametersTrainControlLearningRateSetter()
+        self.learning_rate_setter     = ParametersTrainControlLearningRateSetter()
+        self.margin_multiplier_setter = ParametersTrainControlMarginMultiplierSetter()
 
         self._freeze()
 
