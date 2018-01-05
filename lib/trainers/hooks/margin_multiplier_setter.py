@@ -16,7 +16,7 @@ class MarginMultiplierSetter(tf.train.SessionRunHook):
         self.log = logger.get_logger(name)
 
         self._init_mm                  = self.prm.network.optimization.DML_MARGIN_MULTIPLIER
-        self.decay_refractory_steps    = self.prm.train.train_control.learning_rate_setter.MM_DECAY_REFRACTORY_STEPS
+        self.decay_refractory_steps    = self.prm.train.train_control.margin_multiplier_setter.MM_DECAY_REFRACTORY_STEPS
         self.global_step_of_last_decay = 0
 
         self._mm = self._init_mm
