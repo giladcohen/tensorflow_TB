@@ -16,34 +16,35 @@ class DatasetWrapper(AgentBase):
     def __init__(self, name, prm):
         super(DatasetWrapper, self).__init__(name)
         self.prm = prm
-        self.dataset_name          = self.prm.dataset.DATASET_NAME
-        self.train_set_size        = self.prm.dataset.TRAIN_SET_SIZE
-        self.validation_set_size   = self.prm.dataset.VALIDATION_SET_SIZE
-        self.test_set_size         = self.prm.dataset.TEST_SET_SIZE
-        self.H                     = self.prm.network.IMAGE_HEIGHT
-        self.W                     = self.prm.network.IMAGE_WIDTH
-        self.train_batch_size      = self.prm.train.train_control.TRAIN_BATCH_SIZE
-        self.eval_batch_size       = self.prm.train.train_control.EVAL_BATCH_SIZE
-        self.log                   = logger.get_logger(name)
-        self.rand_gen              = np.random.RandomState(prm.SUPERSEED)
+        self.log = logger.get_logger(name)
+        self.dataset_name             = self.prm.dataset.DATASET_NAME
+        self.train_set_size           = self.prm.dataset.TRAIN_SET_SIZE
+        self.validation_set_size      = self.prm.dataset.VALIDATION_SET_SIZE
+        self.test_set_size            = self.prm.dataset.TEST_SET_SIZE
+        self.train_validation_map_ref = self.prm.dataset.TRAIN_VALIDATION_MAP_REF
+        self.H                        = self.prm.network.IMAGE_HEIGHT
+        self.W                        = self.prm.network.IMAGE_WIDTH
+        self.train_batch_size         = self.prm.train.train_control.TRAIN_BATCH_SIZE
+        self.eval_batch_size          = self.prm.train.train_control.EVAL_BATCH_SIZE
+        self.rand_gen                 = np.random.RandomState(prm.SUPERSEED)
 
-        self.train_validation_dict = {}
+        self.train_validation_info    = []
 
-        self.train_dataset         = None
-        self.validation_dataset    = None
-        self.test_dataset          = None
+        self.train_dataset            = None
+        self.validation_dataset       = None
+        self.test_dataset             = None
 
-        self.iterator              = None
-        self.train_iterator        = None  # static iterator for train only
-        self.validation_iterator   = None  # dynamic iterator for validation. need to reinitialize
-        self.test_iterator         = None  # dynamic iterator for test. need to reinitialize
+        self.iterator                 = None
+        self.train_iterator           = None  # static iterator for train only
+        self.validation_iterator      = None  # dynamic iterator for validation. need to reinitialize
+        self.test_iterator            = None  # dynamic iterator for test. need to reinitialize
 
-        self.handle                = None
-        self.train_handle          = None
-        self.validation_handle     = None
-        self.test_handle           = None
+        self.handle                   = None
+        self.train_handle             = None
+        self.validation_handle        = None
+        self.test_handle              = None
 
-        self.next_minibatch        = None  # this is the output of iterator.get_next()
+        self.next_minibatch           = None  # this is the output of iterator.get_next()
 
         if self.validation_set_size is None:
             self.log.warning('Validation set size is None. Setting its size to 0')
@@ -65,20 +66,36 @@ class DatasetWrapper(AgentBase):
         Sets the dictionary that maps each sample in the train set to 'train' or 'validation'
         :return: None
         """
-        validation_indices = self.rand_gen.choice(range(self.train_validation_size), self.validation_set_size, replace=False)
-        validation_indices = validation_indices.tolist()
-        validation_indices.sort()
+        # optionally load train-validation mapping reference reference
+        if self.train_validation_map_ref is not None:
+            self.log.info('train_validation_map_ref was given. loading csv {}'.format(self.train_validation_map_ref))
+            with open(self.train_validation_map_ref) as csv_file:
+                self.train_validation_info = \
+                    [{'index': int(row['index']), 'dataset': row['dataset'], 'in_pool': row['in_pool'] == 'True'}
+                     for row in csv.DictReader(csv_file, skipinitialspace=True)]
+        else:
+            self.log.info('train_validation_map_ref is None. creating new mapping')
+            validation_indices = self.rand_gen.choice(range(self.train_validation_size), self.validation_set_size, replace=False)
+            validation_indices = validation_indices.tolist()
+            validation_indices.sort()
 
-        for ind in range(self.train_validation_size):
-            if ind in validation_indices:
-                self.train_validation_dict[ind] = 'validation'
-            else:
-                self.train_validation_dict[ind] = 'train'
-        dict_save_path = os.path.join(self.prm.train.train_control.ROOT_DIR, 'train_validation_dict.csv')
-        with open(dict_save_path, 'wb') as csv_file:
-            writer = csv.writer(csv_file)
-            for key, value in self.train_validation_dict.items():
-                writer.writerow([key, value])
+            for ind in range(self.train_validation_size):
+                if ind in validation_indices:
+                    self.train_validation_info.append({'index'  : ind,
+                                                       'dataset': 'validation',
+                                                       'in_pool': False})
+                else:
+                    self.train_validation_info.append({'index'  : ind,
+                                                       'dataset': 'train',
+                                                       'in_pool': True})
+
+        info_save_path = os.path.join(self.prm.train.train_control.ROOT_DIR, 'train_validation_info.csv')
+        self.log.info('saving train-validation mapping csv file to {}'.format(info_save_path))
+        keys = self.train_validation_info[0].keys()
+        with open(info_save_path, 'wb') as csv_file:
+            dict_writer = csv.DictWriter(csv_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(self.train_validation_info)
 
     def build_datasets(self):
         """
@@ -150,9 +167,9 @@ class DatasetWrapper(AgentBase):
         :param y_train: labels
         :return: (train_images, train_labels), (validation_images, validation_labels)
         """
+        train_indices      = [element['index'] for element in self.train_validation_info if element['dataset'] == 'train']
+        validation_indices = [element['index'] for element in self.train_validation_info if element['dataset'] == 'validation']
 
-        train_indices      = [k for k,v in self.train_validation_dict.iteritems() if v == 'train']
-        validation_indices = [k for k,v in self.train_validation_dict.iteritems() if v == 'validation']
         train_images      = X_train[train_indices]
         train_labels      = y_train[train_indices]
         validation_images = X_train[validation_indices]
@@ -250,6 +267,8 @@ class DatasetWrapper(AgentBase):
         self.log.info(' TRAIN_SET_SIZE: {}'.format(self.train_set_size))
         self.log.info(' VALIDATION_SET_SIZE: {}'.format(self.validation_set_size))
         self.log.info(' TEST_SET_SIZE: {}'.format(self.test_set_size))
+        self.log.info(' TRAIN_VALIDATION_MAP_REF: {}'.format(self.train_validation_map_ref))
+
 
 
 # debug
