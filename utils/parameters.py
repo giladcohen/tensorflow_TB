@@ -350,6 +350,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'INIT_AFTER_ANNOT'     , self.INIT_AFTER_ANNOT)
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
+        self.margin_multiplier_setter.save_to_ini(do_save_none, section_name, config)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
@@ -380,6 +381,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'INIT_AFTER_ANNOT'     , bool)
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
+        self.margin_multiplier_setter.set_from_file(override_mode, section_name, parser)
 
 class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def __init__(self):
