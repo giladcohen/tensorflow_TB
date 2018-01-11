@@ -38,8 +38,8 @@ class MarginMultiplierSetter(tf.train.SessionRunHook):
             return
         if self.retention.is_score_stuck():
             self.log.info('global_step={}: Validtion score did not improve after {} steps. Decreasing the margin multiplier by a factor of {} to {}. Last margin multiplier decay was before {} steps.' \
-                          .format(global_step, global_step - self.retention.best_score_step, 0.9, 0.9 * self._mm, global_step - self.global_step_of_last_decay))
-            self.set_margin_multiplier(0.9 * self._mm, run_context.session)
+                          .format(global_step, global_step - self.retention.best_score_step, 1, 1 * self._mm, global_step - self.global_step_of_last_decay))
+            self.set_margin_multiplier(1 * self._mm, run_context.session)
             self.global_step_of_last_decay = global_step
 
     def get_margin_multiplier(self):
