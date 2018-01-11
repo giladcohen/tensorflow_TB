@@ -48,7 +48,7 @@ class DMLResNet(ResNet):
 
     def _build_interpretation(self):
         '''Interprets the logits'''
-        self.score = compute_clustering_score(labels=self.labels, predictions=self.predictions, margin_type='nmi')
+        self.score = self.cluster_cost
 
     def calculate_logits(self, x):
         return None
