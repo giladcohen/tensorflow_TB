@@ -34,6 +34,7 @@ from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
+from lib.testers.knn_classifier_tester import KNNClassifierTester
 from lib.testers.dnn_knn_classifier_tester import DNNKNNClassifierTester
 
 
@@ -112,7 +113,8 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_tester(self, model, dataset):
-        available_testers = {'dnn_knn_classifier' : DNNKNNClassifierTester}
+        available_testers = {'knn_classifier'     : KNNClassifierTester,
+                             'dnn_knn_classifier' : DNNKNNClassifierTester}
         if self.tester in available_testers:
             tester = available_testers[self.tester](self.tester, self.prm, model, dataset)
             self.log.info('get_tester: returning ' + str(tester))
