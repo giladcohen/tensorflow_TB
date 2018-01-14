@@ -5,7 +5,7 @@ from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import tensorflow as tf
-from lib.base.agent_base import AgentBase
+from lib.base.agent import Agent
 from lib.base.collections import TRAIN_SUMMARIES
 import utils
 from lib.retention import Retention
@@ -13,27 +13,19 @@ from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheck
 from lib.trainers.hooks.train_summary_saver_hook import TrainSummarySaverHook
 from utils.tensorboard_logging import TBLogger
 
-class TrainerBase(AgentBase):
+class TrainerBase(Agent):
     __metaclass__ = ABCMeta
 
-    def __init__(self, name, prm, model, dataset):
-        super(TrainerBase, self).__init__(name)
-        self.prm     = prm
-        self.model   = model
-        self.dataset = dataset
-
-        self.rand_gen = np.random.RandomState(self.prm.SUPERSEED)
+    def __init__(self, *args, **kwargs):
+        super(TrainerBase, self).__init__(*args, **kwargs)
 
         # train parameters only
         self.trainer               = self.prm.train.train_control.TRAINER  # just used for printing.
         self.train_batch_size      = self.prm.train.train_control.TRAIN_BATCH_SIZE
-        self.eval_batch_size       = self.prm.train.train_control.EVAL_BATCH_SIZE
-        self.root_dir              = self.prm.train.train_control.ROOT_DIR
         self.train_dir             = self.prm.train.train_control.TRAIN_DIR
         self.eval_dir              = self.prm.train.train_control.EVAL_DIR
         self.pred_dir              = self.prm.train.train_control.PREDICTION_DIR
         self.test_dir              = self.prm.train.train_control.TEST_DIR
-        self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
         self.summary_steps         = self.prm.train.train_control.SUMMARY_STEPS
         self.checkpoint_secs       = self.prm.train.train_control.CHECKPOINT_SECS
         self.checkpoint_steps      = self.prm.train.train_control.CHECKPOINT_STEPS
@@ -46,11 +38,9 @@ class TrainerBase(AgentBase):
         if self.last_step is None:
             self.log.warning('LAST_STEP is None. Setting LAST_STEP=1000000')
             self.last_step = 1000000
-        self.debug_mode            = self.prm.DEBUG_MODE
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks
 
         # variables
-        self.global_step = 0
         if self.skip_first_evaluation:
             self.log.info('skipping evaluation for global_step=0')
             self._activate_eval = False
@@ -59,41 +49,14 @@ class TrainerBase(AgentBase):
             self._activate_eval = True
             self._activate_test = True
 
-    def build(self):
-        """
-        Building all trainer agents: train/validation/test sessions, file writers, retentions, hooks, etc.
-        """
-        self.model.build_graph()
-        # self.print_model_info()
-        self.dataset.build()
+    def load_pretrained_from_ref(self):
+        pass
 
-        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
-
+    def build_retentions(self):
         # Retention for train/validation stats
         self.train_retention      = Retention('retention_train'     , self.prm)
         self.validation_retention = Retention('retention_validation', self.prm)
         self.test_retention       = Retention('retention_test'      , self.prm)
-
-        self.build_train_env()
-        self.build_validation_env()
-        self.build_test_env()
-        self.build_prediction_env()
-
-        # create session
-        self.sess = tf.train.MonitoredTrainingSession(
-            checkpoint_dir=self.checkpoint_dir,
-            hooks=self.train_session_hooks,
-            save_checkpoint_secs=self.checkpoint_secs,
-            config=tf.ConfigProto(allow_soft_placement=True))
-
-        self.plain_sess = self.sess._tf_sess()
-        # creating train monitored session for automatically initializing the graph, running 'begin' function for
-        # all hooks and using scaffold to finalize the graph. If there is a checkpoint already in the checkpoint_dir,
-        # then it recovers the weights on the graph. Closing this session immediately after.
-        self.finalize_graph()
-
-        # Allow overwriting some parameters and optimizer on the graph from new parameter file.
-        self.set_params()
 
     def build_train_env(self):
         self.log.info("Starting building the train environment")
@@ -147,18 +110,25 @@ class TrainerBase(AgentBase):
         self.summary_writer_pred = tf.summary.FileWriter(self.pred_dir)
         self.tb_logger_pred = TBLogger(self.summary_writer_pred)
 
+    def build_session(self):
+        # create session
+        self.sess = tf.train.MonitoredTrainingSession(
+            checkpoint_dir=self.checkpoint_dir,
+            hooks=self.train_session_hooks,
+            save_checkpoint_secs=self.checkpoint_secs,
+            config=tf.ConfigProto(allow_soft_placement=True))
+
+        self.plain_sess = self.sess._tf_sess()
+
     def print_stats(self):
-        '''print basic train parameters'''
         self.log.info('Train parameters:')
+        super(TrainerBase, self).print_stats()
         self.log.info(' TRAINER: {}'.format(self.trainer))
         self.log.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
-        self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
-        self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
         self.log.info(' TRAIN_DIR: {}'.format(self.train_dir))
         self.log.info(' EVAL_DIR: {}'.format(self.eval_dir))
         self.log.info(' TEST_DIR: {}'.format(self.test_dir))
         self.log.info(' PREDICTION_DIR: {}'.format(self.pred_dir))
-        self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
         self.log.info(' SUMMARY_STEPS: {}'.format(self.summary_steps))
         self.log.info(' CHECKPOINT_SECS: {}'.format(self.checkpoint_secs))
         self.log.info(' CHECKPOINT_STEPS: {}'.format(self.checkpoint_steps))
@@ -190,10 +160,6 @@ class TrainerBase(AgentBase):
                 self._activate_test = True
         self.log.info('Stop training at global_step={}'.format(self.global_step))
 
-    def finalize_graph(self):
-        self.global_step = self.plain_sess.run(self.model.global_step)
-        self.dataset.set_handles(self.plain_sess)
-
     def print_model_info(self):
         param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
             tf.get_default_graph(),
@@ -204,40 +170,6 @@ class TrainerBase(AgentBase):
         tf.contrib.tfprof.model_analyzer.print_model_analysis(
             tf.get_default_graph(),
             tfprof_options=tf.contrib.tfprof.model_analyzer.FLOAT_OPS_OPTIONS)
-
-    def set_params(self):
-        """
-        Overriding model's parameters if necessary.
-        collecting the model values stored previously in the model.
-        """
-
-        [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
-            self.plain_sess.run([self.model.lrn_rate, self.model.xent_rate, self.model.weight_decay_rate,
-                           self.model.relu_leakiness, self.model.optimizer])
-
-        assign_ops = []
-        if not np.isclose(lrn_rate, self.prm.network.optimization.LEARNING_RATE):
-            assign_ops.append(self.model.assign_ops['lrn_rate'])
-            self.log.warning('changing model.lrn_rate from {} to {}'.
-                             format(lrn_rate, self.prm.network.optimization.LEARNING_RATE))
-        if not np.isclose(xent_rate, self.prm.network.optimization.XENTROPY_RATE):
-            assign_ops.append(self.model.assign_ops['xent_rate'])
-            self.log.warning('changing model.xent_rate from {} to {}'.
-                             format(xent_rate, self.prm.network.optimization.XENTROPY_RATE))
-        if not np.isclose(weight_decay_rate, self.prm.network.optimization.WEIGHT_DECAY_RATE):
-            assign_ops.append(self.model.assign_ops['weight_decay_rate'])
-            self.log.warning('changing model.weight_decay_rate from {} to {}'.
-                             format(weight_decay_rate, self.prm.network.optimization.WEIGHT_DECAY_RATE))
-        if not np.isclose(relu_leakiness, self.prm.network.system.RELU_LEAKINESS):
-            assign_ops.append(self.model.assign_ops['relu_leakiness'])
-            self.log.warning('changing model.relu_leakiness from {} to {}'.
-                             format(relu_leakiness, self.prm.network.system.RELU_LEAKINESS))
-        if optimizer != self.prm.network.optimization.OPTIMIZER:
-            assign_ops.append(self.model.assign_ops['optimizer'])
-            self.log.warning('changing model.optimizer from {} to {}'.
-                             format(optimizer, self.prm.network.optimization.OPTIMIZER))
-
-        self.plain_sess.run(assign_ops)
 
     @abstractmethod
     def train_step(self):

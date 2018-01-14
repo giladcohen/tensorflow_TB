@@ -5,7 +5,7 @@ from __future__ import print_function
 import os
 import numpy as np
 import tensorflow as tf
-from lib.base.agent_base import AgentBase
+from lib.base.agent import Agent
 from utils.tensorboard_logging import TBLogger
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
@@ -13,21 +13,12 @@ from sklearn.metrics import normalized_mutual_info_score
 from utils.misc import collect_features
 
 
-class KNNClassifierTester(AgentBase):
+class KNNClassifierTester(Agent):
 
-    def __init__(self, name, prm, model, dataset):
-        super(KNNClassifierTester, self).__init__(name)
-        self.prm     = prm
-        self.model   = model
-        self.dataset = dataset
+    def __init__(self, *args, **kwargs):
+        super(KNNClassifierTester, self).__init__(*args, **kwargs)
 
-        self.rand_gen = np.random.RandomState(self.prm.SUPERSEED)
-        self.debug_mode = self.prm.DEBUG_MODE
-
-        self.eval_batch_size       = self.prm.train.train_control.EVAL_BATCH_SIZE
-        self.root_dir              = self.prm.train.train_control.ROOT_DIR
-        self.pred_dir              = self.prm.train.train_control.PREDICTION_DIR
-        self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
+        self.test_dir              = self.prm.train.train_control.TEST_DIR
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
 
@@ -39,29 +30,8 @@ class KNNClassifierTester(AgentBase):
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
         self.dump_net        = self.prm.test.test_control.DUMP_NET
 
-        self.global_step = 0
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
         self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=self.knn_p_norm, n_jobs=self.knn_jobs)
-
-    def build(self):
-        """
-        Building all tester agents: test session
-        """
-        self.model.build_graph()
-        # self.print_model_info()
-        self.dataset.build()
-
-        self.saver = tf.train.Saver(max_to_keep=None, name='test', filename='model_pred')
-        self.build_prediction_env()
-
-        # create session
-        self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-        self.plain_sess = self.sess
-
-        # get global step
-        self.finalize_graph()
-
-        self.log.info('Done building tester {}'.format(str(self)))
 
     def test(self):
         train_size = self.dataset.train_set_size
@@ -104,23 +74,23 @@ class KNNClassifierTester(AgentBase):
         knn_nmi_score = normalized_mutual_info_score(labels_true=y_test, labels_pred=test_knn_pred)
 
         # writing summaries
-        self.tb_logger_pred.log_scalar('score/dnn_accuracy', dnn_accuracy , self.global_step)
-        self.tb_logger_pred.log_scalar('score/dnn_NMI'     , dnn_nmi_score, self.global_step)
-        self.tb_logger_pred.log_scalar('score/knn_accuracy', knn_accuracy , self.global_step)
-        self.tb_logger_pred.log_scalar('score/knn_NMI'     , knn_nmi_score, self.global_step)
+        self.tb_logger_test.log_scalar('score/dnn_accuracy', dnn_accuracy , self.global_step)
+        self.tb_logger_test.log_scalar('score/dnn_NMI'     , dnn_nmi_score, self.global_step)
+        self.tb_logger_test.log_scalar('score/knn_accuracy', knn_accuracy , self.global_step)
+        self.tb_logger_test.log_scalar('score/knn_NMI'     , knn_nmi_score, self.global_step)
 
-        self.summary_writer_pred.flush()
+        self.summary_writer_test.flush()
         self.log.info('TEST : dnn accuracy: {}, dnn NMI score: {}\n\t   knn accuracy: {} knn NMI score: {}'
                       .format(dnn_accuracy, dnn_nmi_score, knn_accuracy, knn_nmi_score))
 
         if self.dump_net:
-            train_features_file            = os.path.join(self.pred_dir, 'train_features.npy')
-            test_features_file             = os.path.join(self.pred_dir, 'test_features.npy')
-            test_dnn_predictions_prob_file = os.path.join(self.pred_dir, 'test_dnn_predictions_prob.npy')
-            test_dnn_predictions_file      = os.path.join(self.pred_dir, 'test_dnn_predictions.npy')
-            test_knn_predictions_file      = os.path.join(self.pred_dir, 'test_knn_predictions.npy')
-            train_labels_file              = os.path.join(self.pred_dir, 'train_labels.npy')
-            test_labels_file               = os.path.join(self.pred_dir, 'test_labels.npy')
+            train_features_file            = os.path.join(self.test_dir, 'train_features.npy')
+            test_features_file             = os.path.join(self.test_dir, 'test_features.npy')
+            test_dnn_predictions_prob_file = os.path.join(self.test_dir, 'test_dnn_predictions_prob.npy')
+            test_dnn_predictions_file      = os.path.join(self.test_dir, 'test_dnn_predictions.npy')
+            test_knn_predictions_file      = os.path.join(self.test_dir, 'test_knn_predictions.npy')
+            train_labels_file              = os.path.join(self.test_dir, 'train_labels.npy')
+            test_labels_file               = os.path.join(self.test_dir, 'test_labels.npy')
 
             self.log.info('Dumping train features into disk:\n{}\n{}\n{}\n{}\n{}\n{}\n{})'
                           .format(train_features_file, test_features_file, test_dnn_predictions_prob_file,
@@ -135,30 +105,23 @@ class KNNClassifierTester(AgentBase):
 
         self.log.info('Tester {} is done'.format(str(self)))
 
-    def print_model_info(self):
-        param_stats = tf.contrib.tfprof.model_analyzer.print_model_analysis(
-            tf.get_default_graph(),
-            tfprof_options=tf.contrib.tfprof.model_analyzer.TRAINABLE_VARS_PARAMS_STAT_OPTIONS)
-        self.total_parameters = param_stats.total_parameters
-        self.log.info('total_params: {}\n'.format(self.total_parameters))
+    def build_test_env(self):
+        super(KNNClassifierTester, self).build_test_env()
+        self.log.info("Starting building the test environment")
+        self.summary_writer_test = tf.summary.FileWriter(self.test_dir)
+        self.tb_logger_test = TBLogger(self.summary_writer_test)
 
-        tf.contrib.tfprof.model_analyzer.print_model_analysis(
-            tf.get_default_graph(),
-            tfprof_options=tf.contrib.tfprof.model_analyzer.FLOAT_OPS_OPTIONS)
-
-    def build_prediction_env(self):
-        self.log.info("Starting building the prediction environment")
-        self.summary_writer_pred = tf.summary.FileWriter(self.pred_dir)
-        self.tb_logger_pred = TBLogger(self.summary_writer_pred)
+    def build_session(self):
+        super(KNNClassifierTester, self).build_session()
+        self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+        self.plain_sess = self.sess
 
     def print_stats(self):
         '''print basic test parameters'''
         self.log.info('Test parameters:')
+        super(KNNClassifierTester, self).print_stats()
         self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
-        self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
-        self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
-        self.log.info(' PREDICTION_DIR: {}'.format(self.pred_dir))
-        self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
+        self.log.info(' TEST_DIR: {}'.format(self.test_dir))
         self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
         self.log.info(' TESTER: {}'.format(self.tester))
@@ -170,5 +133,5 @@ class KNNClassifierTester(AgentBase):
 
     def finalize_graph(self):
         self.saver.restore(self.plain_sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
-        self.global_step = self.plain_sess.run(self.model.global_step)
-        self.dataset.set_handles(self.plain_sess)
+        super(KNNClassifierTester, self).finalize_graph()
+
