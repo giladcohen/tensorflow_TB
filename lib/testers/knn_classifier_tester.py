@@ -49,17 +49,17 @@ class KNNClassifierTester(AgentBase):
         """
         self.model.build_graph()
         # self.print_model_info()
+        self.dataset.build()
+
         self.saver = tf.train.Saver(max_to_keep=None, name='test', filename='model_pred')
         self.build_prediction_env()
 
         # create session
         self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-
-        # restore checkpoint
-        self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
+        self.plain_sess = self.sess
 
         # get global step
-        self.global_step = self.sess.run(self.model.global_step)
+        self.finalize_graph()
 
         self.log.info('Done building tester {}'.format(str(self)))
 
@@ -167,3 +167,8 @@ class KNNClassifierTester(AgentBase):
         self.log.info(' KNN_P_NORM: {}'.format(self.knn_p_norm))
         self.log.info(' KNN_JOBS: {}'.format(self.knn_jobs))
         self.log.info(' DUMP_NET: {}'.format(self.dump_net))
+
+    def finalize_graph(self):
+        self.saver.restore(self.plain_sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
+        self.global_step = self.plain_sess.run(self.model.global_step)
+        self.dataset.set_handles(self.plain_sess)

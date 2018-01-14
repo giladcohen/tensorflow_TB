@@ -64,9 +64,9 @@ class TrainerBase(AgentBase):
         Building all trainer agents: train/validation/test sessions, file writers, retentions, hooks, etc.
         """
         self.model.build_graph()
+        # self.print_model_info()
         self.dataset.build()
 
-        # self.print_model_info()
         self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
 
         # Retention for train/validation stats
