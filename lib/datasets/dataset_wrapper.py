@@ -36,6 +36,7 @@ class DatasetWrapper(AgentBase):
 
         self.iterator                 = None
         self.train_iterator           = None  # static iterator for train only
+        self.train_eval_iterator      = None  # dynamic iterator for train evaluation. need to reinitialize
         self.validation_iterator      = None  # dynamic iterator for validation. need to reinitialize
         self.test_iterator            = None  # dynamic iterator for test. need to reinitialize
 
