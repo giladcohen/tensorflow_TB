@@ -55,11 +55,11 @@ class KNNClassifierTester(AgentBase):
         # create session
         self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
 
-        # get global step
-        self.global_step = self.sess.run(self.model.global_step)
-
         # restore checkpoint
         self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
+
+        # get global step
+        self.global_step = self.sess.run(self.model.global_step)
 
         self.log.info('Done building tester {}'.format(str(self)))
 
