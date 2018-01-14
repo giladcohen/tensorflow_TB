@@ -31,6 +31,7 @@ class DatasetWrapper(AgentBase):
         self.train_validation_info    = []
 
         self.train_dataset            = None
+        self.train_eval_dataset       = None
         self.validation_dataset       = None
         self.test_dataset             = None
 
