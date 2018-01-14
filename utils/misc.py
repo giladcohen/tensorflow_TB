@@ -169,9 +169,17 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None):
 
         batch_size = agent.eval_batch_size
         log        = agent.log
-        sess       = agent.plain_sess
         model      = agent.model
         dataset    = agent.dataset
+
+        if hasattr(agent, 'plain_sess'):
+            sess   = agent.plain_sess
+        else:
+            sess   = agent.sess
+        if type(sess).__name__ != 'Session':
+            err_str = 'sess must have a tf.Session type'
+            log.error(err_str)
+            raise AssertionError(err_str)
 
         if dataset_type == 'train':
             num_samples = dataset.train_set_size
@@ -231,9 +239,17 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
 
     batch_size = agent.eval_batch_size
     log = agent.log
-    sess = agent.plain_sess
     model = agent.model
     dataset = agent.dataset
+
+    if hasattr(agent, 'plain_sess'):
+        sess = agent.plain_sess
+    else:
+        sess = agent.sess
+    if type(sess).__name__ != 'Session':
+        err_str = 'sess must have a tf.Session type'
+        log.error(err_str)
+        raise AssertionError(err_str)
 
     if dataset_type == 'train':
         num_samples = dataset.train_set_size
