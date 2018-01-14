@@ -20,7 +20,7 @@ class TesterBase(Agent):
         self.tester          = self.prm.test.test_control.TESTER         # just used for printing.
         self.checkpoint_file = self.prm.test.test_control.CHECKPOINT_FILE
         self.dump_net        = self.prm.test.test_control.DUMP_NET
-        self.load_from_disc  = self.prm.test.test_control.LOAD_FROM_DISC
+        self.load_from_disk  = self.prm.test.test_control.LOAD_FROM_DISK
 
     @abstractmethod
     def test(self):
@@ -45,7 +45,7 @@ class TesterBase(Agent):
         self.log.info(' TESTER: {}'.format(self.tester))
         self.log.info(' CHECKPOINT_FILE: {}'.format(self.checkpoint_file))
         self.log.info(' DUMP_NET: {}'.format(self.dump_net))
-        self.log.info(' LOAD_FROM_DISC: {}'.format(self.load_from_disc))
+        self.log.info(' LOAD_FROM_DISK: {}'.format(self.load_from_disk))
 
     def finalize_graph(self):
         self.saver.restore(self.plain_sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
