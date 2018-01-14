@@ -155,7 +155,7 @@ def get_plain_session(sess):
     return session
 
 def collect_features(agent, dataset_type, fetches, feed_dict=None):
-        """Collecting all fetches from the DNN in the dataset (train/validation/test)
+        """Collecting all fetches from the DNN in the dataset (train/validation/test/train_eval)
         :param agent: The agent (trainer/tester).
                       Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
                       The agent must have a model with images and labels.  # This should be updated for all models
@@ -175,6 +175,9 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None):
 
         if dataset_type == 'train':
             num_samples = dataset.train_set_size
+        elif dataset_type == 'train_eval':
+            num_samples = dataset.train_set_size
+            sess.run(dataset.train_eval_iterator.initializer)
         elif dataset_type == 'validation':
             num_samples = dataset.validation_set_size
             sess.run(dataset.validation_iterator.initializer)
@@ -212,7 +215,7 @@ def collect_features(agent, dataset_type, fetches, feed_dict=None):
         return tuple(fetches_np)
 
 def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
-    """Collecting all fetches from the DNN in the dataset (train/validation/test)
+    """Collecting all fetches from the DNN in the dataset (train/validation/test/train_eval)
     This function supports aggregation and averaging of 1d signals (scalelr per minibatch) in the network
     :param agent: The agent (trainer/tester).
                   Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
@@ -234,6 +237,9 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
 
     if dataset_type == 'train':
         num_samples = dataset.train_set_size
+    elif dataset_type == 'train_eval':
+        num_samples = dataset.train_set_size
+        sess.run(dataset.train_eval_iterator.initializer)
     elif dataset_type == 'validation':
         num_samples = dataset.validation_set_size
         sess.run(dataset.validation_iterator.initializer)

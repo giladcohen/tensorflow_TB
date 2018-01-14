@@ -125,12 +125,13 @@ class DatasetWrapper(AgentBase):
 
         # generate datasets
         self.train_dataset       = self.set_transform('train'     , train_images     , train_labels)
+        self.train_eval_dataset  = self.set_transform('train_eval', train_images     , train_labels)  # for evaluatiion only
         self.validation_dataset  = self.set_transform('validation', validation_images, validation_labels)
         self.test_dataset        = self.set_transform('test'      , test_images      , test_labels)
 
     def build_iterators(self):
         """
-        Sets the train/validation/test iterators
+        Sets the train/validation/test/train_eval iterators
         :return: None
         """
 
@@ -145,6 +146,7 @@ class DatasetWrapper(AgentBase):
 
         # generate iterators
         self.train_iterator      = self.train_dataset.make_one_shot_iterator()
+        self.train_eval_iterator = self.train_eval_dataset.make_initializable_iterator()
         self.validation_iterator = self.validation_dataset.make_initializable_iterator()
         self.test_iterator       = self.test_dataset.make_initializable_iterator()
 
@@ -157,6 +159,7 @@ class DatasetWrapper(AgentBase):
         # The `Iterator.string_handle()` method returns a tensor that can be evaluated
         # and used to feed the `handle` placeholder.
         self.train_handle      = sess.run(self.train_iterator.string_handle())
+        self.train_eval_handle = sess.run(self.train_eval_iterator.string_handle())
         self.validation_handle = sess.run(self.validation_iterator.string_handle())
         self.test_handle       = sess.run(self.test_iterator.string_handle())
 
@@ -186,7 +189,7 @@ class DatasetWrapper(AgentBase):
     def set_transform(self, dataset_type, images, labels):
         """
         Adding some transformation on a dataset
-        :param dataset_type: 'train'/'validation'/'test'
+        :param dataset_type: 'train'/'validation'/'test/train_eval'
         :return: None.
         """
 
@@ -248,6 +251,8 @@ class DatasetWrapper(AgentBase):
         """
         if dataset_type == 'train':
             handle = self.train_handle
+        elif dataset_type == 'train_eval':
+            handle = self.train_eval_handle
         elif dataset_type == 'validation':
             handle = self.validation_handle
         elif dataset_type == 'test':

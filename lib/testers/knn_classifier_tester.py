@@ -64,28 +64,24 @@ class KNNClassifierTester(AgentBase):
         self.log.info('Done building tester {}'.format(str(self)))
 
     def test(self):
-        train_size = self.dataset.train_dataset.pool_size()
-        test_size  = self.dataset.validation_dataset.size
+        train_size = self.dataset.train_set_size
+        test_size  = self.dataset.test_set_size
 
         self.log.info('Collecting {} train set embedding features'.format(train_size))
-        (X_train_features, ) = \
+        (X_train_features, y_train) = \
             collect_features(
                 agent=self,
-                dataset_type='train',
-                fetches=[self.model.net['embedding_layer']],
-                feed_dict={self.model.dropout_keep_prob: 1.0}
-            )
-        _, y_train = self.dataset.get_mini_batch_train(indices=range(train_size))
+                dataset_type='train_eval',
+                fetches=[self.model.net['embedding_layer'], self.model.labels],
+                feed_dict={self.model.dropout_keep_prob: 1.0})
 
         self.log.info('Collecting {} test set embedding features and DNN predictions'.format(test_size))
-        (X_test_features, X_test_dnn_predictions_prob) = \
+        (X_test_features, y_test, test_dnn_predictions_prob, test_dnn_pred) = \
             collect_features(
                 agent=self,
-                dataset_type='validation',
-                fetches=[self.model.net['embedding_layer'], self.model.predictions_prob],
-                feed_dict={self.model.dropout_keep_prob: 1.0}
-            )
-        _, y_test = self.dataset.get_mini_batch_validate(indices=range(test_size))
+                dataset_type='test',
+                fetches=[self.model.net['embedding_layer'], self.model.labels, self.model.predictions_prob, self.model.predictions],
+                feed_dict={self.model.dropout_keep_prob: 1.0})
 
         if self.pca_reduction:
             self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.model.embedding_dims, self.pca_embedding_dims))
@@ -99,26 +95,43 @@ class KNNClassifierTester(AgentBase):
         self.knn.fit(X_train_features_post, y_train)
 
         self.log.info('Predicting test set labels from KNN model...')
-        y_pred = self.knn.predict(X_test_features_post)
-        score     = np.sum(y_pred==y_test)/test_size
-        nmi_score = normalized_mutual_info_score(labels_true=y_test, labels_pred=y_pred)
+        test_knn_pred = self.knn.predict(X_test_features_post)
 
-        self.tb_logger_pred.log_scalar('score', score, 0)
-        self.tb_logger_pred.log_scalar('NMI score', nmi_score, 0)
+        # calculating different metrics
+        dnn_accuracy  = np.sum(test_dnn_pred==y_test)/test_size
+        knn_accuracy  = np.sum(test_knn_pred==y_test)/test_size
+        dnn_nmi_score = normalized_mutual_info_score(labels_true=y_test, labels_pred=test_dnn_pred)
+        knn_nmi_score = normalized_mutual_info_score(labels_true=y_test, labels_pred=test_knn_pred)
+
+        # writing summaries
+        self.tb_logger_pred.log_scalar('score/dnn_accuracy', dnn_accuracy , self.global_step)
+        self.tb_logger_pred.log_scalar('score/dnn_NMI'     , dnn_nmi_score, self.global_step)
+        self.tb_logger_pred.log_scalar('score/knn_accuracy', knn_accuracy , self.global_step)
+        self.tb_logger_pred.log_scalar('score/knn_NMI'     , knn_nmi_score, self.global_step)
 
         self.summary_writer_pred.flush()
-        self.log.info('TEST : score: {}, NMI score: {}'.format(score, nmi_score))
+        self.log.info('TEST : dnn accuracy: {}, dnn NMI score: {}\n\t   knn accuracy: {} knn NMI score: {}'
+                      .format(dnn_accuracy, dnn_nmi_score, knn_accuracy, knn_nmi_score))
 
         if self.dump_net:
             train_features_file            = os.path.join(self.pred_dir, 'train_features.npy')
             test_features_file             = os.path.join(self.pred_dir, 'test_features.npy')
-            test_dnn_predictions_prob_file = os.path.join(self.pred_dir, 'test_predictions_prob.npy')
+            test_dnn_predictions_prob_file = os.path.join(self.pred_dir, 'test_dnn_predictions_prob.npy')
+            test_dnn_predictions_file      = os.path.join(self.pred_dir, 'test_dnn_predictions.npy')
+            test_knn_predictions_file      = os.path.join(self.pred_dir, 'test_knn_predictions.npy')
+            train_labels_file              = os.path.join(self.pred_dir, 'train_labels.npy')
+            test_labels_file               = os.path.join(self.pred_dir, 'test_labels.npy')
 
-            self.log.info('Dumping train features into disk:\n{}\n{}\n{})'
-                          .format(train_features_file, test_features_file, test_dnn_predictions_prob_file))
+            self.log.info('Dumping train features into disk:\n{}\n{}\n{}\n{}\n{}\n{}\n{})'
+                          .format(train_features_file, test_features_file, test_dnn_predictions_prob_file,
+                                  test_dnn_predictions_file, test_knn_predictions_file, train_labels_file, test_labels_file))
             np.save(train_features_file           , X_train_features)
             np.save(test_features_file            , X_test_features)
-            np.save(test_dnn_predictions_prob_file, X_test_dnn_predictions_prob)
+            np.save(test_dnn_predictions_prob_file, test_dnn_predictions_prob)
+            np.save(test_dnn_predictions_file     , test_dnn_pred)
+            np.save(test_knn_predictions_file     , test_knn_pred)
+            np.save(train_labels_file             , y_train)
+            np.save(test_labels_file              , y_test)
 
         self.log.info('Tester {} is done'.format(str(self)))
 

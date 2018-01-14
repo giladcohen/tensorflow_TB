@@ -57,7 +57,7 @@ def get_params(test_config):
 
     return prm
 
-def train(prm):
+def test(prm):
     tf.set_random_seed(prm.SUPERSEED)
     factories = Factories(prm)
 
@@ -85,4 +85,4 @@ if __name__ == "__main__":
 
     dev = prm.network.DEVICE
     with tf.device(dev):
-        train(prm)
+        test(prm)
