@@ -32,10 +32,13 @@ class KNNClassifierTester(TesterBase):
             raise AssertionError(err_str)
 
         if self.knn_norm == 'L1':
+            self.log.info('Constructing KNN with L1')
             self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=1, n_jobs=self.knn_jobs)
         elif self.knn_norm == 'L2':
+            self.log.info('Constructing KNN with L2')
             self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=2, n_jobs=self.knn_jobs)
         else:
+            self.log.info('Constructing KNN with corr_norm')
             self.knn = KNeighborsClassifier(
                 n_neighbors=self.knn_neighbors,
                 algorithm = 'kd_tree',
