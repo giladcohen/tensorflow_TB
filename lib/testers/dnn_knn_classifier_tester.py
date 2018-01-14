@@ -5,7 +5,7 @@ from __future__ import print_function
 import os
 import numpy as np
 import tensorflow as tf
-from lib.base.agent import Agent
+from lib.testers.tester_base import TesterBase
 from utils.tensorboard_logging import TBLogger
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
@@ -13,22 +13,18 @@ from sklearn.metrics import normalized_mutual_info_score
 from utils.misc import collect_features
 
 
-class KNNClassifierTester(Agent):
+class DNNKNNClassifierTester(TesterBase):
 
     def __init__(self, *args, **kwargs):
-        super(KNNClassifierTester, self).__init__(*args, **kwargs)
+        super(DNNKNNClassifierTester, self).__init__(*args, **kwargs)
 
-        self.test_dir              = self.prm.train.train_control.TEST_DIR
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
 
         # testing parameters
-        self.tester          = self.prm.test.test_control.TESTER         # just used for printing.
-        self.checkpoint_file = self.prm.test.test_control.CHECKPOINT_FILE
         self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
         self.knn_p_norm      = self.prm.test.test_control.KNN_P_NORM
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
-        self.dump_net        = self.prm.test.test_control.DUMP_NET
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
         self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=self.knn_p_norm, n_jobs=self.knn_jobs)
@@ -105,33 +101,13 @@ class KNNClassifierTester(Agent):
 
         self.log.info('Tester {} is done'.format(str(self)))
 
-    def build_test_env(self):
-        super(KNNClassifierTester, self).build_test_env()
-        self.log.info("Starting building the test environment")
-        self.summary_writer_test = tf.summary.FileWriter(self.test_dir)
-        self.tb_logger_test = TBLogger(self.summary_writer_test)
-
-    def build_session(self):
-        super(KNNClassifierTester, self).build_session()
-        self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-        self.plain_sess = self.sess
-
     def print_stats(self):
         '''print basic test parameters'''
-        self.log.info('Test parameters:')
-        super(KNNClassifierTester, self).print_stats()
-        self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
-        self.log.info(' TEST_DIR: {}'.format(self.test_dir))
+        super(DNNKNNClassifierTester, self).print_stats()
         self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
-        self.log.info(' TESTER: {}'.format(self.tester))
-        self.log.info(' CHECKPOINT_FILE: {}'.format(self.checkpoint_file))
         self.log.info(' KNN_NEIGHBORS: {}'.format(self.knn_neighbors))
         self.log.info(' KNN_P_NORM: {}'.format(self.knn_p_norm))
         self.log.info(' KNN_JOBS: {}'.format(self.knn_jobs))
-        self.log.info(' DUMP_NET: {}'.format(self.dump_net))
 
-    def finalize_graph(self):
-        self.saver.restore(self.plain_sess, os.path.join(self.checkpoint_dir, self.checkpoint_file))
-        super(KNNClassifierTester, self).finalize_graph()
 

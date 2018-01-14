@@ -136,5 +136,7 @@ class Agent(AgentBase):
         self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
         self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
         self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
+        self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
+
 
 
