@@ -297,3 +297,10 @@ def get_vars(all_vars, *var_patt):
             other_vars.append(v)
     return vars, other_vars
 
+def corr_distance(x, y):
+    """Correlation distance between x and y"""
+    norm_x = np.linalg.norm(x)
+    norm_y = np.linalg.norm(y)
+    ret = 1 - (np.dot(x, y) / (norm_x * norm_y))
+    assert 0 <= ret <= 1
+    return ret

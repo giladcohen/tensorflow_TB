@@ -8,7 +8,7 @@ from lib.testers.tester_base import TesterBase
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import normalized_mutual_info_score
-from utils.misc import collect_features
+from utils.misc import collect_features, corr_distance
 
 
 class KNNClassifierTester(TesterBase):
@@ -21,11 +21,27 @@ class KNNClassifierTester(TesterBase):
 
         # testing parameters
         self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
-        self.knn_p_norm      = self.prm.test.test_control.KNN_P_NORM
+        self.knn_norm        = self.prm.test.test_control.KNN_NORM
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
-        self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=self.knn_p_norm, n_jobs=self.knn_jobs)
+
+        if self.knn_norm not in ['L1', 'L2', 'corr_norm']:
+            err_str = 'knn_norm {} is not supported'.format(self.knn_norm)
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
+        if self.knn_norm == 'L1':
+            self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=1, n_jobs=self.knn_jobs)
+        elif self.knn_norm == 'L2':
+            self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=2, n_jobs=self.knn_jobs)
+        else:
+            self.knn = KNeighborsClassifier(
+                n_neighbors=self.knn_neighbors,
+                algorithm = 'kd_tree',
+                metric='pyfunc',
+                metric_params={'func': corr_distance},
+                n_jobs=self.knn_jobs)
 
     def test(self):
         train_size = self.dataset.train_set_size
@@ -96,7 +112,7 @@ class KNNClassifierTester(TesterBase):
         self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
         self.log.info(' KNN_NEIGHBORS: {}'.format(self.knn_neighbors))
-        self.log.info(' KNN_P_NORM: {}'.format(self.knn_p_norm))
+        self.log.info(' KNN_NORM: {}'.format(self.knn_norm))
         self.log.info(' KNN_JOBS: {}'.format(self.knn_jobs))
 
 

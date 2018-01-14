@@ -483,9 +483,10 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.TESTER                = None  # string: tester to use. e.g. knn_classifier
         self.CHECKPOINT_FILE       = None  # string: The checkpoint file name to read. e.g. model.ckpt-50000
         self.KNN_NEIGHBORS         = None  # integer: number of knn neighbors, e.g. 200
-        self.KNN_P_NORM            = None  # integer: knn norm. L1 or L2, e.g. 2
+        self.KNN_NORM              = None  # integer: knn norm. L1 or L2, e.g. 2
         self.KNN_JOBS              = None  # integer: number of KNN n_jobs, should be the number of available CPUs
         self.DUMP_NET              = None  # boolean: whether or not to dump the net signals to disk
+        self.LOAD_FROM_DISK        = None  # boolean: whether or not to load the network data from the .npy files
 
         self._freeze()
 
@@ -497,15 +498,17 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'TESTER'               , self.TESTER)
         self.set_to_config(do_save_none, section_name, config, 'CHECKPOINT_FILE'      , self.CHECKPOINT_FILE)
         self.set_to_config(do_save_none, section_name, config, 'KNN_NEIGHBORS'        , self.KNN_NEIGHBORS)
-        self.set_to_config(do_save_none, section_name, config, 'KNN_P_NORM'           , self.KNN_P_NORM)
+        self.set_to_config(do_save_none, section_name, config, 'KNN_NORM'             , self.KNN_NORM)
         self.set_to_config(do_save_none, section_name, config, 'KNN_JOBS'             , self.KNN_JOBS)
         self.set_to_config(do_save_none, section_name, config, 'DUMP_NET'             , self.DUMP_NET)
+        self.set_to_config(do_save_none, section_name, config, 'LOAD_FROM_DISK'       , self.LOAD_FROM_DISK)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'TESTER'          , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'CHECKPOINT_FILE' , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_NEIGHBORS'   , int)
-        self.parse_from_config(self, override_mode, section_name, parser, 'KNN_P_NORM'      , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'KNN_NORM'        , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_JOBS'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'DUMP_NET'        , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'LOAD_FROM_DISK'  , bool)
