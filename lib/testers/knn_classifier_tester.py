@@ -41,7 +41,7 @@ class KNNClassifierTester(TesterBase):
             self.log.info('Constructing KNN with corr_norm')
             self.knn = KNeighborsClassifier(
                 n_neighbors=self.knn_neighbors,
-                algorithm = 'kd_tree',
+                algorithm='brute',
                 metric='pyfunc',
                 metric_params={'func': corr_distance},
                 n_jobs=self.knn_jobs)

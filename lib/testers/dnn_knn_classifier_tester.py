@@ -21,7 +21,7 @@ class DNNKNNClassifierTester(KNNClassifierTester):
         test_labels_file               = os.path.join(self.test_dir, 'test_labels.npy')
 
         if self.load_from_disk:
-            self.log.info('Loading {}/{} train/test set embedding features from disc'.format(train_size, test_size))
+            self.log.info('Loading {}/{} train/test set embedding features from disk'.format(train_size, test_size))
             X_train_features          = np.load(train_features_file)
             y_train                   = np.load(train_labels_file)
             X_test_features           = np.load(test_features_file)
