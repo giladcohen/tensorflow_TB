@@ -7,6 +7,7 @@ from lib.models.dml_resnet_model import DMLResNet
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
 from lib.models.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
 from lib.models.wide_resnet_28_10_pool_classes2 import WideResNet_28_10_pool_classes2
+from lib.models.wide_resnet_28_10_wo_last_relu import WideResNet_28_10_wo_last_relu
 from lib.trainers.active_learning.all_centers_trainer import AllCentersTrainer
 from lib.trainers.active_learning.class_centers_trainer import ClassCentersTrainer
 from lib.trainers.active_learning.cross_entropy_trainer import CrossEntropyTrainer
@@ -67,7 +68,8 @@ class Factories(object):
                               'DML-Wide-Resnet-28-10'           : DMLResNet,
                               'Wide-Resnet-28-10_plus_fc'       : WideResNet_28_10_plus_fc,
                               'Wide-Resnet-28-10_pool_classes'  : WideResNet_28_10_pool_classes,
-                              'Wide-Resnet-28-10_pool_classes2' : WideResNet_28_10_pool_classes2}
+                              'Wide-Resnet-28-10_pool_classes2' : WideResNet_28_10_pool_classes2,
+                              'Wide-Resnet-28-10_wo_last_relu'  : WideResNet_28_10_wo_last_relu}
         if self.architecture in available_networks:
             model = available_networks[self.architecture](self.architecture, self.prm)
             self.log.info('get_model: returning ' + str(model))

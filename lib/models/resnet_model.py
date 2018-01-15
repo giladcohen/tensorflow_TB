@@ -64,6 +64,10 @@ class ResNet(ClassifierModel):
             with tf.variable_scope('unit_3_%d' % i):
                 x = self._residual(x, filters[3], stride_arr(1), False)
 
+        x = self.unit_last(x)
+
+    def unit_last(self, x):
+        """Implementing the final unit of the resnet"""
         with tf.variable_scope('unit_last'):
             x = tf.layers.batch_normalization(x, training=self.is_training, name='pre_pool_bn')
             x = relu(x, self.relu_leakiness)
