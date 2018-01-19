@@ -1,16 +1,40 @@
 import subprocess
 import time
 
-logdir_vec   = ['/data/gilad/logs/log_1005_051217_simple_dropout_0.5-SUPERSEED=05121700',
-                '/data/gilad/logs/log_1005_051217_simple_dropout_0.5-SUPERSEED=05121701',
-                '/data/gilad/logs/log_1005_051217_simple_dropout_0.5-SUPERSEED=05121702',
-                '/data/gilad/logs/log_1005_051217_simple_dropout_0.5-SUPERSEED=05121703',
-                '/data/gilad/logs/log_1005_051217_simple_dropout_0.5-SUPERSEED=05121704',
-                '/data/gilad/logs/log_1632_071217_simple_dropout_0.5-SUPERSEED=07121700',
-                '/data/gilad/logs/log_0935_151217_simple_dropout_0.5-SUPERSEED=15121700',
-                '/data/gilad/logs/log_0935_151217_simple_dropout_0.5-SUPERSEED=15121701',
-                '/data/gilad/logs/log_0935_151217_simple_dropout_0.5-SUPERSEED=15121702',
-                '/data/gilad/logs/log_0935_151217_simple_dropout_0.5-SUPERSEED=15121703']
+logdir_vec   = ['/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121700',
+                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121701',
+                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121702',
+                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121703',
+                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121704',
+                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121700',
+                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121701',
+                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121702',
+                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121703',
+                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121704',
+
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121700',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121701',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121702',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121703',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121704',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121705',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121706',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121707',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121708',
+                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121709',
+
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121700',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121701',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121702',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121703',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121704',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121705',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121706',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121707',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121708',
+                '/data/gilad/logs/log_2025_201217_cifar100_simple_dropout_0.5_wd_0.0003-SUPERSEED=20121709',
+                ]
+
 weights_vec  = ['uniform', 'distance']
 norm_vec     = ['L2', 'L1']
 PCA_dims_vec = ['640', '64']
