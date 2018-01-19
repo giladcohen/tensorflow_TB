@@ -1,8 +1,6 @@
 import subprocess
 import time
 
-
-
 logdir_vec   = ['/data/gilad/logs/log_1005_051217_simple_dropout_0.5-SUPERSEED=05121700']
 weights_vec  = ['uniform', 'distance']
 norm_vec     = ['L2', 'L1']
@@ -20,6 +18,11 @@ cmd = 'CUDA_VISIBLE_DEVICES=3 python scripts/test_automated.py' + \
       ' --DUMP_NET True' + \
       ' --LOAD_FROM_DISK False' + \
       ' -c examples/test_simple.ini'
+
+print ('start running command {}'.format(cmd))
+process = subprocess.call(cmd, shell=True)
+print ('finished running command {}'.format(cmd))
+
 
 # for logdir in logdir_vec:
 #     for weights in weights_vec:
