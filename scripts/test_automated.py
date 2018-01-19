@@ -14,25 +14,17 @@ from utils.misc import query_yes_no
 
 def get_params(test_config, parser_args=None):
     """get params and save them to root dir"""
+
+    # Just to get the ROOT_DIR and save prm test_config
     prm = Parameters()
-
-    # get giles paths
     prm.override(test_config)
-    if parser_args is not None:
-        # overriding some parameters manually from parser:
-        prm.train.train_control.ROOT_DIR           = parser_args.ROOT_DIR
-        prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
-        prm.test.test_control.KNN_NORM             = parser_args.KNN_NORM
-        prm.train.train_control.PCA_REDUCTION      = (parser_args.PCA_REDUCTION == 'True')
-        prm.train.train_control.PCA_EMBEDDING_DIMS = int(parser_args.PCA_EMBEDDING_DIMS)
-        prm.test.test_control.KNN_NEIGHBORS        = int(parser_args.KNN_NEIGHBORS)
-        prm.test.test_control.DUMP_NET             = (parser_args.DUMP_NET == 'True')
-        prm.test.test_control.LOAD_FROM_DISK       = (parser_args.LOAD_FROM_DISK == 'True')
+    ROOT_DIR = parser_args.ROOT_DIR if parser_args.ROOT_DIR is not None else prm.train.train_control.ROOT_DIR
 
-    parameter_file      = os.path.join(prm.train.train_control.ROOT_DIR, 'parameters.ini')
-    test_parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'test_parameters.ini')
-    all_parameter_file  = os.path.join(prm.train.train_control.ROOT_DIR, 'all_parameters.ini')
-    log_file            = os.path.join(prm.train.train_control.ROOT_DIR, 'test.log')
+    # get files paths
+    parameter_file      = os.path.join(ROOT_DIR, 'parameters.ini')
+    test_parameter_file = os.path.join(ROOT_DIR, 'test_parameters.ini')
+    all_parameter_file  = os.path.join(ROOT_DIR, 'all_parameters.ini')
+    log_file            = os.path.join(ROOT_DIR, 'test.log')
     logging = logging_config(log_file)
     logging.disable(logging.DEBUG)
 
@@ -54,6 +46,16 @@ def get_params(test_config, parser_args=None):
     prm = Parameters()
     prm.override(parameter_file)
     prm.override(test_parameter_file)
+    if parser_args is not None:
+        # overriding some parameters manually from parser:
+        prm.train.train_control.ROOT_DIR           = parser_args.ROOT_DIR
+        prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
+        prm.test.test_control.KNN_NORM             = parser_args.KNN_NORM
+        prm.train.train_control.PCA_REDUCTION      = (parser_args.PCA_REDUCTION == 'True')
+        prm.train.train_control.PCA_EMBEDDING_DIMS = int(parser_args.PCA_EMBEDDING_DIMS)
+        prm.test.test_control.KNN_NEIGHBORS        = int(parser_args.KNN_NEIGHBORS)
+        prm.test.test_control.DUMP_NET             = (parser_args.DUMP_NET == 'True')
+        prm.test.test_control.LOAD_FROM_DISK       = (parser_args.LOAD_FROM_DISK == 'True')
 
     ret = True
     if os.path.isfile(all_parameter_file):
