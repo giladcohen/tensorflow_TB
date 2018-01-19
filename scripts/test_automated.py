@@ -49,6 +49,9 @@ def get_params(test_config, parser_args=None):
     if parser_args is not None:
         # overriding some parameters manually from parser:
         prm.train.train_control.ROOT_DIR           = parser_args.ROOT_DIR
+        prm.train.train_control.TEST_DIR           = parser_args.ROOT_DIR + '/test'
+        prm.train.train_control.PREDICTION_DIR     = parser_args.ROOT_DIR + '/prediction'
+        prm.train.train_control.CHECKPOINT_DIR     = parser_args.ROOT_DIR + '/checkpoint'
         prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
         prm.test.test_control.KNN_NORM             = parser_args.KNN_NORM
         prm.train.train_control.PCA_REDUCTION      = (parser_args.PCA_REDUCTION == 'True')
