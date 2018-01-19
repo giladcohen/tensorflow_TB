@@ -12,7 +12,9 @@ import contextlib
 import matplotlib.pyplot as plt
 from matplotlib import offsetbox
 from math import ceil
-import tensorflow as tf
+import time
+import datetime
+
 
 def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
     """Converts numpy data in the form:
@@ -304,3 +306,7 @@ def corr_distance(x, y):
     ret = 1 - (np.dot(x, y) / (norm_x * norm_y))
     assert 0 <= ret <= 1
     return ret
+
+def get_timestamp():
+    ts = time.time()
+    return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H:%M:%S')

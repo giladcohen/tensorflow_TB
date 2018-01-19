@@ -4,7 +4,7 @@ import time
 logdir_vec   = ['/data/gilad/logs/log_1005_051217_simple_dropout_0.5-SUPERSEED=05121700']
 weights_vec  = ['uniform', 'distance']
 norm_vec     = ['L2', 'L1']
-PCA_dims_vec = ['640', '64', '6']
+PCA_dims_vec = ['640', '64']
 K_vec        = ['1', '5', '30', '150', '1000']
 
 # Just for dumping the files once and calculating the DNN results
