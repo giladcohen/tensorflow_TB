@@ -12,22 +12,22 @@ from utils.factories import Factories
 import tensorflow as tf
 from utils.misc import query_yes_no
 
-def get_params(test_config, parser=None):
+def get_params(test_config, parser_args=None):
     """get params and save them to root dir"""
     prm = Parameters()
 
     # get giles paths
     prm.override(test_config)
-    if parser is not None:
+    if parser_args is not None:
         # overriding some parameters manually from parser:
-        prm.train.train_control.ROOT_DIR           = parser.ROOT_DIR
-        prm.test.test_control.KNN_WEIGHTS          = parser.KNN_WEIGHTS
-        prm.test.test_control.KNN_NORM             = parser.KNN_NORM
-        prm.train.train_control.PCA_REDUCTION      = (parser.PCA_REDUCTION == 'True')
-        prm.train.train_control.PCA_EMBEDDING_DIMS = int(parser.PCA_EMBEDDING_DIMS)
-        prm.test.test_control.KNN_NEIGHBORS        = int(parser.KNN_NEIGHBORS)
-        prm.test.test_control.DUMP_NET             = (parser.DUMP_NET == 'True')
-        prm.test.test_control.LOAD_FROM_DISK       = (parser.LOAD_FROM_DISK == 'True')
+        prm.train.train_control.ROOT_DIR           = parser_args.ROOT_DIR
+        prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
+        prm.test.test_control.KNN_NORM             = parser_args.KNN_NORM
+        prm.train.train_control.PCA_REDUCTION      = (parser_args.PCA_REDUCTION == 'True')
+        prm.train.train_control.PCA_EMBEDDING_DIMS = int(parser_args.PCA_EMBEDDING_DIMS)
+        prm.test.test_control.KNN_NEIGHBORS        = int(parser_args.KNN_NEIGHBORS)
+        prm.test.test_control.DUMP_NET             = (parser_args.DUMP_NET == 'True')
+        prm.test.test_control.LOAD_FROM_DISK       = (parser_args.LOAD_FROM_DISK == 'True')
 
     parameter_file      = os.path.join(prm.train.train_control.ROOT_DIR, 'parameters.ini')
     test_parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'test_parameters.ini')
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     if not os.path.isfile(test_config):
         raise AssertionError('Can not find file: {}'.format(test_config))
 
-    prm = get_params(test_config, parser=parser)
+    prm = get_params(test_config, parser_args=args)
 
     dev = prm.network.DEVICE
     with tf.device(dev):
