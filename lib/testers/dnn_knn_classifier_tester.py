@@ -76,7 +76,9 @@ class DNNKNNClassifierTester(KNNClassifierTester):
             .format(self.knn_neighbors, self.pca_embedding_dims, self.knn_norm, self.knn_weights)
         self.tb_logger_test.log_scalar(score_str + '/knn_accuracy', knn_accuracy , self.global_step)
         self.tb_logger_test.log_scalar(score_str + '/knn_NMI'     , knn_nmi_score, self.global_step)
-        print('{}: knn_accuracy= {}, knn_NMI={}'.format(score_str, knn_accuracy, knn_nmi_score))
+        print_str = '{}: knn_accuracy= {}, knn_NMI={}'.format(score_str, knn_accuracy, knn_nmi_score)
+        self.log.info(print_str)
+        print(print_str)
 
         self.summary_writer_test.flush()
         self.log.info('TEST : dnn accuracy: {}, dnn NMI score: {}\n\t   knn accuracy: {} knn NMI score: {}'
