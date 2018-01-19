@@ -22,29 +22,21 @@ class KNNClassifierTester(TesterBase):
         # testing parameters
         self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
         self.knn_norm        = self.prm.test.test_control.KNN_NORM
+        self.knn_weights     = self.prm.test.test_control.KNN_WEIGHTS
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 
-        if self.knn_norm not in ['L1', 'L2', 'corr_norm']:
+        if self.knn_norm not in ['L1', 'L2']:
             err_str = 'knn_norm {} is not supported'.format(self.knn_norm)
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        if self.knn_norm == 'L1':
-            self.log.info('Constructing KNN with L1')
-            self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=1, n_jobs=self.knn_jobs)
-        elif self.knn_norm == 'L2':
-            self.log.info('Constructing KNN with L2')
-            self.knn = KNeighborsClassifier(n_neighbors=self.knn_neighbors, p=2, n_jobs=self.knn_jobs)
-        else:
-            self.log.info('Constructing KNN with corr_norm')
-            self.knn = KNeighborsClassifier(
-                n_neighbors=self.knn_neighbors,
-                algorithm='brute',
-                metric='pyfunc',
-                metric_params={'func': corr_distance},
-                n_jobs=self.knn_jobs)
+        self.knn = KNeighborsClassifier(
+            n_neighbors=self.knn_neighbors,
+            weights=self.knn_weights,
+            p=int(self.knn_norm[-1]),
+            n_jobs=self.knn_jobs)
 
     def test(self):
         train_size = self.dataset.train_set_size
@@ -116,6 +108,7 @@ class KNNClassifierTester(TesterBase):
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
         self.log.info(' KNN_NEIGHBORS: {}'.format(self.knn_neighbors))
         self.log.info(' KNN_NORM: {}'.format(self.knn_norm))
+        self.log.info(' KNN_WEIGHTS: {}'.format(self.knn_weights))
         self.log.info(' KNN_JOBS: {}'.format(self.knn_jobs))
 
 

@@ -69,9 +69,11 @@ class DNNKNNClassifierTester(KNNClassifierTester):
         knn_nmi_score = normalized_mutual_info_score(labels_true=y_test, labels_pred=test_knn_pred)
 
         # writing summaries
-        score_str = 'score_metrics/K={}/L{}/PCA={}/'.format(self.knn_neighbors, self.knn_norm, self.pca_embedding_dims)
-        self.tb_logger_test.log_scalar(score_str + 'dnn_accuracy', dnn_accuracy , self.global_step)
-        self.tb_logger_test.log_scalar(score_str + 'dnn_NMI'     , dnn_nmi_score, self.global_step)
+        self.tb_logger_test.log_scalar('score_metrics/dnn_accuracy', dnn_accuracy , self.global_step)
+        self.tb_logger_test.log_scalar('score_metrics/dnn_NMI'     , dnn_nmi_score, self.global_step)
+
+        score_str = 'score_metrics/K={}/PCA={}/norm={}/weights={}/'\
+            .format(self.knn_neighbors, self.pca_embedding_dims, self.knn_norm, self.knn_weights)
         self.tb_logger_test.log_scalar(score_str + 'knn_accuracy', knn_accuracy , self.global_step)
         self.tb_logger_test.log_scalar(score_str + 'knn_NMI'     , knn_nmi_score, self.global_step)
 
