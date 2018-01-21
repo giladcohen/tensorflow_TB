@@ -1,18 +1,7 @@
 import subprocess
 import time
 
-logdir_vec   = ['/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121700',
-                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121701',
-                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121702',
-                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121703',
-                '/data/gilad/logs/log_0532_011217_simple-SUPERSEED=01121704',
-                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121700',
-                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121701',
-                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121702',
-                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121703',
-                '/data/gilad/logs/log_0336_061217_simple-SUPERSEED=06121704',
-
-                '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121700',
+logdir_vec   = ['/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121700',
                 '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121701',
                 '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121702',
                 '/data/gilad/logs/log_0439_171217_cifar100_simple-SUPERSEED=17121703',
