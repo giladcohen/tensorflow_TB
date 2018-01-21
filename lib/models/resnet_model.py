@@ -76,7 +76,7 @@ class ResNet(ClassifierModel):
             x = tf.nn.dropout(x, keep_prob=self.dropout_keep_prob)
             if self.normalize_embedding:
                 x = tf.nn.l2_normalize(x, axis=1, name='normalize_vec')  # was x = slim.unit_norm(x, dim=1, scope='normalize_vec')
-                variable_summaries('embedding', x)
+            variable_summaries('embedding', x)
             self.net['embedding_layer'] = x
             self.net['logits'] = self.calculate_logits(x)
 
