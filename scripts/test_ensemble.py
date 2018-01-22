@@ -20,8 +20,6 @@ def get_params(test_config):
     prm.override(test_config)
     test_parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'test_parameters.ini')
     log_file            = os.path.join(prm.train.train_control.ROOT_DIR, 'test.log')
-    logging = logging_config(log_file)
-    logging.disable(logging.DEBUG)
 
     ret = True
     if os.path.isfile(test_parameter_file):
@@ -33,6 +31,9 @@ def get_params(test_config):
         if not os.path.exists(dir):
             os.makedirs(dir)
         prm.save(test_parameter_file)
+
+    logging = logging_config(log_file)
+    logging.disable(logging.DEBUG)
 
     return prm
 
