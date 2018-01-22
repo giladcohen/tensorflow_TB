@@ -41,6 +41,8 @@ class IniParser(object):
                 val = parser.getboolean(section, key)
             elif isinstance(val, np.ndarray):
                 val = eval(val_as_str)
+            elif isinstance(val, list):
+                val = val_as_str.split(",")
             else:
                 if val_as_str == 'None':
                     val = None

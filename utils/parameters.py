@@ -462,6 +462,7 @@ class ParametersTest(parser_utils.FrozenClass):
         super(ParametersTest, self).__init__()
 
         self.test_control = ParametersTestControl()
+        self.ensemble     = ParametersTestEnsemble()
 
         self._freeze()
 
@@ -471,10 +472,12 @@ class ParametersTest(parser_utils.FrozenClass):
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
         self.test_control.save_to_ini(do_save_none    , section_name, config)
+        self.ensemble.save_to_ini(do_save_none        , section_name, config)
 
     def set_from_file(self,override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.test_control.set_from_file(override_mode    , section_name, parser)
+        self.ensemble.set_from_file(override_mode        , section_name, parser)
 
 class ParametersTestControl(parser_utils.FrozenClass):
     def __init__(self):
@@ -515,3 +518,25 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_JOBS'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'DUMP_NET'        , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOAD_FROM_DISK'  , bool)
+
+class ParametersTestEnsemble(parser_utils.FrozenClass):
+    def __init__(self):
+        super(ParametersTestEnsemble, self).__init__()
+
+        self.LOG_DIR_LIST          = None  # list: root dirs that make the ensemble
+        self.DECISION_METHOD       = None  # string: The decision method for the classification
+
+        self._freeze()
+
+    def name(self):
+        return 'ensemble'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.set_to_config(do_save_none, section_name, config, 'LOG_DIR_LIST'               , self.LOG_DIR_LIST)
+        self.set_to_config(do_save_none, section_name, config, 'DECISION_METHOD'            , self.DECISION_METHOD)
+
+    def set_from_file(self, override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.parse_from_config(self, override_mode, section_name, parser, 'LOG_DIR_LIST'          , list)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DECISION_METHOD'       , str)
