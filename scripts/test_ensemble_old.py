@@ -17,16 +17,9 @@ def get_params(test_config):
     prm = Parameters()
 
     # get giles paths
-    prm.override(test_config)  # just to get the LOG_DIR_LIST[0]
-    train_log_dir       = prm.test.ensemble.LOG_DIR_LIST[0]
-
-    parameter_file      = os.path.join(train_log_dir, 'parameters.ini')
+    prm.override(test_config)
     test_parameter_file = os.path.join(prm.train.train_control.ROOT_DIR, 'test_parameters.ini')
-    all_parameter_file  = os.path.join(prm.train.train_control.ROOT_DIR, 'all_parameters.ini')
     log_file            = os.path.join(prm.train.train_control.ROOT_DIR, 'test.log')
-
-    if not os.path.isfile(parameter_file):
-        raise AssertionError('Can not find file: {}'.format(parameter_file))
 
     ret = True
     if os.path.isfile(test_parameter_file):
@@ -42,35 +35,13 @@ def get_params(test_config):
     logging = logging_config(log_file)
     logging.disable(logging.DEBUG)
 
-    # Done saving test parameters. Now doing the integration:
-    prm = Parameters()
-    prm.override(parameter_file)
-    prm.override(test_parameter_file)
-
-    ret = True
-    if os.path.isfile(all_parameter_file):
-        warnings.warn('All parameter file {} already exists'.format(all_parameter_file))
-        ret = query_yes_no('Overwrite parameter file?')
-
-    if ret:
-        dir = os.path.dirname(all_parameter_file)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        prm.save(all_parameter_file)
-
     return prm
 
 def test(prm):
     tf.set_random_seed(prm.SUPERSEED)
     factories = Factories(prm)
 
-    model        = factories.get_model()
-    model.print_stats() #debug
-
-    dataset = factories.get_dataset()
-    dataset.print_stats() #debug
-
-    tester      = factories.get_tester(model, dataset)
+    tester      = factories.get_tester(model=None, dataset=None)
     tester.print_stats() #debug
 
     tester.test()

@@ -3,33 +3,22 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from lib.base.agent_base import AgentBase
+from lib.testers.tester_base import TesterBase
 import tensorflow as tf
 from utils.tensorboard_logging import TBLogger
 import os
 
-class EnsembleTester(AgentBase):
+class EnsembleTester(TesterBase):
 
-    def __init__(self, name, prm, model, dataset):
-        super(EnsembleTester, self).__init__(name)
-        self.prm                   = prm
-        self.rand_gen              = np.random.RandomState(self.prm.SUPERSEED)
-        self.debug_mode            = self.prm.DEBUG_MODE
+    def __init__(self, *args, **kwargs):
+        super(EnsembleTester, self).__init__(*args, **kwargs)
 
-        self.eval_batch_size       = self.prm.train.train_control.EVAL_BATCH_SIZE
-        self.root_dir              = self.prm.train.train_control.ROOT_DIR
-        self.checkpoint_dir        = self.prm.train.train_control.CHECKPOINT_DIR
-        self.test_dir              = self.prm.train.train_control.TEST_DIR
-        self.tester                = self.prm.test.test_control.TESTER  # just used for printing.
-        self.checkpoint_file       = self.prm.test.test_control.CHECKPOINT_FILE
         self.log_dir_list          = self.prm.test.ensemble.LOG_DIR_LIST
         self.decision_method       = self.prm.test.ensemble.DECISION_METHOD
 
         self.train_set_size        = self.prm.dataset.TRAIN_SET_SIZE
         self.test_set_size         = self.prm.dataset.TEST_SET_SIZE
-        self.dataset_name          = self.prm.dataset.DATASET_NAME
 
-        self.embedding_dims        = self.prm.network.EMBEDDING_DIMS
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
 
@@ -40,29 +29,31 @@ class EnsembleTester(AgentBase):
         self.knn_jobs              = self.prm.test.test_control.KNN_JOBS
 
         # variables
-        self.global_step = 0
         self.ensemble_size = len(self.log_dir_list)
-        self.num_classes = int(self.dataset_name[5:])
-
-    def build(self):
-        self.build_test_env()
+        self.num_classes = int(self.dataset.dataset_name[5:])
 
     def build_test_env(self):
         self.log.info("Starting building the test environment")
         self.summary_writer_test = tf.summary.FileWriter(self.test_dir)
         self.tb_logger_test = TBLogger(self.summary_writer_test)
 
+    def finalize_graph(self):
+        self.dataset.set_handles(self.plain_sess)
+
+    def set_params(self):
+        self.log.info('Not setting params for ensemble tester')
+
     def test(self):
         """Testing ensemble"""
         # loading the entire train/test features and labels
-        X_train_features, y_train, X_test_features, y_test, test_dnn_predictions_prob = self.load_features()
-        # y_pred = np.empty(shape=[self.test_set_size], dtype=np.int32)
+        if self.load_from_disk:
+            # useful for DNN scores
+            X_train_features, y_train, X_test_features, y_test, test_dnn_predictions_prob = self.load_features()
 
         if self.decision_method == 'dnn_median':
             y_median = np.median(test_dnn_predictions_prob, axis=0)   # median over all ensembles.
                                                                       # shape=[self.test_set_size, self.num_classes]
             y_pred = y_median.argmax(axis=1).astype(np.int32)
-
         elif self.decision_method == 'dnn_average':
             y_average = np.average(test_dnn_predictions_prob, axis=0) # median over all ensembles.
                                                                       # shape = [self.test_set_size, self.num_classes]
@@ -124,20 +115,8 @@ class EnsembleTester(AgentBase):
 
     def print_stats(self):
         super(EnsembleTester, self).print_stats()
-        self.log.info('Test parameters:')
-        self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
-        self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
-        self.log.info(' ROOT_DIR: {}'.format(self.root_dir))
-        self.log.info(' CHECKPOINT_DIR: {}'.format(self.checkpoint_dir))
-        self.log.info(' TEST_DIR: {}'.format(self.test_dir))
-        self.log.info(' TESTER: {}'.format(self.tester))
-        self.log.info(' CHECKPOINT_FILE: {}'.format(self.checkpoint_file))
         self.log.info(' LOG_DIR_LIST: {}'.format(self.log_dir_list))
         self.log.info(' DECISION_METHOD: {}'.format(self.decision_method))
-        self.log.info(' TRAIN_SET_SIZE: {}'.format(self.train_set_size))
-        self.log.info(' TEST_SET_SIZE: {}'.format(self.test_set_size))
-        self.log.info(' DATASET_NAME: {}'.format(self.dataset_name))
-        self.log.info(' EMBEDDING_DIMS: {}'.format(self.embedding_dims))
         self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))
         self.log.info(' KNN_NEIGHBORS: {}'.format(self.knn_neighbors))
