@@ -63,7 +63,7 @@ class EnsembleTester(AgentBase):
                                                                      # shape=[self.test_set_size, self.num_classes]
             y_pred = y_median.argmax(axis=1).astype(np.int32)
 
-        accuracy = np.sum(y_pred == y_test) / self.test_set_size
+        accuracy = np.sum(y_pred == y_test[0]) / self.test_set_size
         self.tb_logger_test.log_scalar('score_metrics/ensemble_' + self.decision_method + '_accuracy', accuracy, self.global_step)
 
         score_str = 'score_metrics/ensemble_' + self.decision_method + '_accuracy'
@@ -102,6 +102,18 @@ class EnsembleTester(AgentBase):
             X_test_features[i]             = np.load(test_features_file)
             y_test[i]                      = np.load(test_labels_file)
             test_dnn_predictions_prob[i]   = np.load(test_dnn_predictions_prob_file)
+
+        # assert labels are the same for every network
+        for i in xrange(self.ensemble_size):
+            if not (y_train[i] == y_train[0]):
+                err_str = 'y_train[{}] values do not match y_train[0] values'.format(i)
+                self.log.error(err_str)
+                raise AssertionError(err_str)
+
+            if not (y_test[i] == y_test[0]):
+                err_str = 'y_test[{}] values do not match y_test[0] values'.format(i)
+                self.log.error(err_str)
+                raise AssertionError(err_str)
 
         return X_train_features, y_train, X_test_features, y_test, test_dnn_predictions_prob
 
