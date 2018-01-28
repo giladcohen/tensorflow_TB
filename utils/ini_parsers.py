@@ -44,6 +44,7 @@ class IniParser(object):
                 val = eval(val_as_str)
             elif isinstance(val, list):
                 val = val_as_str[1:-1].split(",")
+                val = [str(val[i]) for i in range(len(val))]
             else:
                 if val_as_str == 'None':
                     val = None
