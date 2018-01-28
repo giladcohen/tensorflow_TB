@@ -76,9 +76,9 @@ class EnsembleTester(TesterBase):
         X_test_features.shape           = [ensemble_size, test_size(10000), embedding_size(640)]
         test_dnn_predictions_prob.shape = [ensemble_size, test_size(10000), num_classes(10)]
         """
-        X_train_features          = np.empty(shape=[self.ensemble_size, self.train_set_size, self.embedding_dims], dtype=np.float32)
+        X_train_features          = np.empty(shape=[self.ensemble_size, self.train_set_size, self.model.embedding_dims], dtype=np.float32)
         y_train                   = np.empty(shape=[self.ensemble_size, self.train_set_size], dtype=np.int32)
-        X_test_features           = np.empty(shape=[self.ensemble_size, self.test_set_size, self.embedding_dims], dtype=np.float32)
+        X_test_features           = np.empty(shape=[self.ensemble_size, self.test_set_size, self.model.embedding_dims], dtype=np.float32)
         y_test                    = np.empty(shape=[self.ensemble_size, self.test_set_size], dtype=np.int32)
         test_dnn_predictions_prob = np.empty(shape=[self.ensemble_size, self.test_set_size, self.num_classes], dtype=np.float32)
 
