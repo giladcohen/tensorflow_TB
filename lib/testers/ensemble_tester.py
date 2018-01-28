@@ -59,9 +59,14 @@ class EnsembleTester(AgentBase):
         # y_pred = np.empty(shape=[self.test_set_size], dtype=np.int32)
 
         if self.decision_method == 'dnn_median':
-            y_median = np.median(test_dnn_predictions_prob, axis=0)  # median over all ensembles.
-                                                                     # shape=[self.test_set_size, self.num_classes]
+            y_median = np.median(test_dnn_predictions_prob, axis=0)   # median over all ensembles.
+                                                                      # shape=[self.test_set_size, self.num_classes]
             y_pred = y_median.argmax(axis=1).astype(np.int32)
+
+        elif self.decision_method == 'dnn_average':
+            y_average = np.average(test_dnn_predictions_prob, axis=0) # median over all ensembles.
+                                                                      # shape = [self.test_set_size, self.num_classes]
+            y_pred = y_average.argmax(axis=1).astype(np.int32)
 
         accuracy = np.sum(y_pred == y_test[0]) / self.test_set_size
         self.tb_logger_test.log_scalar('score_metrics/ensemble_' + self.decision_method + '_accuracy', accuracy, self.global_step)
