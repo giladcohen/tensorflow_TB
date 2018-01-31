@@ -114,7 +114,7 @@ class KNNClassifierTester(TesterBase):
             y_pred = test_knn_predictions_prob.argmax(axis=1)
         elif self.decision_method == 'knn_nc_dropout_sum':
             self.log.info('Predicting test set labels from KNN model using NC dropout...')
-            number_of_predictions = 100
+            number_of_predictions = 20
             test_knn_predictions_prob_mat = np.zeros(shape=[number_of_predictions, self.dataset.test_set_size, self.num_classes], dtype=np.float32)
             for i in xrange(number_of_predictions):
                 self.log.info('Calculating NC dropout - iteration #{}'.format(i+1))
