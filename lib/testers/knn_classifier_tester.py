@@ -72,6 +72,14 @@ class KNNClassifierTester(TesterBase):
                     dataset_type='test',
                     fetches=[self.model.net['embedding_layer'], self.model.labels, self.model.predictions_prob],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
+        if self.dump_net:
+            self.log.info('Dumping train features into disk:\n{}\n{}\n{}\n{}\n{}'
+                          .format(train_features_file, test_features_file, test_dnn_predictions_prob_file, train_labels_file, test_labels_file))
+            np.save(train_features_file           , X_train_features)
+            np.save(test_features_file            , X_test_features)
+            np.save(test_dnn_predictions_prob_file, test_dnn_predictions_prob)
+            np.save(train_labels_file             , y_train)
+            np.save(test_labels_file              , y_test)
 
         if self.pca_reduction:
             self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.model.embedding_dims, self.pca_embedding_dims))
@@ -108,20 +116,12 @@ class KNNClassifierTester(TesterBase):
         print_str = '{}: knn_accuracy= {}, knn_NMI={}'.format(score_str, knn_accuracy, knn_nmi_score)
         self.log.info(print_str)
         print(print_str)
-
         self.summary_writer_test.flush()
-        self.log.info('TEST : dnn accuracy: {}, dnn NMI score: {}\n\t   knn accuracy: {} knn NMI score: {}'
-                      .format(dnn_accuracy, dnn_nmi_score, knn_accuracy, knn_nmi_score))
 
-        if self.dump_net:
-            self.log.info('Dumping train features into disk:\n{}\n{}\n{}\n{}\n{}'
-                          .format(train_features_file, test_features_file, test_dnn_predictions_prob_file,
-                                  train_labels_file, test_labels_file))
-            np.save(train_features_file           , X_train_features)
-            np.save(test_features_file            , X_test_features)
-            np.save(test_dnn_predictions_prob_file, test_dnn_predictions_prob)
-            np.save(train_labels_file             , y_train)
-            np.save(test_labels_file              , y_test)
+        score_str = 'TEST : dnn accuracy: {}, dnn NMI score: {}\n\t   knn accuracy: {} knn NMI score: {}'\
+            .format(dnn_accuracy, dnn_nmi_score, knn_accuracy, knn_nmi_score)
+        self.log.info(score_str)
+        print(print_str)
 
         self.log.info('Tester {} is done'.format(str(self)))
 
