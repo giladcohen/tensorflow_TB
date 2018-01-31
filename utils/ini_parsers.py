@@ -45,8 +45,9 @@ class IniParser(object):
             elif isinstance(val, list):
                 val = val_as_str[1:-1]
                 print("val1={}".format(val))
-                # val = list(filter(None, (x.strip() for x in val.split(","))))
-                # print("val2={}".format(val))
+                val = list(filter(None, (x.strip() for x in val.split(","))))
+                print("val2={}".format(val))
+                print("val4={}".format(val[0]))
                 # val = val_as_str[1:-1].split(",")
                 # print("val2={}".format(val))
                 # val = [str(val[i]) for i in range(len(val))]
