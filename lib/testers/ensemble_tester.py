@@ -15,7 +15,7 @@ class EnsembleTester(TesterBase):
         super(EnsembleTester, self).__init__(*args, **kwargs)
 
         self.log_dir_list          = self.prm.test.ensemble.LOG_DIR_LIST
-        self.decision_method       = self.prm.test.ensemble.DECISION_METHOD
+        self.decision_method       = self.prm.test.test_control.DECISION_METHOD
 
         self.train_set_size        = self.prm.dataset.TRAIN_SET_SIZE
         self.test_set_size         = self.prm.dataset.TEST_SET_SIZE

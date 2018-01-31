@@ -15,7 +15,7 @@ class KNNClassifierTester(TesterBase):
 
     def __init__(self, *args, **kwargs):
         super(KNNClassifierTester, self).__init__(*args, **kwargs)
-        self.decision_method = self.prm.test.ensemble.DECISION_METHOD
+        self.decision_method = self.prm.test.test_control.DECISION_METHOD
 
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
