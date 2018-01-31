@@ -127,6 +127,8 @@ class KNNClassifierTester(TesterBase):
                         feed_dict={self.model.dropout_keep_prob: 0.5})
                 X_test_features = self.apply_pca(X_test_features, fit=False)
                 test_knn_predictions_prob_tmp = self.knn.predict_proba(X_test_features)
+                if self.debug_mode:
+                    print('test_knn_predictions_prob_tmp[0] for i={}: {}\ny_test[0]={}'.format(i, test_knn_predictions_prob_tmp[0], y_test[0]))
                 test_knn_predictions_prob_mat[i] += test_knn_predictions_prob_tmp
 
             self.log.info("Summing all knn probability vectors")
