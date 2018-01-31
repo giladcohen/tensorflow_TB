@@ -7,6 +7,7 @@ from lib.testers.tester_base import TesterBase
 import tensorflow as tf
 from utils.tensorboard_logging import TBLogger
 import os
+from sklearn.neighbors import KNeighborsClassifier
 
 class EnsembleTester(TesterBase):
 
@@ -31,6 +32,16 @@ class EnsembleTester(TesterBase):
         # variables
         self.ensemble_size = len(self.log_dir_list)
         self.num_classes = int(self.dataset.dataset_name[5:])
+
+        self.checkpoint_file_list  = self.get_checkpoint_file_list()
+
+    def get_checkpoint_file_list(self):
+        """Getting a list contating all the checkpoint files in the ensemble"""
+        checkpoint_file_list = []
+        for i in xrange(self.ensemble_size):
+            dir_basename = os.path.basename(self.checkpoint_dir)
+            checkpoint_file_list.append(os.path.join(self.log_dir_list[i], dir_basename, self.checkpoint_file))
+        return checkpoint_file_list
 
     def build_test_env(self):
         self.log.info("Starting building the test environment")
@@ -58,6 +69,26 @@ class EnsembleTester(TesterBase):
             y_average = np.average(test_dnn_predictions_prob, axis=0) # median over all ensembles.
                                                                       # shape = [self.test_set_size, self.num_classes]
             y_pred = y_average.argmax(axis=1).astype(np.int32)
+        elif self.decision_method == 'knn_aggregate_nc_dropout':
+            test_knn_predictions_prob = np.empty(shape=[self.ensemble_size, self.test_set_size, self.num_classes], dtype=np.float32)
+            knn_models = []
+            for i in xrange(self.ensemble_size):
+                self.log.info('Constructing KNN model for net #{}'.format(i))
+                knn_models.append(KNeighborsClassifier(
+                    n_neighbors=self.knn_neighbors,
+                    weights=self.knn_weights,
+                    p=int(self.knn_norm[-1]),
+                    n_jobs=self.knn_jobs))
+            for i in xrange(self.ensemble_size):
+                self.log.info('Training KNN model for net #{}'.format(i))
+                X_train_features_i = X_train_features[i]
+                knn_models[i].fit(X_train_features_i, y_train[0])
+            for i in xrange(self.ensemble_size):
+                self.log.info('loading KNN model parameters for net #{}'.format(i))
+                self.saver.restore(self.plain_sess, self.checkpoint_file_list[i])
+                self.log.info('Predicting KNN model for net #{}'.format(i))
+                # TODO(continue)
+
 
         accuracy = np.sum(y_pred == y_test[0]) / self.test_set_size
         self.tb_logger_test.log_scalar('score_metrics/ensemble_' + self.decision_method + '_accuracy', accuracy, self.global_step)
