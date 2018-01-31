@@ -118,7 +118,7 @@ class KNNClassifierTester(TesterBase):
         print(print_str)
         self.summary_writer_test.flush()
 
-        score_str = 'TEST : dnn accuracy: {}, dnn NMI score: {}\n\t   knn accuracy: {} knn NMI score: {}'\
+        print_str = 'TEST : dnn accuracy: {}, dnn NMI score: {}\n\t   knn accuracy: {} knn NMI score: {}'\
             .format(dnn_accuracy, dnn_nmi_score, knn_accuracy, knn_nmi_score)
         self.log.info(score_str)
         print(print_str)
