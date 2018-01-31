@@ -26,6 +26,8 @@ class KNNClassifierTester(TesterBase):
         self.knn_weights     = self.prm.test.test_control.KNN_WEIGHTS
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
 
+        self.num_classes     = int(self.dataset.dataset_name[5:])
+
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 
         if self.knn_norm not in ['L1', 'L2']:
@@ -82,6 +84,15 @@ class KNNClassifierTester(TesterBase):
 
         return X_train_features, X_test_features, test_dnn_predictions_prob, y_train, y_test
 
+    def apply_pca(self, X, fit=False):
+        """If pca_reduction is True, apply PCA reduction"""
+        if self.pca_reduction:
+            self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.model.embedding_dims, self.pca_embedding_dims))
+            if fit:
+                self.pca.fit(X)
+            X = self.pca.transform(X)
+        return X
+
     def test(self):
         X_train_features, \
         X_test_features, \
@@ -89,22 +100,37 @@ class KNNClassifierTester(TesterBase):
         y_train, \
         y_test = self.fetch_dump_data_features()
 
-        if self.pca_reduction:
-            self.log.info('Reducing features_vec from {} dims to {} dims using PCA'.format(self.model.embedding_dims, self.pca_embedding_dims))
-            X_train_features_post = self.pca.fit_transform(X_train_features)
-            X_test_features_post  = self.pca.transform(X_test_features)
-        else:
-            X_train_features_post = X_train_features
-            X_test_features_post  = X_test_features
+        X_train_features = self.apply_pca(X_train_features, fit=True)
+        X_test_features  = self.apply_pca(X_test_features , fit=False)
 
         self.log.info('Fitting KNN model...')
-        self.knn.fit(X_train_features_post, y_train)
+        self.knn.fit(X_train_features, y_train)
 
         if self.decision_method == 'dnn_accuracy':
             y_pred = test_dnn_predictions_prob.argmax(axis=1)
         elif self.decision_method == 'knn_accuracy':
-            self.log.info('Predicting precomputed test set labels from KNN model...')
-            test_knn_predictions_prob = self.knn.predict_proba(X_test_features_post)
+            self.log.info('Predicting test set labels from KNN model...')
+            test_knn_predictions_prob = self.knn.predict_proba(X_test_features)
+            y_pred = test_knn_predictions_prob.argmax(axis=1)
+        elif self.decision_method == 'knn_nc_dropout_sum':
+            self.log.info('Predicting test set labels from KNN model using NC dropout...')
+            number_of_predictions = 100
+            test_knn_predictions_prob_mat = np.zeros(shape=[number_of_predictions, self.dataset.test_set_size, self.num_classes], dtype=np.float32)
+            for i in xrange(number_of_predictions):
+                self.log.info('Calculating NC dropout - iteration #{}'.format(i+1))
+                # collect new features using dropout=0.5
+                (X_test_features, ) = \
+                    collect_features(
+                        agent=self,
+                        dataset_type='test',
+                        fetches=[self.model.net['embedding_layer']],
+                        feed_dict={self.model.dropout_keep_prob: 0.5})
+                X_test_features = self.apply_pca(X_test_features, fit=False)
+                test_knn_predictions_prob_tmp = self.knn.predict_proba(X_test_features)
+                test_knn_predictions_prob_mat[i] += test_knn_predictions_prob_tmp
+
+            self.log.info("Summing all knn probability vectors")
+            test_knn_predictions_prob = np.sum(test_knn_predictions_prob_mat, axis=0)
             y_pred = test_knn_predictions_prob.argmax(axis=1)
 
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
