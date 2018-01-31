@@ -25,7 +25,7 @@ class IniParser(object):
 
     def set_to_config(self, do_save_none, section, config, key, val):
         if val is not None:
-            if type(val) == list:
+            if type(val) == list and type(val[0]) == str:  # if it is list of strings
                 val = '[' + ",".join(val) + ']'
                 config.set(section, key, val)
             else:
