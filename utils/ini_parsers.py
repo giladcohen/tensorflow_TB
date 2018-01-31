@@ -43,14 +43,14 @@ class IniParser(object):
             elif isinstance(val, np.ndarray):
                 val = eval(val_as_str)
             elif isinstance(val, list):
-                val = eval(val_as_str)
-                print("val4={}".format(val))
-            elif isinstance(val, list):
+                val = val_as_str[1:-1]
                 print("val1={}".format(val))
-                val = val_as_str[1:-1].split(",")
+                val = list(filter(None, (x.strip() for x in val.split(","))))
                 print("val2={}".format(val))
-                val = [str(val[i]) for i in range(len(val))]
-                print("val3={}".format(val))
+                # val = val_as_str[1:-1].split(",")
+                # print("val2={}".format(val))
+                # val = [str(val[i]) for i in range(len(val))]
+                # print("val3={}".format(val))
             else:
                 if val_as_str == 'None':
                     val = None
