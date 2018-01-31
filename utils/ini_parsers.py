@@ -25,7 +25,10 @@ class IniParser(object):
 
     def set_to_config(self, do_save_none, section, config, key, val):
         if val is not None:
-            config.set(section, key, str(val))
+            if type(val) == list:
+                config.set(section, key, val)
+            else:
+                config.set(section, key, str(val))
         else:
             if do_save_none:
                 config.set(section, key, 'None')
@@ -42,12 +45,12 @@ class IniParser(object):
                 val = parser.getboolean(section, key)
             elif isinstance(val, np.ndarray):
                 val = eval(val_as_str)
-            # elif isinstance(val, list):
-                # val = val_as_str[1:-1]
-                # print("val1={}".format(val))
-                # val = list(filter(None, (x.strip() for x in val.split(","))))
-                # print("val2={}".format(val))
-                # print("val4={}".format(val[0]))
+            elif isinstance(val, list):
+                val = val_as_str[1:-1]
+                print("val1={}".format(val))
+                val = list(filter(None, (x.strip() for x in val.split(","))))
+                print("val2={}".format(val))
+                print("val4={}".format(val[0]))
 
 
 

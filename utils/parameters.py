@@ -408,9 +408,9 @@ class ParametersTrainControlLearningRateSetter(parser_utils.FrozenClass):
         super(ParametersTrainControlLearningRateSetter, self).__init__()
 
         self.LEARNING_RATE_SETTER          = None  # string: Name of the learning rate setter
-        self.SCHEDULED_STEPS               = None  # list: the epochs in which the learning rate is decreased
+        self.SCHEDULED_STEPS               = None  # np.array: the epochs in which the learning rate is decreased
         self.USE_FIXED_EPOCHS              = None  # boolean: use epochs instead of global steps
-        self.SCHEDULED_LEARNING_RATES      = None  # list: the updated learning rates at each SCHEDULED_STEPS
+        self.SCHEDULED_LEARNING_RATES      = None  # np.array: the updated learning rates at each SCHEDULED_STEPS
         self.LR_DECAY_REFRACTORY_STEPS     = None  # integer: number of training steps after decaying the learning
                                                    # rate in which no new decay can be utilized
         self.LEARNING_RATE_RESET           = None  # float: reset value of learning rate
