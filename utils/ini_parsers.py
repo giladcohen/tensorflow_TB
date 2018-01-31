@@ -43,6 +43,9 @@ class IniParser(object):
             elif isinstance(val, np.ndarray):
                 val = eval(val_as_str)
             elif isinstance(val, list):
+                val = eval(val_as_str)
+                print("val4={}".format(val))
+            elif isinstance(val, list):
                 print("val1={}".format(val))
                 val = val_as_str[1:-1].split(",")
                 print("val2={}".format(val))
