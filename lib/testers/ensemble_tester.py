@@ -129,12 +129,12 @@ class EnsembleTester(KNNClassifierTester):
 
         # assert labels are the same for every network
         for i in xrange(self.ensemble_size):
-            if not (y_train[i] == y_train[0]).all():
+            if not (y_train[:, i] == y_train[:, 0]).all():
                 err_str = 'y_train[{}] values do not match y_train[0] values'.format(i)
                 self.log.error(err_str)
                 raise AssertionError(err_str)
 
-            if not (y_test[i] == y_test[0]).all():
+            if not (y_test[:, i] == y_test[:, 0]).all():
                 err_str = 'y_test[{}] values do not match y_test[0] values'.format(i)
                 self.log.error(err_str)
                 raise AssertionError(err_str)
