@@ -91,9 +91,9 @@ class EnsembleTester(KNNClassifierTester):
             y_pred = test_knn_predictions_prob_mat.argmax(axis=1)
 
         accuracy = np.sum(y_pred == y_test[:, 0]) / self.dataset.test_set_size
-        self.tb_logger_test.log_scalar('score_metrics/ensemble_' + self.decision_method + '_accuracy', accuracy, self.global_step)
+        score_str = 'score_metrics/ensemble_{}_K={}_norm={}/accuracy'.format(self.decision_method, self.knn_neighbors, self.knn_norm)
+        self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
 
-        score_str = 'score_metrics/ensemble_' + self.decision_method + '_accuracy'
         print_str = '{}: {}'.format(score_str, accuracy)
         self.log.info(print_str)
         print(print_str)
