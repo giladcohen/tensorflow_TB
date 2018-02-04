@@ -310,3 +310,32 @@ def corr_distance(x, y):
 def get_timestamp():
     ts = time.time()
     return datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H:%M:%S')
+
+def calc_mutual_agreement(y1, y2, y_gt):
+    """
+    This function gets to prediction vectors y1, y2 and calculates the
+    mutual agreement and disagreement scores
+    MA = (DNN right and KNN right)/(DNN right)
+    MD = (DNN wrong and KNN wrong like the DNN)/(DNN wrong)
+    :param y1: DNN prediction vector
+    :param y2: KNN prediction vector
+    :param y_gt: Ground truth labels
+    :return: MA and MD scores
+    """
+    assert y1.shape == y2.shape == y_gt.shape, "labels' shape do not match"
+    dnn_correct_cnt = dnn_wrong_cnt = 0
+    ma_cnt = md_cnt = 0
+
+    for i in xrange(y_gt.shape[0]):
+        if y1[i] == y_gt[i]:
+            dnn_correct_cnt += 1
+            if y2[i] == y1[i]:
+                ma_cnt += 1
+        else:
+            dnn_wrong_cnt += 1
+            if y2[i] == y1[i]:
+                md_cnt += 1
+
+    ma_score = ma_cnt / dnn_correct_cnt
+    md_score = md_cnt / dnn_wrong_cnt
+    return ma_score, md_score

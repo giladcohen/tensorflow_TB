@@ -41,13 +41,15 @@ class KNNClassifierTester(TesterBase):
             p=int(self.knn_norm[-1]),
             n_jobs=self.knn_jobs)
 
-    def fetch_dump_data_features(self):
+    def fetch_dump_data_features(self, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
-        train_features_file            = os.path.join(self.test_dir, 'train_features.npy')
-        test_features_file             = os.path.join(self.test_dir, 'test_features.npy')
-        test_dnn_predictions_prob_file = os.path.join(self.test_dir, 'test_dnn_predictions_prob.npy')
-        train_labels_file              = os.path.join(self.test_dir, 'train_labels.npy')
-        test_labels_file               = os.path.join(self.test_dir, 'test_labels.npy')
+        if test_dir is None:
+            test_dir = self.test_dir
+        train_features_file            = os.path.join(test_dir, 'train_features.npy')
+        test_features_file             = os.path.join(test_dir, 'test_features.npy')
+        test_dnn_predictions_prob_file = os.path.join(test_dir, 'test_dnn_predictions_prob.npy')
+        train_labels_file              = os.path.join(test_dir, 'train_labels.npy')
+        test_labels_file               = os.path.join(test_dir, 'test_labels.npy')
 
         if self.load_from_disk:
             self.log.info('Loading {}/{} train/test set embedding features from disk'.format(self.dataset.train_set_size, self.dataset.test_set_size))
