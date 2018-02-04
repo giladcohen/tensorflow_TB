@@ -68,7 +68,7 @@ class EnsembleTester(KNNClassifierTester):
                     p=int(self.knn_norm[-1]),
                     n_jobs=self.knn_jobs))
 
-            number_of_predictions = 2
+            number_of_predictions = 20
             for i in xrange(self.ensemble_size):
                 test_knn_predictions_prob_sum = np.zeros(shape=[self.dataset.test_set_size, self.num_classes], dtype=np.float32)
                 self.log.info('Training KNN model for net #{}'.format(i))
