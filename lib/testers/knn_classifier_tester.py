@@ -8,7 +8,7 @@ from lib.testers.tester_base import TesterBase
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import normalized_mutual_info_score
-from utils.misc import collect_features
+from utils.misc import collect_features, calc_mutual_agreement
 
 
 class KNNClassifierTester(TesterBase):
@@ -136,6 +136,21 @@ class KNNClassifierTester(TesterBase):
             self.log.info("Summing all knn probability vectors")
             test_knn_predictions_prob = np.sum(test_knn_predictions_prob_mat, axis=0)
             y_pred = test_knn_predictions_prob.argmax(axis=1)
+        elif self.decision_method == 'dnn_knn_mutual_agreement':
+            y_pred = y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
+            self.log.info('Predicting test set labels from KNN model...')
+            test_knn_predictions_prob = self.knn.predict_proba(X_test_features)
+            y_pred_knn = test_knn_predictions_prob.argmax(axis=1)
+            ma_score, md_score = calc_mutual_agreement(y_pred_dnn, y_pred_knn, y_test)
+
+            score_str = 'score_metrics/K={}/PCA={}/norm={}/weights={}/decision_method={}'\
+                .format(self.knn_neighbors, self.pca_embedding_dims, self.knn_norm, self.knn_weights, self.decision_method)
+            self.tb_logger_test.log_scalar(score_str + '/ma_score', ma_score, self.global_step)
+            self.tb_logger_test.log_scalar(score_str + '/md_score', md_score, self.global_step)
+            print_str = '{}: ma_score={}, md_score={}'.format(score_str, ma_score, md_score)
+            self.log.info(print_str)
+            print(print_str)
+            self.summary_writer_test.flush()
 
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
 
