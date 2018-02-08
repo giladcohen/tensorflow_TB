@@ -97,7 +97,7 @@ class ActiveDatasetWrapper(DatasetWrapper):
             return self.train_pool_handle
         elif name == 'train_pool_eval':
             return self.train_pool_eval_handle
-        super(ActiveDatasetWrapper, self).get_handle(name)
+        return super(ActiveDatasetWrapper, self).get_handle(name)
 
     def print_stats(self):
         super(ActiveDatasetWrapper, self).print_stats()
