@@ -8,10 +8,10 @@ from lib.base.agent_base import AgentBase
 import lib.logger.logger as logger
 import csv
 import tensorflow as tf
+from utils.enums import Mode
 
 class DatasetWrapper(AgentBase):
     """Wrapper which hold both the trainset and the validation set for cifar-10"""
-    #FIXME(gilad): consider using parent class for other datasets
 
     def __init__(self, name, prm):
         super(DatasetWrapper, self).__init__(name)
@@ -43,6 +43,7 @@ class DatasetWrapper(AgentBase):
 
         self.handle                   = None
         self.train_handle             = None
+        self.train_eval_handle        = None
         self.validation_handle        = None
         self.test_handle              = None
 
@@ -55,8 +56,7 @@ class DatasetWrapper(AgentBase):
 
     def build(self):
         """
-        Build the datasets and iterators. Session must be provided for the handles.
-        :param sess: session
+        Build the datasets and iterators.
         :return: None
         """
         self.map_train_validation()
@@ -66,31 +66,43 @@ class DatasetWrapper(AgentBase):
     def map_train_validation(self):
         """
         Sets the dictionary that maps each sample in the train set to 'train' or 'validation'
-        :return: None
+        :return: None. Updates self.train_validation_info.
         """
         # optionally load train-validation mapping reference reference
         if self.train_validation_map_ref is not None:
-            self.log.info('train_validation_map_ref was given. loading csv {}'.format(self.train_validation_map_ref))
-            with open(self.train_validation_map_ref) as csv_file:
-                self.train_validation_info = \
-                    [{'index': int(row['index']), 'dataset': row['dataset'], 'in_pool': row['in_pool'] == 'True'}
-                     for row in csv.DictReader(csv_file, skipinitialspace=True)]
+            self.load_data_info()
         else:
-            self.log.info('train_validation_map_ref is None. creating new mapping')
-            validation_indices = self.rand_gen.choice(range(self.train_validation_size), self.validation_set_size, replace=False)
-            validation_indices = validation_indices.tolist()
-            validation_indices.sort()
+            self.set_data_info()
+        self.save_data_info()
 
-            for ind in range(self.train_validation_size):
-                if ind in validation_indices:
-                    self.train_validation_info.append({'index'  : ind,
-                                                       'dataset': 'validation',
-                                                       'in_pool': False})
-                else:
-                    self.train_validation_info.append({'index'  : ind,
-                                                       'dataset': 'train',
-                                                       'in_pool': True})
+    def load_data_info(self):
+        """Loading self.train_validation_info from ref"""
+        self.log.info('train_validation_map_ref was given. loading csv {}'.format(self.train_validation_map_ref))
+        with open(self.train_validation_map_ref) as csv_file:
+            self.train_validation_info = \
+                [{'index': int(row['index']), 'dataset': row['dataset'], 'in_pool': row['in_pool'] == 'True'}
+                 for row in csv.DictReader(csv_file, skipinitialspace=True)]
 
+    def set_data_info(self):
+        """Updating self.train_validation_info dictionary is one is not loaded from ref"""
+        self.log.info('train_validation_map_ref is None. Creating new mapping')
+
+        validation_indices = self.rand_gen.choice(range(self.train_validation_size), self.validation_set_size, replace=False)
+        validation_indices = validation_indices.tolist()
+        validation_indices.sort()
+
+        for ind in range(self.train_validation_size):
+            if ind in validation_indices:
+                self.train_validation_info.append({'index': ind,
+                                                   'dataset': 'validation',
+                                                   'in_pool': False})
+            else:
+                self.train_validation_info.append({'index': ind,
+                                                   'dataset': 'train',
+                                                   'in_pool': False})  # 'in_pool' is only used for active learning.
+
+    def save_data_info(self):
+        """Saving self.train_validation_info into disk"""
         info_save_path = os.path.join(self.prm.train.train_control.ROOT_DIR, 'train_validation_info.csv')
         self.log.info('saving train-validation mapping csv file to {}'.format(info_save_path))
         keys = self.train_validation_info[0].keys()
@@ -99,17 +111,20 @@ class DatasetWrapper(AgentBase):
             dict_writer.writeheader()
             dict_writer.writerows(self.train_validation_info)
 
-    def build_datasets(self):
+    def get_raw_data(self, dataset_name):
+        """This function get the string dataset_name (such as cifar10 or cifar100) and returns images and labels
+        :param dataset_name: the name of the dataset
+        :return (X_train, y_train), (X_test, y_test) where
+        X_train/test.shape = [?, H, W, 3], dtype=float32
+        y_train/test.shape = [?]         , dtype=int
         """
-        Sets the train/validation/test datasets
-        :return: None
-        """
-        if self.dataset_name == 'cifar10':
-            data = tf.keras.datasets.cifar10
-        elif self.dataset_name == 'cifar100':
+
+        if 'cifar100' in dataset_name:
             data = tf.keras.datasets.cifar100
+        elif 'cifar10' in dataset_name:
+            data = tf.keras.datasets.cifar10
         else:
-            err_str = 'dataset {} is not legal'.format(self.dataset_name)
+            err_str = 'dataset {} is not legal'.format(dataset_name)
             self.log.error(err_str)
             raise AssertionError(err_str)
 
@@ -122,14 +137,44 @@ class DatasetWrapper(AgentBase):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        (train_images, train_labels), (validation_images, validation_labels) = self.split_train_validation(X_train, y_train)
-        (test_images, test_labels) = (X_test, y_test)
+        return (X_train, y_train), (X_test, y_test)
 
-        # generate datasets
-        self.train_dataset       = self.set_transform('train'     , train_images     , train_labels)
-        self.train_eval_dataset  = self.set_transform('train_eval', train_images     , train_labels)  # for evaluatiion only
-        self.validation_dataset  = self.set_transform('validation', validation_images, validation_labels)
-        self.test_dataset        = self.set_transform('test'      , test_images      , test_labels)
+    def build_datasets(self):
+        """
+        Sets the train/validation/test datasets
+        :return: None
+        """
+        (X_train, y_train), (X_test, y_test) = self.get_raw_data(self.dataset_name)
+        self.set_datasets(X_train, y_train, X_test, y_test)
+
+    def set_datasets(self, X_train, y_train, X_test, y_test):
+        """
+        Setting different datasets based on the train/test data
+        :param X_train: train data
+        :param y_train: train labels
+        :param X_test: test data
+        :param y_test: test labels
+        :return: None
+        """
+        # train set
+        train_indices           = [element['index'] for element in self.train_validation_info if element['dataset'] == 'train']
+        train_images            = X_train[train_indices]
+        train_labels            = y_train[train_indices]
+        self.train_dataset      = self.set_transform('train', Mode.TRAIN, train_images, train_labels)
+
+        # train eval set, for evaluation only
+        self.train_eval_dataset = self.set_transform('train_eval', Mode.EVAL, train_images, train_labels)
+
+        # validation set
+        validation_indices      = [element['index'] for element in self.train_validation_info if element['dataset'] == 'validation']
+        validation_images       = X_train[validation_indices]
+        validation_labels       = y_train[validation_indices]
+        self.validation_dataset = self.set_transform('validation', Mode.EVAL, validation_images, validation_labels)
+
+        # test set
+        test_images             = X_test
+        test_labels             = y_test
+        self.test_dataset       = self.set_transform('test', Mode.EVAL, test_images, test_labels)
 
     def build_iterators(self):
         """
@@ -165,33 +210,11 @@ class DatasetWrapper(AgentBase):
         self.validation_handle = sess.run(self.validation_iterator.string_handle())
         self.test_handle       = sess.run(self.test_iterator.string_handle())
 
-    def split_train_validation(self, X_train, y_train):
-        """
-        Splitting the train set to train and validation sets
-        :param X_train: images
-        :param y_train: labels
-        :return: (train_images, train_labels), (validation_images, validation_labels)
-        """
-        train_indices      = [element['index'] for element in self.train_validation_info if element['dataset'] == 'train']
-        validation_indices = [element['index'] for element in self.train_validation_info if element['dataset'] == 'validation']
-
-        train_images      = X_train[train_indices]
-        train_labels      = y_train[train_indices]
-        validation_images = X_train[validation_indices]
-        validation_labels = y_train[validation_indices]
-
-        if train_images.shape[0] != self.train_set_size or validation_images.shape[0] != self.validation_set_size:
-            err_str = 'The train/val set size is ({},{}) instead of ({},{})'.format(
-                train_images.shape[0], validation_images.shape[0], self.train_set_size, self.validation_set_size)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-
-        return (train_images, train_labels), (validation_images, validation_labels)
-
-    def set_transform(self, dataset_type, images, labels):
+    def set_transform(self, name, mode, images, labels):
         """
         Adding some transformation on a dataset
-        :param dataset_type: 'train'/'validation'/'test/train_eval'
+        :param name: name of the dataset (string). Examples: 'train'/'validation'/'test/train_eval'
+        :param mode: Mode (TRAIN/EVAL/PREDICT)
         :return: None.
         """
 
@@ -222,17 +245,17 @@ class DatasetWrapper(AgentBase):
             label = tf.cast(label, tf.int32)
             return image, label
 
-        if dataset_type == 'train':
+        if mode == Mode.TRAIN:
             batch_size = self.prm.train.train_control.TRAIN_BATCH_SIZE
         else:
             batch_size = self.prm.train.train_control.EVAL_BATCH_SIZE
 
-        with tf.name_scope(dataset_type + '_data'):
+        with tf.name_scope(name + '_data'):
             # feed all datasets with the same model placeholders:
             dataset = tf.data.Dataset.from_tensor_slices((images, labels))
             dataset = dataset.map(map_func=_cast, num_parallel_calls=batch_size)
 
-            if dataset_type == 'train':
+            if mode == Mode.TRAIN:
                 dataset = dataset.map(map_func=_augment, num_parallel_calls=batch_size)
                 dataset = dataset.shuffle(
                     buffer_size=batch_size,
@@ -245,27 +268,33 @@ class DatasetWrapper(AgentBase):
 
             return dataset
 
-    def get_mini_batch(self, dataset_type, sess):
+    def get_mini_batch(self, name, sess):
         """
         Get a session and returns the next training batch
+        :param name: the name of the dataset
         :param sess: Session
         :return: next training batch
         """
-        if dataset_type == 'train':
-            handle = self.train_handle
-        elif dataset_type == 'train_eval':
-            handle = self.train_eval_handle
-        elif dataset_type == 'validation':
-            handle = self.validation_handle
-        elif dataset_type == 'test':
-            handle = self.test_handle
-        else:
-            err_str = 'calling get_mini_batch with illegal dataset type ({})'.format(dataset_type)
-            self.log.error(err_str)
-            raise AssertionError(err_str)
-
+        handle = self.get_handle(name)
         images, labels = sess.run(self.next_minibatch, feed_dict={self.handle: handle})
         return images, labels
+
+    def get_handle(self, name):
+        """Getting an iterator handle based on dataset name
+        :param name: name of the dataset (string). e.g., 'train', 'train_eval', 'validation', 'test', etc.
+        """
+        if name == 'train':
+            return self.train_handle
+        elif name == 'train_eval':
+            return self.train_eval_handle
+        elif name == 'validation':
+            return self.validation_handle
+        elif name == 'test':
+            return self.test_handle
+
+        err_str = 'calling get_mini_batch with illegal dataset name ({})'.format(name)
+        self.log.error(err_str)
+        raise AssertionError(err_str)
 
     def print_stats(self):
         """print dataset parameters"""

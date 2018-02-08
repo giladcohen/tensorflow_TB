@@ -63,7 +63,7 @@ class KNNClassifierTester(TesterBase):
             (X_train_features, y_train) = \
                 collect_features(
                     agent=self,
-                    dataset_type='train_eval',
+                    dataset_name='train_eval',
                     fetches=[self.model.net['embedding_layer'], self.model.labels],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
 
@@ -71,7 +71,7 @@ class KNNClassifierTester(TesterBase):
             (X_test_features, y_test, test_dnn_predictions_prob) = \
                 collect_features(
                     agent=self,
-                    dataset_type='test',
+                    dataset_name='test',
                     fetches=[self.model.net['embedding_layer'], self.model.labels, self.model.predictions_prob],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
 
@@ -124,7 +124,7 @@ class KNNClassifierTester(TesterBase):
                 (X_test_features, ) = \
                     collect_features(
                         agent=self,
-                        dataset_type='test',
+                        dataset_name='test',
                         fetches=[self.model.net['embedding_layer']],
                         feed_dict={self.model.dropout_keep_prob: 0.5})
                 X_test_features = self.apply_pca(X_test_features, fit=False)

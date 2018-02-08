@@ -81,7 +81,7 @@ class EnsembleTester(KNNClassifierTester):
                     (X_test_features, ) = \
                         collect_features(
                             agent=self,
-                            dataset_type='test',
+                            dataset_name='test',
                             fetches=[self.model.net['embedding_layer']],
                             feed_dict={self.model.dropout_keep_prob: 0.5})
                     X_test_features = self.apply_pca(X_test_features, fit=False)

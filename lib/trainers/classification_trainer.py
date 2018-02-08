@@ -28,13 +28,13 @@ class ClassificationTrainer(TrainerBase):
         (labels, predictions) = \
             collect_features(
                 agent=self,
-                dataset_type='validation',
+                dataset_name='validation',
                 fetches=[self.model.labels, self.model.predictions],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
         score = np.average(labels == predictions)
 
         # sample loss/summaries for only the first batch
-        (summaries, loss) = self.sample_stats(dataset_type='validation')
+        (summaries, loss) = self.sample_stats(dataset_name='validation')
 
         self.validation_retention.add_score(score, self.global_step)
         self.tb_logger_validation.log_scalar('score', score, self.global_step)
@@ -50,13 +50,13 @@ class ClassificationTrainer(TrainerBase):
         (labels, predictions) = \
             collect_features(
                 agent=self,
-                dataset_type='test',
+                dataset_name='test',
                 fetches=[self.model.labels, self.model.predictions],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
         score = np.average(labels == predictions)
 
         # sample loss/summaries for only the first batch
-        (summaries, loss) = self.sample_stats(dataset_type='test')
+        (summaries, loss) = self.sample_stats(dataset_name='test')
 
         self.test_retention.add_score(score, self.global_step)
         self.tb_logger_test.log_scalar('score', score, self.global_step)
@@ -66,18 +66,18 @@ class ClassificationTrainer(TrainerBase):
         self.log.info('TEST (step={}): loss: {}, score: {}, best score: {}' \
                       .format(self.global_step, loss, score, self.test_retention.get_best_score()))
 
-    def sample_stats(self, dataset_type):
+    def sample_stats(self, dataset_name):
         """Sampling validation/test summary and loss only for one eval batch."""
-        if dataset_type == 'validation':
+        if dataset_name == 'validation':
             self.plain_sess.run(self.dataset.validation_iterator.initializer)
-        elif dataset_type == 'test':
+        elif dataset_name == 'test':
             self.plain_sess.run(self.dataset.test_iterator.initializer)
         else:
-            err_str = 'sample_stats must be called only with dataset=validation/test, not {}'.format(dataset_type)
+            err_str = 'sample_stats must be called only with dataset=validation/test, not {}'.format(dataset_name)
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        images, labels = self.dataset.get_mini_batch(dataset_type, self.plain_sess)
+        images, labels = self.dataset.get_mini_batch(dataset_name, self.plain_sess)
         (summaries, loss) = self.plain_sess.run([self.model.summaries, self.model.cost],
                                           feed_dict={self.model.images: images,
                                                      self.model.labels: labels,

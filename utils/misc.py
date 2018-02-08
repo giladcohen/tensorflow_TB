@@ -156,73 +156,78 @@ def get_plain_session(sess):
         session = session._sess
     return session
 
-def collect_features(agent, dataset_type, fetches, feed_dict=None):
-        """Collecting all fetches from the DNN in the dataset (train/validation/test/train_eval)
-        :param agent: The agent (trainer/tester).
-                      Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
-                      The agent must have a model with images and labels.  # This should be updated for all models
-        :param dataset_type: 'train', 'validation' or "test"
-        :param fetches: list of all the fetches to sample from the DNN.
-        :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
-        :return: fetches, as numpy float32.
-        """
-        if feed_dict is None:
-            feed_dict = {}
+def collect_features(agent, dataset_name, fetches, feed_dict=None):
+    """Collecting all fetches from the DNN in the dataset (train/validation/test/train_eval)
+    :param agent: The agent (trainer/tester).
+                  Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
+                  The agent must have a model with images and labels.  # This should be updated for all models
+    :param dataset_name: 'train', 'validation' or "test"
+    :param fetches: list of all the fetches to sample from the DNN.
+    :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
+    :return: fetches, as numpy float32.
+    """
+    if feed_dict is None:
+        feed_dict = {}
 
-        batch_size = agent.eval_batch_size
-        log        = agent.log
-        model      = agent.model
-        dataset    = agent.dataset
-        sess   = agent.plain_sess
+    batch_size = agent.eval_batch_size
+    log        = agent.log
+    model      = agent.model
+    dataset    = agent.dataset
+    sess       = agent.plain_sess
 
-        if dataset_type == 'train':
-            num_samples = dataset.train_set_size
-        elif dataset_type == 'train_eval':
-            num_samples = dataset.train_set_size
-            sess.run(dataset.train_eval_iterator.initializer)
-        elif dataset_type == 'validation':
-            num_samples = dataset.validation_set_size
-            sess.run(dataset.validation_iterator.initializer)
-        elif dataset_type == 'test':
-            num_samples = dataset.test_set_size
-            sess.run(dataset.test_iterator.initializer)
+    if dataset_name == 'train':
+        num_samples = dataset.train_set_size
+    elif dataset_name == 'train_pool':
+        num_samples = dataset.pool_size
+    elif dataset_name == 'train_eval':
+        num_samples = dataset.train_set_size
+        sess.run(dataset.train_eval_iterator.initializer)
+    elif dataset_name == 'train_pool_eval':
+        num_samples = dataset.pool_size
+        sess.run(dataset.train_pool_eval_iterator.initializer)
+    elif dataset_name == 'validation':
+        num_samples = dataset.validation_set_size
+        sess.run(dataset.validation_iterator.initializer)
+    elif dataset_name == 'test':
+        num_samples = dataset.test_set_size
+        sess.run(dataset.test_iterator.initializer)
+    else:
+        err_str = 'dataset_name={} is not supported'.format(dataset_name)
+        log.error(err_str)
+        raise AssertionError(err_str)
+
+    fetches_dims = [(num_samples,) + tuple(fetches[i].get_shape().as_list()[1:]) for i in xrange(len(fetches))]
+
+    batch_count     = int(ceil(num_samples / batch_size))
+    last_batch_size =          num_samples % batch_size
+    fetches_np = [np.empty(fetches_dims[i], dtype=np.float32) for i in xrange(len(fetches))]
+
+    log.info('start storing 2d fetches for {} samples in the {} set.'.format(num_samples, dataset_name))
+    for i in range(batch_count):
+        b = i * batch_size
+        if i < (batch_count - 1) or (last_batch_size == 0):
+            e = (i + 1) * batch_size
         else:
-            err_str = 'dataset_type={} is not supported'.format(dataset_type)
-            log.error(err_str)
-            raise AssertionError(err_str)
+            e = i * batch_size + last_batch_size
+        images, labels = dataset.get_mini_batch(dataset_name, sess)
+        tmp_feed_dict = {model.images: images,
+                         model.labels: labels,
+                         model.is_training: False}
+        tmp_feed_dict.update(feed_dict)
+        fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
+        for i in xrange(len(fetches)):
+            fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b,) + fetches_dims[i][1:])
+        log.info('Storing completed: {}%'.format(int(100.0 * e / num_samples)))
 
-        fetches_dims = [(num_samples,) + tuple(fetches[i].get_shape().as_list()[1:]) for i in xrange(len(fetches))]
+    return tuple(fetches_np)
 
-        batch_count     = int(ceil(num_samples / batch_size))
-        last_batch_size =          num_samples % batch_size
-        fetches_np = [np.empty(fetches_dims[i], dtype=np.float32) for i in xrange(len(fetches))]
-
-        log.info('start storing 2d fetches for {} samples in the {} set.'.format(num_samples, dataset_type))
-        for i in range(batch_count):
-            b = i * batch_size
-            if i < (batch_count - 1) or (last_batch_size == 0):
-                e = (i + 1) * batch_size
-            else:
-                e = i * batch_size + last_batch_size
-            images, labels = dataset.get_mini_batch(dataset_type, sess)
-            tmp_feed_dict = {model.images: images,
-                             model.labels: labels,
-                             model.is_training: False}
-            tmp_feed_dict.update(feed_dict)
-            fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
-            for i in xrange(len(fetches)):
-                fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b,) + fetches_dims[i][1:])
-            log.info('Storing completed: {}%'.format(int(100.0 * e / num_samples)))
-
-        return tuple(fetches_np)
-
-def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
+def collect_features_1d(agent, dataset_name, fetches, feed_dict=None):
     """Collecting all fetches from the DNN in the dataset (train/validation/test/train_eval)
     This function supports aggregation and averaging of 1d signals (scalelr per minibatch) in the network
     :param agent: The agent (trainer/tester).
                   Must have a session (sess), batch size (eval_batch_size), logger (log) and dataset wrapper (dataset)
                   The agent must have a model with images and labels.  # This should be updated for all models
-    :param dataset_type: 'train' or 'validation'
+    :param dataset_name: 'train' or 'validation'
     :param fetches: list of all the fetches to sample from the DNN.
     :param feed_dict: feed_dict to sess.run, other than images/labels/is_training.
     :return: fetches, as numpy float32.
@@ -232,25 +237,29 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
         feed_dict = {}
 
     batch_size = agent.eval_batch_size
-    log = agent.log
-    model = agent.model
-    dataset = agent.dataset
+    log        = agent.log
+    model      = agent.model
+    dataset    = agent.dataset
+    sess       = agent.plain_sess
 
-    sess = agent.plain_sess
-
-    if dataset_type == 'train':
+    if dataset_name == 'train':
         num_samples = dataset.train_set_size
-    elif dataset_type == 'train_eval':
+    elif dataset_name == 'train_pool':
+        num_samples = dataset.pool_size
+    elif dataset_name == 'train_eval':
         num_samples = dataset.train_set_size
         sess.run(dataset.train_eval_iterator.initializer)
-    elif dataset_type == 'validation':
+    elif dataset_name == 'train_pool_eval':
+        num_samples = dataset.pool_size
+        sess.run(dataset.train_pool_eval_iterator.initializer)
+    elif dataset_name == 'validation':
         num_samples = dataset.validation_set_size
         sess.run(dataset.validation_iterator.initializer)
-    elif dataset_type == 'test':
+    elif dataset_name == 'test':
         num_samples = dataset.test_set_size
         sess.run(dataset.test_iterator.initializer)
     else:
-        err_str = 'dataset_type={} is not supported'.format(dataset_type)
+        err_str = 'dataset_name={} is not supported'.format(dataset_name)
         log.error(err_str)
         raise AssertionError(err_str)
 
@@ -259,14 +268,14 @@ def collect_features_1d(agent, dataset_type, fetches, feed_dict=None):
 
     total_fetches_np = np.zeros(shape=(len(fetches)), dtype=np.float32)
 
-    log.info('start storing 1d fetches for {} samples in the {} set.'.format(num_samples, dataset_type))
+    log.info('start storing 1d fetches for {} samples in the {} set.'.format(num_samples, dataset_name))
     for i in range(batch_count):
         b = i * batch_size
         if i < (batch_count - 1) or (last_batch_size == 0):
             e = (i + 1) * batch_size
         else:
             e = i * batch_size + last_batch_size
-        images, labels = dataset.get_mini_batch(dataset_type, sess)
+        images, labels = dataset.get_mini_batch(dataset_name, sess)
         tmp_feed_dict = {model.images: images,
                          model.labels: labels,
                          model.is_training: False}

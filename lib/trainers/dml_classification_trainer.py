@@ -55,12 +55,12 @@ class DMLClassificationTrainer(ClassificationTrainer):
         self.log.info('start running eval within training. global_step={}'.format(self.global_step))
         (score,) = collect_features_1d(
             agent=self,
-            dataset_type='validation',
+            dataset_name='validation',
             fetches=[self.model.score],
             feed_dict={self.model.dropout_keep_prob: 1.0})
 
         # sample loss/summaries for only the first batch
-        (summaries, loss) = self.sample_stats(dataset_type='validation')
+        (summaries, loss) = self.sample_stats(dataset_name='validation')
 
         self.validation_retention.add_score(score, self.global_step)
         self.tb_logger_validation.log_scalar('score', score, self.global_step)
@@ -75,12 +75,12 @@ class DMLClassificationTrainer(ClassificationTrainer):
         self.log.info('start running test within training. global_step={}'.format(self.global_step))
         (score,) = collect_features_1d(
             agent=self,
-            dataset_type='test',
+            dataset_name='test',
             fetches=[self.model.score],
             feed_dict={self.model.dropout_keep_prob: 1.0})
 
         # sample loss/summaries for only the first batch
-        (summaries, loss) = self.sample_stats(dataset_type='test')
+        (summaries, loss) = self.sample_stats(dataset_name='test')
 
         self.test_retention.add_score(score, self.global_step)
         self.tb_logger_test.log_scalar('score', score, self.global_step)

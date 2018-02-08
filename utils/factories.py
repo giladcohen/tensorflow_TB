@@ -2,6 +2,7 @@ from __future__ import division
 
 import lib.logger.logger as logger
 from lib.datasets.dataset_wrapper import DatasetWrapper
+from lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
 from lib.models.resnet_model import ResNet
 from lib.models.dml_resnet_model import DMLResNet
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
@@ -29,6 +30,7 @@ from lib.trainers.active_learning.knn_dnn_correlation_trainer import KnnDnnCorre
 from lib.trainers.active_learning.most_uncertained_balanced_trainer import MostUncertainedBalancedTrainer
 from lib.trainers.active_learning.most_uncertained_knn_trainer import MostUncertainedKnnTrainer
 from lib.trainers.active_learning.most_uncertained_trainer import MostUncertainedTrainer
+from lib.trainers.active_learning.random_sampler_trainer_qad import RandomSamplerTrainerQAD
 from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTrainer
 from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
@@ -54,7 +56,9 @@ class Factories(object):
 
     def get_dataset(self):
         available_datasets = {'cifar10'         : DatasetWrapper,
-                              'cifar100'        : DatasetWrapper}
+                              'cifar100'        : DatasetWrapper,
+                              'active_cifar10'  : ActiveDatasetWrapper,
+                              'active_cifar100' : ActiveDatasetWrapper}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_dataset_wrapper', self.prm)
             return dataset
@@ -103,7 +107,8 @@ class Factories(object):
                               'random_sampler_dynamic'               : RandomSamplerDynamicTrainer,
                               'most_uncertained_dynamic'             : MostUncertainedDynamicTrainer,
                               'kmeans_segments_knn_dnn_correlation_dynamic' : KMeansSegmentsKnnDnnCorrelationDynamicTrainer,
-                              'most_uncertained_knn_dynamic'         : MostUncertainedKnnDynamicTrainer}
+                              'most_uncertained_knn_dynamic'         : MostUncertainedKnnDynamicTrainer,
+                              'random_sampler_trainer_qad'           : RandomSamplerTrainerQAD}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
