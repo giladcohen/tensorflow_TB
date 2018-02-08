@@ -38,10 +38,14 @@ class ActiveTrainerBase(ClassificationTrainer):
             elif self.to_eval():
                 self.eval_step()
                 self._activate_eval  = False
+            elif self.to_test():
+                self.test_step()
+                self._activate_test = False
             else:
                 self.train_step()
                 self._activate_annot = True
                 self._activate_eval  = True
+                self._activate_test  = True
         self.log.info('Stop training at global_step={}'.format(self.global_step))
 
     def annot_step(self):
