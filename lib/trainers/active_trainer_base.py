@@ -28,6 +28,7 @@ class ActiveTrainerBase(ClassificationTrainer):
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 
         self._activate_annot = True
+        self.steps_for_new_annotations = self.steps_for_new_annotations or []
 
     def train(self):
         while not self.sess.should_stop():
