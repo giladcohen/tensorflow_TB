@@ -101,9 +101,10 @@ class DatasetWrapper(AgentBase):
                                                    'dataset': 'train',
                                                    'in_pool': False})  # 'in_pool' is only used for active learning.
 
-    def save_data_info(self):
+    def save_data_info(self, info_save_path=None):
         """Saving self.train_validation_info into disk"""
-        info_save_path = os.path.join(self.prm.train.train_control.ROOT_DIR, 'train_validation_info.csv')
+        if info_save_path is None:
+            info_save_path = os.path.join(self.prm.train.train_control.ROOT_DIR, 'train_validation_info.csv')
         self.log.info('saving train-validation mapping csv file to {}'.format(info_save_path))
         keys = self.train_validation_info[0].keys()
         with open(info_save_path, 'wb') as csv_file:

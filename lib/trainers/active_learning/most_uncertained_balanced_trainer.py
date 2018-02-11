@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.active_trainer_base import ActiveTrainerBase
+from lib.trainers.active_trainer import ActiveTrainer
 import numpy as np
 
 
-class MostUncertainedBalancedTrainer(ActiveTrainerBase):
+class MostUncertainedBalancedTrainer(ActiveTrainer):
 
     def __init__(self, *args, **kwargs):
         super(MostUncertainedBalancedTrainer, self).__init__(*args, **kwargs)

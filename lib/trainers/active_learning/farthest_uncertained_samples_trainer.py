@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.active_trainer_base import ActiveTrainerBase
+from lib.trainers.active_trainer import ActiveTrainer
 import numpy as np
 
-class FarthestUncertainedSamplesTrainer(ActiveTrainerBase):
+class FarthestUncertainedSamplesTrainer(ActiveTrainer):
     def select_new_samples(self):
 
         # analyzing (evaluation)

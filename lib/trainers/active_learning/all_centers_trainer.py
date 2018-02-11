@@ -2,12 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.active_trainer_base import ActiveTrainerBase
+from lib.trainers.active_trainer import ActiveTrainer
 from lib.all_centers_kmeans import AllCentersKMeans
 from sklearn.neighbors import NearestNeighbors
 
 
-class AllCentersTrainer(ActiveTrainerBase):
+class AllCentersTrainer(ActiveTrainer):
     def select_new_samples(self):
         lp = self.dataset.train_dataset.pool_size()
 

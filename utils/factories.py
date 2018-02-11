@@ -39,6 +39,7 @@ from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 from lib.testers.knn_classifier_tester import KNNClassifierTester
 from lib.testers.ensemble_tester import EnsembleTester
+import lib.trainers.active_learning.active_learning_select_functions as alf
 
 
 class Factories(object):
@@ -48,11 +49,12 @@ class Factories(object):
         self.log = logger.get_logger('factories')
         self.prm = prm
 
-        self.dataset_name         = self.prm.dataset.DATASET_NAME
-        self.trainer              = self.prm.train.train_control.TRAINER
-        self.architecture         = self.prm.network.ARCHITECTURE
-        self.learning_rate_setter = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
-        self.tester               = self.prm.test.test_control.TESTER
+        self.dataset_name               = self.prm.dataset.DATASET_NAME
+        self.trainer                    = self.prm.train.train_control.TRAINER
+        self.architecture               = self.prm.network.ARCHITECTURE
+        self.learning_rate_setter       = self.prm.train.train_control.learning_rate_setter.LEARNING_RATE_SETTER
+        self.tester                     = self.prm.test.test_control.TESTER
+        self.active_selection_criterion = self.prm.train.train_control.ACTIVE_SELECTION_CRITERION
 
     def get_dataset(self):
         available_datasets = {'cifar10'         : DatasetWrapper,
@@ -144,3 +146,15 @@ class Factories(object):
             err_str = 'get_learning_rate_setter: learning_rate_setter {} was not found. Available setters are: {}'.format(self.learning_rate_setter, available_setters.keys())
             self.log.error(err_str)
             raise AssertionError(err_str)
+
+    def get_active_selection_fn(self):
+        available_functions = {'min_mul_dnn_max_knn_same': alf.min_mul_dnn_max_knn_same}
+        if self.active_selection_criterion in available_functions:
+            function = available_functions[self.active_selection_criterion]
+            self.log.info('get_active_selection_fn: returning ' + self.active_selection_criterion)
+            return function
+        else:
+            err_str = 'get_active_selection_fn: active_selection_criterion {} was not found. Available functions are: {}'.format(self.active_selection_criterion, available_functions.keys())
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+

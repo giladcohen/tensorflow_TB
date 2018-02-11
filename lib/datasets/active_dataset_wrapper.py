@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from utils.enums import Mode
 
@@ -112,24 +113,22 @@ class ActiveDatasetWrapper(DatasetWrapper):
         :param indices: list of indices to add to train_pool
         :return: None
         """
-        if indices is not None:
-            return self.update_pool_with_indices(indices)
         if clusters is None:
             clusters = self.clusters
-
-        unpool_train_indices = self.get_all_unpool_train_indices()
-        if len(unpool_train_indices) < clusters:
-            self.log.warning('Adding {} indices instead of {} to pool. pool is full'.format(len(unpool_train_indices), clusters))
-            indices = unpool_train_indices
-        else:
-            indices = self.rand_gen.choice(unpool_train_indices, clusters, replace=False)
-            indices = indices.tolist()
-            indices.sort()
+        if indices is None:
+            # indices are not provided - selecting list of indices
+            unpool_train_indices = self.get_all_unpool_train_indices()
+            if len(unpool_train_indices) < clusters:
+                self.log.warning('Adding {} indices instead of {} to pool. pool is full'.format(len(unpool_train_indices), clusters))
+                indices = unpool_train_indices
+            else:
+                indices = self.rand_gen.choice(unpool_train_indices, clusters, replace=False)
+                indices = indices.tolist()
+                indices.sort()
         self.update_pool_with_indices(indices)
         self.save_data_info()
         self.build_datasets()
         self.build_iterators()
-        # also needs to rerun set_handles with a session
 
     def update_pool_with_indices(self, indices):
         """Updating train_pool dataset with new indices
@@ -160,3 +159,9 @@ class ActiveDatasetWrapper(DatasetWrapper):
             err_str = 'assert_unique_indices: some index/indices are already in pool.\nindices={}'.format(indices)
             self.log.error(err_str)
             raise AssertionError(err_str)
+
+    def save_data_info(self, info_save_path=None):
+        """Saving self.train_validation_info into disk"""
+        save_file = 'train_validation_info_' + 'lp_' + str(self.pool_size)
+        info_save_path = os.path.join(self.prm.train.train_control.ROOT_DIR, save_file)
+        super(ActiveDatasetWrapper, self).save_data_info(info_save_path)

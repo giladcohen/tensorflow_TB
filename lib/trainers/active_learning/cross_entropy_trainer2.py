@@ -2,14 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.active_trainer_base import ActiveTrainerBase
+from lib.trainers.active_trainer import ActiveTrainer
 import numpy as np
 # from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import log_loss
 
 
-class CrossEntropyTrainer2(ActiveTrainerBase):
+class CrossEntropyTrainer2(ActiveTrainer):
     """
     The difference between CrossEntropyTrainer2 and CrossEntropyTrainer is that in '2' the GT for the
     cross entropy is the network prediction instead of the KNN prediction

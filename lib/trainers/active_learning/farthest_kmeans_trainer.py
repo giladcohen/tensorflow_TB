@@ -5,12 +5,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.active_trainer_base import ActiveTrainerBase
+from lib.trainers.active_trainer import ActiveTrainer
 from sklearn.cluster import KMeans
 import numpy as np
 
 
-class FarthestKMeansTrainer(ActiveTrainerBase):
+class FarthestKMeansTrainer(ActiveTrainer):
 
     def select_new_samples(self):
 

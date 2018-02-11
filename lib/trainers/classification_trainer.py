@@ -89,3 +89,13 @@ class ClassificationTrainer(TrainerBase):
         super(ClassificationTrainer, self).get_train_summaries()
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.image('input_images', self.model.images))
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('dropout_keep_prob', self.model.dropout_keep_prob))
+
+    def set_params(self):
+        super(ClassificationTrainer, self).set_params()
+        assign_ops = []
+        dropout_keep_prob = self.plain_sess.run(self.model.dropout_keep_prob)
+
+        if not np.isclose(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB):
+            assign_ops.append(self.model.assign_ops['dropout_keep_prob'])
+            self.log.warning('changing model.dropout_keep_prob from {} to {}'.format(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB))
+        self.plain_sess.run(assign_ops)

@@ -312,6 +312,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.ANNOTATION_RULE       = None  # The rule for adding new annotations in active learning
         self.STEPS_FOR_NEW_ANNOTATIONS = None # integer: global steps to add annotations
         self.INIT_AFTER_ANNOT      = None  # Whether or not to initialize network weights after annotation phase
+        self.ACTIVE_SELECTION_CRITERION = None  # string: the method for the active learning
 
         self.learning_rate_setter     = ParametersTrainControlLearningRateSetter()
         self.margin_multiplier_setter = ParametersTrainControlMarginMultiplierSetter()
@@ -348,6 +349,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'ANNOTATION_RULE'      , self.ANNOTATION_RULE)
         self.set_to_config(do_save_none, section_name, config, 'STEPS_FOR_NEW_ANNOTATIONS' , self.STEPS_FOR_NEW_ANNOTATIONS)
         self.set_to_config(do_save_none, section_name, config, 'INIT_AFTER_ANNOT'     , self.INIT_AFTER_ANNOT)
+        self.set_to_config(do_save_none, section_name, config, 'ACTIVE_SELECTION_CRITERION', self.ACTIVE_SELECTION_CRITERION)
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
         self.margin_multiplier_setter.save_to_ini(do_save_none, section_name, config)
@@ -379,6 +381,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'ANNOTATION_RULE'      , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'STEPS_FOR_NEW_ANNOTATIONS' , np.array)
         self.parse_from_config(self, override_mode, section_name, parser, 'INIT_AFTER_ANNOT'     , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'ACTIVE_SELECTION_CRITERION', str)
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
         self.margin_multiplier_setter.set_from_file(override_mode, section_name, parser)
