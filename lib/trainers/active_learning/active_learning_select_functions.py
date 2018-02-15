@@ -82,6 +82,47 @@ def most_uncertained_following_min_corr(agent):
     best_unpool_indices.sort()
     return best_unpool_indices
 
+def min_corr_following_most_uncertained(agent):
+    """
+    :param agent: An active learning trainer
+    :return: list of indices
+    """
+
+    unpool_indices = agent.dataset.get_all_unpool_train_indices()
+
+    pool_features_vec, pool_labels = \
+        collect_features(agent=agent,
+                         dataset_name='train_pool_eval',
+                         fetches=[agent.model.net['embedding_layer'], agent.model.labels],
+                         feed_dict={agent.model.dropout_keep_prob: 1.0})
+
+    unpool_features_vec, unpool_predictions_vec = \
+        collect_features(agent=agent,
+                         dataset_name='train_unpool_eval',
+                         fetches=[agent.model.net['embedding_layer'], agent.model.predictions_prob],
+                         feed_dict={agent.model.dropout_keep_prob: 1.0})
+
+    agent.log.info('building kNN space only for the labeled (pooled) train features')
+    nbrs = KNeighborsClassifier(n_neighbors=30, weights='uniform', p=1)
+    nbrs.fit(pool_features_vec, pool_labels)
+
+    agent.log.info('Calculating the estimated labels probability based on KNN')
+    estimated_labels_vec = nbrs.predict_proba(unpool_features_vec)
+
+    agent.log.info('Calculating the correlation scores between the KNN and DNN predictions')
+    corr_vec = correlation_score(agent, estimated_labels_vec, unpool_predictions_vec)
+    corr_unpool_relative_indices = corr_vec.argsort()[-agent.dataset.clusters*5:]
+    corr_unpool_indices = np.take(unpool_indices, corr_unpool_relative_indices)
+    corr_unpool_predictions_vec = unpool_predictions_vec[corr_unpool_relative_indices]
+
+    agent.log.info('Selecting 1k samples out of the 5k candidate samples')
+    mu_vec = uncertainty_score(agent, corr_unpool_predictions_vec)
+    mu_unpool_relative_indices = mu_vec.argsort()[-agent.dataset.clusters:]
+    best_unpool_indices = np.take(corr_unpool_indices, mu_unpool_relative_indices)
+    best_unpool_indices.tolist()
+    best_unpool_indices.sort()
+    return best_unpool_indices
+
 def mul_dnn_max_knn_same(agent, y_pred_knn, y_pred_dnn):
     """
     Calculates the uncertainty score based on the multiplication of the highest DNN probability with the
