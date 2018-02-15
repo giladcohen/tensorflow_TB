@@ -254,7 +254,7 @@ class DatasetWrapper(AgentBase):
         else:
             batch_size = self.prm.train.train_control.EVAL_BATCH_SIZE
 
-        with tf.name_scope(name + '_data' + '_poolsize_' + str(self.pool_size)):
+        with tf.name_scope(name + '_data'):
             # feed all datasets with the same model placeholders:
             dataset = tf.data.Dataset.from_tensor_slices((images, labels))
             dataset = dataset.map(map_func=_cast, num_parallel_calls=batch_size)

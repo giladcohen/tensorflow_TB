@@ -140,8 +140,6 @@ class ActiveDatasetWrapper(DatasetWrapper):
                 indices.sort()
         self.update_pool_with_indices(indices)
         self.save_data_info()
-        self.build_datasets()
-        self.build_iterators()
 
     def update_pool_with_indices(self, indices):
         """Updating train_pool dataset with new indices
