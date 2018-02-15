@@ -66,9 +66,9 @@ class ActiveTrainer(ClassificationTrainer):
         tf.reset_default_graph()
         train_validation_map_ref = self.dataset.train_validation_map_ref
 
-        self.model   = self.Factories.get_model()
-        self.dataset = self.Factories.get_dataset()
-        self.dataset.train_validation_map_ref = train_validation_map_ref
+        # self.model   = self.Factories.get_model()
+        # self.dataset = self.Factories.get_dataset()
+        # self.dataset.train_validation_map_ref = train_validation_map_ref
         self.build()
         self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
 
