@@ -150,7 +150,8 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_active_selection_fn(self):
-        available_functions = {'min_mul_dnn_max_knn_same': alf.min_mul_dnn_max_knn_same}
+        available_functions = {'min_mul_dnn_max_knn_same'           : alf.min_mul_dnn_max_knn_same,
+                               'most_uncertained_following_min_corr': alf.most_uncertained_following_min_corr}
         if self.active_selection_criterion in available_functions:
             function = available_functions[self.active_selection_criterion]
             self.log.info('get_active_selection_fn: returning ' + self.active_selection_criterion)
