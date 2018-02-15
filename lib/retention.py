@@ -1,6 +1,5 @@
 from lib.base.agent_base import AgentBase
 
-
 class Retention(AgentBase):
 
     def __init__(self, name, prm):
@@ -16,7 +15,7 @@ class Retention(AgentBase):
         self.reset_memory()
 
     def print_stats(self):
-        self.log.info(self.__str__() + 'parameters:')
+        self.log.info(str(self) + ' parameters:')
         self.log.info(' RETENTION_SIZE: {}'.format(self.retention_size))
 
     def set_best_score(self, score, global_step):
@@ -32,13 +31,17 @@ class Retention(AgentBase):
         self.log.info('Current score memory is:\n\t{}'.format(self.memory))
 
     def add_score(self, score, global_step):
-        self.memory = self.memory[1:] + [score]
+        self.memory = self.memory[1:] + [{'step': global_step, 'score': score}]
         if score > self.best_score:
             self.set_best_score(score, global_step)
 
     def is_score_stuck(self):
-        return all(val < self.get_best_score() for val in self.memory)
+        return all(m['score'] < self.get_best_score() or (m['score'] == self.get_best_score() and m['step'] > self.best_score_step)
+                   for m in self.memory)
 
     def reset_memory(self):
-        self.log.info('Reseting ' + self.__str__() + ' memory')
-        self.memory = [0.0] * self.retention_size
+        self.log.info('Reseting ' + str(self) + ' memory')
+        self.memory = [{'step': None, 'score': None}] * self.retention_size
+
+
+

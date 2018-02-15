@@ -2,14 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.active_trainer_base import ActiveTrainerBase
+from lib.trainers.active_trainer import ActiveTrainer
 import numpy as np
 import tensorflow as tf
 from lib.base.collections import TRAIN_SUMMARIES
 import os
 
 
-class DynamicModelTrainer(ActiveTrainerBase):
+class DynamicModelTrainer(ActiveTrainer):
 
     def __init__(self, *args, **kwargs):
         super(DynamicModelTrainer, self).__init__(*args, **kwargs)
@@ -88,7 +88,6 @@ class DynamicModelTrainer(ActiveTrainerBase):
                      self.model.is_training         : False}
 
         self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']], feed_dict=feed_dict)
-        # global_step, weight_decay_rate = self.sess.run([self.model.global_step, self.model.weight_decay_rate], feed_dict=feed_dict)
 
     def set_params(self):
         pass

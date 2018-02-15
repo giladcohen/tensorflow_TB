@@ -1,5 +1,6 @@
 import numpy as np
 import lib.logger.logger as logger
+import ast
 DEBUG_MODE = False
 
 
@@ -24,7 +25,12 @@ class IniParser(object):
 
     def set_to_config(self, do_save_none, section, config, key, val):
         if val is not None:
-            config.set(section, key, str(val))
+            if type(val) == list and type(val[0]) == unicode:  # if it is list of unicode strings
+                val = '[' + ",".join(val) + ']'
+                val = str(val)
+                config.set(section, key, val)
+            else:
+                config.set(section, key, str(val))
         else:
             if do_save_none:
                 config.set(section, key, 'None')
@@ -41,10 +47,14 @@ class IniParser(object):
                 val = parser.getboolean(section, key)
             elif isinstance(val, np.ndarray):
                 val = eval(val_as_str)
+            elif isinstance(val, list):
+                val = val_as_str[1:-1]
+                val = list(filter(None, (x.strip() for x in val.split(","))))
             else:
                 if val_as_str == 'None':
                     val = None
-            setattr(obj_instance, key, val)
+            if val is not None:
+                setattr(obj_instance, key, val)
         except:
             # key do not exist: error in load mode and O.K. in override mode
             if not override_mode:

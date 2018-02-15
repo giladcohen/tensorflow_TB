@@ -8,7 +8,6 @@ import lib.logger.logger as logger
 from lib.logger.logging_config import logging_config
 from utils.parameters import Parameters
 from utils.factories import Factories
-from lib.datasets.dataset_wrapper import DatasetWrapper
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans

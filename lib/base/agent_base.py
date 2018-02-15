@@ -6,7 +6,6 @@ class AgentBase(object):
     """Base class for all the agents in the train bench:
     Model
     Trainer
-    PreProcessor
     Dataset
     Hooks
     et cetera"""

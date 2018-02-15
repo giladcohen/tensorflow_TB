@@ -6,11 +6,9 @@ import warnings
 cwd = os.getcwd() # tensorflow-TB
 sys.path.insert(0, cwd)
 
-import lib.logger.logger as logger
 from lib.logger.logging_config import logging_config
 from utils.parameters import Parameters
 from utils.factories import Factories
-from lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
 from utils.misc import query_yes_no
 
@@ -44,10 +42,7 @@ def train(prm):
     model        = factories.get_model()
     model.print_stats() #debug
 
-    preprocessor = factories.get_preprocessor()
-    preprocessor.print_stats() #debug
-
-    dataset = factories.get_dataset(preprocessor)
+    dataset = factories.get_dataset()
     dataset.print_stats() #debug
 
     trainer      = factories.get_trainer(model, dataset)

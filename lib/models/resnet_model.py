@@ -1,7 +1,6 @@
 from lib.models.classifier_model import ClassifierModel
 from lib.models.layers import *
 import six
-import tensorflow.contrib.slim as slim
 
 class ResNet(ClassifierModel):
     """Implementing an image classifier using a ResNet architecture
@@ -65,6 +64,10 @@ class ResNet(ClassifierModel):
             with tf.variable_scope('unit_3_%d' % i):
                 x = self._residual(x, filters[3], stride_arr(1), False)
 
+        x = self.unit_last(x)
+
+    def unit_last(self, x):
+        """Implementing the final unit of the resnet"""
         with tf.variable_scope('unit_last'):
             x = tf.layers.batch_normalization(x, training=self.is_training, name='pre_pool_bn')
             x = relu(x, self.relu_leakiness)
@@ -72,10 +75,10 @@ class ResNet(ClassifierModel):
             x = self.post_pool_operations(x)
             x = tf.nn.dropout(x, keep_prob=self.dropout_keep_prob)
             if self.normalize_embedding:
-                x = slim.unit_norm(x, dim=1, scope='normalize_vec')
-                variable_summaries('embedding', x)
+                x = tf.nn.l2_normalize(x, axis=1, name='normalize_vec')  # was x = slim.unit_norm(x, dim=1, scope='normalize_vec')
+            variable_summaries('embedding', x)
             self.net['embedding_layer'] = x
-            self.logits = self.calculate_logits(x)
+            self.net['logits'] = self.calculate_logits(x)
 
     def _residual(self, x, out_filter, stride, activate_before_residual=False):
         """Residual unit with 2 sub layers."""
@@ -115,3 +118,4 @@ class ResNet(ClassifierModel):
 
     def calculate_logits(self, x):
         return fully_connected(x, self.num_classes)
+

@@ -6,11 +6,10 @@ import lib.logger.logger as logger
 class LearningRateSetterBase(tf.train.SessionRunHook):
     """Sets learning_rate based on the initial learning rate parameter."""
 
-    def __init__(self, name, prm, model, trainset_dataset, retention):
+    def __init__(self, name, prm, model, retention):
         self.name = name
         self.prm = prm
         self.model = model
-        self.trainset_dataset = trainset_dataset  # used in children
         self.retention = retention  # used in children
         self.log = logger.get_logger(name)
 
@@ -26,12 +25,7 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
         return self.name
 
     def before_run(self, run_context):
-        if hasattr(run_context.original_args.fetches, 'name') and run_context.original_args.fetches.name == 'init_set_params/init':  # ad hoc code to prevent error when initializing
-            # don't feed the learning rate
-            return tf.train.SessionRunArgs(self.model.global_step)
-        else:
-            # feed the learning rate
-            return tf.train.SessionRunArgs(self.model.global_step, feed_dict={self.model.lrn_rate: self._lrn_rate})
+        return tf.train.SessionRunArgs(self.model.global_step, feed_dict={self.model.lrn_rate: self._lrn_rate})
 
     def print_stats(self):
         self.log.info('Learning Rate Setter parameters:')
@@ -48,3 +42,4 @@ class LearningRateSetterBase(tf.train.SessionRunHook):
     def reset_learning_rate(self):
         self.log.info('Reseting learning rate to reset value')
         self.set_lrn_rate(self._reset_lrn_rate)
+

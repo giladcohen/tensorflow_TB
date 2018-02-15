@@ -21,7 +21,6 @@ class ModelBase(AgentBase):
         self.train_op = None       # training operation
         self.cost = None           # total objective to decrease - input to train_op
         self.wd_cost = None        # weight decay cost
-        self.logits = None         # output of network - used to calculate cost
         self.predictions = None    # predictions of the network
         self.score = None          # total score of the network
         self.summaries = None      # summaries collected from the entire graph
@@ -49,14 +48,16 @@ class ModelBase(AgentBase):
             self._set_params()
         with tf.variable_scope('inference'):
             self._build_inference()
-        with tf.variable_scope('interpretation'):
-            self._build_interpretation()
         with tf.variable_scope('loss'):
             self._build_loss()
+        with tf.variable_scope('interpretation'):
+            self._build_interpretation()
         with tf.variable_scope('training'):
             self._build_train_op()
         with tf.variable_scope('summaries'):
             self.summaries = tf.summary.merge_all()
+        with tf.variable_scope('init_op'):
+            self.init_op = tf.global_variables_initializer()
 
     def _init_params(self):
         """Initialize params that may be changed from two training sessions"""
@@ -76,7 +77,6 @@ class ModelBase(AgentBase):
         self.optimizer          = tf.contrib.framework.model_variable(
             name='optimizer', dtype=tf.string, shape=[],
             initializer=tf.constant_initializer(self.prm.network.optimization.OPTIMIZER), trainable=False)
-        self.init_op = tf.global_variables_initializer()
 
     def _set_params(self):
         self.assign_ops['global_step_ow'] = self.global_step.assign(self.global_step_ph)
@@ -96,7 +96,7 @@ class ModelBase(AgentBase):
 
     @abstractmethod
     def _build_inference(self):
-        '''build the inference model and sets self.logits'''
+        '''build the inference model and sets self.net'''
         pass
 
     def _build_interpretation(self):
@@ -108,7 +108,7 @@ class ModelBase(AgentBase):
         self.add_weight_decay()
         self.add_fidelity_loss()
         with tf.control_dependencies(tf.get_collection('assertions')):
-            self.cost = tf.add_n(tf.get_collection('losses'), name='total_loss')
+            self.cost = tf.add_n(tf.get_collection(tf.GraphKeys.LOSSES), name='total_loss')
             tf.summary.scalar('cost', self.cost)
 
     def add_weight_decay(self):
@@ -116,7 +116,7 @@ class ModelBase(AgentBase):
             self.wd_cost = self._decay()
             tf.summary.scalar('wd_cost', self.wd_cost)
             wd_assert_op = tf.verify_tensor_all_finite(self.wd_cost, 'wd_cost contains NaN or Inf')
-            tf.add_to_collection('losses', self.wd_cost)
+            tf.add_to_collection(tf.GraphKeys.LOSSES, self.wd_cost)
             tf.add_to_collection('assertions', wd_assert_op)
 
     @abstractmethod
@@ -159,6 +159,8 @@ class ModelBase(AgentBase):
             optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9, use_nesterov=True)
         elif self.optimizer_name == 'SGD':
             optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
+        elif self.optimizer_name == 'RMSPROP':
+            optimizer = tf.train.RMSPropOptimizer(self.lrn_rate)
         else:
             err_str = 'optimizer_name ({}) is not supported'.format(self.optimizer_name)
             self.log.error(err_str)

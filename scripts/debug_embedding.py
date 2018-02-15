@@ -12,7 +12,6 @@ import lib.logger.logger as logger
 from lib.logger.logging_config import logging_config
 from utils.parameters import Parameters
 from utils.factories import Factories
-from lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
 import numpy as np
 from sklearn import manifold

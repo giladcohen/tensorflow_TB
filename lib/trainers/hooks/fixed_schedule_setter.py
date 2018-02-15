@@ -6,14 +6,14 @@ class FixedScheduleSetter(LearningRateSetterBase):
     def __init__(self, *args, **kwargs):
         super(FixedScheduleSetter, self).__init__(*args, **kwargs)
 
-        self.scheduled_steps         = self.prm.train.train_control.learning_rate_setter.SCHEDULED_STEPS
-        self.use_fixed_epochs        = self.prm.train.train_control.learning_rate_setter.USE_FIXED_EPOCHS
+        self.scheduled_steps          = self.prm.train.train_control.learning_rate_setter.SCHEDULED_STEPS
+        self.use_fixed_epochs         = self.prm.train.train_control.learning_rate_setter.USE_FIXED_EPOCHS
         self.scheduled_learning_rates = self.prm.train.train_control.learning_rate_setter.SCHEDULED_LEARNING_RATES
-        self.all_learning_rates      = [self._init_lrn_rate] + self.scheduled_learning_rates # all learning rates
+        self.all_learning_rates       = [self._init_lrn_rate] + self.scheduled_learning_rates # all learning rates
 
-        self.train_batch_size = self.trainset_dataset.batch_size
-        self.train_set_size   = self.trainset_dataset.pool_size()
-        self._notify = [False] * len(self.all_learning_rates)
+        self.train_batch_size         = self.prm.train.train_control.TRAIN_BATCH_SIZE
+        self.train_set_size           = self.prm.dataset.TRAIN_SET_SIZE
+        self._notify                  = [False] * len(self.all_learning_rates)
 
         self.assert_config()
 
