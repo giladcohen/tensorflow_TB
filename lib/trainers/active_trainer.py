@@ -4,7 +4,6 @@ from __future__ import print_function
 
 from lib.trainers.classification_trainer import ClassificationTrainer
 from sklearn.decomposition import PCA
-from utils.factories import Factories
 
 class ActiveTrainer(ClassificationTrainer):
     """Implementing active trainer
@@ -26,7 +25,7 @@ class ActiveTrainer(ClassificationTrainer):
 
         self._activate_annot = True
         self.steps_for_new_annotations = self.steps_for_new_annotations or []
-        self.select_new_samples = Factories.get_active_selection_fn()
+        self.select_new_samples = self.Factories.get_active_selection_fn()
 
     def train(self):
         while not self.sess.should_stop():
