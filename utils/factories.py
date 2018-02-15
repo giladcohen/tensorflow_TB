@@ -34,6 +34,7 @@ from lib.trainers.active_learning.random_sampler_trainer_qad import RandomSample
 from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTrainer
 from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
+from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
@@ -88,6 +89,7 @@ class Factories(object):
     def get_trainer(self, model, dataset):
         available_trainers = {'simple'                               : ClassificationTrainer,
                               'dml'                                  : DMLClassificationTrainer,
+                              'active'                               : ActiveTrainer,
                               'random_sampler'                       : RandomSamplerTrainer,
                               'all_centers'                          : AllCentersTrainer,
                               'class_centers'                        : ClassCentersTrainer,

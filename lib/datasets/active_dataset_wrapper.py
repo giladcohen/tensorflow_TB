@@ -13,14 +13,17 @@ class ActiveDatasetWrapper(DatasetWrapper):
         self.init_size = self.prm.dataset.INIT_SIZE
         self.cap       = self.prm.dataset.CAP
 
-        self.train_pool_dataset       = None
-        self.train_pool_eval_dataset  = None
+        self.train_pool_dataset         = None
+        self.train_pool_eval_dataset    = None
+        self.train_unpool_eval_dataset  = None
 
-        self.train_pool_iterator      = None
-        self.train_pool_eval_iterator = None
+        self.train_pool_iterator        = None
+        self.train_pool_eval_iterator   = None
+        self.train_unpool_eval_iterator = None
 
-        self.train_pool_handle        = None
-        self.train_pool_eval_handle   = None
+        self.train_pool_handle          = None
+        self.train_pool_eval_handle     = None
+        self.train_unpool_eval_handle   = None
 
     def set_data_info(self):
         """
@@ -77,27 +80,37 @@ class ActiveDatasetWrapper(DatasetWrapper):
         super(ActiveDatasetWrapper, self).set_datasets(X_train, y_train, X_test, y_test)
 
         # train_pool_set
-        train_pool_indices           = [element['index'] for element in self.train_validation_info if element['dataset'] == 'train' and element['in_pool']]
-        train_pool_images            = X_train[train_pool_indices]
-        train_pool_labels            = y_train[train_pool_indices]
-        self.train_pool_dataset      = self.set_transform('train_pool', Mode.TRAIN, train_pool_images, train_pool_labels)
-        self.train_pool_eval_dataset = self.set_transform('train_pool', Mode.EVAL , train_pool_images, train_pool_labels)
+        train_pool_indices             = self.get_all_pool_train_indices()
+        train_pool_images              = X_train[train_pool_indices]
+        train_pool_labels              = y_train[train_pool_indices]
+        self.train_pool_dataset        = self.set_transform('train_pool', Mode.TRAIN, train_pool_images, train_pool_labels)
+        self.train_pool_eval_dataset   = self.set_transform('train_pool', Mode.EVAL , train_pool_images, train_pool_labels)
+
+        # train_unpool_set
+        train_unpool_indices           = self.get_all_unpool_train_indices()
+        train_unpool_images            = X_train[train_unpool_indices]
+        train_unpool_labels            = y_train[train_unpool_indices]
+        self.train_unpool_eval_dataset = self.set_transform('train_unpool', Mode.EVAL, train_unpool_images, train_unpool_labels)
 
     def build_iterators(self):
         super(ActiveDatasetWrapper, self).build_iterators()
-        self.train_pool_iterator      = self.train_pool_dataset.make_one_shot_iterator()
-        self.train_pool_eval_iterator = self.train_pool_eval_dataset.make_initializable_iterator()
+        self.train_pool_iterator        = self.train_pool_dataset.make_one_shot_iterator()
+        self.train_pool_eval_iterator   = self.train_pool_eval_dataset.make_initializable_iterator()
+        self.train_unpool_eval_iterator = self.train_unpool_eval_dataset.make_initializable_iterator()
 
     def set_handles(self, sess):
         super(ActiveDatasetWrapper, self).set_handles(sess)
-        self.train_pool_handle      = sess.run(self.train_pool_iterator.string_handle())
-        self.train_pool_eval_handle = sess.run(self.train_pool_eval_iterator.string_handle())
+        self.train_pool_handle        = sess.run(self.train_pool_iterator.string_handle())
+        self.train_pool_eval_handle   = sess.run(self.train_pool_eval_iterator.string_handle())
+        self.train_unpool_eval_handle = sess.run(self.train_unpool_eval_iterator.string_handle())
 
     def get_handle(self, name):
         if name == 'train_pool':
             return self.train_pool_handle
         elif name == 'train_pool_eval':
             return self.train_pool_eval_handle
+        elif name == 'train_unpool_eval':
+            return self.train_unpool_eval_handle
         return super(ActiveDatasetWrapper, self).get_handle(name)
 
     def print_stats(self):
@@ -149,6 +162,10 @@ class ActiveDatasetWrapper(DatasetWrapper):
     @property
     def pool_size(self):
         return len(self.get_all_pool_train_indices())
+
+    @property
+    def unpool_size(self):
+        return len(self.get_all_unpool_train_indices())
 
     def assert_unique_indices(self, indices):
         """Asserting that the new indices to add to train_pool are not already in train_pool
