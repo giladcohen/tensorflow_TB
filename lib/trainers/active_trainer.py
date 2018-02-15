@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from lib.trainers.classification_trainer import ClassificationTrainer
 from sklearn.decomposition import PCA
+import tensorflow as tf
 
 class ActiveTrainer(ClassificationTrainer):
     """Implementing active trainer
@@ -27,10 +28,13 @@ class ActiveTrainer(ClassificationTrainer):
         self.steps_for_new_annotations = self.steps_for_new_annotations or []
         self.select_new_samples = self.Factories.get_active_selection_fn()
 
+        self._finalized_once = False
+
     def train(self):
         while not self.sess.should_stop():
             if self.to_annotate():
                 self.annot_step()
+                self.update_graph()
                 self._activate_annot = False
             elif self.to_eval():
                 self.eval_step()
@@ -56,6 +60,24 @@ class ActiveTrainer(ClassificationTrainer):
             self.init_weights()
         self.learning_rate_hook.reset_learning_rate()
         self.validation_retention.reset_memory()
+
+    def update_graph(self):
+        """Resetting the graph and starting a new graph to update the dataset operations on the graph"""
+        tf.reset_default_graph()
+        self.build()
+        self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
+
+    def finalize_graph(self):
+        """overwrite the global step on the graph"""
+        if self._finalized_once:
+            self.log.info('overwriting graph\'s value: global_step={}'.format(self.global_step))
+            self.plain_sess.run(self.model.assign_ops['global_step_ow'],
+                                feed_dict={self.model.global_step_ph: self.global_step})
+            self.dataset.set_handles(self.plain_sess)
+        else:
+            # restoring global_step
+            super(ActiveTrainer, self).finalize_graph()
+            self._finalized_once = True
 
     def add_new_samples(self, indices):
         """

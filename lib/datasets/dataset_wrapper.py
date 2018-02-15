@@ -112,6 +112,9 @@ class DatasetWrapper(AgentBase):
             dict_writer.writeheader()
             dict_writer.writerows(self.train_validation_info)
 
+        # updating ref
+        self.train_validation_map_ref = info_save_path
+
     def get_raw_data(self, dataset_name):
         """This function get the string dataset_name (such as cifar10 or cifar100) and returns images and labels
         :param dataset_name: the name of the dataset
