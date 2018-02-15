@@ -35,7 +35,9 @@ def min_mul_dnn_max_knn_same(agent):
     estimated_labels_vec = nbrs.predict_proba(unpool_features_vec)
     u_vec = mul_dnn_max_knn_same(agent, estimated_labels_vec, unpool_predictions_vec)
 
-    best_unpool_indices = unpool_indices[u_vec.argsort()[-agent.dataset.clusters:]]
+    best_unpool_indices = np.take(unpool_indices, u_vec.argsort()[-agent.dataset.clusters:])
+    best_unpool_indices.tolist()
+    best_unpool_indices.sort()
     return best_unpool_indices
 
 def mul_dnn_max_knn_same(agent, y_pred_knn, y_pred_dnn):
