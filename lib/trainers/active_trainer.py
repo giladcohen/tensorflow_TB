@@ -64,6 +64,8 @@ class ActiveTrainer(ClassificationTrainer):
     def update_graph(self):
         """Resetting the graph and starting a new graph to update the dataset operations on the graph"""
         tf.reset_default_graph()
+        self.model   = self.Factories.get_model()
+        self.dataset = self.Factories.get_dataset()
         self.build()
         self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
 
