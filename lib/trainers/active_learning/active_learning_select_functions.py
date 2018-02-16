@@ -69,12 +69,12 @@ def most_uncertained_following_min_corr(agent):
 
     agent.log.info('Calculating the most uncertainty scores based on the DNN output')
     mu_vec = uncertainty_score(agent, unpool_predictions_vec)
-    mu_unpool_relative_indices = mu_vec.argsort()[-agent.dataset.clusters*5:]
+    mu_unpool_relative_indices = mu_vec.argsort()[-agent.dataset.clusters*2:]
     mu_unpool_indices = np.take(unpool_indices, mu_unpool_relative_indices)
     mu_unpool_predictions_vec = unpool_predictions_vec[mu_unpool_relative_indices]
     mu_estimated_labels_vec = estimated_labels_vec[mu_unpool_relative_indices]
 
-    agent.log.info('Selecting 1k samples out of the 5k candidate samples')
+    agent.log.info('Selecting 1k samples out of the 2k candidate samples')
     corr_vec = correlation_score(agent, mu_estimated_labels_vec, mu_unpool_predictions_vec)
     corr_unpool_relative_indices = corr_vec.argsort()[-agent.dataset.clusters:]
     best_unpool_indices = np.take(mu_unpool_indices, corr_unpool_relative_indices)
@@ -111,11 +111,11 @@ def min_corr_following_most_uncertained(agent):
 
     agent.log.info('Calculating the correlation scores between the KNN and DNN predictions')
     corr_vec = correlation_score(agent, estimated_labels_vec, unpool_predictions_vec)
-    corr_unpool_relative_indices = corr_vec.argsort()[-agent.dataset.clusters*5:]
+    corr_unpool_relative_indices = corr_vec.argsort()[-agent.dataset.clusters*2:]
     corr_unpool_indices = np.take(unpool_indices, corr_unpool_relative_indices)
     corr_unpool_predictions_vec = unpool_predictions_vec[corr_unpool_relative_indices]
 
-    agent.log.info('Selecting 1k samples out of the 5k candidate samples')
+    agent.log.info('Selecting 1k samples out of the 2k candidate samples')
     mu_vec = uncertainty_score(agent, corr_unpool_predictions_vec)
     mu_unpool_relative_indices = mu_vec.argsort()[-agent.dataset.clusters:]
     best_unpool_indices = np.take(corr_unpool_indices, mu_unpool_relative_indices)
