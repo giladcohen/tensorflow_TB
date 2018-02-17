@@ -31,7 +31,7 @@ class ClassifierModel(ModelBase):
     def add_fidelity_loss(self):
         with tf.variable_scope('xent_cost'):
             if self.one_hot_labels:
-                xent_cost = tf.nn.softmax_cross_entropy_with_logits(logits=self.net['logits'], labels=self.labels)
+                xent_cost = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.net['logits'], labels=self.labels)
             else:
                 xent_cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.net['logits'], labels=self.labels)
             xent_cost = tf.reduce_mean(xent_cost, name='cross_entropy_mean')

@@ -212,7 +212,7 @@ def collect_features(agent, dataset_name, fetches, feed_dict=None):
             e = (i + 1) * batch_size
         else:
             e = i * batch_size + last_batch_size
-        images, labels = dataset.get_mini_batch(dataset_name, sess)
+        _, images, labels = dataset.get_mini_batch(dataset_name, sess)
         tmp_feed_dict = {model.images: images,
                          model.labels: labels,
                          model.is_training: False}
@@ -278,7 +278,7 @@ def collect_features_1d(agent, dataset_name, fetches, feed_dict=None):
             e = (i + 1) * batch_size
         else:
             e = i * batch_size + last_batch_size
-        images, labels = dataset.get_mini_batch(dataset_name, sess)
+        _, images, labels = dataset.get_mini_batch(dataset_name, sess)
         tmp_feed_dict = {model.images: images,
                          model.labels: labels,
                          model.is_training: False}
