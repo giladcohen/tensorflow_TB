@@ -77,7 +77,7 @@ class ClassificationTrainer(TrainerBase):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
-        images, labels = self.dataset.get_mini_batch(dataset_name, self.plain_sess)
+        _, images, labels = self.dataset.get_mini_batch(dataset_name, self.plain_sess)
         (summaries, loss) = self.plain_sess.run([self.model.summaries, self.model.cost],
                                           feed_dict={self.model.images: images,
                                                      self.model.labels: labels,
