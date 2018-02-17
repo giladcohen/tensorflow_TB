@@ -26,7 +26,10 @@ class ClassifierModel(ModelBase):
     def _set_placeholders(self):
         super(ClassifierModel, self)._set_placeholders()
         self.images = tf.placeholder(tf.float32, [None, self.image_height, self.image_width, 3])
-        self.labels = tf.placeholder(tf.int32, [None])
+        if self.one_hot_labels:
+            self.labels = tf.placeholder(tf.int32, [None, self.num_classes])
+        else:
+            self.labels = tf.placeholder(tf.int32, [None])
 
     def add_fidelity_loss(self):
         with tf.variable_scope('xent_cost'):
