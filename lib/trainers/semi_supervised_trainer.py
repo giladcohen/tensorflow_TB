@@ -24,7 +24,7 @@ class SemiSupervisedTrainer(ClassificationTrainer):
         self.pca_embedding_dims = self.prm.train.train_control.PCA_EMBEDDING_DIMS
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 
-        self._update_soft_labels = False
+        self._activate_sl_update = False
         self._finalized_once = False
         self._num_of_updates = 0
 
@@ -33,7 +33,7 @@ class SemiSupervisedTrainer(ClassificationTrainer):
             if self.to_update():
                 self.update_soft_labels()
                 self.update_graph()
-                self._update_soft_labels = False
+                self._activate_sl_update = False
             elif self.to_eval():
                 self.eval_step()
                 self._activate_eval  = False
@@ -42,7 +42,7 @@ class SemiSupervisedTrainer(ClassificationTrainer):
                 self._activate_test = False
             else:
                 self.train_step()
-                self._activate_annot = True
+                self._activate_sl_update = True
                 self._activate_eval  = True
                 self._activate_test  = True
         self.log.info('Stop training at global_step={}'.format(self.global_step))
@@ -113,7 +113,7 @@ class SemiSupervisedTrainer(ClassificationTrainer):
         """
         :return: boolean. Whether or not to update the dataset with the new KNN model predictions
         """
-        return self.global_step % self.soft_label_update_steps == 0 and self._update_soft_labels
+        return self.global_step % self.soft_label_update_steps == 0 and self._activate_sl_update
 
     def train_step(self):
         '''Implementing one training step'''

@@ -80,7 +80,6 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         return indices
 
     def set_datasets(self, X_train, y_train, X_test, y_test):
-        super(SemiSupervisedDatasetWrapper, self).set_datasets(X_train, y_train, X_test, y_test)
 
         # train_pool_set
         train_pool_indices             = self.get_all_pool_train_indices()
@@ -96,6 +95,7 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         validation_indices      = self.get_all_validation_indices()
         validation_images       = X_train[validation_indices]
         validation_labels       = y_train[validation_indices]
+        validation_labels       = tf.one_hot(validation_labels, self.num_classes)
         self.validation_dataset = self.set_transform('validation', Mode.EVAL, validation_indices, validation_images, validation_labels)
 
         # train_unpool_set
@@ -104,6 +104,14 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         train_unpool_labels            = self.train_unpool_soft_labels
         self.train_unpool_dataset      = self.set_transform('train_unpool'     , Mode.EVAL, train_unpool_indices, train_unpool_images, train_unpool_labels, self.unpool_batch_size)
         self.train_unpool_eval_dataset = self.set_transform('train_unpool_eval', Mode.EVAL, train_unpool_indices, train_unpool_images, train_unpool_labels)
+
+        # test set
+        test_indices            = range(X_test.shape[0])
+        test_images             = X_test
+        test_labels             = y_test
+        test_labels             = tf.one_hot(test_labels, self.num_classes)
+        self.test_dataset       = self.set_transform('test', Mode.EVAL, test_indices, test_images, test_labels)
+
 
     def build_iterators(self):
         super(SemiSupervisedDatasetWrapper, self).build_iterators()
