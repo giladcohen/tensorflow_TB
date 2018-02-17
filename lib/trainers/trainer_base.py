@@ -20,7 +20,6 @@ class TrainerBase(Agent):
 
         # train parameters only
         self.trainer               = self.prm.train.train_control.TRAINER  # just used for printing.
-        self.train_batch_size      = self.prm.train.train_control.TRAIN_BATCH_SIZE
         self.train_dir             = self.prm.train.train_control.TRAIN_DIR
         self.eval_dir              = self.prm.train.train_control.EVAL_DIR
         self.pred_dir              = self.prm.train.train_control.PREDICTION_DIR
@@ -123,7 +122,6 @@ class TrainerBase(Agent):
         self.log.info('Train parameters:')
         super(TrainerBase, self).print_stats()
         self.log.info(' TRAINER: {}'.format(self.trainer))
-        self.log.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
         self.log.info(' TRAIN_DIR: {}'.format(self.train_dir))
         self.log.info(' EVAL_DIR: {}'.format(self.eval_dir))
         self.log.info(' TEST_DIR: {}'.format(self.test_dir))

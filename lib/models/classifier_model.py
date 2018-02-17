@@ -8,9 +8,10 @@ class ClassifierModel(ModelBase):
 
     def __init__(self, *args, **kwargs):
         super(ClassifierModel, self).__init__(*args, **kwargs)
-        self.num_classes  = self.prm.network.NUM_CLASSES
-        self.image_height = self.prm.network.IMAGE_HEIGHT
-        self.image_width  = self.prm.network.IMAGE_WIDTH
+        self.num_classes    = self.prm.network.NUM_CLASSES
+        self.image_height   = self.prm.network.IMAGE_HEIGHT
+        self.image_width    = self.prm.network.IMAGE_WIDTH
+        self.one_hot_labels = self.prm.network.ONE_HOT_LABELS
 
         self.xent_cost        = None # contribution of cross entropy to loss
         self.predictions_prob = None # output of the classifier softmax
@@ -20,6 +21,7 @@ class ClassifierModel(ModelBase):
         self.log.info(' NUM_CLASSES: {}'.format(self.num_classes))
         self.log.info(' IMAGE_HEIGHT: {}'.format(self.image_height))
         self.log.info(' IMAGE_WIDTH: {}'.format(self.image_width))
+        self.log.info(' ONE_HOT_LABELS: {}'.format(self.one_hot_labels))
 
     def _set_placeholders(self):
         super(ClassifierModel, self)._set_placeholders()
@@ -28,7 +30,10 @@ class ClassifierModel(ModelBase):
 
     def add_fidelity_loss(self):
         with tf.variable_scope('xent_cost'):
-            xent_cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.net['logits'], labels=self.labels)
+            if self.one_hot_labels:
+                xent_cost = tf.nn.softmax_cross_entropy_with_logits(logits=self.net['logits'], labels=self.labels)
+            else:
+                xent_cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.net['logits'], labels=self.labels)
             xent_cost = tf.reduce_mean(xent_cost, name='cross_entropy_mean')
             self.xent_cost = tf.multiply(self.xent_rate, xent_cost)
             tf.summary.scalar('xent_cost', self.xent_cost)

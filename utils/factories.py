@@ -3,6 +3,7 @@ from __future__ import division
 import lib.logger.logger as logger
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
+from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
 from lib.models.resnet_model import ResNet
 from lib.models.dml_resnet_model import DMLResNet
 from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
@@ -35,6 +36,7 @@ from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTra
 from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.active_trainer import ActiveTrainer
+from lib.trainers.semi_supervised_trainer import SemiSupervisedTrainer
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
@@ -61,7 +63,9 @@ class Factories(object):
         available_datasets = {'cifar10'         : DatasetWrapper,
                               'cifar100'        : DatasetWrapper,
                               'active_cifar10'  : ActiveDatasetWrapper,
-                              'active_cifar100' : ActiveDatasetWrapper}
+                              'active_cifar100' : ActiveDatasetWrapper,
+                              'semi_cifar10'    : SemiSupervisedDatasetWrapper,
+                              'semi_cifar100'   : SemiSupervisedDatasetWrapper}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_dataset_wrapper', self.prm)
             return dataset
@@ -90,6 +94,7 @@ class Factories(object):
         available_trainers = {'simple'                               : ClassificationTrainer,
                               'dml'                                  : DMLClassificationTrainer,
                               'active'                               : ActiveTrainer,
+                              'semi_supervised'                      : SemiSupervisedTrainer,
                               'random_sampler'                       : RandomSamplerTrainer,
                               'all_centers'                          : AllCentersTrainer,
                               'class_centers'                        : ClassCentersTrainer,

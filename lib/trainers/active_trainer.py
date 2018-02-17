@@ -53,7 +53,7 @@ class ActiveTrainer(ClassificationTrainer):
         '''Implementing one annotation step'''
         self.log.info('Adding {} new labels to train dataset.'.format(self.dataset.clusters))
         new_indices = self.select_new_samples(self)  # select new indices
-        self.add_new_samples(new_indices)            # add new indices to train dataset
+        self.dataset.update_pool(indices=new_indices)           # add new indices to train dataset
 
         # reset learning rate to initial value, retention memory and model weights
         if self.init_after_annot:
@@ -83,15 +83,6 @@ class ActiveTrainer(ClassificationTrainer):
             # restoring global_step
             super(ActiveTrainer, self).finalize_graph()
             self._finalized_once = True
-
-    def add_new_samples(self, indices):
-        """
-        Adding indices to train dataset
-        :param indices: list of indices to add to train dataset
-        :return: no return
-        """
-        self.dataset.update_pool(indices=indices)
-        self.dataset.set_handles(self.plain_sess)
 
     def print_stats(self):
         super(ActiveTrainer, self).print_stats()

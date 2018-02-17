@@ -18,6 +18,7 @@ class DatasetWrapper(AgentBase):
         self.prm = prm
         self.log = logger.get_logger(name)
         self.dataset_name             = self.prm.dataset.DATASET_NAME
+        self.num_classes              = self.prm.network.NUM_CLASSES
         self.train_set_size           = self.prm.dataset.TRAIN_SET_SIZE
         self.validation_set_size      = self.prm.dataset.VALIDATION_SET_SIZE
         self.test_set_size            = self.prm.dataset.TEST_SET_SIZE
@@ -161,24 +162,25 @@ class DatasetWrapper(AgentBase):
         :return: None
         """
         # train set
-        train_indices           = [element['index'] for element in self.train_validation_info if element['dataset'] == 'train']
+        train_indices           = self.get_all_train_indices()
         train_images            = X_train[train_indices]
         train_labels            = y_train[train_indices]
-        self.train_dataset      = self.set_transform('train', Mode.TRAIN, train_images, train_labels)
+        self.train_dataset      = self.set_transform('train', Mode.TRAIN, train_indices, train_images, train_labels)
 
         # train eval set, for evaluation only
-        self.train_eval_dataset = self.set_transform('train_eval', Mode.EVAL, train_images, train_labels)
+        self.train_eval_dataset = self.set_transform('train_eval', Mode.EVAL, train_indices, train_images, train_labels)
 
         # validation set
-        validation_indices      = [element['index'] for element in self.train_validation_info if element['dataset'] == 'validation']
+        validation_indices      = self.get_all_validation_indices()
         validation_images       = X_train[validation_indices]
         validation_labels       = y_train[validation_indices]
-        self.validation_dataset = self.set_transform('validation', Mode.EVAL, validation_images, validation_labels)
+        self.validation_dataset = self.set_transform('validation', Mode.EVAL, validation_indices, validation_images, validation_labels)
 
         # test set
+        test_indices            = range(X_test.shape[0])
         test_images             = X_test
         test_labels             = y_test
-        self.test_dataset       = self.set_transform('test', Mode.EVAL, test_images, test_labels)
+        self.test_dataset       = self.set_transform('test', Mode.EVAL, test_indices, test_images, test_labels)
 
     def build_iterators(self):
         """
@@ -214,15 +216,19 @@ class DatasetWrapper(AgentBase):
         self.validation_handle = sess.run(self.validation_iterator.string_handle())
         self.test_handle       = sess.run(self.test_iterator.string_handle())
 
-    def set_transform(self, name, mode, images, labels):
+    def set_transform(self, name, mode, indices, images, labels, batch_size=None):
         """
         Adding some transformation on a dataset
         :param name: name of the dataset (string). Examples: 'train'/'validation'/'test/train_eval'
         :param mode: Mode (TRAIN/EVAL/PREDICT)
+        :param indices: indices
+        :param images: rgb data
+        :param labels: labels
+        :param batch_size: optional batch size
         :return: None.
         """
 
-        def _augment(image, label):
+        def _augment(index, image, label):
             """
             :param image: input image
             :param label: input label
@@ -236,27 +242,29 @@ class DatasetWrapper(AgentBase):
             # image = tf.image.random_brightness(image, max_delta=63. / 255.)
             # image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
             # image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
-            return image, label
+            return index, image, label
 
-        def _cast(image, label):
+        def _cast(index, image, label):
             """
             Casting the image to tf.float32 and the label to tf.int32
             :param image: input image
             :param label: input labels
             :return: cated image and casted label
             """
-            image = tf.cast(image, tf.float32)
-            label = tf.cast(label, tf.int32)
-            return image, label
+            index   = tf.cast(index, tf.int32)
+            image   = tf.cast(image, tf.float32)
+            label   = tf.cast(label, tf.int32)
+            return index, image, label
 
-        if mode == Mode.TRAIN:
-            batch_size = self.prm.train.train_control.TRAIN_BATCH_SIZE
-        else:
-            batch_size = self.prm.train.train_control.EVAL_BATCH_SIZE
+        if batch_size is None:
+            if mode == Mode.TRAIN:
+                batch_size = self.prm.train.train_control.TRAIN_BATCH_SIZE
+            else:
+                batch_size = self.prm.train.train_control.EVAL_BATCH_SIZE
 
         with tf.name_scope(name + '_data'):
             # feed all datasets with the same model placeholders:
-            dataset = tf.data.Dataset.from_tensor_slices((images, labels))
+            dataset = tf.data.Dataset.from_tensor_slices((indices, images, labels))
             dataset = dataset.map(map_func=_cast, num_parallel_calls=batch_size)
 
             if mode == Mode.TRAIN:
@@ -280,8 +288,8 @@ class DatasetWrapper(AgentBase):
         :return: next training batch
         """
         handle = self.get_handle(name)
-        images, labels = sess.run(self.next_minibatch, feed_dict={self.handle: handle})
-        return images, labels
+        indices, images, labels = sess.run(self.next_minibatch, feed_dict={self.handle: handle})
+        return indices, images, labels
 
     def get_handle(self, name):
         """Getting an iterator handle based on dataset name
@@ -308,6 +316,30 @@ class DatasetWrapper(AgentBase):
         self.log.info(' VALIDATION_SET_SIZE: {}'.format(self.validation_set_size))
         self.log.info(' TEST_SET_SIZE: {}'.format(self.test_set_size))
         self.log.info(' TRAIN_VALIDATION_MAP_REF: {}'.format(self.train_validation_map_ref))
+        self.log.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
+        self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
+
+    def get_all_train_indices(self):
+        """
+        :return: all train indices, regardless of 'in_pool' values
+        """
+        indices = []
+        for sample in self.train_validation_info:
+            if sample['dataset'] == 'train':
+                indices.append(sample['index'])
+        indices.sort()
+        return indices
+
+    def get_all_validation_indices(self):
+        """
+        :return: all train indices, regardless of 'in_pool' values
+        """
+        indices = []
+        for sample in self.train_validation_info:
+            if sample['dataset'] == 'validation':
+                indices.append(sample['index'])
+        indices.sort()
+        return indices
 
 
 

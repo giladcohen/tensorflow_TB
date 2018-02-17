@@ -96,6 +96,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.BATCH_NORMALIZE_EMBEDDING = None          # boolean: whether or not to apply batch normalization before the embedding activation
         self.NORMALIZE_EMBEDDING = None                # boolean: whether or not to normalize the embedded space
         self.RESNET_FILTERS = None                     # numpy: the number of filters in the resnet bloks
+        self.ONE_HOT_LABELS = None                     # boolean: whether or not the labels are represented with one hot
 
         self.pre_processing = ParametersNetworkPreProcessing()
         self.system         = ParametersNetworkSystem()
@@ -118,6 +119,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'BATCH_NORMALIZE_EMBEDDING' , self.BATCH_NORMALIZE_EMBEDDING)
         self.set_to_config(do_save_none, section_name, config, 'NORMALIZE_EMBEDDING'       , self.NORMALIZE_EMBEDDING)
         self.set_to_config(do_save_none, section_name, config, 'RESNET_FILTERS'            , self.RESNET_FILTERS)
+        self.set_to_config(do_save_none, section_name, config, 'ONE_HOT_LABELS'            , self.ONE_HOT_LABELS)
 
         self.pre_processing.save_to_ini(do_save_none, section_name, config)
         self.system.save_to_ini(do_save_none, section_name, config)
@@ -136,6 +138,7 @@ class ParametersNetwork(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'BATCH_NORMALIZE_EMBEDDING' , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'NORMALIZE_EMBEDDING'       , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'RESNET_FILTERS'            , np.array)
+        self.parse_from_config(self, override_mode, section_name, parser, 'ONE_HOT_LABELS'            , bool)
 
         self.pre_processing.set_from_file(override_mode, section_name, parser)
         self.system.set_from_file(override_mode, section_name, parser)
@@ -316,6 +319,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
 
         self.learning_rate_setter     = ParametersTrainControlLearningRateSetter()
         self.margin_multiplier_setter = ParametersTrainControlMarginMultiplierSetter()
+        self.semi_supervised          = ParametersTrainControlSemiSupervised()
 
         self._freeze()
 
@@ -353,6 +357,7 @@ class ParametersTrainControl(parser_utils.FrozenClass):
 
         self.learning_rate_setter.save_to_ini(do_save_none, section_name, config)
         self.margin_multiplier_setter.save_to_ini(do_save_none, section_name, config)
+        self.semi_supervised.save_to_ini(do_save_none, section_name, config)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
@@ -385,6 +390,33 @@ class ParametersTrainControl(parser_utils.FrozenClass):
 
         self.learning_rate_setter.set_from_file(override_mode, section_name, parser)
         self.margin_multiplier_setter.set_from_file(override_mode, section_name, parser)
+        self.semi_supervised.set_from_file(override_mode, section_name, parser)
+
+class ParametersTrainControlSemiSupervised(parser_utils.FrozenClass):
+    def __init__(self):
+        super(ParametersTrainControlSemiSupervised, self).__init__()
+
+        self.SOFT_LABEL_UPDATE_STEPS       = None  # int: number of training steps to update the KNN soft labels
+        self.UNSUPERVISED_PERCENTAGE       = None  # float: the percentage of soft labeling to consider in the training dataset
+        self.UNSUPERVISED_PERCENTAGE_BATCH = None  # float: the percentage of soft labeling to consider in the training minibatch
+
+        self._freeze()
+
+    def name(self):
+        return 'semi_supervised'
+
+    def save_to_ini(self, do_save_none, txt, config):
+        section_name = self.add_section(txt, self.name(), config)
+        self.set_to_config(do_save_none, section_name, config, 'SOFT_LABEL_UPDATE_STEPS'      , self.SOFT_LABEL_UPDATE_STEPS)
+        self.set_to_config(do_save_none, section_name, config, 'UNSUPERVISED_PERCENTAGE'      , self.UNSUPERVISED_PERCENTAGE)
+        self.set_to_config(do_save_none, section_name, config, 'UNSUPERVISED_PERCENTAGE_BATCH', self.UNSUPERVISED_PERCENTAGE_BATCH)
+
+
+    def set_from_file(self, override_mode, txt, parser):
+        section_name = self.add_section(txt, self.name())
+        self.parse_from_config(self, override_mode, section_name, parser, 'SOFT_LABEL_UPDATE_STEPS'      , int)
+        self.parse_from_config(self, override_mode, section_name, parser, 'UNSUPERVISED_PERCENTAGE'      , float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'UNSUPERVISED_PERCENTAGE_BATCH', float)
 
 class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def __init__(self):
