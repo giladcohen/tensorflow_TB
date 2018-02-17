@@ -92,6 +92,12 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         self.train_pool_dataset        = self.set_transform('train_pool'     , Mode.TRAIN, train_pool_indices, train_pool_images, train_pool_labels, self.pool_batch_size)
         self.train_pool_eval_dataset   = self.set_transform('train_pool_eval', Mode.EVAL , train_pool_indices, train_pool_images, train_pool_labels)
 
+        # validation set
+        validation_indices      = self.get_all_validation_indices()
+        validation_images       = X_train[validation_indices]
+        validation_labels       = y_train[validation_indices]
+        self.validation_dataset = self.set_transform('validation', Mode.EVAL, validation_indices, validation_images, validation_labels)
+
         # train_unpool_set
         train_unpool_indices           = self.get_all_unpool_train_indices()
         train_unpool_images            = X_train[train_unpool_indices]
