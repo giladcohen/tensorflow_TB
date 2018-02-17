@@ -81,15 +81,13 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
 
     def set_datasets(self, X_train, y_train, X_test, y_test):
 
-        # train_pool_set
-        train_pool_indices             = self.get_all_pool_train_indices()
-        train_pool_images              = X_train[train_pool_indices]
-        train_pool_labels              = y_train[train_pool_indices]
-        train_pool_labels              = tf.one_hot(train_pool_labels, self.num_classes)
-
-        self.train_pool_init_dataset   = self.set_transform('train_pool_init', Mode.TRAIN, train_pool_indices, train_pool_images, train_pool_labels)
-        self.train_pool_dataset        = self.set_transform('train_pool'     , Mode.TRAIN, train_pool_indices, train_pool_images, train_pool_labels, self.pool_batch_size)
-        self.train_pool_eval_dataset   = self.set_transform('train_pool_eval', Mode.EVAL , train_pool_indices, train_pool_images, train_pool_labels)
+        # train set
+        train_indices           = self.get_all_train_indices()
+        train_images            = X_train[train_indices]
+        train_labels            = y_train[train_indices]
+        train_labels            = tf.one_hot(train_labels, self.num_classes)
+        self.train_dataset      = self.set_transform('train'     , Mode.TRAIN, train_indices, train_images, train_labels)
+        self.train_eval_dataset = self.set_transform('train_eval', Mode.EVAL , train_indices, train_images, train_labels)
 
         # validation set
         validation_indices      = self.get_all_validation_indices()
@@ -97,6 +95,15 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         validation_labels       = y_train[validation_indices]
         validation_labels       = tf.one_hot(validation_labels, self.num_classes)
         self.validation_dataset = self.set_transform('validation', Mode.EVAL, validation_indices, validation_images, validation_labels)
+
+        # train_pool_set
+        train_pool_indices             = self.get_all_pool_train_indices()
+        train_pool_images              = X_train[train_pool_indices]
+        train_pool_labels              = y_train[train_pool_indices]
+        train_pool_labels              = tf.one_hot(train_pool_labels, self.num_classes)
+        self.train_pool_init_dataset   = self.set_transform('train_pool_init', Mode.TRAIN, train_pool_indices, train_pool_images, train_pool_labels)
+        self.train_pool_dataset        = self.set_transform('train_pool'     , Mode.TRAIN, train_pool_indices, train_pool_images, train_pool_labels, self.pool_batch_size)
+        self.train_pool_eval_dataset   = self.set_transform('train_pool_eval', Mode.EVAL , train_pool_indices, train_pool_images, train_pool_labels)
 
         # train_unpool_set
         train_unpool_indices           = self.get_all_unpool_train_indices()
@@ -111,7 +118,6 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         test_labels             = y_test
         test_labels             = tf.one_hot(test_labels, self.num_classes)
         self.test_dataset       = self.set_transform('test', Mode.EVAL, test_indices, test_images, test_labels)
-
 
     def build_iterators(self):
         super(SemiSupervisedDatasetWrapper, self).build_iterators()
