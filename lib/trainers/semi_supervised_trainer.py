@@ -77,6 +77,7 @@ class SemiSupervisedTrainer(ClassificationTrainer):
 
     def update_graph(self):
         """Resetting the graph and starting a new graph to update the dataset operations on the graph"""
+        self.sess.close()
         tf.reset_default_graph()
         train_validation_map_ref = self.dataset.train_validation_map_ref
         train_unpool_soft_labels = self.dataset.train_unpool_soft_labels
