@@ -113,7 +113,7 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         self.train_pool_init_iterator   = self.train_pool_init_dataset.make_one_shot_iterator()
         self.train_pool_iterator        = self.train_pool_dataset.make_one_shot_iterator()
         self.train_pool_eval_iterator   = self.train_pool_eval_dataset.make_initializable_iterator()
-        self.train_unpool_iterator      = self.train_unpool_dataset.make_initializable_iterator()
+        self.train_unpool_iterator      = self.train_unpool_dataset.make_one_shot_iterator()
         self.train_unpool_eval_iterator = self.train_unpool_eval_dataset.make_initializable_iterator()
 
     def set_handles(self, sess):
