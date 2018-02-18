@@ -17,7 +17,6 @@ class SemiSupervisedTrainer(ClassificationTrainer):
 
     def __init__(self, *args, **kwargs):
         super(SemiSupervisedTrainer, self).__init__(*args, **kwargs)
-        self.min_learning_rate          = self.prm.train.train_control.MIN_LEARNING_RATE
         self.soft_label_update_steps    = self.prm.train.train_control.semi_supervised.SOFT_LABEL_UPDATE_STEPS
 
         self.pca_reduction = self.prm.train.train_control.PCA_REDUCTION
@@ -104,7 +103,6 @@ class SemiSupervisedTrainer(ClassificationTrainer):
 
     def print_stats(self):
         super(SemiSupervisedTrainer, self).print_stats()
-        self.log.info(' MIN_LEARNING_RATE: {}'.format(self.min_learning_rate))
         self.log.info(' SOFT_LABEL_UPDATE_STEPS: {}'.format(self.soft_label_update_steps))
         self.log.info(' PCA_REDUCTION: {}'.format(self.pca_reduction))
         self.log.info(' PCA_EMBEDDING_DIMS: {}'.format(self.pca_embedding_dims))

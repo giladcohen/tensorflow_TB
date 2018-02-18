@@ -21,22 +21,21 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         self.pool_batch_size               = self.train_batch_size - self.unpool_batch_size
 
         self.train_unpool_soft_labels      = np.zeros([self.unpool_set_size, self.num_classes], dtype=np.float32)
-        self.soft_labels_ready             = False  # whether or not we are good to use the soft label predictions
 
-        self.train_pool_dataset            = None
         self.train_pool_init_dataset       = None  # only for initialization
+        self.train_pool_dataset            = None
         self.train_pool_eval_dataset       = None
         self.train_unpool_dataset          = None
         self.train_unpool_eval_dataset     = None
 
-        self.train_pool_iterator           = None
         self.train_pool_init_iterator      = None
+        self.train_pool_iterator           = None
         self.train_pool_eval_iterator      = None
         self.train_unpool_iterator         = None
         self.train_unpool_eval_iterator    = None
 
-        self.train_pool_handle             = None
         self.train_pool_init_handle        = None
+        self.train_pool_handle             = None
         self.train_pool_eval_handle        = None
         self.train_unpool_handle           = None
         self.train_unpool_eval_handle      = None
@@ -79,28 +78,25 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         indices.sort()
         return indices
 
+    def get_raw_data(self, dataset_name):
+        """This function get the string dataset_name (such as cifar10 or cifar100) and returns images and labels
+        :param dataset_name: the name of the dataset
+        :return (X_train, y_train), (X_test, y_test) where
+        X_train/test.shape = [?, H, W, 3], dtype=float32
+        y_train/test.shape = [?. num_classes] (one hot), dtype=int
+        """
+        (X_train, y_train), (X_test, y_test) = super(SemiSupervisedDatasetWrapper, self).get_raw_data(dataset_name)
+        y_train = tf.one_hot(y_train, self.num_classes)
+        y_test  = tf.one_hot(y_test , self.num_classes)
+        return (X_train, y_train), (X_test, y_test)
+
     def set_datasets(self, X_train, y_train, X_test, y_test):
-
-        # train set
-        train_indices           = self.get_all_train_indices()
-        train_images            = X_train[train_indices]
-        train_labels            = y_train[train_indices]
-        train_labels            = tf.one_hot(train_labels, self.num_classes)
-        self.train_dataset      = self.set_transform('train'     , Mode.TRAIN, train_indices, train_images, train_labels)
-        self.train_eval_dataset = self.set_transform('train_eval', Mode.EVAL , train_indices, train_images, train_labels)
-
-        # validation set
-        validation_indices      = self.get_all_validation_indices()
-        validation_images       = X_train[validation_indices]
-        validation_labels       = y_train[validation_indices]
-        validation_labels       = tf.one_hot(validation_labels, self.num_classes)
-        self.validation_dataset = self.set_transform('validation', Mode.EVAL, validation_indices, validation_images, validation_labels)
+        super(SemiSupervisedDatasetWrapper, self).set_datasets(X_train, y_train, X_test, y_test)
 
         # train_pool_set
         train_pool_indices             = self.get_all_pool_train_indices()
         train_pool_images              = X_train[train_pool_indices]
         train_pool_labels              = y_train[train_pool_indices]
-        train_pool_labels              = tf.one_hot(train_pool_labels, self.num_classes)
         self.train_pool_init_dataset   = self.set_transform('train_pool_init', Mode.TRAIN, train_pool_indices, train_pool_images, train_pool_labels)
         self.train_pool_dataset        = self.set_transform('train_pool'     , Mode.TRAIN, train_pool_indices, train_pool_images, train_pool_labels, self.pool_batch_size)
         self.train_pool_eval_dataset   = self.set_transform('train_pool_eval', Mode.EVAL , train_pool_indices, train_pool_images, train_pool_labels)
@@ -112,34 +108,27 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         self.train_unpool_dataset      = self.set_transform('train_unpool'     , Mode.EVAL, train_unpool_indices, train_unpool_images, train_unpool_labels, self.unpool_batch_size)
         self.train_unpool_eval_dataset = self.set_transform('train_unpool_eval', Mode.EVAL, train_unpool_indices, train_unpool_images, train_unpool_labels)
 
-        # test set
-        test_indices            = range(X_test.shape[0])
-        test_images             = X_test
-        test_labels             = y_test
-        test_labels             = tf.one_hot(test_labels, self.num_classes)
-        self.test_dataset       = self.set_transform('test', Mode.EVAL, test_indices, test_images, test_labels)
-
     def build_iterators(self):
         super(SemiSupervisedDatasetWrapper, self).build_iterators()
-        self.train_pool_iterator        = self.train_pool_dataset.make_one_shot_iterator()
         self.train_pool_init_iterator   = self.train_pool_init_dataset.make_one_shot_iterator()
+        self.train_pool_iterator        = self.train_pool_dataset.make_one_shot_iterator()
         self.train_pool_eval_iterator   = self.train_pool_eval_dataset.make_initializable_iterator()
         self.train_unpool_iterator      = self.train_unpool_dataset.make_initializable_iterator()
         self.train_unpool_eval_iterator = self.train_unpool_eval_dataset.make_initializable_iterator()
 
     def set_handles(self, sess):
         super(SemiSupervisedDatasetWrapper, self).set_handles(sess)
-        self.train_pool_handle        = sess.run(self.train_pool_iterator.string_handle())
         self.train_pool_init_handle   = sess.run(self.train_pool_init_iterator.string_handle())
+        self.train_pool_handle        = sess.run(self.train_pool_iterator.string_handle())
         self.train_pool_eval_handle   = sess.run(self.train_pool_eval_iterator.string_handle())
         self.train_unpool_handle      = sess.run(self.train_unpool_iterator.string_handle())
         self.train_unpool_eval_handle = sess.run(self.train_unpool_eval_iterator.string_handle())
 
     def get_handle(self, name):
-        if name == 'train_pool':
-            return self.train_pool_handle
         if name == 'train_pool_init':
             return self.train_pool_init_handle
+        elif name == 'train_pool':
+            return self.train_pool_handle
         elif name == 'train_pool_eval':
             return self.train_pool_eval_handle
         elif name == 'train_unpool':
