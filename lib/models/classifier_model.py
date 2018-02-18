@@ -48,4 +48,8 @@ class ClassifierModel(ModelBase):
         '''Interprets the logits'''
         self.predictions_prob = tf.nn.softmax(self.net['logits'])
         self.predictions = tf.argmax(self.predictions_prob, axis=1, output_type=tf.int32)
-        self.score       = tf.reduce_mean(tf.to_float(tf.equal(self.predictions, self.labels)))
+        if self.one_hot_labels:
+            labels_int   = tf.argmax(self.labels          , axis=1, output_type=tf.int32)
+        else:
+            labels_int   = self.labels
+        self.score       = tf.reduce_mean(tf.to_float(tf.equal(self.predictions, labels_int)))
