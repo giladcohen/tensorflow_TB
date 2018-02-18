@@ -31,6 +31,8 @@ class ClassificationTrainer(TrainerBase):
                 dataset_name='validation',
                 fetches=[self.model.labels, self.model.predictions],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
+        if self.model.one_hot_labels:
+            labels = np.argmax(labels, axis=1)
         score = np.average(labels == predictions)
 
         # sample loss/summaries for only the first batch
@@ -53,6 +55,8 @@ class ClassificationTrainer(TrainerBase):
                 dataset_name='test',
                 fetches=[self.model.labels, self.model.predictions],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
+        if self.model.one_hot_labels:
+            labels = np.argmax(labels, axis=1)
         score = np.average(labels == predictions)
 
         # sample loss/summaries for only the first batch

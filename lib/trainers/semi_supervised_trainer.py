@@ -60,7 +60,7 @@ class SemiSupervisedTrainer(ClassificationTrainer):
         pool_labels = np.argmax(pool_labels, axis=1)
 
         self.log.info('Getting embedding space vectors for all samples in the train_unpool dataset')
-        unpool_features_vec = \
+        (unpool_features_vec,) = \
             collect_features(agent=self,
                              dataset_name='train_unpool_eval',
                              fetches=[self.model.net['embedding_layer']],
