@@ -347,3 +347,13 @@ def calc_mutual_agreement(y1, y2, y_gt):
     ma_score = ma_cnt / dnn_correct_cnt
     md_score = md_cnt / dnn_wrong_cnt
     return ma_score, md_score
+
+def one_hot(indices, depth):
+    """Converting the indices to one hot representation
+    :param indices: numpy array
+    :param depth: the depth of the one hot vectors
+    """
+    ohm = np.zeros([indices.shape[0], depth])
+    ohm[np.arange(indices.shape[0]), indices] = 1
+    return ohm
+

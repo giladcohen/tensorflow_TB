@@ -2,10 +2,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import tensorflow as tf
 import numpy as np
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from utils.enums import Mode
+from utils.misc import one_hot
 
 class SemiSupervisedDatasetWrapper(DatasetWrapper):
     def __init__(self, *args, **kwargs):
@@ -86,8 +86,8 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         y_train/test.shape = [?. num_classes] (one hot), dtype=int
         """
         (X_train, y_train), (X_test, y_test) = super(SemiSupervisedDatasetWrapper, self).get_raw_data(dataset_name)
-        y_train = tf.one_hot(y_train, self.num_classes)
-        y_test  = tf.one_hot(y_test , self.num_classes)
+        y_train = one_hot(y_train, self.num_classes)
+        y_test  = one_hot(y_test , self.num_classes)
         return (X_train, y_train), (X_test, y_test)
 
     def set_datasets(self, X_train, y_train, X_test, y_test):
