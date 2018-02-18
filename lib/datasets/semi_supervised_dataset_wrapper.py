@@ -105,8 +105,8 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         train_unpool_indices           = self.get_all_unpool_train_indices()
         train_unpool_images            = X_train[train_unpool_indices]
         train_unpool_labels            = self.train_unpool_soft_labels
-        self.train_unpool_dataset      = self.set_transform('train_unpool'     , Mode.EVAL, train_unpool_indices, train_unpool_images, train_unpool_labels, self.unpool_batch_size)
-        self.train_unpool_eval_dataset = self.set_transform('train_unpool_eval', Mode.EVAL, train_unpool_indices, train_unpool_images, train_unpool_labels)
+        self.train_unpool_dataset      = self.set_transform('train_unpool'     , Mode.TRAIN, train_unpool_indices, train_unpool_images, train_unpool_labels, self.unpool_batch_size)
+        self.train_unpool_eval_dataset = self.set_transform('train_unpool_eval', Mode.EVAL , train_unpool_indices, train_unpool_images, train_unpool_labels)
 
     def build_iterators(self):
         super(SemiSupervisedDatasetWrapper, self).build_iterators()
