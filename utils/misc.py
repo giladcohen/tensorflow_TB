@@ -175,11 +175,7 @@ def collect_features(agent, dataset_name, fetches, feed_dict=None):
     dataset    = agent.dataset
     sess       = agent.plain_sess
 
-    if dataset_name == 'train':
-        num_samples = dataset.train_set_size
-    elif dataset_name == 'train_pool':
-        num_samples = dataset.pool_size
-    elif dataset_name == 'train_eval':
+    if dataset_name == 'train_eval':
         num_samples = dataset.train_set_size
         sess.run(dataset.train_eval_iterator.initializer)
     elif dataset_name == 'train_pool_eval':

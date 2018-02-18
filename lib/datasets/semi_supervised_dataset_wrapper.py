@@ -173,3 +173,12 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
             .format(sampled_old_values, self.train_unpool_soft_labels[0:5])
         self.log.info(debug_str)
         print(debug_str)
+
+    @property
+    def pool_size(self):
+        return len(self.get_all_pool_train_indices())
+
+    @property
+    def unpool_size(self):
+        return len(self.get_all_unpool_train_indices())
+
