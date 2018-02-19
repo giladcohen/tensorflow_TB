@@ -399,6 +399,7 @@ class ParametersTrainControlSemiSupervised(parser_utils.FrozenClass):
         self.SOFT_LABEL_UPDATE_STEPS       = None  # int: number of training steps to update the KNN soft labels
         self.UNSUPERVISED_PERCENTAGE       = None  # float: the percentage of soft labeling to consider in the training dataset
         self.UNSUPERVISED_PERCENTAGE_BATCH = None  # float: the percentage of soft labeling to consider in the training minibatch
+        self.SOFT_LABELS_REF               = None  # str: path to a .npy file for the soft labels reference
 
         self._freeze()
 
@@ -410,13 +411,14 @@ class ParametersTrainControlSemiSupervised(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'SOFT_LABEL_UPDATE_STEPS'      , self.SOFT_LABEL_UPDATE_STEPS)
         self.set_to_config(do_save_none, section_name, config, 'UNSUPERVISED_PERCENTAGE'      , self.UNSUPERVISED_PERCENTAGE)
         self.set_to_config(do_save_none, section_name, config, 'UNSUPERVISED_PERCENTAGE_BATCH', self.UNSUPERVISED_PERCENTAGE_BATCH)
-
+        self.set_to_config(do_save_none, section_name, config, 'SOFT_LABELS_REF'              , self.SOFT_LABELS_REF)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'SOFT_LABEL_UPDATE_STEPS'      , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'UNSUPERVISED_PERCENTAGE'      , float)
         self.parse_from_config(self, override_mode, section_name, parser, 'UNSUPERVISED_PERCENTAGE_BATCH', float)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SOFT_LABELS_REF'              , str)
 
 class ParametersNetworkPreProcessing(parser_utils.FrozenClass):
     def __init__(self):

@@ -24,11 +24,14 @@ class SemiSupervisedTrainer(ClassificationTrainer):
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 
         self._activate_sl_update = False
+        self._finalized_once = False
+        self._num_of_updates = 0
 
     def train(self):
         while not self.sess.should_stop():
             if self.to_update():
                 self.update_soft_labels()
+                self.update_graph()
                 self._activate_sl_update = False
             elif self.to_eval():
                 self.eval_step()
@@ -70,6 +73,34 @@ class SemiSupervisedTrainer(ClassificationTrainer):
         train_unpool_soft_labels = nbrs.predict_proba(unpool_features_vec)
 
         self.dataset.update_soft_labels(train_unpool_soft_labels, self.global_step)
+        self._num_of_updates += 1
+
+    def update_graph(self):
+        """Resetting the graph and starting a new graph to update the dataset operations on the graph"""
+        self.sess.close()
+        tf.reset_default_graph()
+        train_validation_map_ref = self.dataset.train_validation_map_ref
+        train_unpool_soft_labels = self.dataset.train_unpool_soft_labels
+
+        self.model   = self.Factories.get_model()
+        self.dataset = self.Factories.get_dataset()
+
+        self.dataset.train_validation_map_ref = train_validation_map_ref
+        self.dataset.train_unpool_soft_labels = train_unpool_soft_labels
+
+        self.build()
+        self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
+
+    def finalize_graph(self):
+        """overwrite the global step on the graph"""
+        if self._finalized_once:
+            self.log.info('overwriting graph\'s value: global_step={}'.format(self.global_step))
+            self.plain_sess.run(self.model.assign_ops['global_step_ow'], feed_dict={self.model.global_step_ph: self.global_step})
+            self.dataset.set_handles(self.plain_sess)
+        else:
+            # restoring global_step
+            super(SemiSupervisedTrainer, self).finalize_graph()
+            self._finalized_once = True
 
     def print_stats(self):
         super(SemiSupervisedTrainer, self).print_stats()
@@ -85,12 +116,13 @@ class SemiSupervisedTrainer(ClassificationTrainer):
 
     def train_step(self):
         '''Implementing one training step'''
-        _, pool_images, pool_labels   = self.dataset.get_mini_batch('train_pool', self.plain_sess)
-        unpool_indices, unpool_images, _ = self.dataset.get_mini_batch('train_unpool', self.plain_sess)
-        soft_labels = self.dataset.fetch_soft_labels(unpool_indices)
-
-        images = np.concatenate((pool_images, unpool_images), axis=0)
-        labels = np.concatenate((pool_labels, soft_labels)  , axis=0)
+        if self._num_of_updates == 0:
+            _, images, labels = self.dataset.get_mini_batch('train_pool_init', self.plain_sess)
+        else:
+            _, pool_images  , pool_labels   = self.dataset.get_mini_batch('train_pool'  , self.plain_sess)
+            _, unpool_images, unpool_labels = self.dataset.get_mini_batch('train_unpool', self.plain_sess)
+            images = np.concatenate((pool_images, unpool_images), axis=0)
+            labels = np.concatenate((pool_labels, unpool_labels), axis=0)
 
         _ , self.global_step = self.sess.run([self.model.train_op, self.model.global_step],
                                               feed_dict={self.model.images: images,
