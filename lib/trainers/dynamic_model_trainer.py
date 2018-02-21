@@ -13,20 +13,22 @@ class DynamicModelTrainer(ActiveTrainer):
 
     def __init__(self, *args, **kwargs):
         super(DynamicModelTrainer, self).__init__(*args, **kwargs)
-        self.checkpoint_dir = self.get_checkpoint_subdir()
+        #self.checkpoint_dir = self.get_checkpoint_subdir()
+        self.checkpoint_dir = os.path.join(self.prm.train.train_control.CHECKPOINT_DIR, 'checkpoint_' + str(self.prm.dataset.INIT_SIZE))
         self.weight_decay_rate = self.prm.network.optimization.WEIGHT_DECAY_RATE
 
     def update_graph(self):
         """Updating the model - increasing the model parameters to accommodate larger pool"""
         tf.reset_default_graph()
         resnet_filters, self.weight_decay_rate, self.pca_embedding_dims = self.get_new_model_hps()
-        self.checkpoint_dir = self.get_checkpoint_subdir()
         train_validation_map_ref = self.dataset.train_validation_map_ref
+
+        self.dataset = self.Factories.get_dataset()
+        self.dataset.train_validation_map_ref = train_validation_map_ref
+        self.checkpoint_dir = self.get_checkpoint_subdir()
 
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
-        self.dataset = self.Factories.get_dataset()
-        self.dataset.train_validation_map_ref = train_validation_map_ref
 
         self.build()
         self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
