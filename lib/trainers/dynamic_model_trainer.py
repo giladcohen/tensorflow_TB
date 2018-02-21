@@ -16,30 +16,17 @@ class DynamicModelTrainer(ActiveTrainer):
         self.checkpoint_dir = self.get_checkpoint_subdir()
         self.weight_decay_rate = self.prm.network.optimization.WEIGHT_DECAY_RATE
 
-    def train(self):
-        while not self.sess.should_stop():
-            if self.to_annotate():
-                self.annot_step()
-                self.update_model()
-                self._activate_annot = False
-            elif self.to_eval():
-                self.eval_step()
-                self._activate_eval  = False
-            else:
-                self.train_step()
-                self._activate_annot = True
-                self._activate_eval  = True
-        self.log.info('Stop training at global_step={}'.format(self.global_step))
-
-    def update_model(self):
+    def update_graph(self):
         """Updating the model - increasing the model parameters to accommodate larger pool"""
         tf.reset_default_graph()
         resnet_filters, self.weight_decay_rate, self.pca_embedding_dims = self.get_new_model_hps()
         self.checkpoint_dir = self.get_checkpoint_subdir()
+        train_validation_map_ref = self.dataset.train_validation_map_ref
 
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
-        self.embedding_dims = resnet_filters[-1]
+        self.dataset = self.Factories.get_dataset()
+        self.dataset.train_validation_map_ref = train_validation_map_ref
 
         self.build()
         self.log.info('Done restoring graph for global_step ({})'.format(self.global_step))
@@ -79,15 +66,10 @@ class DynamicModelTrainer(ActiveTrainer):
         # overwrite the global step and weight decay rate
         self.log.info('overwriting graph\'s values: global_step={}, weight_decay_rate={}'
                       .format(self.global_step, self.weight_decay_rate))
-
-        images, labels = self.dataset.get_mini_batch_train(indices=[0])
-        feed_dict = {self.model.global_step_ph      : self.global_step,
-                     self.model.weight_decay_rate_ph: self.weight_decay_rate,
-                     self.model.images              : images,
-                     self.model.labels              : labels,
-                     self.model.is_training         : False}
-
-        self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']], feed_dict=feed_dict)
+        self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
+                      feed_dict={self.model.global_step_ph       : self.global_step,
+                                 self.model.weight_decay_rate_ph : self.weight_decay_rate})
+        self.dataset.set_handles(self.plain_sess)
 
     def set_params(self):
         pass

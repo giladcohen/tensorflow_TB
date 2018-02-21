@@ -7,6 +7,13 @@ from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 import operator
 
+def random_sampler(agent):
+    """
+    :param agent: An active learning trainer - selecting new random samples
+    :return: None. Will be translated to random sampler.
+    """
+    return None
+
 def min_mul_dnn_max_knn_same(agent):
     """
     :param agent: An active learning trainer

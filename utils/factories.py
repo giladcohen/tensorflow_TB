@@ -36,6 +36,7 @@ from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTra
 from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.active_trainer import ActiveTrainer
+from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
 from lib.trainers.semi_supervised_trainer import SemiSupervisedTrainer
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
@@ -94,6 +95,7 @@ class Factories(object):
         available_trainers = {'simple'                               : ClassificationTrainer,
                               'dml'                                  : DMLClassificationTrainer,
                               'active'                               : ActiveTrainer,
+                              'active_dynamic'                       : DynamicModelTrainer,
                               'semi_supervised'                      : SemiSupervisedTrainer,
                               'random_sampler'                       : RandomSamplerTrainer,
                               'all_centers'                          : AllCentersTrainer,
@@ -155,7 +157,8 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_active_selection_fn(self):
-        available_functions = {'min_mul_dnn_max_knn_same'           : alf.min_mul_dnn_max_knn_same,
+        available_functions = {'random_sampler'                     : alf.random_sampler,
+                               'min_mul_dnn_max_knn_same'           : alf.min_mul_dnn_max_knn_same,
                                'most_uncertained_following_min_corr': alf.most_uncertained_following_min_corr,
                                'min_corr_following_most_uncertained': alf.min_corr_following_most_uncertained}
         if self.active_selection_criterion in available_functions:
