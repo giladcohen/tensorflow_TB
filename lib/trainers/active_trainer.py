@@ -123,7 +123,7 @@ class ActiveTrainer(ClassificationTrainer):
 
     def train_step(self):
         '''Implementing one training step'''
-        images, labels = self.dataset.get_mini_batch('train_pool', self.plain_sess)
+        _, images, labels = self.dataset.get_mini_batch('train_pool', self.plain_sess)
         _ , self.global_step = self.sess.run([self.model.train_op, self.model.global_step],
                                               feed_dict={self.model.images: images,
                                                          self.model.labels: labels,
