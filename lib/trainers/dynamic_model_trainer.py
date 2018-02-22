@@ -68,7 +68,7 @@ class DynamicModelTrainer(ActiveTrainer):
         # overwrite the global step and weight decay rate
         self.log.info('overwriting graph\'s values: global_step={}, weight_decay_rate={}'
                       .format(self.global_step, self.weight_decay_rate))
-        self.sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
+        self.plain_sess.run([self.model.assign_ops['global_step_ow'], self.model.assign_ops['weight_decay_rate_ow']],
                       feed_dict={self.model.global_step_ph       : self.global_step,
                                  self.model.weight_decay_rate_ph : self.weight_decay_rate})
         self.dataset.set_handles(self.plain_sess)
