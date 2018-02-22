@@ -37,7 +37,7 @@ class DynamicModelTrainer(ActiveTrainer):
         """
         :return: resnet filters, weight decay rate and the dims of the PCA embedding space
         """
-        lp = self.dataset.train_dataset.pool_size
+        lp = self.dataset.pool_size
         # [16, 160, 320, 640] for 50k samples.
         # for 1k: [16, 22, 44, 88]. weight_decay for 1k: 0.0390625. pca_embedding_dims = 18
         if lp == 2000:
@@ -77,5 +77,5 @@ class DynamicModelTrainer(ActiveTrainer):
         pass
 
     def get_checkpoint_subdir(self):
-        lp = self.dataset.train_dataset.pool_size
+        lp = self.dataset.pool_size
         return os.path.join(self.prm.train.train_control.CHECKPOINT_DIR, 'checkpoint_' + str(lp))
