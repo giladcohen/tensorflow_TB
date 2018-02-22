@@ -132,6 +132,7 @@ class TrainerBase(Agent):
         self.log.info(' LAST_STEP: {}'.format(self.last_step))
         self.log.info(' LOGGER_STEPS: {}'.format(self.logger_steps))
         self.log.info(' EVAL_STEPS: {}'.format(self.eval_steps))
+        self.log.info(' TEST_STEPS: {}'.format(self.test_steps))
         self.log.info(' SKIP_FIRST_EVALUATION: {}'.format(self.skip_first_evaluation))
         self.log.info(' DEBUG_MODE: {}'.format(self.debug_mode))
         self.train_retention.print_stats()
