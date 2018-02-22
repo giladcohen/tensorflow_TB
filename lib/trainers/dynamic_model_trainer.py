@@ -22,10 +22,10 @@ class DynamicModelTrainer(ActiveTrainer):
         tf.reset_default_graph()
         resnet_filters, self.weight_decay_rate, self.pca_embedding_dims = self.get_new_model_hps()
         train_validation_map_ref = self.dataset.train_validation_map_ref
+        self.checkpoint_dir = self.get_checkpoint_subdir()
 
         self.dataset = self.Factories.get_dataset()
         self.dataset.train_validation_map_ref = train_validation_map_ref
-        self.checkpoint_dir = self.get_checkpoint_subdir()
 
         self.model = self.Factories.get_model()
         self.model.resnet_filters = resnet_filters
