@@ -158,6 +158,8 @@ class Factories(object):
 
     def get_active_selection_fn(self):
         available_functions = {'random_sampler'                     : alf.random_sampler,
+                               'most_uncertained_dnn'               : alf.most_uncertained_dnn,
+                               'most_uncertained_knn'               : alf.most_uncertained_knn,
                                'min_mul_dnn_max_knn_same'           : alf.min_mul_dnn_max_knn_same,
                                'most_uncertained_following_min_corr': alf.most_uncertained_following_min_corr,
                                'min_corr_following_most_uncertained': alf.min_corr_following_most_uncertained}

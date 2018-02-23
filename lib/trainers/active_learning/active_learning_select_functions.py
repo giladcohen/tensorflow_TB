@@ -14,6 +14,62 @@ def random_sampler(agent):
     """
     return None
 
+def most_uncertained_knn(agent):
+    """
+    :param agent: An active learning trainer
+    :return: list of indices
+    """
+    unpool_indices = agent.dataset.get_all_unpool_train_indices()
+
+    pool_features_vec, pool_labels = \
+        collect_features(agent=agent,
+                         dataset_name='train_pool_eval',
+                         fetches=[agent.model.net['embedding_layer'], agent.model.labels],
+                         feed_dict={agent.model.dropout_keep_prob: 1.0})
+
+    unpool_features_vec = \
+        collect_features(agent=agent,
+                         dataset_name='train_unpool_eval',
+                         fetches=[agent.model.net['embedding_layer']],
+                         feed_dict={agent.model.dropout_keep_prob: 1.0})
+
+    n_neighbors = int(0.02 * agent.dataset.pool_size)
+    agent.log.info('building kNN space only for the labeled (pooled) train features. k={}'.format(n_neighbors))
+    nbrs = KNeighborsClassifier(n_neighbors=n_neighbors, weights='uniform', p=1, n_jobs=20)
+    nbrs.fit(pool_features_vec, pool_labels)
+
+    agent.log.info('Calculating the estimated labels probability based on KNN')
+    estimated_labels_vec = nbrs.predict_proba(unpool_features_vec)
+
+    agent.log.info('Calculating the most uncertainty scores based on the KNN predctions')
+    mu_vec = uncertainty_score(agent, estimated_labels_vec)
+    mu_unpool_relative_indices = mu_vec.argsort()[-agent.dataset.clusters:]
+    best_unpool_indices = np.take(unpool_indices, mu_unpool_relative_indices)
+    best_unpool_indices.tolist()
+    best_unpool_indices.sort()
+    return best_unpool_indices
+
+def most_uncertained_dnn(agent):
+    """
+    :param agent: An active learning trainer
+    :return: list of indices
+    """
+    unpool_indices = agent.dataset.get_all_unpool_train_indices()
+
+    unpool_predictions_vec = \
+        collect_features(agent=agent,
+                         dataset_name='train_unpool_eval',
+                         fetches=[agent.model.predictions_prob],
+                         feed_dict={agent.model.dropout_keep_prob: 1.0})
+
+    agent.log.info('Calculating the most uncertainty scores based on the DNN output')
+    mu_vec = uncertainty_score(agent, unpool_predictions_vec)
+    mu_unpool_relative_indices = mu_vec.argsort()[-agent.dataset.clusters:]
+    best_unpool_indices = np.take(unpool_indices, mu_unpool_relative_indices)
+    best_unpool_indices.tolist()
+    best_unpool_indices.sort()
+    return best_unpool_indices
+
 def min_mul_dnn_max_knn_same(agent):
     """
     :param agent: An active learning trainer
