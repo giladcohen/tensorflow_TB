@@ -27,7 +27,7 @@ def most_uncertained_knn(agent):
                          fetches=[agent.model.net['embedding_layer'], agent.model.labels],
                          feed_dict={agent.model.dropout_keep_prob: 1.0})
 
-    unpool_features_vec = \
+    (unpool_features_vec, ) = \
         collect_features(agent=agent,
                          dataset_name='train_unpool_eval',
                          fetches=[agent.model.net['embedding_layer']],
@@ -56,7 +56,7 @@ def most_uncertained_dnn(agent):
     """
     unpool_indices = agent.dataset.get_all_unpool_train_indices()
 
-    unpool_predictions_vec = \
+    (unpool_predictions_vec, ) = \
         collect_features(agent=agent,
                          dataset_name='train_unpool_eval',
                          fetches=[agent.model.predictions_prob],
