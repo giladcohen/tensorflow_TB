@@ -88,7 +88,7 @@ class ClassificationMATrainer(ClassificationTrainer):
                       .format(self.global_step, loss, dnn_score, knn_score, self.test_retention.get_best_score()))
 
     def to_test(self):
-        ret = (self.global_step % self.test_steps == 0) or \
-              (self.global_step < 1000 and self.global_step % 100 == 0) and \
-              self._activate_test
+        ret = self.global_step % self.test_steps == 0
+        ret = ret or (self.global_step < 1000 and self.global_step % 100 == 0)
+        ret = ret and self._activate_test
         return ret
