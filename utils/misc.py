@@ -184,6 +184,9 @@ def collect_features(agent, dataset_name, fetches, feed_dict=None):
     elif dataset_name == 'train_unpool_eval':
         num_samples = dataset.unpool_size
         sess.run(dataset.train_unpool_eval_iterator.initializer)
+    elif dataset_name == 'train_random_eval':
+        num_samples = dataset.train_set_size
+        sess.run(dataset.train_random_eval_iterator.initializer)
     elif dataset_name == 'validation':
         num_samples = dataset.validation_set_size
         sess.run(dataset.validation_iterator.initializer)
@@ -251,6 +254,9 @@ def collect_features_1d(agent, dataset_name, fetches, feed_dict=None):
     elif dataset_name == 'train_pool_eval':
         num_samples = dataset.pool_size
         sess.run(dataset.train_pool_eval_iterator.initializer)
+    elif dataset_name == 'train_random_eval':
+        num_samples = dataset.train_set_size
+        sess.run(dataset.train_random_eval_iterator.initializer)
     elif dataset_name == 'validation':
         num_samples = dataset.validation_set_size
         sess.run(dataset.validation_iterator.initializer)

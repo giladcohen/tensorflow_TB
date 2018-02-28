@@ -2,6 +2,7 @@ from __future__ import division
 
 import lib.logger.logger as logger
 from lib.datasets.dataset_wrapper import DatasetWrapper
+from lib.datasets.random_dataset_wrapper import RandomDatasetWrapper
 from lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
 from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
 from lib.models.resnet_model import ResNet
@@ -34,6 +35,7 @@ from lib.trainers.active_learning.most_uncertained_trainer import MostUncertaine
 from lib.trainers.active_learning.random_sampler_trainer_qad import RandomSamplerTrainerQAD
 from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTrainer
 from lib.trainers.classification_trainer import ClassificationTrainer
+from lib.trainers.classification_ma_trainer import ClassificationMATrainer
 from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
@@ -66,7 +68,9 @@ class Factories(object):
                               'active_cifar10'  : ActiveDatasetWrapper,
                               'active_cifar100' : ActiveDatasetWrapper,
                               'semi_cifar10'    : SemiSupervisedDatasetWrapper,
-                              'semi_cifar100'   : SemiSupervisedDatasetWrapper}
+                              'semi_cifar100'   : SemiSupervisedDatasetWrapper,
+                              'random_cifar10'  : RandomDatasetWrapper,
+                              'random_cifar100' : RandomDatasetWrapper}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_dataset_wrapper', self.prm)
             return dataset
@@ -93,6 +97,7 @@ class Factories(object):
 
     def get_trainer(self, model, dataset):
         available_trainers = {'simple'                               : ClassificationTrainer,
+                              'simple_ma'                            : ClassificationMATrainer,
                               'dml'                                  : DMLClassificationTrainer,
                               'active'                               : ActiveTrainer,
                               'active_dynamic'                       : DynamicModelTrainer,
