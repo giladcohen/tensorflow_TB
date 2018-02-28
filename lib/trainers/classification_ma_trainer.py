@@ -13,8 +13,8 @@ class ClassificationMATrainer(ClassificationTrainer):
 
     def __init__(self, *args, **kwargs):
         super(ClassificationMATrainer, self).__init__(*args, **kwargs)
-        self.dnn_train_handle = 'train_random'       # either train      or train_random
-        self.knn_train_handle = 'train_random_eval'  # either train_eval or train_random_eval
+        self.dnn_train_handle = 'train'       # either train      or train_random
+        self.knn_train_handle = 'train_eval'  # either train_eval or train_random_eval
 
         # testing parameters
         self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
@@ -86,3 +86,8 @@ class ClassificationMATrainer(ClassificationTrainer):
         self.summary_writer_test.flush()
         self.log.info('TEST (step={}): loss: {}, dnn_score: {}, knn_score: {}, best score: {}' \
                       .format(self.global_step, loss, dnn_score, knn_score, self.test_retention.get_best_score()))
+
+    def to_test(self):
+        ret = self.global_step % self.test_steps == 0  and self._activate_test
+        ret = ret or (self.global_step < 1000 and self.global_step % 100 == 0)  # adding to sample beginning of training
+        return ret
