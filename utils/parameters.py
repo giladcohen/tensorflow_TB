@@ -153,6 +153,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.VALIDATION_SET_SIZE = None                      # integer: validation set size
         self.TEST_SET_SIZE = None                            # integer: test set size
         self.TRAIN_VALIDATION_MAP_REF = None                 # string: path to a reference train-validation mapping
+        self.USE_AUGMENTATION = None                         # boolean: whether or not to use augmentation
         self.CLUSTERS = None                                 # integer: number of new clusters when updating active pool
         self.INIT_SIZE = None                                # integer: the initial pool size when dataset constructs
         self.CAP = None                                      # integer: maximum number of labels in active training
@@ -169,6 +170,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE'     , self.VALIDATION_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TEST_SET_SIZE'           , self.TEST_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_VALIDATION_MAP_REF', self.TRAIN_VALIDATION_MAP_REF)
+        self.set_to_config(do_save_none, section_name, config, 'USE_AUGMENTATION'        , self.USE_AUGMENTATION)
         self.set_to_config(do_save_none, section_name, config, 'CLUSTERS'                , self.CLUSTERS)
         self.set_to_config(do_save_none, section_name, config, 'INIT_SIZE'               , self.INIT_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'CAP'                     , self.CAP)
@@ -180,6 +182,7 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE'     , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TEST_SET_SIZE'           , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_VALIDATION_MAP_REF', str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'USE_AUGMENTATION'        , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'CLUSTERS'                , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'INIT_SIZE'               , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CAP'                     , int)

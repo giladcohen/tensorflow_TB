@@ -23,6 +23,7 @@ class DatasetWrapper(AgentBase):
         self.validation_set_size      = self.prm.dataset.VALIDATION_SET_SIZE
         self.test_set_size            = self.prm.dataset.TEST_SET_SIZE
         self.train_validation_map_ref = self.prm.dataset.TRAIN_VALIDATION_MAP_REF
+        self.use_augmentation         = self.prm.dataset.USE_AUGMENTATION
         self.H                        = self.prm.network.IMAGE_HEIGHT
         self.W                        = self.prm.network.IMAGE_WIDTH
         self.train_batch_size         = self.prm.train.train_control.TRAIN_BATCH_SIZE
@@ -266,9 +267,9 @@ class DatasetWrapper(AgentBase):
             # feed all datasets with the same model placeholders:
             dataset = tf.data.Dataset.from_tensor_slices((indices, images, labels))
             dataset = dataset.map(map_func=_cast, num_parallel_calls=batch_size)
-
             if mode == Mode.TRAIN:
-                dataset = dataset.map(map_func=_augment, num_parallel_calls=batch_size)
+                if self.use_augmentation:
+                    dataset = dataset.map(map_func=_augment, num_parallel_calls=batch_size)
                 dataset = dataset.shuffle(
                     buffer_size=batch_size,
                     seed=self.prm.SUPERSEED,
@@ -316,6 +317,7 @@ class DatasetWrapper(AgentBase):
         self.log.info(' VALIDATION_SET_SIZE: {}'.format(self.validation_set_size))
         self.log.info(' TEST_SET_SIZE: {}'.format(self.test_set_size))
         self.log.info(' TRAIN_VALIDATION_MAP_REF: {}'.format(self.train_validation_map_ref))
+        self.log.info(' USE_AUGMENTATION: {}'.format(self.use_augmentation))
         self.log.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
         self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
 
