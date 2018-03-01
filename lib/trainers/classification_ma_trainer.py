@@ -16,6 +16,8 @@ class ClassificationMATrainer(ClassificationTrainer):
         self.dnn_train_handle = 'train'       # either train      or train_random
         self.knn_train_handle = 'train_eval'  # either train_eval or train_random_eval
 
+        self.analyize_knn_on_trainset = True
+
         # testing parameters
         self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
         self.knn_norm        = self.prm.test.test_control.KNN_NORM
@@ -45,11 +47,11 @@ class ClassificationMATrainer(ClassificationTrainer):
         '''Implementing one test step.'''
         self.log.info('start running test within training. global_step={}'.format(self.global_step))
         self.log.info('Collecting {} {} set embedding features'.format(self.dataset.train_set_size, self.knn_train_handle))
-        (X_train_features, y_train) = \
+        (X_train_features, y_train, train_dnn_predictions_prob) = \
             collect_features(
                 agent=self,
                 dataset_name=self.knn_train_handle,
-                fetches=[self.model.net['embedding_layer'], self.model.labels],
+                fetches=[self.model.net['embedding_layer'], self.model.labels, self.model.predictions_prob],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
 
         self.log.info('Collecting {} test set embedding features and DNN predictions'.format(self.dataset.test_set_size))
@@ -83,9 +85,26 @@ class ClassificationMATrainer(ClassificationTrainer):
         self.tb_logger_test.log_scalar('best score', self.test_retention.get_best_score(), self.global_step)
         self.tb_logger_test.log_scalar('knn_score', knn_score, self.global_step)
         self.summary_writer_test.add_summary(summaries, self.global_step)
+        self.log.info('TEST (step={}): loss: {}, dnn_score: {}, knn_score: {}, ma_score: {}, md_score: {}, best score: {}' \
+                      .format(self.global_step, loss, dnn_score, knn_score, self.test_retention.get_best_score(), ma_score, md_score))
+
+        if self.analyize_knn_on_trainset:
+            self.log.info('Analyizing knn and dnn on the trainset {}'.format(self.knn_train_handle))
+            y_pred_dnn = train_dnn_predictions_prob.argmax(axis=1)
+            self.log.info('Predicting {} set labels from KNN model...'.format(self.knn_train_handle))
+            train_knn_predictions_prob = self.knn.predict_proba(X_train_features)
+            y_pred_knn = train_knn_predictions_prob.argmax(axis=1)
+
+            ma_score, md_score = calc_mutual_agreement(y_pred_dnn, y_pred_knn, y_train)
+            dnn_score = np.average(y_train == y_pred_dnn)
+            knn_score = np.average(y_train == y_pred_knn)
+
+            self.tb_logger_test.log_scalar('ma_score_trainset', ma_score, self.global_step)
+            self.tb_logger_test.log_scalar('md_score_trainset', md_score, self.global_step)
+            self.tb_logger_test.log_scalar('score_trainset', dnn_score, self.global_step)
+            self.tb_logger_test.log_scalar('knn_score_trainset', knn_score, self.global_step)
+
         self.summary_writer_test.flush()
-        self.log.info('TEST (step={}): loss: {}, dnn_score: {}, knn_score: {}, best score: {}' \
-                      .format(self.global_step, loss, dnn_score, knn_score, self.test_retention.get_best_score()))
 
     def to_test(self):
         ret = self.global_step % self.test_steps == 0
