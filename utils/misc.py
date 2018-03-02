@@ -350,8 +350,15 @@ def calc_mutual_agreement(y1, y2, y_gt):
             if y2[i] == y1[i]:
                 md_cnt += 1
 
-    ma_score = ma_cnt / dnn_correct_cnt
-    md_score = md_cnt / dnn_wrong_cnt
+    if dnn_correct_cnt > 0:
+        ma_score = ma_cnt / dnn_correct_cnt
+    else:
+        ma_score = -1.0  # pevent dividing by 0
+
+    if dnn_wrong_cnt > 0:
+        md_score = md_cnt / dnn_wrong_cnt
+    else:
+        md_score = -1.0  # pevent dividing by 0
     return ma_score, md_score
 
 def one_hot(indices, depth):
