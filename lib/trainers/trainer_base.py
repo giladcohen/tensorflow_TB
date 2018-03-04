@@ -70,8 +70,7 @@ class TrainerBase(Agent):
             model=self.model,
             save_steps=self.summary_steps,
             summary_writer=self.summary_writer_train,
-            summary_op=tf.summary.merge([self.model.summaries] + tf.get_collection(TRAIN_SUMMARIES))
-        )
+            summary_op=tf.summary.merge([self.model.summaries] + tf.get_collection(TRAIN_SUMMARIES)))
 
         logging_hook = tf.train.LoggingTensorHook(
             tensors={'step': self.model.global_step,
@@ -81,17 +80,24 @@ class TrainerBase(Agent):
                      'score': self.model.score},
             every_n_iter=self.logger_steps)
 
-        checkpoint_hook = GlobalStepCheckpointSaverHook(name='global_step_checkpoint_saver_hook',
-                                                        prm=self.prm,
-                                                        model=self.model,
-                                                        steps_to_save=self.checkpoint_steps,
-                                                        checkpoint_dir=self.checkpoint_dir,
-                                                        saver=self.saver,
-                                                        checkpoint_basename='model_schedule.ckpt')
+        checkpoint_hook = GlobalStepCheckpointSaverHook(
+            name='global_step_checkpoint_saver_hook',
+            prm=self.prm,
+            model=self.model,
+            steps_to_save=self.checkpoint_steps,
+            checkpoint_dir=self.checkpoint_dir,
+            saver=self.saver,
+            checkpoint_basename='model_schedule.ckpt')
+
+        auto_checkpoint_hook = tf.train.CheckpointSaverHook(
+            checkpoint_dir=self.checkpoint_dir,
+            save_secs=self.checkpoint_secs,
+            saver=tf.train.Saver(max_to_keep=1, name='auto_saver'))
 
         stop_at_step_hook = tf.train.StopAtStepHook(last_step=self.last_step)
 
-        self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook, stop_at_step_hook]
+        self.train_session_hooks = [summary_hook   , logging_hook        , self.learning_rate_hook,
+                                    checkpoint_hook, auto_checkpoint_hook, stop_at_step_hook]
 
     def build_validation_env(self):
         self.log.info("Starting building the validation environment")
