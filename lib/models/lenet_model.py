@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from lib.models.classifier_model import ClassifierModel
 import tensorflow as tf
 from lib.models.layers import variable_summaries
-from lib.base.collections import LOSSES
+# from nets import lenet
 
 slim = tf.contrib.slim
 
@@ -19,7 +19,7 @@ class LeNet(ClassifierModel):
             with slim.arg_scope([slim.conv2d, slim.fully_connected],
                                  weights_regularizer=slim.l2_regularizer(self.weight_decay_rate),
                                  weights_initializer=tf.glorot_uniform_initializer(seed=self.prm.SUPERSEED),
-                                 activation_fn=tf.nn.leaky_relu(alpha=self.relu_leakiness)):
+                                 activation_fn=tf.nn.relu):
                 x = slim.conv2d(self.images, 32, [5, 5], scope='conv1')
                 x = slim.max_pool2d(x, [2, 2], 2, scope='pool1')
                 x = slim.conv2d(x, 64, [5, 5], scope='conv2')
