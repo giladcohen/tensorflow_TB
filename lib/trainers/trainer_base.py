@@ -149,6 +149,7 @@ class TrainerBase(Agent):
     def get_train_summaries(self):
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('score', self.model.score))
         tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('weight_decay_rate', self.model.weight_decay_rate))
+        tf.add_to_collection(TRAIN_SUMMARIES, tf.summary.scalar('dropout_keep_prob', self.model.dropout_keep_prob))
 
     def train(self):
         while not self.sess.should_stop():

@@ -1,16 +1,24 @@
 from __future__ import division
 
 import lib.logger.logger as logger
+import lib.trainers.active_learning.active_learning_select_functions as alf
+
+from lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.datasets.random_dataset_wrapper import RandomDatasetWrapper
-from lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
 from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
-from lib.models.resnet_model import ResNet
+
 from lib.models.dml_resnet_model import DMLResNet
-from lib.models.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
-from lib.models.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
-from lib.models.wide_resnet_28_10_pool_classes2 import WideResNet_28_10_pool_classes2
-from lib.models.wide_resnet_28_10_wo_last_relu import WideResNet_28_10_wo_last_relu
+from lib.models.graveyard.wide_resnet_28_10_wo_last_relu import WideResNet_28_10_wo_last_relu
+from lib.models.resnet_model import ResNet
+from lib.models.lenet_model import LeNet
+from lib.models.graveyard.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
+from lib.models.graveyard.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
+from lib.models.graveyard.wide_resnet_28_10_pool_classes2 import WideResNet_28_10_pool_classes2
+
+from lib.testers.ensemble_tester import EnsembleTester
+from lib.testers.knn_classifier_tester import KNNClassifierTester
+
 from lib.trainers.active_learning.all_centers_trainer import AllCentersTrainer
 from lib.trainers.active_learning.class_centers_trainer import ClassCentersTrainer
 from lib.trainers.active_learning.cross_entropy_trainer import CrossEntropyTrainer
@@ -32,20 +40,17 @@ from lib.trainers.active_learning.knn_dnn_correlation_trainer import KnnDnnCorre
 from lib.trainers.active_learning.most_uncertained_balanced_trainer import MostUncertainedBalancedTrainer
 from lib.trainers.active_learning.most_uncertained_knn_trainer import MostUncertainedKnnTrainer
 from lib.trainers.active_learning.most_uncertained_trainer import MostUncertainedTrainer
-from lib.trainers.active_learning.random_sampler_trainer_qad import RandomSamplerTrainerQAD
 from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTrainer
-from lib.trainers.classification_trainer import ClassificationTrainer
-from lib.trainers.classification_ma_trainer import ClassificationMATrainer
-from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
+from lib.trainers.active_learning.random_sampler_trainer_qad import RandomSamplerTrainerQAD
 from lib.trainers.active_trainer import ActiveTrainer
+from lib.trainers.classification_ma_trainer import ClassificationMATrainer
+from lib.trainers.classification_trainer import ClassificationTrainer
+from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
-from lib.trainers.semi_supervised_trainer import SemiSupervisedTrainer
 from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
 from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
 from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
-from lib.testers.knn_classifier_tester import KNNClassifierTester
-from lib.testers.ensemble_tester import EnsembleTester
-import lib.trainers.active_learning.active_learning_select_functions as alf
+from lib.trainers.semi_supervised_trainer import SemiSupervisedTrainer
 
 
 class Factories(object):
@@ -82,6 +87,7 @@ class Factories(object):
     def get_model(self):
         available_networks = {'Wide-Resnet-28-10'               : ResNet,
                               'DML-Wide-Resnet-28-10'           : DMLResNet,
+                              'LeNet'                           : LeNet,
                               'Wide-Resnet-28-10_plus_fc'       : WideResNet_28_10_plus_fc,
                               'Wide-Resnet-28-10_pool_classes'  : WideResNet_28_10_pool_classes,
                               'Wide-Resnet-28-10_pool_classes2' : WideResNet_28_10_pool_classes2,

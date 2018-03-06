@@ -1,9 +1,8 @@
 from abc import ABCMeta
 import tensorflow as tf
 from lib.models.resnet_model import ResNet
-#from tensorflow.contrib.losses.python.metric_learning import cluster_loss
 from lib.tf_alias.metric_loss_ops import cluster_loss, lifted_struct_loss, compute_clustering_score
-from utils.misc import get_vars
+from lib.base.collections import LOSSES
 
 class DMLResNet(ResNet):
     __metaclass__ = ABCMeta
@@ -43,7 +42,7 @@ class DMLResNet(ResNet):
             self.cluster_cost = tf.multiply(self.xent_rate, cluster_cost)  #TODO(gilad): think of better name here (not xent_rate)
             tf.summary.scalar('cluster_cost', self.cluster_cost)
             cluster_assert_op = tf.verify_tensor_all_finite(self.cluster_cost, 'cluster_cost contains NaN or Inf')
-            tf.add_to_collection(tf.GraphKeys.LOSSES, self.cluster_cost)
+            tf.add_to_collection(LOSSES, self.cluster_cost)
             tf.add_to_collection('assertions', cluster_assert_op)
 
     def _build_interpretation(self):

@@ -102,9 +102,9 @@ class Agent(AgentBase):
         collecting the model values stored previously in the model.
         """
 
-        [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer] = \
+        [lrn_rate, xent_rate, weight_decay_rate, relu_leakiness, optimizer, dropout_keep_prob] = \
             self.plain_sess.run([self.model.lrn_rate, self.model.xent_rate, self.model.weight_decay_rate,
-                           self.model.relu_leakiness, self.model.optimizer])
+                           self.model.relu_leakiness, self.model.optimizer, self.model.dropout_keep_prob])
 
         assign_ops = []
         if not np.isclose(lrn_rate, self.prm.network.optimization.LEARNING_RATE):
@@ -127,6 +127,10 @@ class Agent(AgentBase):
             assign_ops.append(self.model.assign_ops['optimizer'])
             self.log.warning('changing model.optimizer from {} to {}'.
                              format(optimizer, self.prm.network.optimization.OPTIMIZER))
+        if not np.isclose(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB):
+            assign_ops.append(self.model.assign_ops['dropout_keep_prob'])
+            self.log.warning('changing model.dropout_keep_prob from {} to {}'.
+                             format(dropout_keep_prob, self.prm.network.system.DROPOUT_KEEP_PROB))
 
         self.plain_sess.run(assign_ops)
 

@@ -13,27 +13,12 @@ class ResNet(ClassifierModel):
     def __init__(self, *args, **kwargs):
         super(ResNet, self).__init__(*args, **kwargs)
         self.num_residual_units = self.prm.network.NUM_RESIDUAL_UNITS  # number of residual modules in each unit
-        self.normalize_embedding = self.prm.network.NORMALIZE_EMBEDDING
-        self.embedding_dims = self.prm.network.EMBEDDING_DIMS
         self.resnet_filters = self.prm.network.RESNET_FILTERS
 
     def print_stats(self):
         super(ResNet, self).print_stats()
-        self.log.info(' DROPOUT_KEEP_PROB: {}'.format(self.prm.network.system.DROPOUT_KEEP_PROB))
         self.log.info(' NUM_RESIDUAL_UNITS: {}'.format(self.num_residual_units))
-        self.log.info(' NORMALIZE_EMBEDDING: {}'.format(self.normalize_embedding))
-        self.log.info(' EMBEDDING_DIMS: {}'.format(self.embedding_dims))
         self.log.info(' RESNET_FILTERS: {}'.format(self.resnet_filters))
-
-    def _init_params(self):
-        super(ResNet, self)._init_params()
-        self.dropout_keep_prob = tf.contrib.framework.model_variable(
-            name='dropout_keep_prob', dtype=tf.float32, shape=[],
-            initializer=tf.constant_initializer(self.prm.network.system.DROPOUT_KEEP_PROB), trainable=False)
-
-    def _set_params(self):
-        super(ResNet, self)._set_params()
-        self.assign_ops['dropout_keep_prob'] = self.dropout_keep_prob.assign(self.prm.network.system.DROPOUT_KEEP_PROB)
 
     def _build_inference(self):
         """building the inference model of ResNet"""

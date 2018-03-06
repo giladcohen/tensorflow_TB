@@ -3,11 +3,12 @@ This model is similar to WideResNet_28_10_pool_classes except that here I am poo
 instead of a class' logits.
 """
 
-
 from lib.models.resnet_model import ResNet
 from lib.models.layers import *
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+from lib.base.collections import LOSSES
+
 
 class WideResNet_28_10_pool_classes2(ResNet):
 
@@ -35,5 +36,5 @@ class WideResNet_28_10_pool_classes2(ResNet):
             xent_cost = tf.reduce_mean(xent_cost, name='cross_entropy_mean')
             self.xent_cost = tf.multiply(self.xent_rate, xent_cost)
             xent_assert_op = tf.verify_tensor_all_finite(self.xent_cost, 'xent_cost contains NaN or Inf')
-            tf.add_to_collection(tf.GraphKeys.LOSSES, self.xent_cost)
+            tf.add_to_collection(LOSSES, self.xent_cost)
             tf.add_to_collection('assertions', xent_assert_op)

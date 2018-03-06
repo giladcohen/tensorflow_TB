@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from lib.base.agent_base import AgentBase
+from lib.base.collections import LOSSES
 
 class ModelBase(AgentBase):
     __metaclass__ = ABCMeta
@@ -38,6 +39,7 @@ class ModelBase(AgentBase):
         self.log.info(' WEIGHT_DECAY_RATE: {}'.format(self.prm.network.optimization.WEIGHT_DECAY_RATE))
         self.log.info(' RELU_LEAKINESS: {}'.format(self.prm.network.system.RELU_LEAKINESS))
         self.log.info(' OPTIMIZER: {}'.format(self.prm.network.optimization.OPTIMIZER))
+        self.log.info(' DROPOUT_KEEP_PROB: {}'.format(self.prm.network.system.DROPOUT_KEEP_PROB))
 
     def build_graph(self):
         """Build a whole graph for the model."""
@@ -77,6 +79,9 @@ class ModelBase(AgentBase):
         self.optimizer          = tf.contrib.framework.model_variable(
             name='optimizer', dtype=tf.string, shape=[],
             initializer=tf.constant_initializer(self.prm.network.optimization.OPTIMIZER), trainable=False)
+        self.dropout_keep_prob = tf.contrib.framework.model_variable(
+            name='dropout_keep_prob', dtype=tf.float32, shape=[],
+            initializer=tf.constant_initializer(self.prm.network.system.DROPOUT_KEEP_PROB), trainable=False)
 
     def _set_params(self):
         self.assign_ops['global_step_ow'] = self.global_step.assign(self.global_step_ph)
@@ -86,6 +91,8 @@ class ModelBase(AgentBase):
         self.assign_ops['weight_decay_rate_ow'] = self.weight_decay_rate.assign(self.weight_decay_rate_ph)
         self.assign_ops['relu_leakiness'] = self.relu_leakiness.assign(self.prm.network.system.RELU_LEAKINESS)
         self.assign_ops['optimizer'] = self.optimizer.assign(self.prm.network.optimization.OPTIMIZER)
+        self.assign_ops['dropout_keep_prob'] = self.dropout_keep_prob.assign(self.prm.network.system.DROPOUT_KEEP_PROB)
+
 
     @abstractmethod
     def _set_placeholders(self):
@@ -108,7 +115,7 @@ class ModelBase(AgentBase):
         self.add_weight_decay()
         self.add_fidelity_loss()
         with tf.control_dependencies(tf.get_collection('assertions')):
-            self.cost = tf.add_n(tf.get_collection(tf.GraphKeys.LOSSES), name='total_loss')
+            self.cost = tf.add_n(tf.get_collection(LOSSES), name='total_loss')
             tf.summary.scalar('cost', self.cost)
 
     def add_weight_decay(self):
@@ -116,7 +123,7 @@ class ModelBase(AgentBase):
             self.wd_cost = self._decay()
             tf.summary.scalar('wd_cost', self.wd_cost)
             wd_assert_op = tf.verify_tensor_all_finite(self.wd_cost, 'wd_cost contains NaN or Inf')
-            tf.add_to_collection(tf.GraphKeys.LOSSES, self.wd_cost)
+            tf.add_to_collection(LOSSES, self.wd_cost)
             tf.add_to_collection('assertions', wd_assert_op)
 
     @abstractmethod
