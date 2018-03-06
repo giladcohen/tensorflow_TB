@@ -31,7 +31,7 @@ class LeNet(ClassifierModel):
                     x = tf.nn.l2_normalize(x, axis=1, name='normalize_vec')
                 variable_summaries('embedding', x)
                 self.net['embedding_layer'] = x
-                self.net['logits'] = slim.fully_connected(x, self.num_classes, activation_fn=None, scope='fc3')
+                self.net['logits'] = slim.fully_connected(x, self.num_classes, activation_fn=None, scope='fc4')
 
     def _decay(self):
         """L2 weight decay loss."""
