@@ -35,5 +35,5 @@ class LeNet(ClassifierModel):
 
     def _decay(self):
         """L2 weight decay loss."""
-        wd_cost = slim.losses.get_regularization_losses()
-        return tf.multiply(self.weight_decay_rate, wd_cost)
+        costs = slim.losses.get_regularization_losses()
+        return tf.multiply(self.weight_decay_rate, tf.add_n(costs))
