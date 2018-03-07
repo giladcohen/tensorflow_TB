@@ -9,39 +9,13 @@ from lib.datasets.random_dataset_wrapper import RandomDatasetWrapper
 from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
 
 from lib.models.dml_resnet_model import DMLResNet
-from lib.models.graveyard.wide_resnet_28_10_wo_last_relu import WideResNet_28_10_wo_last_relu
 from lib.models.resnet_model import ResNet
 from lib.models.lenet_model import LeNet
-from lib.models.graveyard.wide_resnet_28_10_plus_fc import WideResNet_28_10_plus_fc
-from lib.models.graveyard.wide_resnet_28_10_pool_classes import WideResNet_28_10_pool_classes
-from lib.models.graveyard.wide_resnet_28_10_pool_classes2 import WideResNet_28_10_pool_classes2
+from lib.models.fc2_model import FC2Net
 
 from lib.testers.ensemble_tester import EnsembleTester
 from lib.testers.knn_classifier_tester import KNNClassifierTester
 
-from lib.trainers.active_learning.all_centers_trainer import AllCentersTrainer
-from lib.trainers.active_learning.class_centers_trainer import ClassCentersTrainer
-from lib.trainers.active_learning.cross_entropy_trainer import CrossEntropyTrainer
-from lib.trainers.active_learning.cross_entropy_trainer2 import CrossEntropyTrainer2
-from lib.trainers.active_learning.dynamic_model.kmeans_segments_dynamic_trainer import KMeansSegmentsDynamicTrainer
-from lib.trainers.active_learning.dynamic_model.kmeans_segments_knn_dnn_correlation_dynamic_trainer import KMeansSegmentsKnnDnnCorrelationDynamicTrainer
-from lib.trainers.active_learning.dynamic_model.knn_dnn_correlation_dynamic_trainer import KnnDnnCorrelationDynamicTrainer
-from lib.trainers.active_learning.dynamic_model.most_uncertained_dynamic_trainer import MostUncertainedDynamicTrainer
-from lib.trainers.active_learning.dynamic_model.most_uncertained_knn_dynamic_trainer import MostUncertainedKnnDynamicTrainer
-from lib.trainers.active_learning.dynamic_model.random_sampler_dynamic_trainer import RandomSamplerDynamicTrainer
-from lib.trainers.active_learning.farthest_kmeans_trainer import FarthestKMeansTrainer
-from lib.trainers.active_learning.farthest_uncertained_samples_trainer import FarthestUncertainedSamplesTrainer
-from lib.trainers.active_learning.kmeans_on_most_uncertained_trainer import KMeansOnMostUncertainedTrainer
-from lib.trainers.active_learning.kmeans_segments_balanced_trainer import KMeansSegmentsBalancedTrainer
-from lib.trainers.active_learning.kmeans_segments_knn_dnn_correlation_trainer import KMeansSegmentsKnnDnnCorrelationTrainer
-from lib.trainers.active_learning.kmeans_segments_most_uncertained_knn import KMeansSegmentsMostUncertainedKNNTrainer
-from lib.trainers.active_learning.kmeans_segments_trainer import KMeansSegmentsTrainer
-from lib.trainers.active_learning.knn_dnn_correlation_trainer import KnnDnnCorrelationTrainer
-from lib.trainers.active_learning.most_uncertained_balanced_trainer import MostUncertainedBalancedTrainer
-from lib.trainers.active_learning.most_uncertained_knn_trainer import MostUncertainedKnnTrainer
-from lib.trainers.active_learning.most_uncertained_trainer import MostUncertainedTrainer
-from lib.trainers.active_learning.random_sampler_trainer import RandomSamplerTrainer
-from lib.trainers.active_learning.random_sampler_trainer_qad import RandomSamplerTrainerQAD
 from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.classification_ma_trainer import ClassificationMATrainer
 from lib.trainers.classification_trainer import ClassificationTrainer
@@ -89,10 +63,7 @@ class Factories(object):
         available_networks = {'Wide-Resnet-28-10'               : ResNet,
                               'DML-Wide-Resnet-28-10'           : DMLResNet,
                               'LeNet'                           : LeNet,
-                              'Wide-Resnet-28-10_plus_fc'       : WideResNet_28_10_plus_fc,
-                              'Wide-Resnet-28-10_pool_classes'  : WideResNet_28_10_pool_classes,
-                              'Wide-Resnet-28-10_pool_classes2' : WideResNet_28_10_pool_classes2,
-                              'Wide-Resnet-28-10_wo_last_relu'  : WideResNet_28_10_wo_last_relu}
+                              'FC2Net'                          : FC2Net}
         if self.architecture in available_networks:
             model = available_networks[self.architecture](self.architecture, self.prm)
             self.log.info('get_model: returning ' + str(model))
@@ -108,30 +79,7 @@ class Factories(object):
                               'dml'                                  : DMLClassificationTrainer,
                               'active'                               : ActiveTrainer,
                               'active_dynamic'                       : DynamicModelTrainer,
-                              'semi_supervised'                      : SemiSupervisedTrainer,
-                              'random_sampler'                       : RandomSamplerTrainer,
-                              'all_centers'                          : AllCentersTrainer,
-                              'class_centers'                        : ClassCentersTrainer,
-                              'most_uncertained'                     : MostUncertainedTrainer,
-                              'most_uncertained_balanced'            : MostUncertainedBalancedTrainer,
-                              'cross_entropy'                        : CrossEntropyTrainer,
-                              'cross_entropy2'                       : CrossEntropyTrainer2,
-                              'kmeans_on_most_uncertained'           : KMeansOnMostUncertainedTrainer,
-                              'knn_dnn_correlation'                  : KnnDnnCorrelationTrainer,
-                              'most_uncertained_knn'                 : MostUncertainedKnnTrainer,
-                              'farthest_uncertained_samples'         : FarthestUncertainedSamplesTrainer,
-                              'kmeans_segments'                      : KMeansSegmentsTrainer,
-                              'kmeans_segments_balanced'             : KMeansSegmentsBalancedTrainer,
-                              'farthest_kmeans'                      : FarthestKMeansTrainer,
-                              'kmeans_segments_most_uncertained_knn' : KMeansSegmentsMostUncertainedKNNTrainer,
-                              'kmeans_segments_dynamic'              : KMeansSegmentsDynamicTrainer,
-                              'kmeans_segments_knn_dnn_correlation'  : KMeansSegmentsKnnDnnCorrelationTrainer,
-                              'knn_dnn_correlation_dynamic'          : KnnDnnCorrelationDynamicTrainer,
-                              'random_sampler_dynamic'               : RandomSamplerDynamicTrainer,
-                              'most_uncertained_dynamic'             : MostUncertainedDynamicTrainer,
-                              'kmeans_segments_knn_dnn_correlation_dynamic' : KMeansSegmentsKnnDnnCorrelationDynamicTrainer,
-                              'most_uncertained_knn_dynamic'         : MostUncertainedKnnDynamicTrainer,
-                              'random_sampler_trainer_qad'           : RandomSamplerTrainerQAD}
+                              'semi_supervised'                      : SemiSupervisedTrainer}
         if self.trainer in available_trainers:
             trainer = available_trainers[self.trainer](self.trainer, self.prm, model, dataset)
             self.log.info('get_trainer: returning ' + str(trainer))
