@@ -154,10 +154,12 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.TEST_SET_SIZE = None                            # integer: test set size
         self.TRAIN_VALIDATION_MAP_REF = None                 # string: path to a reference train-validation mapping
         self.USE_AUGMENTATION = None                         # boolean: whether or not to use augmentation
+        self.NUM_CHANNELS = None                             # int: number of channels of the input image
         self.CLUSTERS = None                                 # integer: number of new clusters when updating active pool
         self.INIT_SIZE = None                                # integer: the initial pool size when dataset constructs
         self.CAP = None                                      # integer: maximum number of labels in active training
 
+        self.data_augmentation = ParametersDatasetAugmentation()
         self._freeze()
 
     def name(self):
@@ -171,9 +173,12 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'TEST_SET_SIZE'           , self.TEST_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_VALIDATION_MAP_REF', self.TRAIN_VALIDATION_MAP_REF)
         self.set_to_config(do_save_none, section_name, config, 'USE_AUGMENTATION'        , self.USE_AUGMENTATION)
+        self.set_to_config(do_save_none, section_name, config, 'NUM_CHANNELS'            , self.NUM_CHANNELS)
         self.set_to_config(do_save_none, section_name, config, 'CLUSTERS'                , self.CLUSTERS)
         self.set_to_config(do_save_none, section_name, config, 'INIT_SIZE'               , self.INIT_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'CAP'                     , self.CAP)
+
+        self.data_augmentation.save_to_ini(do_save_none, section_name, config)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
@@ -183,15 +188,17 @@ class ParametersDataset(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'TEST_SET_SIZE'           , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_VALIDATION_MAP_REF', str)
         self.parse_from_config(self, override_mode, section_name, parser, 'USE_AUGMENTATION'        , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'NUM_CHANNELS'            , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CLUSTERS'                , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'INIT_SIZE'               , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'CAP'                     , int)
+
+        self.data_augmentation.set_from_file(override_mode, section_name, parser)
 
 class ParametersTrain(parser_utils.FrozenClass):
     def __init__(self):
         super(ParametersTrain, self).__init__()
 
-        self.data_augmentation = ParametersTrainDataAugmentation()
         self.train_control     = ParametersTrainControl()
 
         self._freeze()
@@ -201,12 +208,10 @@ class ParametersTrain(parser_utils.FrozenClass):
 
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
-        self.data_augmentation.save_to_ini(do_save_none, section_name, config)
         self.train_control.save_to_ini(do_save_none    , section_name, config)
 
     def set_from_file(self,override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
-        self.data_augmentation.set_from_file(override_mode, section_name, parser)
         self.train_control.set_from_file(override_mode    , section_name, parser)
 
 class ParametersNetworkSystem(parser_utils.FrozenClass):
@@ -263,14 +268,14 @@ class ParametersNetworkOptimization(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'WEIGHT_DECAY_RATE'    , float)
         self.parse_from_config(self, override_mode, section_name, parser, 'OPTIMIZER'            , str)
 
-class ParametersTrainDataAugmentation(parser_utils.FrozenClass):
+class ParametersDatasetAugmentation(parser_utils.FrozenClass):
     def __init__(self):
-        super(ParametersTrainDataAugmentation, self).__init__()
+        super(ParametersDatasetAugmentation, self).__init__()
 
-        #FIXME(gilad): incorporate into dataset wrapper
-        self.FLIP_IMAGE         = None   # boolean: whether to randomly flip images due to augmentation
-        self.DRIFT_X            = None   # int: drift x for augmentation, e.g. 45
-        self.DRIFT_Y            = None   # int: drift y for image augmentation, e.g. 20
+        self.FLIP_IMAGE        = None   # boolean: whether to randomly flip images due to augmentation
+        self.DRIFT_X           = None   # int: drift x for augmentation, e.g. 45
+        self.DRIFT_Y           = None   # int: drift y for image augmentation, e.g. 20
+        self.ZCA_NORMALIZATION = None   # boolean: whether to normalize each image
 
         self._freeze()
 
@@ -282,12 +287,14 @@ class ParametersTrainDataAugmentation(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'FLIP_IMAGE'        , self.FLIP_IMAGE)
         self.set_to_config(do_save_none, section_name, config, 'DRIFT_X'           , self.DRIFT_X)
         self.set_to_config(do_save_none, section_name, config, 'DRIFT_Y'           , self.DRIFT_Y)
+        self.set_to_config(do_save_none, section_name, config, 'ZCA_NORMALIZATION' , self.ZCA_NORMALIZATION)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
-        self.parse_from_config(self,override_mode, section_name, parser,'FLIP_IMAGE'        , bool)
-        self.parse_from_config(self,override_mode, section_name, parser,'DRIFT_X'           , int)
-        self.parse_from_config(self,override_mode, section_name, parser,'DRIFT_Y'           , int)
+        self.parse_from_config(self,override_mode, section_name, parser, 'FLIP_IMAGE'        , bool)
+        self.parse_from_config(self,override_mode, section_name, parser, 'DRIFT_X'           , int)
+        self.parse_from_config(self,override_mode, section_name, parser, 'DRIFT_Y'           , int)
+        self.parse_from_config(self,override_mode, section_name, parser, 'ZCA_NORMALIZATION' , bool)
 
 class ParametersTrainControl(parser_utils.FrozenClass):
     def __init__(self):

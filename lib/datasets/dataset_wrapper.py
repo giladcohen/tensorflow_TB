@@ -24,6 +24,11 @@ class DatasetWrapper(AgentBase):
         self.test_set_size            = self.prm.dataset.TEST_SET_SIZE
         self.train_validation_map_ref = self.prm.dataset.TRAIN_VALIDATION_MAP_REF
         self.use_augmentation         = self.prm.dataset.USE_AUGMENTATION
+        self.num_channels             = self.prm.dataset.NUM_CHANNELS
+        self.flip_image               = self.prm.dataset.data_augmentation.FLIP_IMAGE
+        self.drift_x                  = self.prm.dataset.data_augmentation.DRIFT_X
+        self.drift_y                  = self.prm.dataset.data_augmentation.DRIFT_Y
+        self.zca_normalization        = self.prm.dataset.data_augmentation.ZCA_NORMALIZATION
         self.H                        = self.prm.network.IMAGE_HEIGHT
         self.W                        = self.prm.network.IMAGE_WIDTH
         self.train_batch_size         = self.prm.train.train_control.TRAIN_BATCH_SIZE
@@ -125,21 +130,34 @@ class DatasetWrapper(AgentBase):
         y_train/test.shape = [?]         , dtype=int
         """
 
-        if 'cifar100' in dataset_name:
+        if dataset_name == 'cifar100':
             data = tf.keras.datasets.cifar100
-        elif 'cifar10' in dataset_name:
+        elif dataset_name == 'cifar10':
             data = tf.keras.datasets.cifar10
+        elif dataset_name == 'mnist':
+            data = tf.keras.datasets.mnist
         else:
             err_str = 'dataset {} is not legal'.format(dataset_name)
             self.log.error(err_str)
             raise AssertionError(err_str)
 
         (X_train, y_train), (X_test, y_test) = data.load_data()
-        y_train = np.squeeze(y_train, axis=1)
-        y_test  = np.squeeze(y_test , axis=1)
+
+        if dataset_name in ['cifar10', 'cifar100']:
+            y_train = np.squeeze(y_train, axis=1)
+            y_test  = np.squeeze(y_test , axis=1)
+        if dataset_name =='mnist':
+            X_train = np.expand_dims(X_train, axis=-1)
+            X_test  = np.expand_dims(X_test, axis=-1)
 
         if self.train_validation_size != X_train.shape[0]:
             err_str = 'train_set_size + validation_set_size = {} instead of {}'.format(self.train_validation_size, X_train.shape[0])
+            self.log.error(err_str)
+            raise AssertionError(err_str)
+
+        if X_train.shape[-1] != self.num_channels or X_test.shape[-1] != self.num_channels:
+            err_str = 'X_train.shape[-1] = {}. X_test.shape[-1] = {}. NUM_CHANNELS = {}' \
+                .format(X_train.shape[-1], X_test.shape[-1], self.num_channels)
             self.log.error(err_str)
             raise AssertionError(err_str)
 
@@ -235,9 +253,10 @@ class DatasetWrapper(AgentBase):
             :param label: input label
             :return: An augmented image with label
             """
-            image = tf.image.resize_image_with_crop_or_pad(
-                image, self.H + 4, self.W + 4)  # padding with 2 zeros at every side
-            image = tf.random_crop(image, [self.H, self.H, 3], seed=self.prm.SUPERSEED)
+            if self.zca_normalization:
+                image = tf.image.per_image_standardization(image)
+            image = tf.image.resize_image_with_crop_or_pad(image, self.H + self.drift_y, self.W + self.drift_x)  # padding with zeros at every side
+            image = tf.random_crop(image, [self.H, self.H, self.num_channels], seed=self.prm.SUPERSEED)
             image = tf.image.random_flip_left_right(image, seed=self.prm.SUPERSEED)
             # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
             # image = tf.image.random_brightness(image, max_delta=63. / 255.)
@@ -318,6 +337,11 @@ class DatasetWrapper(AgentBase):
         self.log.info(' TEST_SET_SIZE: {}'.format(self.test_set_size))
         self.log.info(' TRAIN_VALIDATION_MAP_REF: {}'.format(self.train_validation_map_ref))
         self.log.info(' USE_AUGMENTATION: {}'.format(self.use_augmentation))
+        self.log.info(' NUM_CHANNELS: {}'.format(self.num_channels))
+        self.log.info(' FLIP_IMAGE: {}'.format(self.flip_image))
+        self.log.info(' DRIFT_X: {}'.format(self.drift_x))
+        self.log.info(' DRIFT_Y: {}'.format(self.drift_y))
+        self.log.info(' ZCA_NORMALIZATION: {}'.format(self.zca_normalization))
         self.log.info(' TRAIN_BATCH_SIZE: {}'.format(self.train_batch_size))
         self.log.info(' EVAL_BATCH_SIZE: {}'.format(self.eval_batch_size))
 
@@ -342,8 +366,6 @@ class DatasetWrapper(AgentBase):
                 indices.append(sample['index'])
         indices.sort()
         return indices
-
-
 
 # debug
 # import os

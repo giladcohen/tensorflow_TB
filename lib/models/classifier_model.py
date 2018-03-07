@@ -15,6 +15,7 @@ class ClassifierModel(ModelBase):
         self.one_hot_labels      = self.prm.network.ONE_HOT_LABELS
         self.normalize_embedding = self.prm.network.NORMALIZE_EMBEDDING
         self.embedding_dims      = self.prm.network.EMBEDDING_DIMS
+        self.num_channels        = self.prm.dataset.NUM_CHANNELS  # number of channels of the input image
 
         self.xent_cost        = None # contribution of cross entropy to loss
         self.predictions_prob = None # output of the classifier softmax
@@ -30,7 +31,7 @@ class ClassifierModel(ModelBase):
 
     def _set_placeholders(self):
         super(ClassifierModel, self)._set_placeholders()
-        self.images = tf.placeholder(tf.float32, [None, self.image_height, self.image_width, 3])
+        self.images = tf.placeholder(tf.float32, [None, self.image_height, self.image_width, self.num_channels])
         if self.one_hot_labels:
             self.labels = tf.placeholder(tf.int32, [None, self.num_classes])
         else:

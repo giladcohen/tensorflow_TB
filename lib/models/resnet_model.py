@@ -24,8 +24,7 @@ class ResNet(ClassifierModel):
         """building the inference model of ResNet"""
         filters = self.resnet_filters
         with tf.variable_scope('init'):
-            x = tf.map_fn(tf.image.per_image_standardization, self.images)
-            x = conv('init_conv', x, 3, filters[0], stride_arr(1))
+            x = conv('init_conv', self.images, 3, filters[0], stride_arr(1))
 
         strides = [1, 2, 2]
         activate_before_residual = [True, False, False]

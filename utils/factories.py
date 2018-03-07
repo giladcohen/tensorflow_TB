@@ -70,6 +70,7 @@ class Factories(object):
     def get_dataset(self):
         available_datasets = {'cifar10'         : DatasetWrapper,
                               'cifar100'        : DatasetWrapper,
+                              'mnist'           : DatasetWrapper,
                               'active_cifar10'  : ActiveDatasetWrapper,
                               'active_cifar100' : ActiveDatasetWrapper,
                               'semi_cifar10'    : SemiSupervisedDatasetWrapper,
