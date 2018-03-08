@@ -257,7 +257,8 @@ class DatasetWrapper(AgentBase):
                 image = tf.image.per_image_standardization(image)
             image = tf.image.resize_image_with_crop_or_pad(image, self.H + self.drift_y, self.W + self.drift_x)  # padding with zeros at every side
             image = tf.random_crop(image, [self.H, self.H, self.num_channels], seed=self.prm.SUPERSEED)
-            image = tf.image.random_flip_left_right(image, seed=self.prm.SUPERSEED)
+            if self.flip_image:
+                image = tf.image.random_flip_left_right(image, seed=self.prm.SUPERSEED)
             # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
             # image = tf.image.random_brightness(image, max_delta=63. / 255.)
             # image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
