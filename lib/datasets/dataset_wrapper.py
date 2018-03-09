@@ -257,8 +257,6 @@ class DatasetWrapper(AgentBase):
             image = tf.random_crop(image, [self.H, self.H, self.num_channels], seed=self.prm.SUPERSEED)
             if self.flip_image:
                 image = tf.image.random_flip_left_right(image, seed=self.prm.SUPERSEED)
-            if self.zca_normalization:
-                image = tf.image.per_image_standardization(image)
             # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
             # image = tf.image.random_brightness(image, max_delta=63. / 255.)
             # image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
@@ -270,11 +268,18 @@ class DatasetWrapper(AgentBase):
             Casting the image to tf.float32 and the label to tf.int32
             :param image: input image
             :param label: input labels
-            :return: cated image and casted label
+            :return: casted image and casted label
             """
             index   = tf.cast(index, tf.int32)
             image   = tf.cast(image, tf.float32)
             label   = tf.cast(label, tf.int32)
+            return index, image, label
+
+        def _normalize(index, image, label):
+            """
+            :return: normalized image
+            """
+            image = tf.image.per_image_standardization(image)
             return index, image, label
 
         if batch_size is None:
@@ -287,15 +292,21 @@ class DatasetWrapper(AgentBase):
             # feed all datasets with the same model placeholders:
             dataset = tf.data.Dataset.from_tensor_slices((indices, images, labels))
             dataset = dataset.map(map_func=_cast, num_parallel_calls=batch_size)
+
             if mode == Mode.TRAIN:
                 if self.use_augmentation:
                     dataset = dataset.map(map_func=_augment, num_parallel_calls=batch_size)
+                if self.zca_normalization:
+                    dataset = dataset.map(map_func=_normalize, num_parallel_calls=batch_size)
                 dataset = dataset.shuffle(
                     buffer_size=batch_size,
                     seed=self.prm.SUPERSEED,
                     reshuffle_each_iteration=True)
                 dataset = dataset.prefetch(5 * batch_size)
                 dataset = dataset.repeat()
+            else:
+                if self.zca_normalization:
+                    dataset = dataset.map(map_func=_normalize, num_parallel_calls=batch_size)
 
             dataset = dataset.batch(batch_size)
 
