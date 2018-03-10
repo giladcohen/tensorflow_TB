@@ -108,6 +108,6 @@ class ClassificationMATrainer(ClassificationTrainer):
 
     def to_test(self):
         ret = self.global_step % self.test_steps == 0
-        ret = ret or (self.global_step < 1000 and self.global_step % 100 == 0)
+        ret = ret or (self.global_step < 10 and self.global_step % 1 == 0)
         ret = ret and self._activate_test
         return ret
