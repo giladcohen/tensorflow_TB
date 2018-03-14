@@ -16,7 +16,7 @@ class ClassificationMATrainer(ClassificationTrainer):
         self.dnn_train_handle = 'train'       # either train      or train_random
         self.knn_train_handle = 'train_eval'  # either train_eval or train_random_eval
 
-        self.analyize_knn_on_trainset = True
+        self.analyize_knn_on_trainset = False
 
         # testing parameters
         self.knn_neighbors   = self.prm.test.test_control.KNN_NEIGHBORS
