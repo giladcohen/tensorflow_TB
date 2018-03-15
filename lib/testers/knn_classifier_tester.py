@@ -26,7 +26,7 @@ class KNNClassifierTester(TesterBase):
         self.knn_weights     = self.prm.test.test_control.KNN_WEIGHTS
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
 
-        self.num_classes     = int(self.dataset.dataset_name[5:])
+        self.num_classes     = self.dataset.num_classes
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 

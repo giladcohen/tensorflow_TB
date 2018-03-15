@@ -15,6 +15,7 @@ from lib.models.fc2_model import FC2Net
 
 from lib.testers.ensemble_tester import EnsembleTester
 from lib.testers.knn_classifier_tester import KNNClassifierTester
+from lib.testers.multi_layer_knn_classifier_tester import MultiLayerKNNClassifierTester
 
 from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.classification_ma_trainer import ClassificationMATrainer
@@ -91,8 +92,9 @@ class Factories(object):
             raise AssertionError(err_str)
 
     def get_tester(self, model, dataset):
-        available_testers = {'knn_classifier'     : KNNClassifierTester,
-                             'ensemble_classifier': EnsembleTester}
+        available_testers = {'knn_classifier'             : KNNClassifierTester,
+                             'multi_layer_knn_classifier' : MultiLayerKNNClassifierTester,
+                             'ensemble_classifier'        : EnsembleTester}
         if self.tester in available_testers:
             tester = available_testers[self.tester](self.tester, self.prm, model, dataset)
             self.log.info('get_tester: returning ' + str(tester))

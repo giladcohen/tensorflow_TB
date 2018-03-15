@@ -539,6 +539,9 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.KNN_JOBS              = None  # integer: number of KNN n_jobs, should be the number of available CPUs
         self.DUMP_NET              = None  # boolean: whether or not to dump the net signals to disk
         self.LOAD_FROM_DISK        = None  # boolean: whether or not to load the network data from the .npy files
+        self.COLLECTED_LAYERS      = None  # list of strings: layers to collect knn scores from
+        self.APPLY_RELU            = None  # boolean: whether to apply ReLU activation for the sampled layer
+        self.APPLY_GAP             = None  # boolean: whether to apply global average pooling for the sampled layer
 
         self._freeze()
 
@@ -556,6 +559,9 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'KNN_JOBS'             , self.KNN_JOBS)
         self.set_to_config(do_save_none, section_name, config, 'DUMP_NET'             , self.DUMP_NET)
         self.set_to_config(do_save_none, section_name, config, 'LOAD_FROM_DISK'       , self.LOAD_FROM_DISK)
+        self.set_to_config(do_save_none, section_name, config, 'COLLECTED_LAYERS'     , self.COLLECTED_LAYERS)
+        self.set_to_config(do_save_none, section_name, config, 'APPLY_RELU'           , self.APPLY_RELU)
+        self.set_to_config(do_save_none, section_name, config, 'APPLY_GAP'            , self.APPLY_GAP)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
@@ -568,6 +574,9 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_JOBS'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'DUMP_NET'        , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOAD_FROM_DISK'  , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'COLLECTED_LAYERS', list)
+        self.parse_from_config(self, override_mode, section_name, parser, 'APPLY_RELU'      , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'APPLY_GAP'       , bool)
 
 class ParametersTestEnsemble(parser_utils.FrozenClass):
     def __init__(self):

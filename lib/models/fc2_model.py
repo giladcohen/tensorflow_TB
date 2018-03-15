@@ -19,6 +19,7 @@ class FC2Net(ClassifierModel):
                                  weights_regularizer=slim.l2_regularizer(self.weight_decay_rate),
                                  weights_initializer=tf.glorot_uniform_initializer(seed=self.prm.SUPERSEED),
                                  activation_fn=tf.nn.relu):
+                self.net['input_images'] = self.images
                 x = slim.flatten(self.images)
                 x = slim.fully_connected(x, self.embedding_dims, scope='fc1')
                 x = tf.nn.dropout(x, keep_prob=self.dropout_keep_prob)
