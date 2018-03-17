@@ -27,28 +27,27 @@ class MultiLayerKNNClassifierTester(KNNClassifierTester):
 
     def collect_layer(self, layer):
         self.log.info('Start collecting samples for layer {}'.format(layer))
+        layer_desc = layer
+        if self.apply_relu:
+            layer_desc = layer_desc + '_relu'
+        if self.apply_gap:
+            layer_desc = layer_desc + '_gap'
+
         (X_train_features, y_train) = \
             collect_features(
                 agent=self,
                 dataset_name='train_eval',
-                fetches=[self.model.net[layer], self.model.labels],
+                fetches=[self.model.net[layer_desc], self.model.labels],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
 
         (X_test_features, y_test, test_dnn_predictions_prob) = \
             collect_features(
                 agent=self,
                 dataset_name='test',
-                fetches=[self.model.net[layer], self.model.labels, self.model.predictions_prob],
+                fetches=[self.model.net[layer_desc], self.model.labels, self.model.predictions_prob],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
 
-        if self.apply_relu:
-            X_train_features = self.relu(X_train_features)
-            X_test_features  = self.relu(X_test_features)
-
-        if self.apply_gap:
-            X_train_features = self.global_average_pool(X_train_features)
-            X_test_features  = self.global_average_pool(X_test_features)
-        else:
+        if not self.apply_gap:
             # flatten
             X_train_features = X_train_features.reshape(X_train_features.shape[0], -1)
             X_test_features  = X_test_features.reshape(X_test_features.shape[0], -1)

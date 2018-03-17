@@ -24,9 +24,13 @@ class ResNet(ClassifierModel):
         """building the inference model of ResNet"""
         filters = self.resnet_filters
         self.net['input_images'] = self.images
+        self.net['input_images_relu'] = relu(self.net['input_images'], self.relu_leakiness)
+        self.net['input_images_relu_gap'] = global_avg_pool(self.net['input_images_relu'])
         with tf.variable_scope('init'):
             x = conv('init_conv', self.images, 3, filters[0], stride_arr(1))
             self.net['init_conv'] = x
+            self.net['init_conv_relu'] = relu(self.net['init_conv'], self.relu_leakiness)
+            self.net['init_conv_relu_gap'] = global_avg_pool(self.net['init_conv_relu'])
 
         strides = [1, 2, 2]
         activate_before_residual = [True, False, False]
@@ -35,26 +39,38 @@ class ResNet(ClassifierModel):
         with tf.variable_scope('unit_1_0'):
             x = self._residual(x, filters[1], stride_arr(strides[0]), activate_before_residual[0])
             self.net['unit_1_0'] = x
+            self.net['unit_1_0_relu'] = relu(self.net['unit_1_0'], self.relu_leakiness)
+            self.net['unit_1_0_relu_gap'] = global_avg_pool(self.net['unit_1_0_relu'])
         for i in six.moves.range(1, self.num_residual_units):
             with tf.variable_scope('unit_1_%d' % i):
                 x = self._residual(x, filters[1], stride_arr(1), False)
                 self.net['unit_1_%d' % i] = x
+                self.net['unit_1_%d_relu' % i] = relu(self.net['unit_1_%d' % i], self.relu_leakiness)
+                self.net['unit_1_%d_relu_gap' % i] = global_avg_pool(self.net['unit_1_%d_relu' % i])
 
         with tf.variable_scope('unit_2_0'):
             x = self._residual(x, filters[2], stride_arr(strides[1]), activate_before_residual[1])
             self.net['unit_2_0'] = x
+            self.net['unit_2_0_relu'] = relu(self.net['unit_2_0'], self.relu_leakiness)
+            self.net['unit_2_0_relu_gap'] = global_avg_pool(self.net['unit_2_0_relu'])
         for i in six.moves.range(1, self.num_residual_units):
             with tf.variable_scope('unit_2_%d' % i):
                 x = self._residual(x, filters[2], stride_arr(1), False)
                 self.net['unit_2_%d' % i] = x
+                self.net['unit_2_%d_relu' % i] = relu(self.net['unit_2_%d' % i], self.relu_leakiness)
+                self.net['unit_2_%d_relu_gap' % i] = global_avg_pool(self.net['unit_2_%d_relu' % i])
 
         with tf.variable_scope('unit_3_0'):
             x = self._residual(x, filters[3], stride_arr(strides[2]), activate_before_residual[2])
             self.net['unit_3_0'] = x
+            self.net['unit_3_0_relu'] = relu(self.net['unit_3_0'], self.relu_leakiness)
+            self.net['unit_3_0_relu_gap'] = global_avg_pool(self.net['unit_3_0_relu'])
         for i in six.moves.range(1, self.num_residual_units):
             with tf.variable_scope('unit_3_%d' % i):
                 x = self._residual(x, filters[3], stride_arr(1), False)
                 self.net['unit_3_%d' % i] = x
+                self.net['unit_3_%d_relu' % i] = relu(self.net['unit_3_%d' % i], self.relu_leakiness)
+                self.net['unit_3_%d_relu_gap' % i] = global_avg_pool(self.net['unit_3_%d_relu' % i])
 
         x = self.unit_last(x)
 
