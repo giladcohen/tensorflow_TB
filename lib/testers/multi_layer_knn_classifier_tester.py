@@ -48,6 +48,10 @@ class MultiLayerKNNClassifierTester(KNNClassifierTester):
         if self.apply_gap:
             X_train_features = self.global_average_pool(X_train_features)
             X_test_features  = self.global_average_pool(X_test_features)
+        else:
+            # flatten
+            X_train_features.reshape(X_train_features.shape[0], -1)
+            X_test_features.reshape(X_test_features.shape[0], -1)
 
         self.log.info('Fitting KNN model for layer {}...'.format(layer))
         self.knn.fit(X_train_features, y_train)
