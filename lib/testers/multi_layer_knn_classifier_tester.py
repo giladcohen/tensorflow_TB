@@ -47,8 +47,11 @@ class MultiLayerKNNClassifierTester(KNNClassifierTester):
                 fetches=[self.model.net[layer_desc], self.model.labels, self.model.predictions_prob],
                 feed_dict={self.model.dropout_keep_prob: 1.0})
 
-        if not self.apply_gap:
-            # flatten
+        if len(self.model.net[layer_desc].get_shape().as_list()) == 2:
+            self.log.info('layer {} is 1D vector. passing as is'.format(layer))
+            pass
+        else:
+            self.log.info('layer {} is not 1D vector. Flattening...'.format(layer))
             X_train_features = X_train_features.reshape(X_train_features.shape[0], -1)
             X_test_features  = X_test_features.reshape(X_test_features.shape[0], -1)
 
