@@ -35,10 +35,10 @@ def export_scalars(multiplexer, run, tag, filepath, write_headers=True):
     data = extract_scalars(multiplexer, run, tag)
     with open(filepath, 'w') as outfile:
         writer = csv.writer(outfile)
-    if write_headers:
-        writer.writerow(('wall_time', 'step', 'value'))
-    for row in data:
-        writer.writerow(row)
+        if write_headers:
+            writer.writerow(('wall_time', 'step', 'value'))
+        for row in data:
+            writer.writerow(row)
 
 NON_ALPHABETIC = re.compile('[^A-Za-z0-9_]')
 
