@@ -54,8 +54,8 @@ def mkdir_p(directory):
             raise
 
 def main():
-    run_names = ('test')
-    tag_names = ('knn_score')
+    run_names = ('test',)
+    tag_names = ('knn_score',)
 
       # '/data/gilad/logs/ma_scores/wrn/cifar10/log_1444_070318_wrn_ma_score_wd_0.00078-SUPERSEED=07031800',
       # '/data/gilad/logs/ma_scores/wrn/cifar100/log_1444_070318_wrn_cifar100_ma_score_wd_0.00078-SUPERSEED=07031800',
