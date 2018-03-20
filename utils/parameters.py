@@ -148,7 +148,8 @@ class ParametersDataset(parser_utils.FrozenClass):
     def __init__(self):
         super(ParametersDataset, self).__init__()
 
-        self.DATASET_NAME = None                             # string, dataset name. e.g.: "cifar10"
+        self.DATASET_NAME = None                             # string: dataset name. e.g.: "cifar10"
+        self.DATASET_PATH = None                             # string: path to the dataset root dir
         self.TRAIN_SET_SIZE = None                           # integer: train set size
         self.VALIDATION_SET_SIZE = None                      # integer: validation set size
         self.TEST_SET_SIZE = None                            # integer: test set size
@@ -165,6 +166,7 @@ class ParametersDataset(parser_utils.FrozenClass):
     def save_to_ini(self, do_save_none, txt, config):
         section_name = self.add_section(txt, self.name(), config)
         self.set_to_config(do_save_none, section_name, config, 'DATASET_NAME'            , self.DATASET_NAME)
+        self.set_to_config(do_save_none, section_name, config, 'DATASET_PATH'            , self.DATASET_PATH)
         self.set_to_config(do_save_none, section_name, config, 'TRAIN_SET_SIZE'          , self.TRAIN_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'VALIDATION_SET_SIZE'     , self.VALIDATION_SET_SIZE)
         self.set_to_config(do_save_none, section_name, config, 'TEST_SET_SIZE'           , self.TEST_SET_SIZE)
@@ -176,6 +178,7 @@ class ParametersDataset(parser_utils.FrozenClass):
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
         self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_NAME'            , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'DATASET_PATH'            , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'TRAIN_SET_SIZE'          , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'VALIDATION_SET_SIZE'     , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'TEST_SET_SIZE'           , int)
@@ -238,6 +241,7 @@ class ParametersNetworkOptimization(parser_utils.FrozenClass):
         self.DML_MARGIN_MULTIPLIER = None    # float: the DML margin to calculate the loss. e.g. 1.0
         self.WEIGHT_DECAY_RATE     = None    # float: e.g. 0.00078125
         self.OPTIMIZER             = None    # string: name of optimizer, e.g. 'MOM'
+        self.IOU_RATE              = None    # float: e.g. 1.0
 
         self._freeze()
 
@@ -251,6 +255,7 @@ class ParametersNetworkOptimization(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'DML_MARGIN_MULTIPLIER', self.DML_MARGIN_MULTIPLIER)
         self.set_to_config(do_save_none, section_name, config, 'WEIGHT_DECAY_RATE'    , self.WEIGHT_DECAY_RATE)
         self.set_to_config(do_save_none, section_name, config, 'OPTIMIZER'            , self.OPTIMIZER)
+        self.set_to_config(do_save_none, section_name, config, 'IOU_RATE'             , self.IOU_RATE)
 
     def set_from_file(self, override_mode, txt, parser):
         section_name = self.add_section(txt, self.name())
@@ -259,6 +264,7 @@ class ParametersNetworkOptimization(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'DML_MARGIN_MULTIPLIER', float)
         self.parse_from_config(self, override_mode, section_name, parser, 'WEIGHT_DECAY_RATE'    , float)
         self.parse_from_config(self, override_mode, section_name, parser, 'OPTIMIZER'            , str)
+        self.parse_from_config(self, override_mode, section_name, parser, 'IOU_RATE'             , float)
 
 class ParametersTrainDataAugmentation(parser_utils.FrozenClass):
     def __init__(self):

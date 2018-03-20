@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from lib.base.agent_base import AgentBase
+from lib.base.collections import LOSSES
 
 class ModelBase(AgentBase):
     __metaclass__ = ABCMeta
@@ -87,7 +88,6 @@ class ModelBase(AgentBase):
         self.assign_ops['relu_leakiness'] = self.relu_leakiness.assign(self.prm.network.system.RELU_LEAKINESS)
         self.assign_ops['optimizer'] = self.optimizer.assign(self.prm.network.optimization.OPTIMIZER)
 
-    @abstractmethod
     def _set_placeholders(self):
         '''Setting up inputs for the network'''
         self.is_training = tf.placeholder(tf.bool)
@@ -108,7 +108,7 @@ class ModelBase(AgentBase):
         self.add_weight_decay()
         self.add_fidelity_loss()
         with tf.control_dependencies(tf.get_collection('assertions')):
-            self.cost = tf.add_n(tf.get_collection(tf.GraphKeys.LOSSES), name='total_loss')
+            self.cost = tf.add_n(tf.get_collection(LOSSES), name='total_loss')
             tf.summary.scalar('cost', self.cost)
 
     def add_weight_decay(self):
@@ -116,7 +116,7 @@ class ModelBase(AgentBase):
             self.wd_cost = self._decay()
             tf.summary.scalar('wd_cost', self.wd_cost)
             wd_assert_op = tf.verify_tensor_all_finite(self.wd_cost, 'wd_cost contains NaN or Inf')
-            tf.add_to_collection(tf.GraphKeys.LOSSES, self.wd_cost)
+            tf.add_to_collection(LOSSES, self.wd_cost)
             tf.add_to_collection('assertions', wd_assert_op)
 
     @abstractmethod

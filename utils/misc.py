@@ -14,6 +14,8 @@ from matplotlib import offsetbox
 from math import ceil
 import time
 import datetime
+import glob
+import json
 
 
 def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
@@ -357,3 +359,33 @@ def one_hot(indices, depth):
     ohm[np.arange(indices.shape[0]), indices] = 1
     return ohm
 
+def get_names_of_image_files_in_dir(image_dir):
+    """
+    Get names of all image files in a directory.
+    :param image_dir: Directory with images
+    :return: A (sorted) list of names of all image files in imega_dir
+    """
+    IMG_TYPES = ('/*.jpg', '/*.png', '/*.JPG')
+    image_fnames = []
+    for type in IMG_TYPES:
+        image_fnames.extend(glob.glob(image_dir + type))
+    # image_fnames.extend(glob.glob(image_dir))
+    return image_fnames
+
+def get_full_names_of_image_files(images_dir, images_file=None):
+    if images_file is not None:
+        # A list of files, stored in in_images_file where each line contains a name of
+        # a file in directory in_dir
+        image_fnames = []  # List of full image file names for training
+        with open(images_file, 'r') as fin:
+            for line in fin.readlines():
+                img_base_fname = line.strip()
+                img_fname = os.path.join(images_dir, img_base_fname)
+                if not os.path.isfile(img_fname):
+                    err_str = 'Failed to find image file: {}'.format(img_fname)
+                    raise Exception(err_str)
+                image_fnames.append(img_fname)
+        return image_fnames
+    else:
+        # Only directory is given --> take all files in this directory
+        return get_names_of_image_files_in_dir(images_dir)
