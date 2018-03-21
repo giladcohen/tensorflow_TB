@@ -17,7 +17,8 @@ import numpy as np
 from sklearn import manifold
 from sklearn.decomposition import PCA
 from math import ceil
-from utils.misc import *
+from utils.misc import print_numpy
+from utils.plots import plot_embedding2
 
 logging = logging_config()
 
