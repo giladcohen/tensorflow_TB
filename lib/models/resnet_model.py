@@ -56,12 +56,12 @@ class ResNet(ClassifierModel):
                 x = self._residual(x, filters[3], stride_arr(1), False)
                 self.net['unit_3_%d' % i] = x
 
-        x = self.unit_last(x)
-
         for key in self.net.keys():
             self.net[key + '_relu'] = relu(self.net[key], self.relu_leakiness)
         for key in self.net.keys():
             self.net[key + '_gap'] = global_avg_pool(self.net[key])
+
+        x = self.unit_last(x)
 
     def unit_last(self, x):
         """Implementing the final unit of the resnet"""

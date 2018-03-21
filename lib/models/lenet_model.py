@@ -31,15 +31,16 @@ class LeNet(ClassifierModel):
                 self.net['pool2'] = x
                 x = slim.flatten(x)
                 x = slim.fully_connected(x, self.embedding_dims, scope='fc3')
+
+                for key in self.net.keys():
+                    self.net[key + '_gap'] = global_avg_pool(self.net[key])
+
                 x = tf.nn.dropout(x, keep_prob=self.dropout_keep_prob)
                 if self.normalize_embedding:
                     x = tf.nn.l2_normalize(x, axis=1, name='normalize_vec')
                 variable_summaries('embedding', x)
                 self.net['embedding_layer'] = x
                 self.net['logits'] = slim.fully_connected(x, self.num_classes, activation_fn=None, scope='fc4')
-
-                for key in self.net.keys():
-                    self.net[key + '_gap'] = global_avg_pool(self.net[key])
 
     def _decay(self):
         """L2 weight decay loss."""
