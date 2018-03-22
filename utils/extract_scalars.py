@@ -52,14 +52,7 @@ def mkdir_p(directory):
 
 def main():
     logdirs   = (
-        '/data/gilad/logs/ma_scores/wrn/cifar10/log_1444_070318_wrn_ma_score_wd_0.00078-SUPERSEED=07031800',
-        '/data/gilad/logs/ma_scores/wrn/cifar100/log_1444_070318_wrn_cifar100_ma_score_wd_0.00078-SUPERSEED=07031800',
-        '/data/gilad/logs/ma_scores/lenet/cifar10/log_2354_060318_lenet_ma_score_wd_0.008-SUPERSEED=06031800',
-        '/data/gilad/logs/ma_scores/lenet/cifar100/log_2340_090318_lenet_cifar100_wd_0.01-SUPERSEED=08031800',
-        '/data/gilad/logs/ma_scores/lenet/mnist/log_2200_100318_ma_score_lenet_mnist_wd_0.0-SUPERSEED=10031800',
-        '/data/gilad/logs/ma_scores/fc2net/cifar10/log_1705_090318_ma_score_fc2net_cifar10_wd_0.0-SUPERSEED=08031800',
-        '/data/gilad/logs/ma_scores/fc2net/cifar100/log_1353_100318_ma_score_fc2net_cifar100_wd_0.0-SUPERSEED=10031800',
-        '/data/gilad/logs/ma_scores/fc2net/mnist/log_1409_140318_ma_score_fc2net_mnist_wd_0.0-SUPERSEED=14031800'
+        '/data/gilad/logs/ma_scores/wrn/mnist/log_2238_210318_ma_score_wrn_mnist_wd_0.00078-SUPERSEED=21031802',
     )
     run_names = ('test',)
     tag_names = ('knn_score', 'ma_score', 'md_score', 'score')
