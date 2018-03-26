@@ -12,7 +12,7 @@ layers = ['input\nimages', 'init\nconv',
           'unit_1_1', 'unit_1_2', 'unit_1_3', 'unit_1_4',
           'unit_2_1', 'unit_2_2', 'unit_2_3', 'unit_2_4',
           'unit_3_1', 'unit_3_2', 'unit_3_3', 'unit_3_4',
-          'embedding\nspace']
+          'embedding\nvector']
 x = np.arange(len(layers))
 
 # wrn, mnist
@@ -39,7 +39,7 @@ subax1 = add_subplot_axes(ax1, subpos)
 subax1.set_ylim([99.25, 99.5])
 subax1.set_xlim([13.9, 14.1])
 subax1.set_xticks([14])
-subax1.set_xticklabels(['embedding\nspace'])
+subax1.set_xticklabels(['embedding\nvector'])
 subax1.set_yticks([99.25, 99.5])
 subax1.plot(x[-1], k_1[-1], 'ro')
 subax1.plot(x[-1], k_5[-1], 'bo')
@@ -71,7 +71,7 @@ subax2 = add_subplot_axes(ax2, subpos)
 subax2.set_ylim([95.12, 95.22])
 subax2.set_xlim([13.9, 14.1])
 subax2.set_xticks([14])
-subax2.set_xticklabels(['embedding\nspace'])
+subax2.set_xticklabels(['embedding\nvector'])
 subax2.set_yticks([95.12, 95.22])
 subax2.plot(x[-1], k_1[-1], 'ro')
 subax2.plot(x[-1], k_5[-1], 'bo')
@@ -102,7 +102,7 @@ subax3 = add_subplot_axes(ax3, subpos)
 subax3.set_ylim([78.66, 78.93])
 subax3.set_xlim([13.9, 14.1])
 subax3.set_xticks([14])
-subax3.set_xticklabels(['embedding\nspace'])
+subax3.set_xticklabels(['embedding\nvector'])
 subax3.set_yticks([78.66, 78.93])
 subax3.plot(x[-1], k_1[-1], 'ro')
 subax3.plot(x[-1], k_5[-1], 'bo')
