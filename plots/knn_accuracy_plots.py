@@ -1,7 +1,8 @@
 """Plotting the 8 KNN accuracy plots"""
-from utils.plots import load_data_from_csv_wrapper
+from utils.plots import load_data_from_csv_wrapper, add_subplot_axes
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import numpy as np
 
 # ax1 = fig.add_subplot(331)                          # wrn, mnist
 # ax2 = fig.add_subplot(332)                          # wrn, cifar10
@@ -16,27 +17,6 @@ import matplotlib.patches as patches
 # ax9 = fig.add_subplot(339, sharey=ax2, sharex=ax2)  # fc2net, cifar100
 
 """"""
-
-def add_subplot_axes(ax, rect, facecolor='moccasin'):
-    fig = plt.gcf()
-    box = ax.get_position()
-    width = box.width
-    height = box.height
-    inax_position  = ax.transAxes.transform(rect[0:2])
-    transFigure = fig.transFigure.inverted()
-    infig_position = transFigure.transform(inax_position)
-    x = infig_position[0]
-    y = infig_position[1]
-    width *= rect[2]
-    height *= rect[3]
-    subax = fig.add_axes([x,y,width,height], facecolor=facecolor)
-    x_labelsize = subax.get_xticklabels()[0].get_size()
-    y_labelsize = subax.get_yticklabels()[0].get_size()
-    # x_labelsize *= rect[2]**0.5
-    # y_labelsize *= rect[3]**0.5
-    subax.xaxis.set_tick_params(labelsize=x_labelsize)
-    subax.yaxis.set_tick_params(labelsize=y_labelsize)
-    return subax
 
 fig = plt.figure(figsize=(15.0, 8.0))
 subpos = [0.55, 0.3, 0.4, 0.3]
@@ -58,6 +38,7 @@ ax1.set_title('MNIST')
 ax1.text(-180, 52, 'Wide ResNet 28-10', va='center', rotation='vertical', fontdict={'fontsize': 13})
 ax1.yaxis.grid()
 ax1.set_ylabel('accuracy (%)', labelpad=0.5, fontdict={'fontsize': 12})
+ax1.add_patch(patches.Polygon(xy=np.array([[400, 104], [278, 66.2], [500, 66.2], [500, 32.2], [500, 94.2]]), closed=True, color='silver'))
 ax1.add_patch(patches.Rectangle(xy=(400, 95), width=100, height=10, facecolor='moccasin'))
 
 # wrn, cifar10
@@ -76,6 +57,7 @@ subax2.plot(steps[-11:], values[-11:], 'black')
 ax2.set_ylim(bottom=0, top=110)
 ax2.set_title('CIFAR-10')
 ax2.yaxis.grid()
+ax2.add_patch(patches.Polygon(xy=np.array([[40000, 99], [27513.4, 65.6], [50000, 65.6], [50000, 32.2], [50000, 90]]), closed=True, color='silver'))
 ax2.add_patch(patches.Rectangle(xy=(40000, 90), width=10000, height=10, facecolor='moccasin'))
 
 # wrn, cifar100
@@ -94,6 +76,7 @@ subax3.plot(steps[-11:], values[-11:], 'black')
 ax3.set_ylim(bottom=0, top=85)
 ax3.set_title('CIFAR-100')
 ax3.yaxis.grid()
+ax3.add_patch(patches.Polygon(xy=np.array([[40000, 83.1], [27700, 50.75], [50000, 50.75], [50000, 25], [50000, 75]]), closed=True, color='silver'))
 ax3.add_patch(patches.Rectangle(xy=(40000, 75), width=10000, height=8, facecolor='moccasin'))
 
 # lenet, mnist
@@ -113,6 +96,7 @@ ax4.set_ylim(bottom=0, top=110)
 ax4.text(-180, 52, 'LeNet', va='center', rotation='vertical', fontdict={'fontsize': 13})
 ax4.yaxis.grid()
 ax4.set_ylabel('accuracy (%)', labelpad=0.5, fontdict={'fontsize': 12})
+ax4.add_patch(patches.Polygon(xy=np.array([[400, 103.5], [278, 65.9], [500, 65.9], [500, 33.75], [500, 94.5]]), closed=True, color='silver'))
 ax4.add_patch(patches.Rectangle(xy=(400, 94), width=100, height=10, facecolor='moccasin'))
 
 # lenet, cifar10
@@ -130,6 +114,7 @@ ax5.plot(steps, values, 'black')
 subax5.plot(steps[-11:], values[-11:], 'black')
 ax5.set_ylim(bottom=0, top=110)
 ax5.yaxis.grid()
+ax5.add_patch(patches.Polygon(xy=np.array([[40000, 87.8], [27800, 66.5], [50000, 66.5], [50000, 33.1], [50000, 78.7]]), closed=True, color='silver'))
 ax5.add_patch(patches.Rectangle(xy=(40000, 78), width=10000, height=10, facecolor='moccasin'))
 
 
@@ -148,6 +133,7 @@ subax6.plot(steps[-11:], values[-11:], 'black')
 ax6.plot(steps, values, 'black')
 ax6.set_ylim(bottom=0, top=60)
 ax6.yaxis.grid()
+ax6.add_patch(patches.Polygon(xy=np.array([[40000, 56.2], [27800, 35.6], [50000, 35.6], [50000, 18], [50000, 50]]), closed=True, color='silver'))
 ax6.add_patch(patches.Rectangle(xy=(40000, 50), width=10000, height=6, facecolor='moccasin'))
 
 # fc2net, mnist
@@ -189,8 +175,9 @@ ax9.plot(steps, values, 'black')
 subax9.plot(steps[-11:], values[-11:], 'black')
 ax9.set_ylim(bottom=0, top=30)
 ax9.yaxis.grid()
+ax9.add_patch(patches.Polygon(xy=np.array([[40000, 25], [27800, 18], [50000, 18], [50000, 9.1], [50000, 22.2]]), closed=True, color='silver'))
 ax9.add_patch(patches.Rectangle(xy=(40000, 22), width=10000, height=3, facecolor='moccasin'))
 ax9.legend(['k-NN', 'DNN'], loc=(1.05, 3.1))
 
-plt.show()
+# plt.show()
 plt.savefig('knn_dnn_acuuracy_vs_iter.png', dpi=350)
