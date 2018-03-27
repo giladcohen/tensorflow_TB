@@ -38,9 +38,10 @@ class Agent(AgentBase):
 
         self.load_pretrained_from_ref()  # For loading params prior to setting monitored session
 
-        self.build_retentions()
+        self.build_retentions()  # All scalars used for future scheduling (e.g. learning rate scheduling)
+                                 # save: loss, accuracy.
 
-        self.build_train_env()
+        self.build_train_env()   # building all the objects that are relevant solely to the train phase
         self.build_validation_env()
         self.build_test_env()
         self.build_prediction_env()

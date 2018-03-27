@@ -104,7 +104,7 @@ class ObjectDetectionTrainer(TrainerBase):
         self.log.info("Starting building the train environment")
         self.summary_writer_train = tf.summary.FileWriter(self.train_dir)
         self.tb_logger_train = TBLogger(self.summary_writer_train)
-        self.get_train_summaries()
+        self.get_train_summaries()  #FIXME(gilad): change to "set_train_summaries"
 
         self.learning_rate_hook = self.Factories.get_learning_rate_setter(self.model, self.test_retention)
 
@@ -134,6 +134,7 @@ class ObjectDetectionTrainer(TrainerBase):
         # tfdbg_hook = tf_debug.LocalCLIDebugHook()
 
         # self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook, stop_at_step_hook, tfdbg_hook]
+        # FIXME(gilad): switch to dictionary instead of list
         self.train_session_hooks = [summary_hook, logging_hook, self.learning_rate_hook, checkpoint_hook, stop_at_step_hook]
 
     def finalize_graph(self):

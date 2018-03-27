@@ -6,7 +6,7 @@ class Retention(AgentBase):
         super(Retention, self).__init__(name)
         self.prm = prm
 
-        self.retention_size = self.prm.train.train_control.RETENTION_SIZE
+        self.retention_size = self.prm.train.train_control.RETENTION_SIZE  # size for temporal retention values.
 
         self.best_score      = None  # need to be reset
         self.best_score_step = None  # need to be reset

@@ -135,7 +135,7 @@ class SSDMobileNet(ModelBase):
             negatives_lower_than_unmatched=True,
             force_match_for_each_row=True)
 
-        region_similarity_calculator = IouSimilarity()
+        region_similarity_calculator = IouSimilarity()  # can be modified with another class
 
         with slim.arg_scope(
             [slim.conv2d, slim.separable_conv2d, slim.conv2d_transpose],
