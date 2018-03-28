@@ -4,20 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
-# ax1 = fig.add_subplot(331)                          # wrn, mnist
-# ax2 = fig.add_subplot(332)                          # wrn, cifar10
-# ax3 = fig.add_subplot(333, sharey=ax2, sharex=ax2)  # wrn, cifar100
-#
-# ax4 = fig.add_subplot(334, sharey=ax2)              # lenet, mnist
-# ax5 = fig.add_subplot(335, sharey=ax2, sharex=ax2)  # lenet, cifar10
-# ax6 = fig.add_subplot(336, sharey=ax2, sharex=ax2)  # lenet, cifar100
-#
-# ax7 = fig.add_subplot(337, sharey=ax2, sharex=ax4)  # fc2net, mnist
-# ax8 = fig.add_subplot(338, sharey=ax2, sharex=ax2)  # fc2net, cifar10
-# ax9 = fig.add_subplot(339, sharey=ax2, sharex=ax2)  # fc2net, cifar100
-
-""""""
-
 fig = plt.figure(figsize=(15.0, 8.0))
 subpos = [0.55, 0.3, 0.4, 0.3]
 # wrn, mnist

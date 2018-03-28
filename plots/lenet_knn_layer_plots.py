@@ -45,11 +45,11 @@ subax1.plot(x[-1], k_100[-1], 'green', marker='o')
 subax1.plot([4, 5, 6], [dnn[-1]]*3, 'k--')
 #
 # lenet, cifar10
-k_1   = [16.85, 37.24, 37.06, 49.33, 49.59, 62.57]
-k_5   = [18.8,  38.71, 40.19, 51.9,  53.47, 65.26]
-k_30  = [22.57, 41.53, 42.44, 53.94, 55.28, 65.79]
-k_100 = [24.42, 40.73, 41.8,  51.37, 52.75, 64.85]
-dnn   = [83.32] * len(layers)
+k_1   = [16.85, 42.74, 42.93, 58.98, 58.69, 83.09]
+k_5   = [18.8,  45.27, 45.37, 62.78, 62.53, 83.38]
+k_30  = [22.57, 47.7,  48.19, 63.73, 63.4,  83.49]
+k_100 = [24.42, 46.45, 46.77, 61.92, 62.05, 83.28]
+dnn   = [84.75] * len(layers)
 ax2 = fig.add_subplot(312)
 ax2.set_xticks(x)
 ax2.set_xticklabels([])
@@ -61,7 +61,19 @@ ax2.plot(x, dnn, 'k--')
 ax2.grid()
 ax2.set_ylabel('accuracy (%)', labelpad=0.5, fontdict={'fontsize': 12})
 ax2.text(-0.95, 50, 'CIFAR-10', va='center', rotation='vertical', fontdict={'fontsize': 13})
-# NO POLYGON for lenet cifar-10
+ax2.add_patch(patches.Polygon(xy=np.array([[4.75, 87.4], [4.17, 67.8], [5.09, 67.8], [5.09, 34.2], [5.25, 77.4]]), closed=True, color='silver'))
+ax2.add_patch(patches.Rectangle(xy=(4.75, 78), width=0.5, height=10, facecolor='moccasin'))
+subax2 = add_subplot_axes(ax2, subpos)
+subax2.set_ylim([83.0, 85.0])
+subax2.set_xlim([4.9, 5.1])
+subax2.set_xticks([5])
+subax2.set_xticklabels(['embedding\nvector'])
+subax2.set_yticks([83.0, 85.0])
+subax2.plot(x[-1], k_1[-1], 'ro')
+subax2.plot(x[-1]+0.015, k_5[-1], 'bo')
+subax2.plot(x[-1], k_30[-1], 'violet', marker='o')
+subax2.plot(x[-1], k_100[-1], 'green', marker='o')
+subax2.plot([4, 5, 6], [dnn[-1]]*3, 'k--')
 
 # lenet, cifar10
 k_1   = [2.9,  20.26, 20.31, 32.11, 32.09, 51.87]
