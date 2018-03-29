@@ -130,11 +130,11 @@ class DatasetWrapper(AgentBase):
         y_train/test.shape = [?]         , dtype=int
         """
 
-        if dataset_name == 'cifar100':
+        if 'cifar100' in dataset_name:
             data = tf.keras.datasets.cifar100
-        elif dataset_name == 'cifar10':
+        elif 'cifar10' in dataset_name:
             data = tf.keras.datasets.cifar10
-        elif dataset_name == 'mnist':
+        elif 'mnist' in dataset_name:
             data = tf.keras.datasets.mnist
         else:
             err_str = 'dataset {} is not legal'.format(dataset_name)
