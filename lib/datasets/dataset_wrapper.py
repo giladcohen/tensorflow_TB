@@ -143,10 +143,10 @@ class DatasetWrapper(AgentBase):
 
         (X_train, y_train), (X_test, y_test) = data.load_data()
 
-        if dataset_name in ['cifar10', 'cifar100']:
+        if 'cifar' in dataset_name:
             y_train = np.squeeze(y_train, axis=1)
             y_test  = np.squeeze(y_test , axis=1)
-        if dataset_name =='mnist':
+        if 'mnist' in dataset_name:
             X_train = np.expand_dims(X_train, axis=-1)
             X_test  = np.expand_dims(X_test, axis=-1)
 
