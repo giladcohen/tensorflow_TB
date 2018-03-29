@@ -51,7 +51,8 @@ class Factories(object):
                               'semi_cifar10'    : SemiSupervisedDatasetWrapper,
                               'semi_cifar100'   : SemiSupervisedDatasetWrapper,
                               'random_cifar10'  : RandomDatasetWrapper,
-                              'random_cifar100' : RandomDatasetWrapper}
+                              'random_cifar100' : RandomDatasetWrapper,
+                              'random_mnist'    : RandomDatasetWrapper}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_dataset_wrapper', self.prm)
             return dataset
