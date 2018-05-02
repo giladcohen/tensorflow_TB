@@ -131,7 +131,7 @@ csv_file = '/data/gilad/logs/ma_scores/fc2net/mnist/log_1409_140318_ma_score_fc2
 steps, values = load_data_from_csv_wrapper(csv_file)
 ax7.plot(steps, values, 'black')
 ax7.set_ylim(bottom=0, top=110)
-ax7.text(-180, 52, 'FC2Net', va='center', rotation='vertical', fontdict={'fontsize': 13})
+ax7.text(-180, 52, 'MLP-640', va='center', rotation='vertical', fontdict={'fontsize': 13})
 ax7.yaxis.grid()
 ax7.set_ylabel('accuracy (%)', labelpad=0.5, fontdict={'fontsize': 12})
 
@@ -166,4 +166,5 @@ ax9.add_patch(patches.Rectangle(xy=(40000, 22), width=10000, height=3, facecolor
 ax9.legend(['k-NN', 'DNN'], loc=(1.05, 3.1))
 
 # plt.show()
+
 plt.savefig('knn_dnn_acuuracy_vs_iter.png', dpi=350)

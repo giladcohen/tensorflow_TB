@@ -17,7 +17,7 @@ ax2.set_xticklabels(['0', '10', '20', '30', '40', '50'], fontdict={'fontsize': 1
 ax2.set_xlabel('Thousands of train steps', fontdict={'fontsize': 13})
 ax2.tick_params('y', colors='b')
 ax2.yaxis.grid()
-ax2.set_ylabel('MA score', color='b', labelpad=10, fontdict={'fontsize': 14})
+ax2.set_ylabel('MC score', color='b', labelpad=10, fontdict={'fontsize': 14})
 ax2.set_title('CIFAR-10')
 for item in ax2.get_yticklabels():
     item.set_fontsize(13)
@@ -28,9 +28,10 @@ steps  = [steps[0]]  + steps[10:]
 values = [values[0]] + values[10:]
 ax22 = ax2.twinx()
 ax22.plot(steps, values, 'r')
-ax22.set_ylim(bottom=0, top=1)
+ax22.set_ylim(bottom=0, top=1.045)
+ax22.yaxis.grid()
 ax22.tick_params('y', colors='r')
-ax22.set_ylabel('MD score', color='r', labelpad=10, fontdict={'fontsize': 14})
+ax22.set_ylabel('ME score', color='r', labelpad=10, fontdict={'fontsize': 14})
 for item in ax22.get_yticklabels():
     item.set_fontsize(13)
 

@@ -123,7 +123,7 @@ ax7.set_ylim(bottom=0.985, top=1)
 ax7.set_ylabel('MA score', color='b', labelpad=5, fontdict={'fontsize': 12})
 ax7.tick_params('y', colors='b')
 ax7.yaxis.grid()
-ax7.text(-220, 0.9925, 'FC2Net', va='center', rotation='vertical', fontdict={'fontsize': 13})
+ax7.text(-220, 0.9925, 'MLP-640', va='center', rotation='vertical', fontdict={'fontsize': 13})
 
 csv_file = '/data/gilad/logs/ma_scores/fc2net/mnist/log_1409_140318_ma_score_fc2net_mnist_wd_0.0-SUPERSEED=14031800/data_for_figures/test___md_score'
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
