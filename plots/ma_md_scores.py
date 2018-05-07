@@ -7,21 +7,22 @@ import numpy as np
 fig = plt.figure(figsize=(15.0, 8.0))
 
 # wrn, mnist
-csv_file = '/data/gilad/logs/ma_scores/wrn/mnist/log_2238_210318_ma_score_wrn_mnist_wd_0.00078-SUPERSEED=21031802/data_for_figures/test___ma_score'
+# csv_file = '/data/gilad/logs/ma_scores/wrn/mnist/log_2238_210318_ma_score_wrn_mnist_wd_0.00078-SUPERSEED=21031802/data_for_figures/test___ma_score'
+csv_file = '/data/gilad/logs/ma_scores/wrn/mnist/log_0746_020518_ma_score_wrn_mnist_wd_0.00078_steps_1000-SUPERSEED=21031802/data_for_figures/test___ma_score'
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 ax1 = fig.add_subplot(331)
 ax1.plot(steps, values, 'b')
-ax1.set_ylabel('MA score', color='b', labelpad=10, fontdict={'fontsize': 12})
+ax1.set_ylabel('MC score', color='b', labelpad=10, fontdict={'fontsize': 12})
 ax1.tick_params('y', colors='b')
 ax1.yaxis.grid()
 ax1.set_title('MNIST')
-ax1.text(-220, 0.95, 'Wide ResNet 28-10', va='center', rotation='vertical', fontdict={'fontsize': 13})
+ax1.text(-430, 0.95, 'Wide ResNet 28-10', va='center', rotation='vertical', fontdict={'fontsize': 13})
 
-csv_file = '/data/gilad/logs/ma_scores/wrn/mnist/log_2238_210318_ma_score_wrn_mnist_wd_0.00078-SUPERSEED=21031802/data_for_figures/test___md_score'
+csv_file = '/data/gilad/logs/ma_scores/wrn/mnist/log_0746_020518_ma_score_wrn_mnist_wd_0.00078_steps_1000-SUPERSEED=21031802/data_for_figures/test___md_score'
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 ax11 = ax1.twinx()
 ax11.plot(steps, values, 'r')
-ax11.set_ylim(bottom=0, top=1)
+ax11.set_ylim(bottom=0, top=1.047)
 ax11.tick_params('y', colors='r')
 
 # wrn, cifar10
@@ -29,8 +30,8 @@ csv_file = '/data/gilad/logs/ma_scores/wrn/cifar10/log_1444_070318_wrn_ma_score_
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 ax2 = fig.add_subplot(332)
 ax2.plot(steps, values, 'b')
-ax2.tick_params('y', colors='b')
 ax2.yaxis.grid()
+ax2.tick_params('y', colors='b')
 ax2.set_title('CIFAR-10')
 
 csv_file = '/data/gilad/logs/ma_scores/wrn/cifar10/log_1444_070318_wrn_ma_score_wd_0.00078-SUPERSEED=07031800/data_for_figures/test___md_score'
@@ -39,7 +40,7 @@ steps  = [steps[0]]  + steps[10:]
 values = [values[0]] + values[10:]
 ax22 = ax2.twinx()
 ax22.plot(steps, values, 'r')
-ax22.set_ylim(bottom=0, top=1)
+ax22.set_ylim(bottom=0, top=1.046)
 ax22.tick_params('y', colors='r')
 
 # wrn, cifar100
@@ -57,27 +58,28 @@ steps  = [steps[0]]  + steps[10:]
 values = [values[0]] + values[10:]
 ax33 = ax3.twinx()
 ax33.plot(steps, values, 'r')
-ax33.set_ylim(bottom=0, top=1)
+ax33.set_ylim(bottom=0, top=1.042)
 ax33.tick_params('y', colors='r')
-ax33.set_ylabel('MD score', color='r', labelpad=5, fontdict={'fontsize': 12})
+ax33.set_ylabel('ME score', color='r', labelpad=5, fontdict={'fontsize': 12})
 
 # lenet, mnist
-csv_file = '/data/gilad/logs/ma_scores/lenet/mnist/log_2200_100318_ma_score_lenet_mnist_wd_0.0-SUPERSEED=10031800/data_for_figures/test___ma_score'
+# csv_file = '/data/gilad/logs/ma_scores/lenet/mnist/log_2200_100318_ma_score_lenet_mnist_wd_0.0-SUPERSEED=10031800/data_for_figures/test___ma_score'
+csv_file = '/data/gilad/logs/ma_scores/lenet/mnist/log_0746_020518_ma_score_lenet_mnist_wd_0.0_steps_1000-SUPERSEED=10031800/data_for_figures/test___ma_score'
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 steps  = [steps[0]]  + steps[10:]
 values = [values[0]] + values[10:]
 ax4 = fig.add_subplot(334)
 ax4.plot(steps, values, 'b')
-ax4.set_ylabel('MA score', color='b', labelpad=5, fontdict={'fontsize': 12})
+ax4.set_ylabel('MC score', color='b', labelpad=5, fontdict={'fontsize': 12})
 ax4.tick_params('y', colors='b')
 ax4.yaxis.grid()
-ax4.text(-220, 0.988, 'LeNet', va='center', rotation='vertical', fontdict={'fontsize': 13})
+ax4.text(-440, 0.988, 'LeNet', va='center', rotation='vertical', fontdict={'fontsize': 13})
 
-csv_file = '/data/gilad/logs/ma_scores/lenet/mnist/log_2200_100318_ma_score_lenet_mnist_wd_0.0-SUPERSEED=10031800/data_for_figures/test___md_score'
+csv_file = '/data/gilad/logs/ma_scores/lenet/mnist/log_0746_020518_ma_score_lenet_mnist_wd_0.0_steps_1000-SUPERSEED=10031800/data_for_figures/test___md_score'
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 ax44 = ax4.twinx()
 ax44.plot(steps, values, 'r')
-ax44.set_ylim(bottom=0, top=1)
+ax44.set_ylim(bottom=0, top=1.044)
 ax44.tick_params('y', colors='r')
 
 # lenet, cifar10
@@ -85,6 +87,8 @@ csv_file = '/data/gilad/logs/ma_scores/lenet/cifar10/log_2354_060318_lenet_ma_sc
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 ax5 = fig.add_subplot(335)
 ax5.plot(steps, values, 'b')
+ax5.set_ylim(bottom=0.36, top=1.0)
+ax5.set_yticks([0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 ax5.tick_params('y', colors='b')
 ax5.yaxis.grid()
 
@@ -92,7 +96,7 @@ csv_file = '/data/gilad/logs/ma_scores/lenet/cifar10/log_2354_060318_lenet_ma_sc
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 ax55 = ax5.twinx()
 ax55.plot(steps, values, 'r')
-ax55.set_ylim(bottom=0, top=1)
+ax55.set_ylim(bottom=0.0, top=1.0)
 ax55.tick_params('y', colors='r')
 
 # lenet, cifar100
@@ -110,22 +114,23 @@ ax66 = ax6.twinx()
 ax66.plot(steps, values, 'r')
 ax66.set_ylim(bottom=0, top=1)
 ax66.tick_params('y', colors='r')
-ax66.set_ylabel('MD score', color='r', labelpad=5, fontdict={'fontsize': 12})
+ax66.set_ylabel('ME score', color='r', labelpad=5, fontdict={'fontsize': 12})
 
 # fc2net, mnist
-csv_file = '/data/gilad/logs/ma_scores/fc2net/mnist/log_1409_140318_ma_score_fc2net_mnist_wd_0.0-SUPERSEED=14031800/data_for_figures/test___ma_score'
+# csv_file = '/data/gilad/logs/ma_scores/fc2net/mnist/log_1409_140318_ma_score_fc2net_mnist_wd_0.0-SUPERSEED=14031800/data_for_figures/test___ma_score'
+csv_file = '/data/gilad/logs/ma_scores/fc2net/mnist/log_0746_020518_ma_score_fc2net_mnist_wd_0.0_steps_1000-SUPERSEED=10031800/data_for_figures/test___ma_score'
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 steps  = [steps[0]]  + steps[10:]
 values = [values[0]] + values[10:]
 ax7 = fig.add_subplot(337)
 ax7.plot(steps, values, 'b')
 ax7.set_ylim(bottom=0.985, top=1)
-ax7.set_ylabel('MA score', color='b', labelpad=5, fontdict={'fontsize': 12})
+ax7.set_ylabel('MC score', color='b', labelpad=5, fontdict={'fontsize': 12})
 ax7.tick_params('y', colors='b')
 ax7.yaxis.grid()
-ax7.text(-220, 0.9925, 'MLP-640', va='center', rotation='vertical', fontdict={'fontsize': 13})
+ax7.text(-440, 0.9925, 'MLP-640', va='center', rotation='vertical', fontdict={'fontsize': 13})
 
-csv_file = '/data/gilad/logs/ma_scores/fc2net/mnist/log_1409_140318_ma_score_fc2net_mnist_wd_0.0-SUPERSEED=14031800/data_for_figures/test___md_score'
+csv_file = '/data/gilad/logs/ma_scores/fc2net/mnist/log_0746_020518_ma_score_fc2net_mnist_wd_0.0_steps_1000-SUPERSEED=10031800/data_for_figures/test___md_score'
 steps, values = load_data_from_csv_wrapper(csv_file, mult=1.0)
 ax77 = ax7.twinx()
 ax77.plot(steps, values, 'r')
@@ -163,7 +168,7 @@ ax99 = ax9.twinx()
 ax99.plot(steps, values, 'r')
 ax99.set_ylim(bottom=0, top=1)
 ax99.tick_params('y', colors='r')
-ax99.set_ylabel('MD score', color='r', labelpad=5, fontdict={'fontsize': 12})
+ax99.set_ylabel('ME score', color='r', labelpad=5, fontdict={'fontsize': 12})
 
 plt.subplots_adjust(wspace=0.25)
 # fig.tight_layout()

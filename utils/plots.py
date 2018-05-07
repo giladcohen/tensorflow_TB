@@ -67,10 +67,10 @@ def load_data_from_csv(csv_file):
     data['value'] = [float(elem) for elem in data['value']]
     return data['step'], data['value']
 
-def load_data_from_csv_wrapper(csv_file, mult=100.0):
+def load_data_from_csv_wrapper(csv_file, mult=100.0, round_points=4):
     """wrapper to fetch corrected values from csv_file"""
     steps, values = load_data_from_csv(csv_file)
-    values = [round(mult * elem, 4) for elem in values]
+    values = [round(mult * elem, round_points) for elem in values]
     return steps, values
 
 def add_subplot_axes(ax, rect, facecolor='moccasin'):

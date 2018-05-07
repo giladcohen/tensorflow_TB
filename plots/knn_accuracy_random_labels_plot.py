@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
-fig = plt.figure(figsize=(15, 8.0))
+fig = plt.figure(figsize=(14, 4))
 # subpos = [0.55, 0.3, 0.4, 0.3]
 
 # wrn, mnist
@@ -28,7 +28,7 @@ for item in ax1.get_yticklabels():
 ax1.set_ylim(bottom=-2, top=102)
 ax1.set_title('Random Labeled MNIST')
 ax1.grid(axis='y')
-ax1.legend(['k-NN', 'DNN'], loc=(0.05, 0.86), prop={'size': 16})
+ax1.legend(['k-NN', 'DNN'], loc=(0.05, 0.7), prop={'size': 16})
 
 # wrn, cifar-10
 csv_file = '/data/gilad/logs/ma_scores/random_labels/wrn/cifar10/log_0103_300318_wrn_cifar10_wd_0_no_aug-SUPERSEED=30031800/data_for_figures/test___knn_score_trainset'
@@ -50,7 +50,7 @@ for item in ax2.get_yticklabels():
 ax2.set_ylim(bottom=-2, top=102)
 ax2.set_title('Random Labeled CIFAR-10')
 ax2.grid(axis='y')
-ax2.legend(['k-NN', 'DNN'], loc=(0.05, 0.86), prop={'size': 16})
+ax2.legend(['k-NN', 'DNN'], loc=(0.05, 0.7), prop={'size': 16})
 
 # wrn, cifar-100
 csv_file = '/data/gilad/logs/ma_scores/random_labels/wrn/cifar100/log_0103_300318_wrn_cifar100_wd_0_no_aug-SUPERSEED=30031800/data_for_figures/test___knn_score_trainset'
@@ -72,7 +72,7 @@ for item in ax3.get_yticklabels():
 ax3.set_ylim(bottom=-2, top=102)
 ax3.set_title('Random Labeled CIFAR-100')
 ax3.grid(axis='y')
-ax3.legend(['k-NN', 'DNN'], loc=(0.05, 0.86), prop={'size': 16})
+ax3.legend(['k-NN', 'DNN'], loc=(0.05, 0.7), prop={'size': 16})
 
 fig.tight_layout()
 plt.savefig('knn_dnn_accuracy_random_labels_vs_iter.png', dpi=350)
