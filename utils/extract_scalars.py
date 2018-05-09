@@ -52,12 +52,12 @@ def mkdir_p(directory):
 
 def main():
     logdirs   = (
-        '/data/gilad/logs/ma_scores/wrn/mnist/log_0746_020518_ma_score_wrn_mnist_wd_0.00078_steps_1000-SUPERSEED=21031802',
-        '/data/gilad/logs/ma_scores/lenet/mnist/log_0746_020518_ma_score_lenet_mnist_wd_0.0_steps_1000-SUPERSEED=10031800',
-        '/data/gilad/logs/ma_scores/fc2net/mnist/log_0746_020518_ma_score_fc2net_mnist_wd_0.0_steps_1000-SUPERSEED=10031800'
+        '/data/gilad/logs/ma_scores/random_labels/wrn/mnist/log_0103_300318_wrn_mnist_wd_0_no_aug_steps_50k-SUPERSEED=30031800',
+        '/data/gilad/logs/ma_scores/random_labels/wrn/cifar10/log_0103_300318_wrn_cifar10_wd_0_no_aug-SUPERSEED=30031800',
+        '/data/gilad/logs/ma_scores/random_labels/wrn/cifar100/log_0103_300318_wrn_cifar100_wd_0_no_aug-SUPERSEED=30031800'
     )
     run_names = ('test',)
-    tag_names = ('ma_score', 'md_score', 'knn_score', 'score')
+    tag_names = ('knn_score', 'knn_score_trainset', 'ma_score', 'ma_score_trainset', 'md_score', 'md_score_trainset', 'score', 'score_trainset')
 
     for logdir in logdirs:
         output_dir = os.path.join(logdir, 'data_for_figures')
