@@ -167,4 +167,4 @@ ax9.legend(['k-NN', 'DNN'], loc=(1.05, 3.1))
 
 # plt.show()
 
-plt.savefig('knn_dnn_acuuracy_vs_iter.png', dpi=350)
+# plt.savefig('knn_dnn_acuuracy_vs_iter.png', dpi=350)

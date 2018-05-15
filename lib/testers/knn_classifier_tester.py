@@ -174,13 +174,17 @@ class KNNClassifierTester(TesterBase):
             train_knn_error_rate = 1.0 - train_knn_accuracy
             dnn_error_rate       = 1.0 - dnn_accuracy
             knn_error_rate       = 1.0 - knn_accuracy
-            dnn_generalization_error = train_dnn_error_rate - dnn_error_rate
-            knn_generalization_error = train_knn_error_rate - knn_error_rate
+            dnn_generalization_error = dnn_error_rate - train_dnn_error_rate
+            knn_generalization_error = knn_error_rate - train_knn_error_rate
 
-            print('train_dnn_accuracy: {}, train_knn_accuracy: {}'.format(train_dnn_accuracy, train_knn_accuracy),
-                  'dnn_accuracy: {}, knn_accuracy: {}'.format(dnn_accuracy, knn_accuracy),
-                  'dnn_error_rate: {}, knn_error_rate: {}'.format(dnn_error_rate, knn_error_rate),
-                  'DNN generalization: {}, KNN generalization: {}'.format(dnn_generalization_error, knn_generalization_error))
+            print('train_dnn_accuracy: {}, train_knn_accuracy: {}\n'.format(train_dnn_accuracy, train_knn_accuracy),
+                  'np.sum(train_y_pred_dnn == y_train) = {}\n'.format(np.sum(train_y_pred_dnn == y_train)),
+                  'np.sum(train_y_pred_knn == y_train) = {}\n'.format(np.sum(train_y_pred_knn == y_train)),
+                  'np.sum(y_pred_dnn == y_test) = {}\n'.format(np.sum(y_pred_dnn == y_test)),
+                  'np.sum(y_pred_knn == y_test) = {}\n'.format(np.sum(y_pred_knn == y_test)),
+                  'dnn_accuracy: {}, knn_accuracy: {}\n'.format(dnn_accuracy, knn_accuracy),
+                  'dnn_error_rate: {}, knn_error_rate: {}\n'.format(dnn_error_rate, knn_error_rate),
+                  'DNN generalization: {}, KNN generalization: {}\n'.format(dnn_generalization_error, knn_generalization_error))
             exit(0)
 
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
