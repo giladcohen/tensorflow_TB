@@ -1,4 +1,4 @@
-"""Plotting the 8 KNN accuracy plots"""
+"""Plotting the 3 KNN accuracy plots for WRN random label"""
 from utils.plots import load_data_from_csv_wrapper, add_subplot_axes
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches

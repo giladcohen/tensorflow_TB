@@ -45,11 +45,11 @@ class KNNClassifierTester(TesterBase):
         """Optionally fetching precomputed train/test features, and labels."""
         if test_dir is None:
             test_dir = self.test_dir
-        train_features_file            = os.path.join(test_dir, 'train_features.npy')
-        test_features_file             = os.path.join(test_dir, 'test_features.npy')
-        test_dnn_predictions_prob_file = os.path.join(test_dir, 'test_dnn_predictions_prob.npy')
-        train_labels_file              = os.path.join(test_dir, 'train_labels.npy')
-        test_labels_file               = os.path.join(test_dir, 'test_labels.npy')
+        train_features_file             = os.path.join(test_dir, 'train_features.npy')
+        test_features_file              = os.path.join(test_dir, 'test_features.npy')
+        test_dnn_predictions_prob_file  = os.path.join(test_dir, 'test_dnn_predictions_prob.npy')
+        train_labels_file               = os.path.join(test_dir, 'train_labels.npy')
+        test_labels_file                = os.path.join(test_dir, 'test_labels.npy')
 
         if self.load_from_disk:
             self.log.info('Loading {}/{} train/test set embedding features from disk'.format(self.dataset.train_set_size, self.dataset.test_set_size))
@@ -60,11 +60,11 @@ class KNNClassifierTester(TesterBase):
             test_dnn_predictions_prob = np.load(test_dnn_predictions_prob_file)
         else:
             self.log.info('Collecting {} train set embedding features'.format(self.dataset.train_set_size))
-            (X_train_features, y_train) = \
+            (X_train_features, y_train, train_dnn_predictions_prob) = \
                 collect_features(
                     agent=self,
                     dataset_name='train_eval',
-                    fetches=[self.model.net['embedding_layer'], self.model.labels],
+                    fetches=[self.model.net['embedding_layer'], self.model.labels, self.model.predictions_prob],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
 
             self.log.info('Collecting {} test set embedding features and DNN predictions'.format(self.dataset.test_set_size))
@@ -78,13 +78,13 @@ class KNNClassifierTester(TesterBase):
         if self.dump_net:
             self.log.info('Dumping train features into disk:\n{}\n{}\n{}\n{}\n{}'
                           .format(train_features_file, test_features_file, test_dnn_predictions_prob_file, train_labels_file, test_labels_file))
-            np.save(train_features_file           , X_train_features)
-            np.save(test_features_file            , X_test_features)
-            np.save(test_dnn_predictions_prob_file, test_dnn_predictions_prob)
-            np.save(train_labels_file             , y_train)
-            np.save(test_labels_file              , y_test)
+            np.save(train_features_file            , X_train_features)
+            np.save(test_features_file             , X_test_features)
+            np.save(test_dnn_predictions_prob_file , test_dnn_predictions_prob)
+            np.save(train_labels_file              , y_train)
+            np.save(test_labels_file               , y_test)
 
-        return X_train_features, X_test_features, test_dnn_predictions_prob, y_train, y_test
+        return X_train_features, X_test_features, train_dnn_predictions_prob, test_dnn_predictions_prob, y_train, y_test
 
     def apply_pca(self, X, fit=False):
         """If pca_reduction is True, apply PCA reduction"""
@@ -98,6 +98,7 @@ class KNNClassifierTester(TesterBase):
     def test(self):
         X_train_features, \
         X_test_features, \
+        train_dnn_predictions_prob, \
         test_dnn_predictions_prob, \
         y_train, \
         y_test = self.fetch_dump_data_features()
@@ -151,6 +152,36 @@ class KNNClassifierTester(TesterBase):
             self.log.info(print_str)
             print(print_str)
             self.summary_writer_test.flush()
+        elif self.decision_method == 'dnn_knn_generalization':
+            # training predictions
+            train_y_pred_dnn = train_dnn_predictions_prob.argmax(axis=1)
+            self.log.info('Predicting train set labels from KNN model...')
+            train_knn_predictions_prob = self.knn.predict_proba(X_train_features)
+            train_y_pred_knn = train_knn_predictions_prob.argmax(axis=1)
+            train_dnn_accuracy = np.sum(train_y_pred_dnn == y_train) / self.dataset.train_set_size
+            train_knn_accuracy = np.sum(train_y_pred_knn == y_train) / self.dataset.train_set_size
+
+            # testing predictions
+            y_pred = y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
+            self.log.info('Predicting test set labels from KNN model...')
+            test_knn_predictions_prob = self.knn.predict_proba(X_test_features)
+            y_pred_knn = test_knn_predictions_prob.argmax(axis=1)
+            dnn_accuracy = np.sum(y_pred_dnn == y_test) / self.dataset.test_set_size
+            knn_accuracy = np.sum(y_pred_knn == y_test) / self.dataset.test_set_size
+
+            # calculating generalization
+            train_dnn_error_rate = 1.0 - train_dnn_accuracy
+            train_knn_error_rate = 1.0 - train_knn_accuracy
+            dnn_error_rate       = 1.0 - dnn_accuracy
+            knn_error_rate       = 1.0 - knn_accuracy
+            dnn_generalization_error = train_dnn_error_rate - dnn_error_rate
+            knn_generalization_error = train_knn_error_rate - knn_error_rate
+
+            print('train_dnn_accuracy: {}, train_knn_accuracy: {}'.format(train_dnn_accuracy, train_knn_accuracy),
+                  'dnn_accuracy: {}, knn_accuracy: {}'.format(dnn_accuracy, knn_accuracy),
+                  'dnn_error_rate: {}, knn_error_rate: {}'.format(dnn_error_rate, knn_error_rate),
+                  'DNN generalization: {}, KNN generalization: {}'.format(dnn_generalization_error, knn_generalization_error))
+            exit(0)
 
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
 
