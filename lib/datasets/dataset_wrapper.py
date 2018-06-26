@@ -9,6 +9,7 @@ import lib.logger.logger as logger
 import csv
 import tensorflow as tf
 from utils.enums import Mode
+from utils.misc import numericalSort
 
 class DatasetWrapper(AgentBase):
     """Wrapper which hold both the trainset and the validation set for cifar-10"""
@@ -169,6 +170,25 @@ class DatasetWrapper(AgentBase):
         :return: None
         """
         (X_train, y_train), (X_test, y_test) = self.get_raw_data(self.dataset_name)
+
+        # override to alternative test set
+
+        # creating image list
+        images_list = []
+        images_dir  = '/data/dataset/cifar10/test_data_v0'
+        labels_file = '/data/dataset/cifar10/test_labels_v0.txt'
+        local_list = sorted(os.listdir(images_dir), key=numericalSort)
+        for file in local_list:
+            images_list.append(os.path.join(images_dir, file))
+        X_test = np.stack(images_list)
+
+        # creating label list
+        labels = -1 * np.ones([2000], dtype=np.int)
+        tmp_list = open(labels_file).read().splitlines()
+        for i, val in enumerate(tmp_list):
+            labels[i] = int(val)
+        y_test = labels
+
         self.set_datasets(X_train, y_train, X_test, y_test)
 
     def set_datasets(self, X_train, y_train, X_test, y_test):
