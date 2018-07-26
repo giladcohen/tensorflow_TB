@@ -29,13 +29,14 @@ values = [values[0]] + values[10:]
 ax22 = ax2.twinx()
 ax22.plot(steps, values, 'r')
 ax22.set_ylim(bottom=0, top=1.045)
-ax22.yaxis.grid()
+# ax22.yaxis.grid()
 ax22.tick_params('y', colors='r')
 ax22.set_ylabel('ME score', color='r', labelpad=10, fontdict={'fontsize': 14})
 for item in ax22.get_yticklabels():
     item.set_fontsize(13)
 
 # plt.subplots_adjust(wspace=0.25)
-# fig.tight_layout()
+fig.tight_layout()
+plt.show()
 plt.savefig('ma_md_scores_just_cifar10_vs_iter.png', dpi=350)
 

@@ -1,4 +1,4 @@
-"""Plotting the 8 KNN accuracy plots"""
+"""Plotting the 9 KNN accuracy plots"""
 from utils.plots import load_data_from_csv_wrapper, add_subplot_axes
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -173,4 +173,4 @@ ax9.legend(['k-NN', 'DNN'], loc=(1.05, 3.1))
 
 # plt.show()
 
-plt.savefig('knn_dnn_accuracy_vs_iter_1000_steps.png', dpi=350)
+# plt.savefig('knn_dnn_accuracy_vs_iter_1000_steps.png', dpi=350)
