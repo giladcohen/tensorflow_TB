@@ -7,6 +7,7 @@ import numpy as np
 from lib.testers.tester_base import TesterBase
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
 from sklearn.metrics import normalized_mutual_info_score
 from utils.misc import collect_features, calc_mutual_agreement
 
@@ -40,6 +41,12 @@ class KNNClassifierTester(TesterBase):
             weights=self.knn_weights,
             p=int(self.knn_norm[-1]),
             n_jobs=self.knn_jobs)
+
+        self.svm = LinearSVC(
+            penalty=self.knn_norm.lower(),
+            dual=False,
+            random_state=self.rand_gen
+        )
 
     def fetch_dump_data_features(self, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
@@ -106,8 +113,12 @@ class KNNClassifierTester(TesterBase):
         X_train_features = self.apply_pca(X_train_features, fit=True)
         X_test_features  = self.apply_pca(X_test_features , fit=False)
 
-        self.log.info('Fitting KNN model...')
-        self.knn.fit(X_train_features, y_train)
+        if 'knn' in self.decision_method:
+            self.log.info('Fitting KNN model...')
+            self.knn.fit(X_train_features, y_train)
+        if 'svm' in self.decision_method:
+            self.log.info('Fitting SVM model...')
+            self.svm.fit(X_train_features, y_train)
 
         if self.decision_method == 'dnn_accuracy':
             y_pred = test_dnn_predictions_prob.argmax(axis=1)
@@ -115,6 +126,10 @@ class KNNClassifierTester(TesterBase):
             self.log.info('Predicting test set labels from KNN model...')
             test_knn_predictions_prob = self.knn.predict_proba(X_test_features)
             y_pred = test_knn_predictions_prob.argmax(axis=1)
+        elif self.decision_method == 'svm':
+            self.log.info('Predicting test set labels from SVM model...')
+            y_pred = self.svm.predict(X_test_features)
+            svm_accuracy = self.svm.score(X_test_features, y_test)
         elif self.decision_method == 'knn_nc_dropout_sum':
             self.log.info('Predicting test set labels from KNN model using NC dropout...')
             number_of_predictions = 20
@@ -190,14 +205,13 @@ class KNNClassifierTester(TesterBase):
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
 
         # writing summaries
-        score_str = 'score_metrics/K={}/PCA={}/norm={}/weights={}/decision_method={}'\
-            .format(self.knn_neighbors, self.pca_embedding_dims, self.knn_norm, self.knn_weights, self.decision_method)
+        score_str = 'score_metrics/decision_method={}/kernel=linear/norm={}/loss={}/PCA='\
+            .format(self.decision_method, self.knn_norm, self.svm.loss, self.pca_embedding_dims)
         self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
-        print_str = '{}: accuracy= {}'.format(score_str, accuracy)
+        print_str = '{}: accuracy= {}. DEBUG: svm_accuracy={}'.format(score_str, accuracy, svm_accuracy)
         self.log.info(print_str)
         print(print_str)
         self.summary_writer_test.flush()
-
         self.log.info('Tester {} is done'.format(str(self)))
 
     def print_stats(self):
