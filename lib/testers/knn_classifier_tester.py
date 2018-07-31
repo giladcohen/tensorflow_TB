@@ -205,7 +205,7 @@ class KNNClassifierTester(TesterBase):
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
 
         # writing summaries
-        score_str = 'score_metrics/decision_method={}/kernel=linear/norm={}/loss={}/PCA='\
+        score_str = 'score_metrics/decision_method={}/kernel=linear/norm={}/loss={}/PCA={}'\
             .format(self.decision_method, self.knn_norm, self.svm.loss, self.pca_embedding_dims)
         self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
         print_str = '{}: accuracy= {}. DEBUG: svm_accuracy={}'.format(score_str, accuracy, svm_accuracy)
