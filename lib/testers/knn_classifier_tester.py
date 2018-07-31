@@ -7,7 +7,7 @@ import numpy as np
 from lib.testers.tester_base import TesterBase
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.metrics import normalized_mutual_info_score
 from utils.misc import collect_features, calc_mutual_agreement
 
@@ -47,6 +47,11 @@ class KNNClassifierTester(TesterBase):
             dual=False,
             random_state=self.rand_gen
         )
+
+        # self.svm = SVC(
+        #     kernel='rbf',
+        #     random_state=self.rand_gen
+        # )
 
     def fetch_dump_data_features(self, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
@@ -207,7 +212,7 @@ class KNNClassifierTester(TesterBase):
         score_str = 'score_metrics/decision_method={}/kernel=linear/norm={}/loss={}/PCA={}'\
             .format(self.decision_method, self.knn_norm, self.svm.loss, self.pca_embedding_dims)
         self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
-        print_str = '{}: accuracy= {}.'.format(score_str, accuracy)
+        print_str = '{}: accuracy={}.'.format(score_str, accuracy)
         self.log.info(print_str)
         print(print_str)
         self.summary_writer_test.flush()
