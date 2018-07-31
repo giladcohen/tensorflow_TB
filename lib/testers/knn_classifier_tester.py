@@ -129,7 +129,6 @@ class KNNClassifierTester(TesterBase):
         elif self.decision_method == 'svm':
             self.log.info('Predicting test set labels from SVM model...')
             y_pred = self.svm.predict(X_test_features)
-            svm_accuracy = self.svm.score(X_test_features, y_test)
         elif self.decision_method == 'knn_nc_dropout_sum':
             self.log.info('Predicting test set labels from KNN model using NC dropout...')
             number_of_predictions = 20
@@ -208,7 +207,7 @@ class KNNClassifierTester(TesterBase):
         score_str = 'score_metrics/decision_method={}/kernel=linear/norm={}/loss={}/PCA={}'\
             .format(self.decision_method, self.knn_norm, self.svm.loss, self.pca_embedding_dims)
         self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
-        print_str = '{}: accuracy= {}. DEBUG: svm_accuracy={}'.format(score_str, accuracy, svm_accuracy)
+        print_str = '{}: accuracy= {}.'.format(score_str, accuracy)
         self.log.info(print_str)
         print(print_str)
         self.summary_writer_test.flush()
