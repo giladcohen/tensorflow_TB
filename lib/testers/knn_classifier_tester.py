@@ -42,16 +42,16 @@ class KNNClassifierTester(TesterBase):
             p=int(self.knn_norm[-1]),
             n_jobs=self.knn_jobs)
 
-        self.svm = LinearSVC(
-            penalty=self.knn_norm.lower(),
-            dual=False,
-            random_state=self.rand_gen
-        )
-
-        # self.svm = SVC(
-        #     kernel='rbf',
+        # self.svm = LinearSVC(
+        #     penalty=self.knn_norm.lower(),
+        #     dual=False,
         #     random_state=self.rand_gen
         # )
+
+        self.svm = SVC(
+            kernel='rbf',
+            random_state=self.rand_gen
+        )
 
     def fetch_dump_data_features(self, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
@@ -209,8 +209,8 @@ class KNNClassifierTester(TesterBase):
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
 
         # writing summaries
-        score_str = 'score_metrics/decision_method={}/kernel=linear/norm={}/loss={}/PCA={}'\
-            .format(self.decision_method, self.knn_norm, self.svm.loss, self.pca_embedding_dims)
+        score_str = 'score_metrics/decision_method={}/kernel=rbf/norm={}/PCA={}'\
+            .format(self.decision_method, self.knn_norm, self.pca_embedding_dims)
         self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
         print_str = '{}: accuracy={}.'.format(score_str, accuracy)
         self.log.info(print_str)
