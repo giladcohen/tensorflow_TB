@@ -74,21 +74,20 @@ class KNNClassifierTester(TesterBase):
             y_test                    = np.load(test_labels_file)
             test_dnn_predictions_prob = np.load(test_dnn_predictions_prob_file)
         else:
-            self.log.info('Collecting {} train set embedding features'.format(self.dataset.train_set_size))
+            dataset_name = 'train_random_eval'
+            self.log.info('Collecting {} samples for training from layer: {} from dataset: {}'.format(self.dataset.train_set_size, layer_name, dataset_name))
             (X_train_features, y_train, train_dnn_predictions_prob) = \
                 collect_features(
                     agent=self,
-                    # dataset_name='train_eval',
-                    dataset_name='train_random_eval',
+                    dataset_name=dataset_name,
                     fetches=[self.model.net[layer_name], self.model.labels, self.model.predictions_prob],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
-
-            self.log.info('Collecting {} test set embedding features and DNN predictions'.format(self.dataset.test_set_size))
+            dataset_name = 'train_random_eval'
+            self.log.info('Collecting {} samples for testing from layer: {} from dataset: {}'.format(self.dataset.train_set_size, layer_name, dataset_name))
             (X_test_features, y_test, test_dnn_predictions_prob) = \
                 collect_features(
                     agent=self,
-                    # dataset_name='test',
-                    dataset_name='train_random_eval',
+                    dataset_name=dataset_name,
                     fetches=[self.model.net[layer_name], self.model.labels, self.model.predictions_prob],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
 
@@ -211,7 +210,7 @@ class KNNClassifierTester(TesterBase):
                   'DNN generalization: {}, KNN generalization: {}\n'.format(dnn_generalization_error, knn_generalization_error))
             exit(0)
 
-        accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
+        accuracy = np.sum(y_pred==y_test)/self.dataset.train_set_size
 
         # writing summaries
         score_str = 'score_metrics/layer={}/decision_method={}/kernel=rbf/norm={}/PCA={}'\
