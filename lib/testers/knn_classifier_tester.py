@@ -183,7 +183,7 @@ class KNNClassifierTester(TesterBase):
             print(print_str)
             self.summary_writer_test.flush()
             exit(0)
-        elif self.decision_method == 'dnn_lr_psame':
+        elif self.decision_method == 'dnn_logistic_regression_psame':
             self.log.info('Predicting labels from DNN model...')
             y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
             self.log.info('Predicting labels from Logistic Regression model...')
