@@ -74,7 +74,7 @@ class KNNClassifierTester(TesterBase):
             y_test                    = np.load(test_labels_file)
             test_dnn_predictions_prob = np.load(test_dnn_predictions_prob_file)
         else:
-            dataset_name = 'train_random_eval'
+            dataset_name = 'train_eval'
             self.log.info('Collecting {} samples for training from layer: {} from dataset: {}'.format(self.dataset.train_set_size, layer_name, dataset_name))
             (X_train_features, y_train, train_dnn_predictions_prob) = \
                 collect_features(
