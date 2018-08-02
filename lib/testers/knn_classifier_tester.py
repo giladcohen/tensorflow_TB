@@ -152,7 +152,23 @@ class KNNClassifierTester(TesterBase):
             self.log.info(print_str)
             print(print_str)
             self.summary_writer_test.flush()
+            exit(0)
+        elif self.decision_method == 'dnn_knn_psame':
+            self.log.info('Predicting labels from DNN model...')
+            y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
+            self.log.info('Predicting labels from KNN model...')
+            test_knn_predictions_prob = self.knn.predict_proba(X_test_features)
+            y_pred_knn = test_knn_predictions_prob.argmax(axis=1)
+            psame = calc_psame(y_pred_dnn, y_pred_knn)
 
+            score_str = 'score_metrics/layer={}/decision_method={}/kernel=rbf/norm={}/PCA={}' \
+                .format(self.tested_layer, self.decision_method, self.knn_norm, self.pca_embedding_dims)
+            self.tb_logger_test.log_scalar(score_str, psame, self.global_step)
+            print_str = '{}: psame={}.'.format(score_str, psame)
+            self.log.info(print_str)
+            print(print_str)
+            self.summary_writer_test.flush()
+            exit(0)
         elif self.decision_method == 'knn_nc_dropout_sum':
             self.log.info('Predicting test set labels from KNN model using NC dropout...')
             number_of_predictions = 20
