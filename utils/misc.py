@@ -329,6 +329,22 @@ def calc_mutual_agreement(y1, y2, y_gt):
         md_score = -1.0  # pevent dividing by 0
     return ma_score, md_score
 
+def calc_psame(y1, y2):
+    """
+    Calculating P_SAME
+    :param y1: DNN prediction
+    :param y2: SVM/k-NN/other prediction
+    :param y_gt: ground truth
+    :return: P_SAME value
+    """
+    assert y1.shape == y2.shape, "labels' shape do not match"
+    match_cnt = 0
+    for i in xrange(y1.shape[0]):
+        if y1[i] == y2[i]:
+            match_cnt += 1
+    p_same = match_cnt / y1.shape[0]
+    return p_same
+
 def one_hot(indices, depth):
     """Converting the indices to one hot representation
     :param indices: numpy array
