@@ -8,6 +8,7 @@ from lib.testers.tester_base import TesterBase
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC, SVC
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import normalized_mutual_info_score
 from utils.misc import collect_features, calc_mutual_agreement, calc_psame
 
@@ -43,16 +44,23 @@ class KNNClassifierTester(TesterBase):
             p=int(self.knn_norm[-1]),
             n_jobs=self.knn_jobs)
 
-        # self.svm = LinearSVC(
-        #     penalty=self.knn_norm.lower(),
-        #     dual=False,
-        #     random_state=self.rand_gen
-        # )
-
-        self.svm = SVC(
-            kernel='rbf',
+        self.svm = LinearSVC(
+            penalty=self.knn_norm.lower(),
+            dual=False,
             random_state=self.rand_gen
         )
+
+        self.lr = LogisticRegression(
+            penalty=self.knn_norm.lower(),
+            dual=False,
+            random_state=self.rand_gen,
+            n_jobs=self.knn_jobs
+        )
+
+        # self.svm = SVC(
+        #     kernel='rbf',
+        #     random_state=self.rand_gen
+        # )
 
     def fetch_dump_data_features(self, layer_name=None, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
@@ -128,6 +136,9 @@ class KNNClassifierTester(TesterBase):
         if 'svm' in self.decision_method:
             self.log.info('Fitting SVM model...')
             self.svm.fit(X_train_features, y_train)
+        if 'logistic_regression' in self.decision_method:
+            self.log.info('Fitting Logistic Regression model...')
+            self.lr.fit(X_train_features, y_train)
 
         if self.decision_method == 'dnn_accuracy':
             y_pred = test_dnn_predictions_prob.argmax(axis=1)
@@ -138,6 +149,9 @@ class KNNClassifierTester(TesterBase):
         elif self.decision_method == 'svm':
             self.log.info('Predicting test set labels from SVM model...')
             y_pred = self.svm.predict(X_test_features)
+        elif self.decision_method == 'logistic_regression':
+            self.log.info('Predicting test set labels from Logistic Regression model...')
+            y_pred = self.lr.predict(X_test_features)
         elif self.decision_method == 'dnn_svm_psame':
             self.log.info('Predicting labels from DNN model...')
             y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
@@ -244,7 +258,7 @@ class KNNClassifierTester(TesterBase):
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
 
         # writing summaries
-        score_str = 'score_metrics/layer={}/decision_method={}/kernel=rbf/norm={}/PCA={}'\
+        score_str = 'score_metrics/layer={}/decision_method={}/norm={}/PCA={}'\
             .format(self.tested_layer, self.decision_method, self.knn_norm, self.pca_embedding_dims)
         self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
         print_str = '{}: accuracy={}.'.format(score_str, accuracy)
