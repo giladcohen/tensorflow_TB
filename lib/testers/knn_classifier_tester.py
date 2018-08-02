@@ -28,6 +28,7 @@ class KNNClassifierTester(TesterBase):
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
 
         self.num_classes     = self.dataset.num_classes
+        self.tested_layer    = 'embedding_layer'
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
 
@@ -53,8 +54,10 @@ class KNNClassifierTester(TesterBase):
             random_state=self.rand_gen
         )
 
-    def fetch_dump_data_features(self, test_dir=None):
+    def fetch_dump_data_features(self, layer_name=None, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
+        if layer_name is None:
+            layer_name = self.tested_layer
         if test_dir is None:
             test_dir = self.test_dir
         train_features_file             = os.path.join(test_dir, 'train_features.npy')
@@ -75,18 +78,18 @@ class KNNClassifierTester(TesterBase):
             (X_train_features, y_train, train_dnn_predictions_prob) = \
                 collect_features(
                     agent=self,
-                    #dataset_name='train_eval',
+                    # dataset_name='train_eval',
                     dataset_name='train_random_eval',
-                    fetches=[self.model.net['embedding_layer'], self.model.labels, self.model.predictions_prob],
+                    fetches=[self.model.net[layer_name], self.model.labels, self.model.predictions_prob],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
 
             self.log.info('Collecting {} test set embedding features and DNN predictions'.format(self.dataset.test_set_size))
             (X_test_features, y_test, test_dnn_predictions_prob) = \
                 collect_features(
                     agent=self,
-                    #dataset_name='test',
+                    # dataset_name='test',
                     dataset_name='train_random_eval',
-                    fetches=[self.model.net['embedding_layer'], self.model.labels, self.model.predictions_prob],
+                    fetches=[self.model.net[layer_name], self.model.labels, self.model.predictions_prob],
                     feed_dict={self.model.dropout_keep_prob: 1.0})
 
         if self.dump_net:
@@ -211,8 +214,8 @@ class KNNClassifierTester(TesterBase):
         accuracy = np.sum(y_pred==y_test)/self.dataset.test_set_size
 
         # writing summaries
-        score_str = 'score_metrics/decision_method={}/kernel=rbf/norm={}/PCA={}'\
-            .format(self.decision_method, self.knn_norm, self.pca_embedding_dims)
+        score_str = 'score_metrics/layer={}/decision_method={}/kernel=rbf/norm={}/PCA={}'\
+            .format(self.tested_layer, self.decision_method, self.knn_norm, self.pca_embedding_dims)
         self.tb_logger_test.log_scalar(score_str, accuracy, self.global_step)
         print_str = '{}: accuracy={}.'.format(score_str, accuracy)
         self.log.info(print_str)
