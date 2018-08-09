@@ -186,9 +186,11 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         if self.collect_knn:
             np.place(test_knn_predictions_prob, test_knn_predictions_prob == 0.0, [eps])
             dnn_knn_kl_div = entropy(test_dnn_predictions_prob, test_knn_predictions_prob)
+            dnn_knn_kl_div_avg = np.average(dnn_knn_kl_div)
         if self.collect_lr:
             np.place(test_lr_predictions_prob, test_lr_predictions_prob == 0.0, [eps])
             dnn_lr_kl_div  = entropy(test_dnn_predictions_prob, test_lr_predictions_prob)
+            dnn_lr_kl_div_avg  = np.average(dnn_lr_kl_div)
 
         if self.eval_trainset:
             # special fitting
@@ -238,9 +240,11 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             if self.collect_knn:
                 np.place(train_knn_predictions_prob, train_knn_predictions_prob == 0.0, [eps])
                 dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob, train_knn_predictions_prob)
+                dnn_knn_kl_div_avg_train = np.average(dnn_knn_kl_div_train)
             if self.collect_lr:
                 np.place(train_lr_predictions_prob, train_lr_predictions_prob == 0.0, [eps])
                 dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob, train_lr_predictions_prob)
+                dnn_lr_kl_div_avg_train = np.average(dnn_lr_kl_div_train)
 
         self.test_retention.add_score(dnn_score, self.global_step)
 
@@ -270,9 +274,9 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             self.tb_logger_test.log_scalar('lr_psame'    , psame_lr   , self.global_step)
 
         if self.collect_knn:
-            self.tb_logger_test.log_scalar('dnn_knn_kl_div', dnn_knn_kl_div, self.global_step)
+            self.tb_logger_test.log_scalar('dnn_knn_kl_div_avg', dnn_knn_kl_div_avg, self.global_step)
         if self.collect_lr:
-            self.tb_logger_test.log_scalar('dnn_lr_kl_div' , dnn_lr_kl_div , self.global_step)
+            self.tb_logger_test.log_scalar('dnn_lr_kl_div_avg' , dnn_lr_kl_div_avg , self.global_step)
 
         if self.eval_trainset:
             self.tb_logger_test.log_scalar('dnn_score_trainset', dnn_score_train, self.global_step)
@@ -300,9 +304,9 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
                 self.tb_logger_test.log_scalar('lr_psame_trainset' , psame_lr_train, self.global_step)
 
             if self.collect_knn:
-                self.tb_logger_test.log_scalar('dnn_knn_kl_div_trainset', dnn_knn_kl_div_train, self.global_step)
+                self.tb_logger_test.log_scalar('dnn_knn_kl_div_avg_trainset', dnn_knn_kl_div_avg_train, self.global_step)
             if self.collect_lr:
-                self.tb_logger_test.log_scalar('dnn_lr_kl_div_trainset' , dnn_lr_kl_div_train , self.global_step)
+                self.tb_logger_test.log_scalar('dnn_lr_kl_div_avg_trainset' , dnn_lr_kl_div_avg_train , self.global_step)
 
         self.summary_writer_test.flush()
 
