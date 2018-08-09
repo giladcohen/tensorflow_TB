@@ -19,6 +19,7 @@ from lib.testers.multi_layer_knn_classifier_tester import MultiLayerKNNClassifie
 
 from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.classification_ma_trainer import ClassificationMATrainer
+from lib.trainers.classification_metrics_trainer import ClassificationMetricsTrainer
 from lib.trainers.classification_trainer import ClassificationTrainer
 from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
 from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
@@ -78,6 +79,7 @@ class Factories(object):
     def get_trainer(self, model, dataset):
         available_trainers = {'simple'                               : ClassificationTrainer,
                               'simple_ma'                            : ClassificationMATrainer,
+                              'simple_metrics'                       : ClassificationMetricsTrainer,
                               'dml'                                  : DMLClassificationTrainer,
                               'active'                               : ActiveTrainer,
                               'active_dynamic'                       : DynamicModelTrainer,
