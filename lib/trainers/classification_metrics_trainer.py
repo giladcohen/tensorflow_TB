@@ -12,6 +12,8 @@ from sklearn.decomposition import PCA
 # from skl_groups.divergences import KNNDivergenceEstimator
 from scipy.stats import entropy
 
+eps = 0.0001
+
 class ClassificationMetricsTrainer(ClassificationTrainer):
     """Implementing classification trainer with many different metrics"""
 
@@ -21,10 +23,10 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
 
         self.randomized_dataset = False
-        self.eval_trainset      = True
+        self.eval_trainset      = False
         self.collect_knn        = True
         self.collect_svm        = False
-        self.collect_lr         = True
+        self.collect_lr         = False
 
         if self.randomized_dataset:
             self.train_handle = 'train_random'
@@ -180,10 +182,13 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             psame_lr  = calc_psame(y_pred_dnn, y_pred_lr)
 
         self.log.info('Calculate KL divergences...')
+        test_dnn_predictions_prob_no_zeros = np.put(test_dnn_predictions_prob, 0, eps)
         if self.collect_knn:
-            dnn_knn_kl_div = entropy(test_dnn_predictions_prob, test_knn_predictions_prob)
+            test_knn_predictions_prob_no_zeros = np.put(test_knn_predictions_prob, 0, eps)
+            dnn_knn_kl_div = entropy(test_dnn_predictions_prob_no_zeros, test_knn_predictions_prob_no_zeros)
         if self.collect_lr:
-            dnn_lr_kl_div  = entropy(test_dnn_predictions_prob, test_lr_predictions_prob)
+            test_lr_predictions_prob_no_zeros = np.put(test_lr_predictions_prob, 0, eps)
+            dnn_lr_kl_div  = entropy(test_dnn_predictions_prob_no_zeros, test_lr_predictions_prob_no_zeros)
 
         if self.eval_trainset:
             # special fitting
@@ -229,10 +234,13 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             if self.collect_lr:
                 psame_lr_train  = calc_psame(y_pred_dnn_train, y_pred_lr_train)
             self.log.info('Calculate KL divergences...')
+            train_dnn_predictions_prob_no_zeros = np.put(train_dnn_predictions_prob, 0, eps)
             if self.collect_knn:
-                dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob, train_knn_predictions_prob)
+                train_knn_predictions_prob_no_zeros = np.put(train_knn_predictions_prob, 0, eps)
+                dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob_no_zeros, train_knn_predictions_prob_no_zeros)
             if self.collect_lr:
-                dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob, train_lr_predictions_prob)
+                train_lr_predictions_prob_no_zeros = np.put(train_lr_predictions_prob, 0, eps)
+                dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob_no_zeros, train_lr_predictions_prob_no_zeros)
 
         self.test_retention.add_score(dnn_score, self.global_step)
 
