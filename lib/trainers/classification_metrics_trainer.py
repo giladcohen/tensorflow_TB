@@ -22,6 +22,10 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
 
         self.randomized_dataset = False
         self.eval_trainset      = True
+        self.collect_knn        = True
+        self.collect_svm        = False
+        self.collect_lr         = True
+
         if self.randomized_dataset:
             self.train_handle = 'train_random'
             self.train_eval_handle = 'train_random_eval'
@@ -124,117 +128,171 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         X_test_features  = self.apply_pca(X_test_features , fit=False)
 
         # fittings
-        self.log.info('Fitting KNN model...')
-        self.knn.fit(X_train_features, y_train)
-        self.log.info('Fitting SVM model...')
-        self.svm.fit(X_train_features, y_train)
-        self.log.info('Fitting Logistic Regression model...')
-        self.lr.fit(X_train_features, y_train)
+        if self.collect_knn:
+            self.log.info('Fitting KNN model...')
+            self.knn.fit(X_train_features, y_train)
+        if self.collect_svm:
+            self.log.info('Fitting SVM model...')
+            self.svm.fit(X_train_features, y_train)
+        if self.collect_lr:
+            self.log.info('Fitting Logistic Regression model...')
+            self.lr.fit(X_train_features, y_train)
 
         # predictions (test set)
         self.log.info('Predicting test set labels from DNN model...')
         y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
-        self.log.info('Predicting test set labels from KNN model...')
-        test_knn_predictions_prob = self.knn.predict_proba(X_test_features)
-        y_pred_knn = test_knn_predictions_prob.argmax(axis=1)
-        self.log.info('Predicting test set labels from SVM model...')
-        y_pred_svm = self.svm.predict(X_test_features)
-        self.log.info('Predicting test set labels from Logistic Regression model...')
-        test_lr_predictions_prob = self.lr.predict_proba(X_test_features)
-        y_pred_lr = test_lr_predictions_prob.argmax(axis=1)
+        if self.collect_knn:
+            self.log.info('Predicting test set labels from KNN model...')
+            test_knn_predictions_prob = self.knn.predict_proba(X_test_features)
+            y_pred_knn = test_knn_predictions_prob.argmax(axis=1)
+        if self.collect_svm:
+            self.log.info('Predicting test set labels from SVM model...')
+            y_pred_svm = self.svm.predict(X_test_features)
+        if self.collect_lr:
+            self.log.info('Predicting test set labels from Logistic Regression model...')
+            test_lr_predictions_prob = self.lr.predict_proba(X_test_features)
+            y_pred_lr = test_lr_predictions_prob.argmax(axis=1)
 
         # calculate metrics
         self.log.info('Calculate test set scores...')
         dnn_score = np.average(y_test == y_pred_dnn)
-        knn_score = np.average(y_test == y_pred_knn)
-        svm_score = np.average(y_test == y_pred_svm)
-        lr_score  = np.average(y_test == y_pred_lr)
+        if self.collect_knn:
+            knn_score = np.average(y_test == y_pred_knn)
+        if self.collect_svm:
+            svm_score = np.average(y_test == y_pred_svm)
+        if self.collect_lr:
+            lr_score  = np.average(y_test == y_pred_lr)
 
         self.log.info('Calculate ma/md and psame scores...')
-        ma_score_knn, md_score_knn = calc_mutual_agreement(y_pred_dnn, y_pred_knn, y_test)
-        ma_score_svm, md_score_svm = calc_mutual_agreement(y_pred_dnn, y_pred_svm, y_test)
-        ma_score_lr , md_score_lr  = calc_mutual_agreement(y_pred_dnn, y_pred_lr , y_test)
-        psame_knn = calc_psame(y_pred_dnn, y_pred_knn)
-        psame_svm = calc_psame(y_pred_dnn, y_pred_svm)
-        psame_lr  = calc_psame(y_pred_dnn, y_pred_lr)
+        if self.collect_knn:
+            ma_score_knn, md_score_knn = calc_mutual_agreement(y_pred_dnn, y_pred_knn, y_test)
+        if self.collect_svm:
+            ma_score_svm, md_score_svm = calc_mutual_agreement(y_pred_dnn, y_pred_svm, y_test)
+        if self.collect_lr:
+            ma_score_lr , md_score_lr  = calc_mutual_agreement(y_pred_dnn, y_pred_lr , y_test)
+        if self.collect_knn:
+            psame_knn = calc_psame(y_pred_dnn, y_pred_knn)
+        if self.collect_svm:
+            psame_svm = calc_psame(y_pred_dnn, y_pred_svm)
+        if self.collect_lr:
+            psame_lr  = calc_psame(y_pred_dnn, y_pred_lr)
 
         self.log.info('Calculate KL divergences...')
-        dnn_knn_kl_div = entropy(test_dnn_predictions_prob, test_knn_predictions_prob)
-        dnn_lr_kl_div  = entropy(test_dnn_predictions_prob, test_lr_predictions_prob)
+        if self.collect_knn:
+            dnn_knn_kl_div = entropy(test_dnn_predictions_prob, test_knn_predictions_prob)
+        if self.collect_lr:
+            dnn_lr_kl_div  = entropy(test_dnn_predictions_prob, test_lr_predictions_prob)
 
         if self.eval_trainset:
             # special fitting
-            self.log.info('Fitting KNN model...')
-            self.knn_train.fit(X_train_features, y_train)
+            if self.collect_knn:
+                self.log.info('Fitting KNN model...')
+                self.knn_train.fit(X_train_features, y_train)
 
             # predictions (train set)
             self.log.info('Predicting train set labels from DNN model...')
             y_pred_dnn_train = train_dnn_predictions_prob.argmax(axis=1)
-            self.log.info('Predicting train set labels from KNN model...')
-            train_knn_predictions_prob = self.knn_predict_proba_for_trainset(X_train_features, y_train)
-            y_pred_knn_train = train_knn_predictions_prob.argmax(axis=1)
-            self.log.info('Predicting train set labels from SVM model...')
-            y_pred_svm_train = self.svm.predict(X_train_features)
-            self.log.info('Predicting train set labels from Logistic Regression model...')
-            train_lr_predictions_prob = self.lr.predict_proba(X_train_features)
-            y_pred_lr_train = train_lr_predictions_prob.argmax(axis=1)
+            if self.collect_knn:
+                self.log.info('Predicting train set labels from KNN model...')
+                train_knn_predictions_prob = self.knn_predict_proba_for_trainset(X_train_features, y_train)
+                y_pred_knn_train = train_knn_predictions_prob.argmax(axis=1)
+            if self.collect_svm:
+                self.log.info('Predicting train set labels from SVM model...')
+                y_pred_svm_train = self.svm.predict(X_train_features)
+            if self.collect_lr:
+                self.log.info('Predicting train set labels from Logistic Regression model...')
+                train_lr_predictions_prob = self.lr.predict_proba(X_train_features)
+                y_pred_lr_train = train_lr_predictions_prob.argmax(axis=1)
 
             # calculate metrics
             self.log.info('Calculate train set scores...')
             dnn_score_train = np.average(y_train == y_pred_dnn_train)
-            knn_score_train = np.average(y_train == y_pred_knn_train)
-            svm_score_train = np.average(y_train == y_pred_svm_train)
-            lr_score_train  = np.average(y_train == y_pred_lr_train)
+            if self.collect_knn:
+                knn_score_train = np.average(y_train == y_pred_knn_train)
+            if self.collect_svm:
+                svm_score_train = np.average(y_train == y_pred_svm_train)
+            if self.collect_lr:
+                lr_score_train  = np.average(y_train == y_pred_lr_train)
             self.log.info('Calculate ma/md and psame scores...')
-            ma_score_knn_train, md_score_knn_train = calc_mutual_agreement(y_pred_dnn_train, y_pred_knn_train, y_train)
-            ma_score_svm_train, md_score_svm_train = calc_mutual_agreement(y_pred_dnn_train, y_pred_svm_train, y_train)
-            ma_score_lr_train , md_score_lr_train  = calc_mutual_agreement(y_pred_dnn_train, y_pred_lr_train , y_train)
-            psame_knn_train = calc_psame(y_pred_dnn_train, y_pred_knn_train)
-            psame_svm_train = calc_psame(y_pred_dnn_train, y_pred_svm_train)
-            psame_lr_train  = calc_psame(y_pred_dnn_train, y_pred_lr_train)
+            if self.collect_knn:
+                ma_score_knn_train, md_score_knn_train = calc_mutual_agreement(y_pred_dnn_train, y_pred_knn_train, y_train)
+            if self.collect_svm:
+                ma_score_svm_train, md_score_svm_train = calc_mutual_agreement(y_pred_dnn_train, y_pred_svm_train, y_train)
+            if self.collect_lr:
+                ma_score_lr_train , md_score_lr_train  = calc_mutual_agreement(y_pred_dnn_train, y_pred_lr_train , y_train)
+            if self.collect_knn:
+                psame_knn_train = calc_psame(y_pred_dnn_train, y_pred_knn_train)
+            if self.collect_svm:
+                psame_svm_train = calc_psame(y_pred_dnn_train, y_pred_svm_train)
+            if self.collect_lr:
+                psame_lr_train  = calc_psame(y_pred_dnn_train, y_pred_lr_train)
             self.log.info('Calculate KL divergences...')
-            dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob, train_knn_predictions_prob)
-            dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob, train_lr_predictions_prob)
+            if self.collect_knn:
+                dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob, train_knn_predictions_prob)
+            if self.collect_lr:
+                dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob, train_lr_predictions_prob)
 
         self.test_retention.add_score(dnn_score, self.global_step)
 
         # save summaries
         self.tb_logger_test.log_scalar('dnn_score', dnn_score, self.global_step)
-        self.tb_logger_test.log_scalar('knn_score', knn_score, self.global_step)
-        self.tb_logger_test.log_scalar('svm_score', svm_score, self.global_step)
-        self.tb_logger_test.log_scalar('lr_score' , lr_score , self.global_step)
+        if self.collect_knn:
+            self.tb_logger_test.log_scalar('knn_score', knn_score, self.global_step)
+        if self.collect_svm:
+            self.tb_logger_test.log_scalar('svm_score', svm_score, self.global_step)
+        if self.collect_lr:
+            self.tb_logger_test.log_scalar('lr_score' , lr_score , self.global_step)
 
-        self.tb_logger_test.log_scalar('knn_ma_score', ma_score_knn, self.global_step)
-        self.tb_logger_test.log_scalar('knn_md_score', md_score_knn, self.global_step)
-        self.tb_logger_test.log_scalar('svm_ma_score', ma_score_svm, self.global_step)
-        self.tb_logger_test.log_scalar('svm_md_score', md_score_svm, self.global_step)
-        self.tb_logger_test.log_scalar('lr_ma_score' , ma_score_lr , self.global_step)
-        self.tb_logger_test.log_scalar('lr_md_score' , md_score_lr , self.global_step)
-        self.tb_logger_test.log_scalar('knn_psame'   , psame_knn   , self.global_step)
-        self.tb_logger_test.log_scalar('svm_psame'   , psame_svm   , self.global_step)
-        self.tb_logger_test.log_scalar('lr_psame'    , psame_lr   , self.global_step)
+        if self.collect_knn:
+            self.tb_logger_test.log_scalar('knn_ma_score', ma_score_knn, self.global_step)
+            self.tb_logger_test.log_scalar('knn_md_score', md_score_knn, self.global_step)
+        if self.collect_svm:
+            self.tb_logger_test.log_scalar('svm_ma_score', ma_score_svm, self.global_step)
+            self.tb_logger_test.log_scalar('svm_md_score', md_score_svm, self.global_step)
+        if self.collect_lr:
+            self.tb_logger_test.log_scalar('lr_ma_score' , ma_score_lr , self.global_step)
+            self.tb_logger_test.log_scalar('lr_md_score' , md_score_lr , self.global_step)
+        if self.collect_knn:
+            self.tb_logger_test.log_scalar('knn_psame'   , psame_knn   , self.global_step)
+        if self.collect_svm:
+            self.tb_logger_test.log_scalar('svm_psame'   , psame_svm   , self.global_step)
+        if self.collect_lr:
+            self.tb_logger_test.log_scalar('lr_psame'    , psame_lr   , self.global_step)
 
-        self.tb_logger_test.log_scalar('dnn_knn_kl_div', dnn_knn_kl_div, self.global_step)
-        self.tb_logger_test.log_scalar('dnn_lr_kl_div' , dnn_lr_kl_div , self.global_step)
+        if self.collect_knn:
+            self.tb_logger_test.log_scalar('dnn_knn_kl_div', dnn_knn_kl_div, self.global_step)
+        if self.collect_lr:
+            self.tb_logger_test.log_scalar('dnn_lr_kl_div' , dnn_lr_kl_div , self.global_step)
 
         if self.eval_trainset:
             self.tb_logger_test.log_scalar('dnn_score_trainset', dnn_score_train, self.global_step)
-            self.tb_logger_test.log_scalar('knn_score_trainset', knn_score_train, self.global_step)
-            self.tb_logger_test.log_scalar('svm_score_trainset', svm_score_train, self.global_step)
-            self.tb_logger_test.log_scalar('lr_score_trainset' , lr_score_train, self.global_step)
+            if self.collect_knn:
+                self.tb_logger_test.log_scalar('knn_score_trainset', knn_score_train, self.global_step)
+            if self.collect_svm:
+                self.tb_logger_test.log_scalar('svm_score_trainset', svm_score_train, self.global_step)
+            if self.collect_lr:
+                self.tb_logger_test.log_scalar('lr_score_trainset' , lr_score_train, self.global_step)
 
-            self.tb_logger_test.log_scalar('knn_ma_score_trainset', ma_score_knn_train, self.global_step)
-            self.tb_logger_test.log_scalar('knn_md_score_trainset', md_score_knn_train, self.global_step)
-            self.tb_logger_test.log_scalar('svm_ma_score_trainset', ma_score_svm_train, self.global_step)
-            self.tb_logger_test.log_scalar('svm_md_score_trainset', md_score_svm_train, self.global_step)
-            self.tb_logger_test.log_scalar('lr_ma_score_trainset' , ma_score_lr_train, self.global_step)
-            self.tb_logger_test.log_scalar('lr_md_score_trainset' , md_score_lr_train, self.global_step)
-            self.tb_logger_test.log_scalar('knn_psame_trainset', psame_knn_train, self.global_step)
-            self.tb_logger_test.log_scalar('svm_psame_trainset', psame_svm_train, self.global_step)
-            self.tb_logger_test.log_scalar('lr_psame_trainset' , psame_lr_train, self.global_step)
+            if self.collect_knn:
+                self.tb_logger_test.log_scalar('knn_ma_score_trainset', ma_score_knn_train, self.global_step)
+                self.tb_logger_test.log_scalar('knn_md_score_trainset', md_score_knn_train, self.global_step)
+            if self.collect_svm:
+                self.tb_logger_test.log_scalar('svm_ma_score_trainset', ma_score_svm_train, self.global_step)
+                self.tb_logger_test.log_scalar('svm_md_score_trainset', md_score_svm_train, self.global_step)
+            if self.collect_lr:
+                self.tb_logger_test.log_scalar('lr_ma_score_trainset' , ma_score_lr_train, self.global_step)
+                self.tb_logger_test.log_scalar('lr_md_score_trainset' , md_score_lr_train, self.global_step)
+            if self.collect_knn:
+                self.tb_logger_test.log_scalar('knn_psame_trainset', psame_knn_train, self.global_step)
+            if self.collect_svm:
+                self.tb_logger_test.log_scalar('svm_psame_trainset', psame_svm_train, self.global_step)
+            if self.collect_lr:
+                self.tb_logger_test.log_scalar('lr_psame_trainset' , psame_lr_train, self.global_step)
 
-            self.tb_logger_test.log_scalar('dnn_knn_kl_div_trainset', dnn_knn_kl_div_train, self.global_step)
-            self.tb_logger_test.log_scalar('dnn_lr_kl_div_trainset' , dnn_lr_kl_div_train , self.global_step)
+            if self.collect_knn:
+                self.tb_logger_test.log_scalar('dnn_knn_kl_div_trainset', dnn_knn_kl_div_train, self.global_step)
+            if self.collect_lr:
+                self.tb_logger_test.log_scalar('dnn_lr_kl_div_trainset' , dnn_lr_kl_div_train , self.global_step)
 
         self.summary_writer_test.flush()
 
