@@ -98,7 +98,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         knn_predictions_prob_train = np.zeros(y_train.shape)
 
         for i in range(len(X_train_features)):
-            y = y_train[i]
+            y = int(y_train[i])
             proba = biased_knn_predictions_prob_train[i]
             assert proba[y] >= 1/(self.knn_neighbors + 1), "for i={}: prob[y={}] = {}, but cannot be smaller than {}"\
                 .format(i, y, proba[y], 1/(self.knn_neighbors + 1))
@@ -182,16 +182,13 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             psame_lr  = calc_psame(y_pred_dnn, y_pred_lr)
 
         self.log.info('Calculate KL divergences...')
-        test_dnn_predictions_prob_no_zeros = np.zeros(test_dnn_predictions_prob.shape)
-        np.place(test_dnn_predictions_prob_no_zeros, test_dnn_predictions_prob == 0.0, [eps])
+        np.place(test_dnn_predictions_prob, test_dnn_predictions_prob == 0.0, [eps])
         if self.collect_knn:
-            test_knn_predictions_prob_no_zeros = np.zeros(test_knn_predictions_prob.shape)
-            np.place(test_knn_predictions_prob_no_zeros, test_knn_predictions_prob == 0.0, [eps])
-            dnn_knn_kl_div = entropy(test_dnn_predictions_prob_no_zeros, test_knn_predictions_prob_no_zeros)
+            np.place(test_knn_predictions_prob, test_knn_predictions_prob == 0.0, [eps])
+            dnn_knn_kl_div = entropy(test_dnn_predictions_prob, test_knn_predictions_prob)
         if self.collect_lr:
-            test_lr_predictions_prob_no_zeros = np.zeros(test_lr_predictions_prob.shape)
-            np.place(test_lr_predictions_prob_no_zeros, test_lr_predictions_prob == 0.0, [eps])
-            dnn_lr_kl_div  = entropy(test_dnn_predictions_prob_no_zeros, test_lr_predictions_prob_no_zeros)
+            np.place(test_lr_predictions_prob, test_lr_predictions_prob == 0.0, [eps])
+            dnn_lr_kl_div  = entropy(test_dnn_predictions_prob, test_lr_predictions_prob)
 
         if self.eval_trainset:
             # special fitting
@@ -237,16 +234,13 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             if self.collect_lr:
                 psame_lr_train  = calc_psame(y_pred_dnn_train, y_pred_lr_train)
             self.log.info('Calculate KL divergences...')
-            train_dnn_predictions_prob_no_zeros = np.zeros(train_dnn_predictions_prob.shape)
-            np.place(train_dnn_predictions_prob_no_zeros, train_dnn_predictions_prob == 0.0, [eps])
+            np.place(train_dnn_predictions_prob, train_dnn_predictions_prob == 0.0, [eps])
             if self.collect_knn:
-                train_knn_predictions_prob_no_zeros = np.zeros(train_knn_predictions_prob.shape)
-                np.place(train_knn_predictions_prob_no_zeros, train_knn_predictions_prob == 0.0, [eps])
-                dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob_no_zeros, train_knn_predictions_prob_no_zeros)
+                np.place(train_knn_predictions_prob, train_knn_predictions_prob == 0.0, [eps])
+                dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob, train_knn_predictions_prob)
             if self.collect_lr:
-                train_lr_predictions_prob_no_zeros = np.zeros(train_lr_predictions_prob.shape)
-                np.place(train_lr_predictions_prob_no_zeros, train_lr_predictions_prob == 0.0, [eps])
-                dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob_no_zeros, train_lr_predictions_prob_no_zeros)
+                np.place(train_lr_predictions_prob, train_lr_predictions_prob == 0.0, [eps])
+                dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob, train_lr_predictions_prob)
 
         self.test_retention.add_score(dnn_score, self.global_step)
 
