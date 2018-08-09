@@ -182,12 +182,15 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             psame_lr  = calc_psame(y_pred_dnn, y_pred_lr)
 
         self.log.info('Calculate KL divergences...')
-        test_dnn_predictions_prob_no_zeros = np.put(test_dnn_predictions_prob, 0, eps)
+        test_dnn_predictions_prob_no_zeros = np.zeros(test_dnn_predictions_prob.shape)
+        np.place(test_dnn_predictions_prob_no_zeros, test_dnn_predictions_prob == 0.0, [eps])
         if self.collect_knn:
-            test_knn_predictions_prob_no_zeros = np.put(test_knn_predictions_prob, 0, eps)
+            test_knn_predictions_prob_no_zeros = np.zeros(test_knn_predictions_prob.shape)
+            np.place(test_knn_predictions_prob_no_zeros, test_knn_predictions_prob == 0.0, [eps])
             dnn_knn_kl_div = entropy(test_dnn_predictions_prob_no_zeros, test_knn_predictions_prob_no_zeros)
         if self.collect_lr:
-            test_lr_predictions_prob_no_zeros = np.put(test_lr_predictions_prob, 0, eps)
+            test_lr_predictions_prob_no_zeros = np.zeros(test_lr_predictions_prob.shape)
+            np.place(test_lr_predictions_prob_no_zeros, test_lr_predictions_prob == 0.0, [eps])
             dnn_lr_kl_div  = entropy(test_dnn_predictions_prob_no_zeros, test_lr_predictions_prob_no_zeros)
 
         if self.eval_trainset:
@@ -234,12 +237,15 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             if self.collect_lr:
                 psame_lr_train  = calc_psame(y_pred_dnn_train, y_pred_lr_train)
             self.log.info('Calculate KL divergences...')
-            train_dnn_predictions_prob_no_zeros = np.put(train_dnn_predictions_prob, 0, eps)
+            train_dnn_predictions_prob_no_zeros = np.zeros(train_dnn_predictions_prob.shape)
+            np.place(train_dnn_predictions_prob_no_zeros, train_dnn_predictions_prob == 0.0, [eps])
             if self.collect_knn:
-                train_knn_predictions_prob_no_zeros = np.put(train_knn_predictions_prob, 0, eps)
+                train_knn_predictions_prob_no_zeros = np.zeros(train_knn_predictions_prob.shape)
+                np.place(train_knn_predictions_prob_no_zeros, train_knn_predictions_prob == 0.0, [eps])
                 dnn_knn_kl_div_train = entropy(train_dnn_predictions_prob_no_zeros, train_knn_predictions_prob_no_zeros)
             if self.collect_lr:
-                train_lr_predictions_prob_no_zeros = np.put(train_lr_predictions_prob, 0, eps)
+                train_lr_predictions_prob_no_zeros = np.zeros(train_lr_predictions_prob.shape)
+                np.place(train_lr_predictions_prob_no_zeros, train_lr_predictions_prob == 0.0, [eps])
                 dnn_lr_kl_div_train  = entropy(train_dnn_predictions_prob_no_zeros, train_lr_predictions_prob_no_zeros)
 
         self.test_retention.add_score(dnn_score, self.global_step)
