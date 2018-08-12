@@ -148,7 +148,9 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         psame = calc_psame(y_pred_dnn, y_pred)
 
         self.log.info('Calculate confidence scores...')
-        
+        confidence = dnn_predictions_prob.max(axis=1)
+        confidence_avg    = np.average(confidence)
+        confidence_median = np.median(confidence)
 
         self.log.info('Calculate KL divergences...')
         np.place(predictions_prob, predictions_prob == 0.0, [eps])
@@ -161,12 +163,14 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             suffix = ''
         else:
             suffix = '_trainset'
-        self.tb_logger_test.log_scalar(model_name + '_score'       + suffix, score      , self.global_step)
-        self.tb_logger_test.log_scalar(model_name + '_ma_score'    + suffix, ma_score   , self.global_step)
-        self.tb_logger_test.log_scalar(model_name + '_md_score'    + suffix, md_score   , self.global_step)
-        self.tb_logger_test.log_scalar(model_name + '_psame'       + suffix, psame      , self.global_step)
-        self.tb_logger_test.log_scalar(model_name + '_kl_div_avg'  + suffix, kl_div_avg , self.global_step)
-        self.tb_logger_test.log_scalar(model_name + '_kl_div2_avg' + suffix, kl_div2_avg, self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_score'            + suffix, score            , self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_ma_score'         + suffix, ma_score         , self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_md_score'         + suffix, md_score         , self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_psame'            + suffix, psame            , self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_confidence_avg'   + suffix, confidence_avg   , self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_confidence_median'+ suffix, confidence_median, self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_kl_div_avg'       + suffix, kl_div_avg       , self.global_step)
+        self.tb_logger_test.log_scalar(model_name + '_kl_div2_avg'      + suffix, kl_div2_avg      , self.global_step)
 
     def test_step(self):
         '''Implementing one test step.'''
@@ -209,9 +213,9 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.tb_logger_test.log_scalar('dnn_score', dnn_score, self.global_step)
 
         for model_name in ['knn', 'svm', 'lr']:
-            if not (model_name is 'knn' and self.collect_knn) or \
-                   (model_name is 'svm' and self.collect_svm) or \
-                   (model_name is 'lr'  and self.collect_lr):
+            if not ((model_name is 'knn' and self.collect_knn) or
+                    (model_name is 'svm' and self.collect_svm) or
+                    (model_name is 'lr'  and self.collect_lr)):
                 continue
             self.process(model_name=model_name,
                          dataset_name='test',
@@ -224,9 +228,9 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
                 self.log.info('Fitting KNN model for training set...')
                 self.knn_train.fit(X_train_features, y_train)
             for model_name in ['knn', 'svm', 'lr']:
-                if not (model_name is 'knn' and self.collect_knn) or \
-                       (model_name is 'svm' and self.collect_svm) or \
-                       (model_name is 'lr'  and self.collect_lr):
+                if not ((model_name is 'knn' and self.collect_knn) or
+                        (model_name is 'svm' and self.collect_svm) or
+                        (model_name is 'lr'  and self.collect_lr)):
                     continue
                 self.process(model_name=model_name,
                              dataset_name='train',
