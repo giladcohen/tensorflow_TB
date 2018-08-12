@@ -127,7 +127,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         elif model_name is 'svm':
             model = self.svm
         elif model_name is 'lr':
-            model = self.svm
+            model = self.lr
         else:
             err_str = 'unknown model_name: {}'.format(model_name)
             self.log.error(err_str)
@@ -140,7 +140,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         y_pred = predictions_prob.argmax(axis=1)
 
         # calculate metrics
-        self.log.info('Calculate {} set scores...'.format(dataset_name))
+        self.log.info('Calculate {} set scores for model_name {}...'.format(dataset_name, model_name))
         score = np.average(y == y_pred)
 
         self.log.info('Calculate ma/md and psame scores...')
@@ -148,6 +148,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         psame = calc_psame(y_pred_dnn, y_pred)
 
         self.log.info('Calculate confidence scores...')
+        
 
         self.log.info('Calculate KL divergences...')
         np.place(predictions_prob, predictions_prob == 0.0, [eps])
@@ -166,7 +167,6 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.tb_logger_test.log_scalar(model_name + '_psame'       + suffix, psame      , self.global_step)
         self.tb_logger_test.log_scalar(model_name + '_kl_div_avg'  + suffix, kl_div_avg , self.global_step)
         self.tb_logger_test.log_scalar(model_name + '_kl_div2_avg' + suffix, kl_div2_avg, self.global_step)
-
 
     def test_step(self):
         '''Implementing one test step.'''
