@@ -22,7 +22,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
 
-        self.randomized_dataset = False
+        self.randomized_dataset = True
         self.eval_trainset      = True
         self.collect_knn        = True
         self.collect_svm        = True
@@ -208,9 +208,15 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.log.info('Predicting test set labels from DNN model...')
         y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
         dnn_score = np.average(y_test == y_pred_dnn)
-        np.place(train_dnn_predictions_prob, train_dnn_predictions_prob == 0.0, [eps])  # for KL divergences
-        np.place(test_dnn_predictions_prob , test_dnn_predictions_prob  == 0.0, [eps])  # for KL divergences
-        self.tb_logger_test.log_scalar('dnn_score', dnn_score, self.global_step)
+        self.log.info('Calculate DNN test confidence scores...')
+        confidence        = test_dnn_predictions_prob.max(axis=1)
+        confidence_avg    = np.average(confidence)
+        confidence_median = np.median(confidence)
+
+        np.place(test_dnn_predictions_prob, test_dnn_predictions_prob  == 0.0, [eps])  # for KL divergences
+        self.tb_logger_test.log_scalar('dnn_score'            , dnn_score        , self.global_step)
+        self.tb_logger_test.log_scalar('dnn_confidence_avg'   , confidence_avg   , self.global_step)
+        self.tb_logger_test.log_scalar('dnn_confidence_median', confidence_median, self.global_step)
 
         for model_name in ['knn', 'svm', 'lr']:
             if not ((model_name is 'knn' and self.collect_knn) or
@@ -227,6 +233,20 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             if self.collect_knn:
                 self.log.info('Fitting KNN model for training set...')
                 self.knn_train.fit(X_train_features, y_train)
+
+            self.log.info('Predicting train set labels from DNN model...')
+            y_pred_dnn = train_dnn_predictions_prob.argmax(axis=1)
+            dnn_score = np.average(y_train == y_pred_dnn)
+            self.log.info('Calculate DNN train confidence scores...')
+            confidence        = train_dnn_predictions_prob.max(axis=1)
+            confidence_avg    = np.average(confidence)
+            confidence_median = np.median(confidence)
+
+            np.place(train_dnn_predictions_prob, train_dnn_predictions_prob == 0.0, [eps])  # for KL divergences
+            self.tb_logger_test.log_scalar('dnn_score_train'            , dnn_score        , self.global_step)
+            self.tb_logger_test.log_scalar('dnn_confidence_avg_train'   , confidence_avg   , self.global_step)
+            self.tb_logger_test.log_scalar('dnn_confidence_median_train', confidence_median, self.global_step)
+
             for model_name in ['knn', 'svm', 'lr']:
                 if not ((model_name is 'knn' and self.collect_knn) or
                         (model_name is 'svm' and self.collect_svm) or
