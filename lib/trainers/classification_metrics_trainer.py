@@ -243,9 +243,9 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             confidence_median = np.median(confidence)
 
             np.place(train_dnn_predictions_prob, train_dnn_predictions_prob == 0.0, [eps])  # for KL divergences
-            self.tb_logger_test.log_scalar('dnn_score_train'            , dnn_score        , self.global_step)
-            self.tb_logger_test.log_scalar('dnn_confidence_avg_train'   , confidence_avg   , self.global_step)
-            self.tb_logger_test.log_scalar('dnn_confidence_median_train', confidence_median, self.global_step)
+            self.tb_logger_test.log_scalar('dnn_score_trainset'            , dnn_score        , self.global_step)
+            self.tb_logger_test.log_scalar('dnn_confidence_avg_trainset'   , confidence_avg   , self.global_step)
+            self.tb_logger_test.log_scalar('dnn_confidence_median_trainset', confidence_median, self.global_step)
 
             for model_name in ['knn', 'svm', 'lr']:
                 if not ((model_name is 'knn' and self.collect_knn) or
