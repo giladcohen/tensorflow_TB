@@ -11,7 +11,9 @@ from sklearn.svm import LinearSVC, SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import normalized_mutual_info_score
 from utils.misc import collect_features, calc_mutual_agreement, calc_psame
+from scipy.stats import entropy
 
+eps = 0.000001
 
 class KNNClassifierTester(TesterBase):
 
@@ -44,11 +46,10 @@ class KNNClassifierTester(TesterBase):
             p=int(self.knn_norm[-1]),
             n_jobs=self.knn_jobs)
 
-        self.svm = LinearSVC(
-            penalty=self.knn_norm.lower(),
-            dual=False,
-            random_state=self.rand_gen
-        )
+        self.svm = SVC(
+            kernel='linear',
+            probability=True,
+            random_state=self.rand_gen)
 
         self.lr = LogisticRegression(
             penalty=self.knn_norm.lower(),
@@ -56,11 +57,6 @@ class KNNClassifierTester(TesterBase):
             random_state=self.rand_gen,
             n_jobs=self.knn_jobs
         )
-
-        # self.svm = SVC(
-        #     kernel='rbf',
-        #     random_state=self.rand_gen
-        # )
 
     def fetch_dump_data_features(self, layer_name=None, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
@@ -70,17 +66,19 @@ class KNNClassifierTester(TesterBase):
             test_dir = self.test_dir
         train_features_file             = os.path.join(test_dir, 'train_features.npy')
         test_features_file              = os.path.join(test_dir, 'test_features.npy')
+        train_dnn_predictions_prob_file = os.path.join(test_dir, 'train_dnn_predictions_prob.npy')
         test_dnn_predictions_prob_file  = os.path.join(test_dir, 'test_dnn_predictions_prob.npy')
         train_labels_file               = os.path.join(test_dir, 'train_labels.npy')
         test_labels_file                = os.path.join(test_dir, 'test_labels.npy')
 
         if self.load_from_disk:
             self.log.info('Loading {}/{} train/test set embedding features from disk'.format(self.dataset.train_set_size, self.dataset.test_set_size))
-            X_train_features          = np.load(train_features_file)
-            y_train                   = np.load(train_labels_file)
-            X_test_features           = np.load(test_features_file)
-            y_test                    = np.load(test_labels_file)
-            test_dnn_predictions_prob = np.load(test_dnn_predictions_prob_file)
+            X_train_features           = np.load(train_features_file)
+            y_train                    = np.load(train_labels_file)
+            train_dnn_predictions_prob = np.load(train_dnn_predictions_prob_file)
+            X_test_features            = np.load(test_features_file)
+            y_test                     = np.load(test_labels_file)
+            test_dnn_predictions_prob  = np.load(test_dnn_predictions_prob_file)
         else:
             dataset_name = 'train_eval'
             self.log.info('Collecting {} samples for training from layer: {} from dataset: {}'.format(self.dataset.train_set_size, layer_name, dataset_name))
@@ -104,6 +102,7 @@ class KNNClassifierTester(TesterBase):
                           .format(train_features_file, test_features_file, test_dnn_predictions_prob_file, train_labels_file, test_labels_file))
             np.save(train_features_file            , X_train_features)
             np.save(test_features_file             , X_test_features)
+            np.save(train_dnn_predictions_prob_file, train_dnn_predictions_prob)
             np.save(test_dnn_predictions_prob_file , test_dnn_predictions_prob)
             np.save(train_labels_file              , y_train)
             np.save(test_labels_file               , y_test)
@@ -196,6 +195,84 @@ class KNNClassifierTester(TesterBase):
             print_str = '{}: psame={}.'.format(score_str, psame)
             self.log.info(print_str)
             print(print_str)
+            self.summary_writer_test.flush()
+            exit(0)
+        elif self.decision_method == 'knn_svm_logistic_regression_metrics':
+            self.log.info('Predicting labels from SVM model...')
+            y_prob_svm = self.svm.predict_proba(X_test_features)
+            y_pred_svm = y_prob_svm.argmax(axis=1)
+            svm_score = np.average(y_test == y_pred_svm)
+            self.log.info('Predicting labels from Logistic Regression model...')
+            y_prob_lr = self.lr.predict_proba(X_test_features)
+            y_pred_lr = y_prob_lr.argmax(axis=1)
+            lr_score = np.average(y_test == y_pred_lr)
+            self.log.info('Predicting labels from KNN model...')
+            y_prob_knn = self.knn.predict_proba(X_test_features)
+            y_pred_knn = y_prob_knn.argmax(axis=1)
+            knn_score = np.average(y_test == y_pred_knn)
+
+            self.log.info('Predicting SVM||KNN PSAME...')
+            svm_knn_psame = calc_psame(y_pred_svm, y_pred_knn)
+            self.log.info('Predicting SVM||LR PSAME...')
+            svm_lr_psame = calc_psame(y_pred_svm, y_pred_lr)
+            self.log.info('Predicting LR||KNN PSAME...')
+            lr_knn_psame = calc_psame(y_pred_lr, y_pred_knn)
+
+            self.log.info('Predicting SVM confidence...')
+            svm_confidence        = y_prob_svm.max(axis=1)
+            svm_confidence_avg    = np.average(svm_confidence)
+            svm_confidence_median = np.median(svm_confidence)
+            self.log.info('Predicting LR confidence...')
+            lr_confidence         = y_prob_lr.max(axis=1)
+            lr_confidence_avg     = np.average(lr_confidence)
+            lr_confidence_median  = np.median(lr_confidence)
+            self.log.info('Predicting KNN confidence...')
+            knn_confidence        = y_prob_knn.max(axis=1)
+            knn_confidence_avg     = np.average(knn_confidence)
+            knn_confidence_median  = np.median(knn_confidence)
+
+            self.log.info('Calculate KL divergences...')
+            np.place(y_prob_svm, y_prob_svm == 0.0, [eps])
+            np.place(y_prob_knn, y_prob_knn == 0.0, [eps])
+            np.place(y_prob_lr , y_prob_lr  == 0.0, [eps])
+
+            svm_knn_kl_div  = entropy(y_prob_svm, y_prob_knn)
+            svm_knn_kl_div2 = entropy(y_prob_knn, y_prob_svm)
+            svm_knn_kl_div_avg  = np.average(svm_knn_kl_div)
+            svm_knn_kl_div2_avg = np.average(svm_knn_kl_div2)
+
+            svm_lr_kl_div  = entropy(y_prob_svm, y_prob_lr)
+            svm_lr_kl_div2 = entropy(y_prob_lr , y_prob_svm)
+            svm_lr_kl_div_avg  = np.average(svm_lr_kl_div)
+            svm_lr_kl_div2_avg = np.average(svm_lr_kl_div2)
+
+            lr_knn_kl_div  = entropy(y_prob_lr, y_prob_knn)
+            lr_knn_kl_div2 = entropy(y_prob_knn, y_prob_lr)
+            lr_knn_kl_div_avg  = np.average(lr_knn_kl_div)
+            lr_knn_kl_div2_avg = np.average(lr_knn_kl_div2)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_score', svm_score, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_score' , lr_score , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/knn_score', knn_score, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_psame', svm_knn_psame, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_psame' , svm_lr_psame , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_psame' , lr_knn_psame , self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_confidence_avg'   , svm_confidence_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_confidence_median', svm_confidence_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_confidence_avg'    , lr_confidence_avg    , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_confidence_median' , lr_confidence_median , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/knn_confidence_avg'   , knn_confidence_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/knn_confidence_median', knn_confidence_median, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div_avg' , svm_knn_kl_div_avg , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div2_avg', svm_knn_kl_div2_avg, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div_avg'  , svm_lr_kl_div_avg  , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div2_avg' , svm_lr_kl_div2_avg , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div_avg'  , lr_knn_kl_div_avg  , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div2_avg' , lr_knn_kl_div2_avg , self.global_step)
+
             self.summary_writer_test.flush()
             exit(0)
         elif self.decision_method == 'knn_nc_dropout_sum':

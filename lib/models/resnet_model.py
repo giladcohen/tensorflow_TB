@@ -30,7 +30,6 @@ class ResNet(ClassifierModel):
 
         strides = [1, 2, 2]
         activate_before_residual = [True, False, False]
-        filters = self.resnet_filters  #WRN28-10
 
         with tf.variable_scope('unit_1_0'):
             x = self._residual(x, filters[1], stride_arr(strides[0]), activate_before_residual[0])

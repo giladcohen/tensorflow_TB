@@ -17,7 +17,6 @@ class MultiLayerKNNClassifierTester(KNNClassifierTester):
         self.apply_relu       = self.prm.test.test_control.APPLY_RELU
         self.apply_gap        = self.prm.test.test_control.APPLY_GAP
 
-        self.relu_leakiness   = self.prm.network.system.RELU_LEAKINESS
         self.tested_layer     = None
 
     def test(self):

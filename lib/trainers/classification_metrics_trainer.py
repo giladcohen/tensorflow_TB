@@ -148,7 +148,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         psame = calc_psame(y_pred_dnn, y_pred)
 
         self.log.info('Calculate confidence scores...')
-        confidence = dnn_predictions_prob.max(axis=1)
+        confidence = predictions_prob.max(axis=1)
         confidence_avg    = np.average(confidence)
         confidence_median = np.median(confidence)
 
