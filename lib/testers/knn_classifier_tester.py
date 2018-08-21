@@ -274,7 +274,7 @@ class KNNClassifierTester(TesterBase):
             self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div2_avg' , lr_knn_kl_div2_avg , self.global_step)
 
             self.summary_writer_test.flush()
-            exit(0)
+            return
         elif self.decision_method == 'knn_nc_dropout_sum':
             self.log.info('Predicting test set labels from KNN model using NC dropout...')
             number_of_predictions = 20
