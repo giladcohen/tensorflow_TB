@@ -37,7 +37,6 @@ class KNNClassifierTester(TesterBase):
         self.eval_trainset      = self.prm.test.test_control.EVAL_TRAINSET
         self.randomized_dataset = 'random' in str(self.dataset)
 
-
         if self.knn_norm not in ['L1', 'L2']:
             err_str = 'knn_norm {} is not supported'.format(self.knn_norm)
             self.log.error(err_str)
@@ -89,7 +88,10 @@ class KNNClassifierTester(TesterBase):
             y_test                     = np.load(test_labels_file)
             test_dnn_predictions_prob  = np.load(test_dnn_predictions_prob_file)
         else:
-            dataset_name = 'train_eval'
+            if self.randomized_dataset:
+                dataset_name = 'train_random_eval'
+            else:
+                dataset_name = 'train_eval'
             self.log.info('Collecting {} samples for training from layer: {} from dataset: {}'.format(self.dataset.train_set_size, layer_name, dataset_name))
             (X_train_features, y_train, train_dnn_predictions_prob) = \
                 collect_features(
