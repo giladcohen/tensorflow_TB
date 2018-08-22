@@ -34,7 +34,7 @@ class KNNClassifierTester(TesterBase):
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
         self.tested_layer       = 'embedding_layer'
-        self.eval_trainset      = self.prm.test_control.EVAL_TRAINSET
+        self.eval_trainset      = self.prm.test.test_control.EVAL_TRAINSET
         self.randomized_dataset = 'random' in str(self.dataset)
 
 
@@ -163,6 +163,7 @@ class KNNClassifierTester(TesterBase):
         if 'knn' in self.decision_method:
             self.log.info('Fitting KNN model...')
             self.knn.fit(X_train_features, y_train)
+            self.knn_train.fit(X_train_features, y_train)
         if 'svm' in self.decision_method:
             self.log.info('Fitting SVM model...')
             self.svm.fit(X_train_features, y_train)

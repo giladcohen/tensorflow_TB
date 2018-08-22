@@ -22,7 +22,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
 
-        self.eval_trainset      = self.prm.test_control.EVAL_TRAINSET
+        self.eval_trainset      = self.prm.test.test_control.EVAL_TRAINSET
         self.randomized_dataset = 'random' in str(self.dataset)
         self.collect_knn        = True
         self.collect_svm        = True
