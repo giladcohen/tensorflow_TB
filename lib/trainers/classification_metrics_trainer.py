@@ -22,8 +22,8 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.pca_reduction         = self.prm.train.train_control.PCA_REDUCTION
         self.pca_embedding_dims    = self.prm.train.train_control.PCA_EMBEDDING_DIMS
 
-        self.randomized_dataset = True
-        self.eval_trainset      = True
+        self.eval_trainset      = self.prm.test_control.EVAL_TRAINSET
+        self.randomized_dataset = 'random' in str(self.dataset)
         self.collect_knn        = True
         self.collect_svm        = True
         self.collect_lr         = True
@@ -88,13 +88,14 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             X = self.pca.transform(X)
         return X
 
-    def knn_predict_proba_for_trainset(self, X_train_features, y_train):
+    def knn_predict_proba_for_trainset(self, model, X_train_features, y_train):
         """
+        :param model: knn_train
         :param X_train_features: Training set features ([n_samples, n_features])
         :param y_train: training set gt ([n_samples])
         :return: knn predictions of the training set, using an efficient leave-one-out.
         """
-        biased_knn_predictions_prob_train = self.knn_train.predict_proba(X_train_features)
+        biased_knn_predictions_prob_train = model.predict_proba(X_train_features)
         knn_predictions_prob_train = np.zeros(biased_knn_predictions_prob_train.shape)
 
         for i in range(len(X_train_features)):
@@ -136,7 +137,10 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         y_pred_dnn = dnn_predictions_prob.argmax(axis=1)
 
         self.log.info('Predicting {} labels for dataset {} using model\n {}...'.format(y.shape[0], dataset_name, str(model)))
-        predictions_prob = model.predict_proba(X)
+        if model_name is 'knn' and dataset_name is 'train':
+            predictions_prob = self.knn_predict_proba_for_trainset(model, X, y)
+        else:
+            predictions_prob = model.predict_proba(X)
         y_pred = predictions_prob.argmax(axis=1)
 
         # calculate metrics

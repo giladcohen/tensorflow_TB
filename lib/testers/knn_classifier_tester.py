@@ -31,9 +31,12 @@ class KNNClassifierTester(TesterBase):
         self.knn_jobs        = self.prm.test.test_control.KNN_JOBS
 
         self.num_classes     = self.dataset.num_classes
-        self.tested_layer    = 'embedding_layer'
 
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
+        self.tested_layer       = 'embedding_layer'
+        self.eval_trainset      = self.prm.test_control.EVAL_TRAINSET
+        self.randomized_dataset = 'random' in str(self.dataset)
+
 
         if self.knn_norm not in ['L1', 'L2']:
             err_str = 'knn_norm {} is not supported'.format(self.knn_norm)
@@ -42,6 +45,12 @@ class KNNClassifierTester(TesterBase):
 
         self.knn = KNeighborsClassifier(
             n_neighbors=self.knn_neighbors,
+            weights=self.knn_weights,
+            p=int(self.knn_norm[-1]),
+            n_jobs=self.knn_jobs)
+
+        self.knn_train = KNeighborsClassifier(
+            n_neighbors=self.knn_neighbors + 1,
             weights=self.knn_weights,
             p=int(self.knn_norm[-1]),
             n_jobs=self.knn_jobs)
@@ -117,6 +126,28 @@ class KNNClassifierTester(TesterBase):
                 self.pca.fit(X)
             X = self.pca.transform(X)
         return X
+
+    def knn_predict_proba_for_trainset(self, model, X_train_features, y_train):
+        """
+        :param model: knn_train
+        :param X_train_features: Training set features ([n_samples, n_features])
+        :param y_train: training set gt ([n_samples])
+        :return: knn predictions of the training set, using an efficient leave-one-out.
+        """
+        biased_knn_predictions_prob_train = model.predict_proba(X_train_features)
+        knn_predictions_prob_train = np.zeros(biased_knn_predictions_prob_train.shape)
+
+        for i in range(len(X_train_features)):
+            y = int(y_train[i])
+            proba = biased_knn_predictions_prob_train[i]
+            assert proba[y] >= 1/(self.knn_neighbors + 1), "for i={}: prob[y={}] = {}, but cannot be smaller than {}"\
+                .format(i, y, proba[y], 1/(self.knn_neighbors + 1))
+            proba[y] -= 1/(self.knn_neighbors + 1)
+            proba *= (self.knn_neighbors + 1)/self.knn_neighbors
+            assert np.isclose(sum(proba), 1.0), "sum of proba[i={}] is {} instead of 1.0".format(i, sum(proba))
+            knn_predictions_prob_train[i] = proba
+
+        return knn_predictions_prob_train
 
     def test(self):
         X_train_features, \
@@ -236,20 +267,38 @@ class KNNClassifierTester(TesterBase):
             np.place(y_prob_knn, y_prob_knn == 0.0, [eps])
             np.place(y_prob_lr , y_prob_lr  == 0.0, [eps])
 
-            svm_knn_kl_div  = entropy(y_prob_svm, y_prob_knn)
-            svm_knn_kl_div2 = entropy(y_prob_knn, y_prob_svm)
-            svm_knn_kl_div_avg  = np.average(svm_knn_kl_div)
-            svm_knn_kl_div2_avg = np.average(svm_knn_kl_div2)
+            svm_knn_kl_div  = entropy(y_prob_svm  , y_prob_knn)
+            svm_knn_kl_div2 = entropy(y_prob_knn  , y_prob_svm)
+            svm_knn_kl_div3 = entropy(y_prob_svm.T, y_prob_knn.T)
+            svm_knn_kl_div4 = entropy(y_prob_knn.T, y_prob_svm.T)
+            svm_knn_kl_div_avg     = np.average(svm_knn_kl_div)
+            svm_knn_kl_div2_avg    = np.average(svm_knn_kl_div2)
+            svm_knn_kl_div3_avg    = np.average(svm_knn_kl_div3)
+            svm_knn_kl_div4_avg    = np.average(svm_knn_kl_div4)
+            svm_knn_kl_div3_median = np.median(svm_knn_kl_div3)
+            svm_knn_kl_div4_median = np.median(svm_knn_kl_div4)
 
             svm_lr_kl_div  = entropy(y_prob_svm, y_prob_lr)
             svm_lr_kl_div2 = entropy(y_prob_lr , y_prob_svm)
-            svm_lr_kl_div_avg  = np.average(svm_lr_kl_div)
-            svm_lr_kl_div2_avg = np.average(svm_lr_kl_div2)
+            svm_lr_kl_div3 = entropy(y_prob_svm.T, y_prob_lr.T)
+            svm_lr_kl_div4 = entropy(y_prob_lr.T, y_prob_svm.T)
+            svm_lr_kl_div_avg     = np.average(svm_lr_kl_div)
+            svm_lr_kl_div2_avg    = np.average(svm_lr_kl_div2)
+            svm_lr_kl_div3_avg    = np.average(svm_lr_kl_div3)
+            svm_lr_kl_div4_avg    = np.average(svm_lr_kl_div4)
+            svm_lr_kl_div3_median = np.median(svm_lr_kl_div3)
+            svm_lr_kl_div4_median = np.median(svm_lr_kl_div4)
 
             lr_knn_kl_div  = entropy(y_prob_lr, y_prob_knn)
             lr_knn_kl_div2 = entropy(y_prob_knn, y_prob_lr)
-            lr_knn_kl_div_avg  = np.average(lr_knn_kl_div)
-            lr_knn_kl_div2_avg = np.average(lr_knn_kl_div2)
+            lr_knn_kl_div3 = entropy(y_prob_lr.T, y_prob_knn.T)
+            lr_knn_kl_div4 = entropy(y_prob_knn.T, y_prob_lr.T)
+            lr_knn_kl_div_avg     = np.average(lr_knn_kl_div)
+            lr_knn_kl_div2_avg    = np.average(lr_knn_kl_div2)
+            lr_knn_kl_div3_avg    = np.average(lr_knn_kl_div3)
+            lr_knn_kl_div4_avg    = np.average(lr_knn_kl_div4)
+            lr_knn_kl_div3_median = np.median(lr_knn_kl_div3)
+            lr_knn_kl_div4_median = np.median(lr_knn_kl_div4)
 
             self.tb_logger_test.log_scalar(self.tested_layer + '/svm_score', svm_score, self.global_step)
             self.tb_logger_test.log_scalar(self.tested_layer + '/lr_score' , lr_score , self.global_step)
@@ -266,12 +315,138 @@ class KNNClassifierTester(TesterBase):
             self.tb_logger_test.log_scalar(self.tested_layer + '/knn_confidence_avg'   , knn_confidence_avg   , self.global_step)
             self.tb_logger_test.log_scalar(self.tested_layer + '/knn_confidence_median', knn_confidence_median, self.global_step)
 
-            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div_avg' , svm_knn_kl_div_avg , self.global_step)
-            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div2_avg', svm_knn_kl_div2_avg, self.global_step)
-            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div_avg'  , svm_lr_kl_div_avg  , self.global_step)
-            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div2_avg' , svm_lr_kl_div2_avg , self.global_step)
-            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div_avg'  , lr_knn_kl_div_avg  , self.global_step)
-            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div2_avg' , lr_knn_kl_div2_avg , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div_avg'    , svm_knn_kl_div_avg    , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div2_avg'   , svm_knn_kl_div2_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div3_avg'   , svm_knn_kl_div3_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div4_avg'   , svm_knn_kl_div4_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div3_median', svm_knn_kl_div3_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div4_median', svm_knn_kl_div4_median, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div_avg'    , svm_lr_kl_div_avg    , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div2_avg'   , svm_lr_kl_div2_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div3_avg'   , svm_lr_kl_div3_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div4_avg'   , svm_lr_kl_div4_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div3_median', svm_lr_kl_div3_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div4_median', svm_lr_kl_div4_median, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div_avg'    , lr_knn_kl_div_avg  , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div2_avg'   , lr_knn_kl_div2_avg , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div3_avg'   , lr_knn_kl_div3_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div4_avg'   , lr_knn_kl_div4_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div3_median', lr_knn_kl_div3_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div4_median', lr_knn_kl_div4_median, self.global_step)
+
+            if not self.eval_trainset:
+                return
+
+            self.log.info('Predicting train labels from SVM model...')
+            y_prob_svm = self.svm.predict_proba(X_train_features)
+            y_pred_svm = y_prob_svm.argmax(axis=1)
+            svm_score = np.average(y_train == y_pred_svm)
+            self.log.info('Predicting train labels from Logistic Regression model...')
+            y_prob_lr = self.lr.predict_proba(X_train_features)
+            y_pred_lr = y_prob_lr.argmax(axis=1)
+            lr_score = np.average(y_train == y_pred_lr)
+            self.log.info('Predicting train labels from KNN model...')
+            y_prob_knn = self.knn_predict_proba_for_trainset(self.knn_train, X_train_features, y_train)
+            y_pred_knn = y_prob_knn.argmax(axis=1)
+            knn_score = np.average(y_train == y_pred_knn)
+
+            self.log.info('Predicting SVM||KNN PSAME for trainset...')
+            svm_knn_psame = calc_psame(y_pred_svm, y_pred_knn)
+            self.log.info('Predicting SVM||LR PSAME for trainset...')
+            svm_lr_psame = calc_psame(y_pred_svm, y_pred_lr)
+            self.log.info('Predicting LR||KNN PSAME for trainset...')
+            lr_knn_psame = calc_psame(y_pred_lr, y_pred_knn)
+
+            self.log.info('Predicting SVM confidence for trainset...')
+            svm_confidence        = y_prob_svm.max(axis=1)
+            svm_confidence_avg    = np.average(svm_confidence)
+            svm_confidence_median = np.median(svm_confidence)
+            self.log.info('Predicting LR confidence for trainset...')
+            lr_confidence         = y_prob_lr.max(axis=1)
+            lr_confidence_avg     = np.average(lr_confidence)
+            lr_confidence_median  = np.median(lr_confidence)
+            self.log.info('Predicting KNN confidence for trainset...')
+            knn_confidence        = y_prob_knn.max(axis=1)
+            knn_confidence_avg     = np.average(knn_confidence)
+            knn_confidence_median  = np.median(knn_confidence)
+
+            self.log.info('Calculate KL divergences for trainset...')
+            np.place(y_prob_svm, y_prob_svm == 0.0, [eps])
+            np.place(y_prob_knn, y_prob_knn == 0.0, [eps])
+            np.place(y_prob_lr , y_prob_lr  == 0.0, [eps])
+
+            svm_knn_kl_div  = entropy(y_prob_svm  , y_prob_knn)
+            svm_knn_kl_div2 = entropy(y_prob_knn  , y_prob_svm)
+            svm_knn_kl_div3 = entropy(y_prob_svm.T, y_prob_knn.T)
+            svm_knn_kl_div4 = entropy(y_prob_knn.T, y_prob_svm.T)
+            svm_knn_kl_div_avg     = np.average(svm_knn_kl_div)
+            svm_knn_kl_div2_avg    = np.average(svm_knn_kl_div2)
+            svm_knn_kl_div3_avg    = np.average(svm_knn_kl_div3)
+            svm_knn_kl_div4_avg    = np.average(svm_knn_kl_div4)
+            svm_knn_kl_div3_median = np.median(svm_knn_kl_div3)
+            svm_knn_kl_div4_median = np.median(svm_knn_kl_div4)
+
+            svm_lr_kl_div  = entropy(y_prob_svm, y_prob_lr)
+            svm_lr_kl_div2 = entropy(y_prob_lr , y_prob_svm)
+            svm_lr_kl_div3 = entropy(y_prob_svm.T, y_prob_lr.T)
+            svm_lr_kl_div4 = entropy(y_prob_lr.T, y_prob_svm.T)
+            svm_lr_kl_div_avg     = np.average(svm_lr_kl_div)
+            svm_lr_kl_div2_avg    = np.average(svm_lr_kl_div2)
+            svm_lr_kl_div3_avg    = np.average(svm_lr_kl_div3)
+            svm_lr_kl_div4_avg    = np.average(svm_lr_kl_div4)
+            svm_lr_kl_div3_median = np.median(svm_lr_kl_div3)
+            svm_lr_kl_div4_median = np.median(svm_lr_kl_div4)
+
+            lr_knn_kl_div  = entropy(y_prob_lr, y_prob_knn)
+            lr_knn_kl_div2 = entropy(y_prob_knn, y_prob_lr)
+            lr_knn_kl_div3 = entropy(y_prob_lr.T, y_prob_knn.T)
+            lr_knn_kl_div4 = entropy(y_prob_knn.T, y_prob_lr.T)
+            lr_knn_kl_div_avg     = np.average(lr_knn_kl_div)
+            lr_knn_kl_div2_avg    = np.average(lr_knn_kl_div2)
+            lr_knn_kl_div3_avg    = np.average(lr_knn_kl_div3)
+            lr_knn_kl_div4_avg    = np.average(lr_knn_kl_div4)
+            lr_knn_kl_div3_median = np.median(lr_knn_kl_div3)
+            lr_knn_kl_div4_median = np.median(lr_knn_kl_div4)
+
+            suffix = '_trainset'
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_score' + suffix, svm_score, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_score' + suffix , lr_score , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/knn_score' + suffix, knn_score, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_psame' + suffix, svm_knn_psame, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_psame' + suffix , svm_lr_psame , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_psame' + suffix , lr_knn_psame , self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_confidence_avg' + suffix   , svm_confidence_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_confidence_median' + suffix, svm_confidence_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_confidence_avg' + suffix    , lr_confidence_avg    , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_confidence_median' + suffix , lr_confidence_median , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/knn_confidence_avg' + suffix   , knn_confidence_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/knn_confidence_median' + suffix, knn_confidence_median, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div_avg' + suffix    , svm_knn_kl_div_avg    , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div2_avg' + suffix   , svm_knn_kl_div2_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div3_avg' + suffix   , svm_knn_kl_div3_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div4_avg' + suffix   , svm_knn_kl_div4_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div3_median' + suffix, svm_knn_kl_div3_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_knn_kl_div4_median' + suffix, svm_knn_kl_div4_median, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div_avg' + suffix    , svm_lr_kl_div_avg    , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div2_avg' + suffix   , svm_lr_kl_div2_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div3_avg' + suffix   , svm_lr_kl_div3_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div4_avg' + suffix   , svm_lr_kl_div4_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div3_median' + suffix, svm_lr_kl_div3_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/svm_lr_kl_div4_median' + suffix, svm_lr_kl_div4_median, self.global_step)
+
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div_avg' + suffix    , lr_knn_kl_div_avg  , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div2_avg' + suffix   , lr_knn_kl_div2_avg , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div3_avg' + suffix   , lr_knn_kl_div3_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div4_avg' + suffix   , lr_knn_kl_div4_avg   , self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div3_median' + suffix, lr_knn_kl_div3_median, self.global_step)
+            self.tb_logger_test.log_scalar(self.tested_layer + '/lr_knn_kl_div4_median' + suffix, lr_knn_kl_div4_median, self.global_step)
 
             self.summary_writer_test.flush()
             return
