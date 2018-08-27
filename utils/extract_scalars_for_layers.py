@@ -51,14 +51,37 @@ def mkdir_p(directory):
             raise
 
 def main():
-    logdirs   = (
+    logdirs   = [
         '/data/gilad/logs/metrics/wrn/cifar10/log_1147_130818_metrics-SUPERSEED=13081800',
         '/data/gilad/logs/metrics/wrn/cifar10/random/log_1147_130818_metrics-SUPERSEED=13081800',
-        '/data/gilad/logs/metrics/wrn/cifar100/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
-        '/data/gilad/logs/metrics/wrn/cifar100/random/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800'
-    )
-    run_names = ('test',)
-    tag_names = ('knn_score', 'knn_score_trainset', 'ma_score', 'ma_score_trainset', 'md_score', 'md_score_trainset', 'score', 'score_trainset')
+        '/data/gilad/logs/metrics/wrn/cifar100/log_1421_150818_metrics-SUPERSEED=15081800',
+        '/data/gilad/logs/metrics/wrn/cifar100/random/log_1421_150818_metrics-SUPERSEED=15081800'
+    ]
+
+    run_names = ['test']
+
+    layers = ['input_images', 'init_conv', 'embedding_layer',
+              'unit_1_0', 'unit_1_1', 'unit_1_2', 'unit_1_3',
+              'unit_2_0', 'unit_2_1', 'unit_2_2', 'unit_2_3',
+              'unit_3_0', 'unit_3_1', 'unit_3_2', 'unit_3_3']
+
+    reg_tags = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score',
+                'knn_confidence_avg', 'knn_confidence_median', 'knn_score', 'knn_kl_div_avg', 'knn_kl_div2_avg', 'knn_psame',
+                'lr_confidence_avg' , 'lr_confidence_median' , 'lr_score' , 'lr_kl_div_avg' , 'lr_kl_div2_avg' , 'lr_psame',
+                'svm_confidence_avg', 'svm_confidence_median', 'svm_score', 'svm_kl_div_avg', 'svm_kl_div2_avg', 'svm_psame']
+    reg_tags += [s + '_trainset' for s in reg_tags]
+
+    layer_tags = ['knn_confidence_avg', 'knn_confidence_median', 'knn_score',
+                  'lr_confidence_avg' , 'lr_confidence_median' , 'lr_score' ,
+                  'svm_confidence_avg', 'svm_confidence_median', 'svm_score',
+                  'lr_knn_psame', 'svm_knn_psame', 'smv_lr_psame',
+                  'lr_knn_kl_div_avg' , 'lr_knn_kl_div2_avg' , 'lr_knn_kl_div3_avg' , 'lr_knn_kl_div3_median' , 'lr_knn_kl_div4_avg' , 'lr_knn_kl_div4_median' ,
+                  'svm_knn_kl_div_avg', 'svm_knn_kl_div2_avg', 'svm_knn_kl_div3_avg', 'svm_knn_kl_div3_median', 'svm_knn_kl_div4_avg', 'svm_knn_kl_div4_median',
+                  'svm_lr_kl_div_avg' , 'svm_lr_kl_div2_avg' , 'svm_lr_kl_div3_avg' , 'svm_lr_kl_div3_median' , 'svm_lr_kl_div4_avg' , 'svm_lr_kl_div4_median']
+    layer_tags += [s + '_trainset' for s in layer_tags]
+
+    tag_names = reg_tags
+    tag_names += [l+'/'+lt for l in layers for lt in layer_tags]
 
     for logdir in logdirs:
         output_dir = os.path.join(logdir, 'data_for_figures')
