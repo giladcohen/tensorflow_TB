@@ -102,7 +102,7 @@ def main():
                 for layer_tag in layer_tags:
                     output_filename = '%s___%s' % (munge_filename(run_name), munge_filename(layer_tag))
                     output_filepath = os.path.join(layer_dir, output_filename)
-                    print("Exporting (run=%r, tag=%r) to %r..." % (run_name, layer_tag, output_filepath))
+                    print("Exporting (run=%r, layer=%r, tag=%r) to %r..." % (run_name, layer, layer_tag, output_filepath))
                     export_scalars(multiplexer, run_name, layer+'/'+layer_tag, output_filepath)
     print("Done.")
 
