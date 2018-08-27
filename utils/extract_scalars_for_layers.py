@@ -74,7 +74,7 @@ def main():
     layer_tags = ['knn_confidence_avg', 'knn_confidence_median', 'knn_score',
                   'lr_confidence_avg' , 'lr_confidence_median' , 'lr_score' ,
                   'svm_confidence_avg', 'svm_confidence_median', 'svm_score',
-                  'lr_knn_psame', 'svm_knn_psame', 'smv_lr_psame',
+                  'lr_knn_psame', 'svm_knn_psame', 'svm_lr_psame',
                   'lr_knn_kl_div_avg' , 'lr_knn_kl_div2_avg' , 'lr_knn_kl_div3_avg' , 'lr_knn_kl_div3_median' , 'lr_knn_kl_div4_avg' , 'lr_knn_kl_div4_median' ,
                   'svm_knn_kl_div_avg', 'svm_knn_kl_div2_avg', 'svm_knn_kl_div3_avg', 'svm_knn_kl_div3_median', 'svm_knn_kl_div4_avg', 'svm_knn_kl_div4_median',
                   'svm_lr_kl_div_avg' , 'svm_lr_kl_div2_avg' , 'svm_lr_kl_div3_avg' , 'svm_lr_kl_div3_median' , 'svm_lr_kl_div4_avg' , 'svm_lr_kl_div4_median']
