@@ -80,8 +80,8 @@ def main():
                   'svm_lr_kl_div_avg' , 'svm_lr_kl_div2_avg' , 'svm_lr_kl_div3_avg' , 'svm_lr_kl_div3_median' , 'svm_lr_kl_div4_avg' , 'svm_lr_kl_div4_median']
     layer_tags += [s + '_trainset' for s in layer_tags]
 
-    tag_names = reg_tags
-    tag_names += [l+'/'+lt for l in layers for lt in layer_tags]
+    # tag_names = reg_tags
+    # tag_names += [l+'/'+lt for l in layers for lt in layer_tags]
 
     for logdir in logdirs:
         output_dir = os.path.join(logdir, 'data_for_figures')
@@ -89,11 +89,21 @@ def main():
         print("Loading data for logdir: {}".format(logdir))
         multiplexer = create_multiplexer(logdir)
         for run_name in run_names:
-            for tag_name in tag_names:
+            regular_dir = os.path.join(output_dir, 'regular')
+            mkdir_p(regular_dir)
+            for tag_name in reg_tags:
                 output_filename = '%s___%s' % (munge_filename(run_name), munge_filename(tag_name))
-                output_filepath = os.path.join(output_dir, output_filename)
+                output_filepath = os.path.join(regular_dir, output_filename)
                 print("Exporting (run=%r, tag=%r) to %r..." % (run_name, tag_name, output_filepath))
                 export_scalars(multiplexer, run_name, tag_name, output_filepath)
+            for layer in layers:
+                layer_dir = os.path.join(output_dir, layer)
+                mkdir_p(layer_dir)
+                for layer_tag in layer_tags:
+                    output_filename = '%s___%s' % (munge_filename(run_name), munge_filename(layer_tag))
+                    output_filepath = os.path.join(layer_dir, output_filename)
+                    print("Exporting (run=%r, tag=%r) to %r..." % (run_name, layer_tag, output_filepath))
+                    export_scalars(multiplexer, run_name, layer+'/'+layer_tag, output_filepath)
     print("Done.")
 
 if __name__ == '__main__':
