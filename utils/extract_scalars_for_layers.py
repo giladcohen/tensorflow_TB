@@ -104,7 +104,7 @@ def main():
                     output_filepath = os.path.join(layer_dir, output_filename)
                     print("Exporting (run=%r, layer=%r, tag=%r) to %r..." % (run_name, layer, layer_tag, output_filepath))
                     export_scalars(multiplexer, run_name, layer+'/'+layer_tag, output_filepath)
-    print("Done.")
+    print("Done extracting scalars. Now processing the JSON file")
 
 if __name__ == '__main__':
     main()
