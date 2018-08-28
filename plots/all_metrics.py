@@ -16,142 +16,402 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 
-root_dir = '/data/gilad/logs/metrics/wrn/cifar10/log_1147_130818_metrics-SUPERSEED=13081800'
-json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
-plot_directory = os.path.join(root_dir, 'plots')
-if not os.path.exists(plot_directory):
-    os.makedirs(plot_directory)
+root_dirs = ['/data/gilad/logs/metrics/wrn/cifar10/log_1147_130818_metrics-SUPERSEED=13081800',
+             '/data/gilad/logs/metrics/wrn/cifar10/random/log_1147_130818_metrics-SUPERSEED=13081800',
+             '/data/gilad/logs/metrics/wrn/cifar100/log_1421_150818_metrics-SUPERSEED=15081800',
+             '/data/gilad/logs/metrics/wrn/cifar100/random/log_1421_150818_metrics-SUPERSEED=15081800']
 
-with open(json_file) as f:
-    data = json.load(f)
+for root_dir in root_dirs:
+    json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
+    plot_directory = os.path.join(root_dir, 'plots')
+    if not os.path.exists(plot_directory):
+        os.makedirs(plot_directory)
 
-# regular plots
-# ploting the models' scores
-plt.figure(1)
-steps, values = data['test']['regular']['dnn_score']['steps'], data['test']['regular']['dnn_score']['values']
-plt.plot(steps, values, 'r')
-steps, values = data['test']['regular']['knn_score']['steps'], data['test']['regular']['knn_score']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['test']['regular']['svm_score']['steps'], data['test']['regular']['svm_score']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['test']['regular']['lr_score']['steps'], data['test']['regular']['lr_score']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylim(0.0, 1.0)
-plt.ylabel('test score')
-plt.legend(['dnn', 'knn', 'svm', 'lr'])
-plt.show()
+    with open(json_file) as f:
+        data = json.load(f)
 
-plt.figure(2)
-steps, values = data['train']['regular']['dnn_score']['steps'], data['train']['regular']['dnn_score']['values']
-plt.plot(steps, values, 'r')
-steps, values = data['train']['regular']['knn_score']['steps'], data['train']['regular']['knn_score']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['train']['regular']['svm_score']['steps'], data['train']['regular']['svm_score']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['train']['regular']['lr_score']['steps'], data['train']['regular']['lr_score']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylim(0.0, 1.0)
-plt.ylabel('train score')
-plt.legend(['dnn', 'knn', 'svm', 'lr'])
-plt.show()
+    if 'cifar100' in root_dir:
+        dataset = 'cifar100'
+    elif 'cifar10' in root_dir:
+        dataset = 'cifar10'
+    else:
+        dataset = 'mnist'
+    is_randomized = 'random' in root_dir
 
+    # regular plots
+    # ploting the models' scores
+    plt.figure(1)
+    plt.plot(data['test']['regular']['dnn_score']['steps'], data['test']['regular']['dnn_score']['values'], 'r')
+    plt.plot(data['test']['regular']['knn_score']['steps'], data['test']['regular']['knn_score']['values'], 'b')
+    plt.plot(data['test']['regular']['svm_score']['steps'], data['test']['regular']['svm_score']['values'], 'k')
+    plt.plot(data['test']['regular']['lr_score']['steps'] , data['test']['regular']['lr_score']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('accuracy score')
+    plt.legend(['dnn', 'knn', 'svm', 'lr'])
+    plt.title('Test accuracy scores on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_accuracy_score.png'))
 
-# ploting the psame score (correspondence to DNN)
-plt.figure(3)
-steps, values = data['test']['regular']['knn_psame']['steps'], data['test']['regular']['knn_psame']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['test']['regular']['svm_psame']['steps'], data['test']['regular']['svm_psame']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['test']['regular']['lr_psame']['steps'], data['test']['regular']['lr_psame']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylim(0.0, 1.0)
-plt.ylabel('test psame to DNN')
-plt.legend(['knn', 'svm', 'lr'])
-plt.show()
-
-plt.figure(4)
-steps, values = data['train']['regular']['knn_psame']['steps'], data['train']['regular']['knn_psame']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['train']['regular']['svm_psame']['steps'], data['train']['regular']['svm_psame']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['train']['regular']['lr_psame']['steps'], data['train']['regular']['lr_psame']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylim(0.0, 1.0)
-plt.ylabel('train psame to DNN')
-plt.legend(['knn', 'svm', 'lr'])
-plt.show()
+    plt.figure(2)
+    plt.plot(data['train']['regular']['dnn_score']['steps'], data['train']['regular']['dnn_score']['values'], 'r')
+    plt.plot(data['train']['regular']['knn_score']['steps'], data['train']['regular']['knn_score']['values'], 'b')
+    plt.plot(data['train']['regular']['svm_score']['steps'], data['train']['regular']['svm_score']['values'], 'k')
+    plt.plot(data['train']['regular']['lr_score']['steps'] , data['train']['regular']['lr_score']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('accuracy score')
+    plt.legend(['dnn', 'knn', 'svm', 'lr'])
+    plt.title('Train accuracy scores on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_accuracy_score.png'))
 
 
-# plotting confidences (avg/median) - #TODO(gilad): in the future
-# plotting KL div
-plt.figure(5)
-steps, values = data['test']['regular']['knn_kl_div_avg']['steps'], data['test']['regular']['knn_kl_div_avg']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['test']['regular']['lr_kl_div_avg']['steps'], data['test']['regular']['lr_kl_div_avg']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['test']['regular']['svm_kl_div_avg']['steps'], data['test']['regular']['svm_kl_div_avg']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylabel('test KL div1 to DNN')
-plt.legend(['knn', 'svm', 'lr'])
-plt.show()
+    # ploting the psame score (correspondence to DNN)
+    plt.figure(3)
+    plt.plot(data['test']['regular']['knn_psame']['steps'], data['test']['regular']['knn_psame']['values'], 'b')
+    plt.plot(data['test']['regular']['svm_psame']['steps'], data['test']['regular']['svm_psame']['values'], 'k')
+    plt.plot(data['test']['regular']['lr_psame']['steps'] , data['test']['regular']['lr_psame']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('psame to DNN')
+    plt.legend(['knn', 'svm', 'lr'])
+    plt.title('Test psame on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_psame.png'))
 
-plt.figure(6)
-steps, values = data['train']['regular']['knn_kl_div_avg']['steps'], data['train']['regular']['knn_kl_div_avg']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['train']['regular']['lr_kl_div_avg']['steps'], data['train']['regular']['lr_kl_div_avg']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['train']['regular']['svm_kl_div_avg']['steps'], data['train']['regular']['svm_kl_div_avg']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylabel('train KL div1 to DNN')
-plt.legend(['knn', 'svm', 'lr'])
-plt.show()
-
-# plotting KL div2
-plt.figure(7)
-steps, values = data['test']['regular']['knn_kl_div2_avg']['steps'], data['test']['regular']['knn_kl_div2_avg']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['test']['regular']['lr_kl_div2_avg']['steps'], data['test']['regular']['lr_kl_div2_avg']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['test']['regular']['svm_kl_div2_avg']['steps'], data['test']['regular']['svm_kl_div2_avg']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylabel('test KL div2 to DNN')
-plt.legend(['knn', 'svm', 'lr'])
-plt.show()
-
-plt.figure(8)
-steps, values = data['train']['regular']['knn_kl_div2_avg']['steps'], data['train']['regular']['knn_kl_div2_avg']['values']
-plt.plot(steps, values, 'b')
-steps, values = data['train']['regular']['lr_kl_div2_avg']['steps'], data['train']['regular']['lr_kl_div2_avg']['values']
-plt.plot(steps, values, 'k')
-steps, values = data['train']['regular']['svm_kl_div2_avg']['steps'], data['train']['regular']['svm_kl_div2_avg']['values']
-plt.plot(steps, values, 'g')
-plt.gca().yaxis.grid(True)
-plt.ylabel('train KL div2 to DNN')
-plt.legend(['knn', 'svm', 'lr'])
-plt.show()
+    plt.figure(4)
+    plt.plot(data['train']['regular']['knn_psame']['steps'], data['train']['regular']['knn_psame']['values'], 'b')
+    plt.plot(data['train']['regular']['svm_psame']['steps'], data['train']['regular']['svm_psame']['values'], 'k')
+    plt.plot(data['train']['regular']['lr_psame']['steps'] , data['train']['regular']['lr_psame']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('psame to DNN')
+    plt.legend(['knn', 'svm', 'lr'])
+    plt.title('Train psame on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_psame.png'))
 
 
-# Layer printing
-layers = ['input\nimages', 'init\nconv',
-          'unit_1_1', 'unit_1_2', 'unit_1_3', 'unit_1_4',
-          'unit_2_1', 'unit_2_2', 'unit_2_3', 'unit_2_4',
-          'unit_3_1', 'unit_3_2', 'unit_3_3', 'unit_3_4',
-          'embedding\nvector']
-x = np.arange(len(layers))
-
-plt.figure(9)
-plt.plot(data['test']['layer']['knn_score'])
-
-
-
-
+    # plotting confidences (avg/median) - #TODO(gilad): in the future
+    # plotting KL div
+    plt.figure(5)
+    plt.plot(data['test']['regular']['knn_kl_div_avg']['steps'], data['test']['regular']['knn_kl_div_avg']['values'], 'b')
+    plt.plot(data['test']['regular']['lr_kl_div_avg']['steps'] , data['test']['regular']['lr_kl_div_avg']['values'] , 'g')
+    plt.plot(data['test']['regular']['svm_kl_div_avg']['steps'], data['test']['regular']['svm_kl_div_avg']['values'], 'k')
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('KL div1 to DNN')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Test KL div1 avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div1.png'))
 
 
+    plt.figure(6)
+    plt.plot(data['train']['regular']['knn_kl_div_avg']['steps'], data['train']['regular']['knn_kl_div_avg']['values'], 'b')
+    plt.plot(data['train']['regular']['lr_kl_div_avg']['steps'] , data['train']['regular']['lr_kl_div_avg']['values'] , 'g')
+    plt.plot(data['train']['regular']['svm_kl_div_avg']['steps'], data['train']['regular']['svm_kl_div_avg']['values'], 'k')
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('KL div1 to DNN')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Train KL div1 avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_kl_div1.png'))
 
+    # plotting KL div2
+    plt.figure(7)
+    plt.plot(data['test']['regular']['knn_kl_div2_avg']['steps'], data['test']['regular']['knn_kl_div2_avg']['values'], 'b')
+    plt.plot(data['test']['regular']['lr_kl_div2_avg']['steps'] , data['test']['regular']['lr_kl_div2_avg']['values'] , 'g')
+    plt.plot(data['test']['regular']['svm_kl_div2_avg']['steps'], data['test']['regular']['svm_kl_div2_avg']['values'], 'k')
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('KL div2 to DNN')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Test KL div2 avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div2.png'))
+
+
+    plt.figure(8)
+    plt.plot(data['train']['regular']['knn_kl_div2_avg']['steps'], data['train']['regular']['knn_kl_div2_avg']['values'], 'b')
+    plt.plot(data['train']['regular']['lr_kl_div2_avg']['steps'] , data['train']['regular']['lr_kl_div2_avg']['values'] , 'g')
+    plt.plot(data['train']['regular']['svm_kl_div2_avg']['steps'], data['train']['regular']['svm_kl_div2_avg']['values'], 'k')
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('KL div2 to DNN')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Train KL div1 avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_kl_div2.png'))
+
+
+    # Layer printing
+    layers = ['input\nimages', 'init\nconv',
+              'unit_1_1', 'unit_1_2', 'unit_1_3', 'unit_1_4',
+              'unit_2_1', 'unit_2_2', 'unit_2_3', 'unit_2_4',
+              'unit_3_1', 'unit_3_2', 'unit_3_3', 'unit_3_4',
+              'embedding\nvector']
+    x = np.arange(len(layers))
+
+    # scores
+    plt.figure(9)
+    plt.plot(data['test']['layer']['knn_score'], 'b')
+    plt.plot(data['test']['layer']['lr_score'] , 'g')
+    plt.plot(data['test']['layer']['svm_score'], 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('accuracy score')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Test accuracy score on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_accuracy_score_vs_layer.png'))
+
+    plt.figure(10)
+    plt.plot(data['train']['layer']['knn_score'], 'b')
+    plt.plot(data['train']['layer']['lr_score'] , 'g')
+    plt.plot(data['train']['layer']['svm_score'], 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('accuracy score')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Train accuracy score on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_accuracy_score_vs_layer.png'))
+
+    # psame scores
+    plt.figure(11)
+    plt.plot(data['test']['layer']['svm_knn_psame'], 'b')
+    plt.plot(data['test']['layer']['svm_lr_psame'] , 'g')
+    plt.plot(data['test']['layer']['lr_knn_psame'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('psame score')
+    plt.legend(['svm-knn', 'svm-lr', 'lr-knn'])
+    plt.title('Test psame score on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_psame_vs_layer.png'))
+
+
+    plt.figure(12)
+    plt.plot(data['train']['layer']['svm_knn_psame'], 'b')
+    plt.plot(data['train']['layer']['svm_lr_psame'] , 'g')
+    plt.plot(data['train']['layer']['lr_knn_psame'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('psame score')
+    plt.legend(['svm-knn', 'svm-lr', 'lr-knn'])
+    plt.title('Train psame score on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_psame_vs_layer.png'))
+
+    # confidences
+    plt.figure(13)
+    plt.plot(data['test']['layer']['knn_confidence_avg'], 'b')
+    plt.plot(data['test']['layer']['lr_confidence_avg'] , 'g')
+    plt.plot(data['test']['layer']['svm_confidence_avg'], 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('confidence avg')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Test confidence avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_confidence_avg_vs_layer.png'))
+
+    plt.figure(14)
+    plt.plot(data['train']['layer']['knn_confidence_avg'], 'b')
+    plt.plot(data['train']['layer']['lr_confidence_avg'] , 'g')
+    plt.plot(data['train']['layer']['svm_confidence_avg'], 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('confidence avg')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Train confidence avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_confidence_avg_vs_layer.png'))
+
+    plt.figure(15)
+    plt.plot(data['test']['layer']['knn_confidence_median'], 'b')
+    plt.plot(data['test']['layer']['lr_confidence_median'] , 'g')
+    plt.plot(data['test']['layer']['svm_confidence_median'], 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('confidence median')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Test confidence median on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_confidence_median_vs_layer.png'))
+
+    plt.figure(16)
+    plt.plot(data['train']['layer']['knn_confidence_median'], 'b')
+    plt.plot(data['train']['layer']['lr_confidence_median'] , 'g')
+    plt.plot(data['train']['layer']['svm_confidence_median'], 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('confidence median')
+    plt.legend(['knn', 'lr', 'svm'])
+    plt.title('Train confidence median on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_confidence_median_vs_layer.png'))
+
+    # KL divergences
+    plt.figure(17)
+    plt.plot(data['test']['layer']['lr_knn_kl_div_avg'] , 'b')
+    plt.plot(data['test']['layer']['svm_knn_kl_div_avg'], 'g')
+    plt.plot(data['test']['layer']['svm_lr_kl_div_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Test kl_div_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div_avg_vs_layer.png'))
+
+    plt.figure(18)
+    plt.plot(data['train']['layer']['lr_knn_kl_div_avg'] , 'b')
+    plt.plot(data['train']['layer']['svm_knn_kl_div_avg'], 'g')
+    plt.plot(data['train']['layer']['svm_lr_kl_div_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Train kl_div_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div_avg_vs_layer.png'))
+
+    plt.figure(19)
+    plt.plot(data['test']['layer']['lr_knn_kl_div2_avg'] , 'b')
+    plt.plot(data['test']['layer']['svm_knn_kl_div2_avg'], 'g')
+    plt.plot(data['test']['layer']['svm_lr_kl_div2_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div2_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Test kl_div2_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div2_avg_vs_layer.png'))
+
+    plt.figure(20)
+    plt.plot(data['train']['layer']['lr_knn_kl_div2_avg'] , 'b')
+    plt.plot(data['train']['layer']['svm_knn_kl_div2_avg'], 'g')
+    plt.plot(data['train']['layer']['svm_lr_kl_div2_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div2_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Train kl_div2_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_kl_div2_avg_vs_layer.png'))
+
+    plt.figure(21)
+    plt.plot(data['test']['layer']['lr_knn_kl_div3_avg'] , 'b')
+    plt.plot(data['test']['layer']['svm_knn_kl_div3_avg'], 'g')
+    plt.plot(data['test']['layer']['svm_lr_kl_div3_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div3_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Test kl_div3_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div3_avg_vs_layer.png'))
+
+    plt.figure(22)
+    plt.plot(data['train']['layer']['lr_knn_kl_div3_avg'] , 'b')
+    plt.plot(data['train']['layer']['svm_knn_kl_div3_avg'], 'g')
+    plt.plot(data['train']['layer']['svm_lr_kl_div3_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div3_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Train kl_div3_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_kl_div3_avg_vs_layer.png'))
+
+    plt.figure(23)
+    plt.plot(data['test']['layer']['lr_knn_kl_div4_avg'] , 'b')
+    plt.plot(data['test']['layer']['svm_knn_kl_div4_avg'], 'g')
+    plt.plot(data['test']['layer']['svm_lr_kl_div4_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div4_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Test kl_div4_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div4_avg_vs_layer.png'))
+
+    plt.figure(24)
+    plt.plot(data['train']['layer']['lr_knn_kl_div4_avg'] , 'b')
+    plt.plot(data['train']['layer']['svm_knn_kl_div4_avg'], 'g')
+    plt.plot(data['train']['layer']['svm_lr_kl_div4_avg'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div4_avg')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Train kl_div4_avg on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_kl_div4_avg_vs_layer.png'))
+
+    plt.figure(25)
+    plt.plot(data['test']['layer']['lr_knn_kl_div3_median'] , 'b')
+    plt.plot(data['test']['layer']['svm_knn_kl_div3_median'], 'g')
+    plt.plot(data['test']['layer']['svm_lr_kl_div3_median'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div3_median')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Test kl_div3_median on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div3_median_vs_layer.png'))
+
+    plt.figure(26)
+    plt.plot(data['train']['layer']['lr_knn_kl_div3_median'] , 'b')
+    plt.plot(data['train']['layer']['svm_knn_kl_div3_median'], 'g')
+    plt.plot(data['train']['layer']['svm_lr_kl_div3_median'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div3_median')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Train kl_div3_median on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_kl_div3_median_vs_layer.png'))
+
+    plt.figure(27)
+    plt.plot(data['test']['layer']['lr_knn_kl_div4_median'] , 'b')
+    plt.plot(data['test']['layer']['svm_knn_kl_div4_median'], 'g')
+    plt.plot(data['test']['layer']['svm_lr_kl_div4_median'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div4_median')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Test kl_div4_median on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_kl_div4_median_vs_layer.png'))
+
+    plt.figure(28)
+    plt.plot(data['train']['layer']['lr_knn_kl_div4_median'] , 'b')
+    plt.plot(data['train']['layer']['svm_knn_kl_div4_median'], 'g')
+    plt.plot(data['train']['layer']['svm_lr_kl_div4_median'] , 'k')
+    plt.xticks(x)
+    plt.gca().set_xticklabels(layers, fontdict={'rotation': 'vertical'})
+    plt.gca().yaxis.grid(True)
+    plt.ylabel('kl_div4_median')
+    plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
+    plt.title('Train kl_div4_median on {} (is_randomized={})'.format(dataset, is_randomized))
+    plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_kl_div4_median_vs_layer.png'))
