@@ -139,7 +139,8 @@ def main():
                 data[rec]['layer'][layer_tag].append(plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
 
         # export to JSON file
-        with open('data.json', 'w') as fp:
+        json_file = os.path.join(output_dir, 'data.json')
+        with open(json_file, 'w') as fp:
             json.dump(data, fp)
 
 if __name__ == '__main__':
