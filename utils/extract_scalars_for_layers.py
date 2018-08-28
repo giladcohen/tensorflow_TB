@@ -9,7 +9,7 @@ import re
 
 import tensorflow as tf
 from tensorboard.backend.event_processing import plugin_event_multiplexer as event_multiplexer  # pylint: disable=line-too-long
-from utils.plots import load_data_from_csv_wrapper
+import utils
 import json
 
 # Control downsampling: how many scalar data do we keep for each run/tag
@@ -123,7 +123,7 @@ def main():
             data[rec]['regular'][reg_tag] = {}
             csv_file = os.path.join(regular_dir, 'test____' + reg_tag)
             data[rec]['regular'][reg_tag]['steps'], data[rec]['regular'][reg_tag]['values'] = \
-                load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
+                utils.plot.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
 
         # build layer data
         data['train']['layer'] = {}
@@ -136,7 +136,7 @@ def main():
             data[rec]['layer'][layer_tag] = []
             for layer in layers:
                 csv_file = os.path.join(output_dir, layer, 'test____' + layer_tag)
-                data[rec]['layer'][layer_tag].append(load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
+                data[rec]['layer'][layer_tag].append(utils.plot.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
 
         # export to JSON file
         with open('data.json', 'w') as fp:
