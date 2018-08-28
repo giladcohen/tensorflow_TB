@@ -9,6 +9,8 @@ import re
 
 import tensorflow as tf
 from tensorboard.backend.event_processing import plugin_event_multiplexer as event_multiplexer  # pylint: disable=line-too-long
+from utils.plots import load_data_from_csv_wrapper
+import json
 
 # Control downsampling: how many scalar data do we keep for each run/tag
 # combination?
@@ -60,10 +62,11 @@ def main():
 
     run_names = ['test']
 
-    layers = ['input_images', 'init_conv', 'embedding_layer',
+    layers = ['input_images', 'init_conv',
               'unit_1_0', 'unit_1_1', 'unit_1_2', 'unit_1_3',
               'unit_2_0', 'unit_2_1', 'unit_2_2', 'unit_2_3',
-              'unit_3_0', 'unit_3_1', 'unit_3_2', 'unit_3_3']
+              'unit_3_0', 'unit_3_1', 'unit_3_2', 'unit_3_3',
+              'embedding_layer']
 
     reg_tags = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score',
                 'knn_confidence_avg', 'knn_confidence_median', 'knn_score', 'knn_kl_div_avg', 'knn_kl_div2_avg', 'knn_psame',
@@ -104,7 +107,40 @@ def main():
                     output_filepath = os.path.join(layer_dir, output_filename)
                     print("Exporting (run=%r, layer=%r, tag=%r) to %r..." % (run_name, layer, layer_tag, output_filepath))
                     export_scalars(multiplexer, run_name, layer+'/'+layer_tag, output_filepath)
-    print("Done extracting scalars. Now processing the JSON file")
+        print("Done extracting scalars. Now processing the JSON file")
+        data = {}
+        data['train']   = {}
+        data['test']    = {}
+
+        # build regular data
+        data['train']['regular'] = {}
+        data['test']['regular']  = {}
+        for reg_tag in reg_tags:
+            if 'trainset' in reg_tag:
+                rec = 'train'
+            else:
+                rec = 'test'
+            data[rec]['regular'][reg_tag] = {}
+            csv_file = os.path.join(regular_dir, 'test____' + reg_tag)
+            data[rec]['regular'][reg_tag]['steps'], data[rec]['regular'][reg_tag]['values'] = \
+                load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
+
+        # build layer data
+        data['train']['layer'] = {}
+        data['test']['layer']  = {}
+        for layer_tag in layer_tags:
+            if 'trainset' in layer_tag:
+                rec = 'train'
+            else:
+                rec = 'test'
+            data[rec]['layer'][layer_tag] = []
+            for layer in layers:
+                csv_file = os.path.join(output_dir, layer, 'test____' + layer_tag)
+                data[rec]['layer'][layer_tag].append(load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
+
+        # export to JSON file
+        with open('data.json', 'w') as fp:
+            json.dump(data, fp)
 
 if __name__ == '__main__':
     main()
