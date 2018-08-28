@@ -145,7 +145,7 @@ def main():
             data[rec]['layer'][rm_str(layer_tag)] = []
             for layer in layers:
                 csv_file = os.path.join(output_dir, layer, 'test___' + layer_tag)
-                data[rec]['layer'][rm_str(layer_tag)].append(plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
+                data[rec]['layer'][rm_str(layer_tag)].append(plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1][0])
 
         # export to JSON file
         json_file = os.path.join(output_dir, 'data.json')
