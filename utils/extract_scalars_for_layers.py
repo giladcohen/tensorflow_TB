@@ -121,7 +121,7 @@ def main():
             else:
                 rec = 'test'
             data[rec]['regular'][reg_tag] = {}
-            csv_file = os.path.join(regular_dir, 'test____' + reg_tag)
+            csv_file = os.path.join(regular_dir, 'test___' + reg_tag)
             data[rec]['regular'][reg_tag]['steps'], data[rec]['regular'][reg_tag]['values'] = \
                 plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
 
@@ -135,7 +135,7 @@ def main():
                 rec = 'test'
             data[rec]['layer'][layer_tag] = []
             for layer in layers:
-                csv_file = os.path.join(output_dir, layer, 'test____' + layer_tag)
+                csv_file = os.path.join(output_dir, layer, 'test___' + layer_tag)
                 data[rec]['layer'][layer_tag].append(plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
 
         # export to JSON file
