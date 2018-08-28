@@ -16,6 +16,15 @@ import json
 # combination?
 SIZE_GUIDANCE = {'scalars': 1000}
 
+def rm_str(str1, str2='_trainset'):
+    """
+    Removing str2 from str1
+    :param str1: string
+    :param str2: string
+    :return: str1 without str2
+    """
+    return str1.replace(str2, '')
+
 def extract_scalars(multiplexer, run, tag):
     """Extract tabular data from the scalars at a given run and tag.
 
@@ -122,7 +131,7 @@ def main():
                 rec = 'test'
             data[rec]['regular'][reg_tag] = {}
             csv_file = os.path.join(regular_dir, 'test___' + reg_tag)
-            data[rec]['regular'][reg_tag]['steps'], data[rec]['regular'][reg_tag]['values'] = \
+            data[rec]['regular'][reg_tag]['steps'], data[rec]['regular'][rm_str(reg_tag)]['values'] = \
                 plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
 
         # build layer data
@@ -136,7 +145,7 @@ def main():
             data[rec]['layer'][layer_tag] = []
             for layer in layers:
                 csv_file = os.path.join(output_dir, layer, 'test___' + layer_tag)
-                data[rec]['layer'][layer_tag].append(plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
+                data[rec]['layer'][rm_str(layer_tag)].append(plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)[1])
 
         # export to JSON file
         json_file = os.path.join(output_dir, 'data.json')
