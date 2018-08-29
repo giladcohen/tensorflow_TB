@@ -50,8 +50,9 @@ for root_dir in root_dirs:
     plt.ylabel('accuracy score')
     plt.legend(['dnn', 'knn', 'svm', 'lr'])
     plt.title('Test accuracy scores on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_accuracy_score.png'))
+    plt.close()
 
     plt.figure(2)
     plt.plot(data['train']['regular']['dnn_score']['steps'], data['train']['regular']['dnn_score']['values'], 'r')
@@ -63,9 +64,9 @@ for root_dir in root_dirs:
     plt.ylabel('accuracy score')
     plt.legend(['dnn', 'knn', 'svm', 'lr'])
     plt.title('Train accuracy scores on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_accuracy_score.png'))
-
+    plt.close()
 
     # ploting the psame score (correspondence to DNN)
     plt.figure(3)
@@ -77,8 +78,9 @@ for root_dir in root_dirs:
     plt.ylabel('psame to DNN')
     plt.legend(['knn', 'svm', 'lr'])
     plt.title('Test psame on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_psame.png'))
+    plt.close()
 
     plt.figure(4)
     plt.plot(data['train']['regular']['knn_psame']['steps'], data['train']['regular']['knn_psame']['values'], 'b')
@@ -89,8 +91,9 @@ for root_dir in root_dirs:
     plt.ylabel('psame to DNN')
     plt.legend(['knn', 'svm', 'lr'])
     plt.title('Train psame on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_psame.png'))
+    plt.close()
 
 
     # plotting confidences (avg/median) - #TODO(gilad): in the future
@@ -103,8 +106,9 @@ for root_dir in root_dirs:
     plt.ylabel('KL div1 to DNN')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Test KL div1 avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div1.png'))
+    plt.close()
 
 
     plt.figure(6)
@@ -115,8 +119,9 @@ for root_dir in root_dirs:
     plt.ylabel('KL div1 to DNN')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Train KL div1 avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_kl_div1.png'))
+    plt.close()
 
     # plotting KL div2
     plt.figure(7)
@@ -127,8 +132,9 @@ for root_dir in root_dirs:
     plt.ylabel('KL div2 to DNN')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Test KL div2 avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div2.png'))
+    plt.close()
 
 
     plt.figure(8)
@@ -139,8 +145,9 @@ for root_dir in root_dirs:
     plt.ylabel('KL div2 to DNN')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Train KL div1 avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_kl_div2.png'))
+    plt.close()
 
 
     # Layer printing
@@ -162,8 +169,9 @@ for root_dir in root_dirs:
     plt.ylabel('accuracy score')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Test accuracy score on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_accuracy_score_vs_layer.png'))
+    plt.close()
 
     plt.figure(10)
     plt.plot(data['train']['layer']['knn_score'], 'b')
@@ -175,8 +183,9 @@ for root_dir in root_dirs:
     plt.ylabel('accuracy score')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Train accuracy score on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_accuracy_score_vs_layer.png'))
+    plt.close()
 
     # psame scores
     plt.figure(11)
@@ -189,8 +198,9 @@ for root_dir in root_dirs:
     plt.ylabel('psame score')
     plt.legend(['svm-knn', 'svm-lr', 'lr-knn'])
     plt.title('Test psame score on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_psame_vs_layer.png'))
+    plt.close()
 
 
     plt.figure(12)
@@ -203,8 +213,9 @@ for root_dir in root_dirs:
     plt.ylabel('psame score')
     plt.legend(['svm-knn', 'svm-lr', 'lr-knn'])
     plt.title('Train psame score on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_psame_vs_layer.png'))
+    plt.close()
 
     # confidences
     plt.figure(13)
@@ -217,8 +228,9 @@ for root_dir in root_dirs:
     plt.ylabel('confidence avg')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Test confidence avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_confidence_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(14)
     plt.plot(data['train']['layer']['knn_confidence_avg'], 'b')
@@ -230,8 +242,9 @@ for root_dir in root_dirs:
     plt.ylabel('confidence avg')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Train confidence avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_confidence_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(15)
     plt.plot(data['test']['layer']['knn_confidence_median'], 'b')
@@ -243,8 +256,9 @@ for root_dir in root_dirs:
     plt.ylabel('confidence median')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Test confidence median on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_confidence_median_vs_layer.png'))
+    plt.close()
 
     plt.figure(16)
     plt.plot(data['train']['layer']['knn_confidence_median'], 'b')
@@ -256,8 +270,9 @@ for root_dir in root_dirs:
     plt.ylabel('confidence median')
     plt.legend(['knn', 'lr', 'svm'])
     plt.title('Train confidence median on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_confidence_median_vs_layer.png'))
+    plt.close()
 
     # KL divergences
     plt.figure(17)
@@ -270,8 +285,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Test kl_div_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(18)
     plt.plot(data['train']['layer']['lr_knn_kl_div_avg'] , 'b')
@@ -283,8 +299,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Train kl_div_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(19)
     plt.plot(data['test']['layer']['lr_knn_kl_div2_avg'] , 'b')
@@ -296,8 +313,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div2_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Test kl_div2_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div2_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(20)
     plt.plot(data['train']['layer']['lr_knn_kl_div2_avg'] , 'b')
@@ -309,8 +327,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div2_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Train kl_div2_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_kl_div2_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(21)
     plt.plot(data['test']['layer']['lr_knn_kl_div3_avg'] , 'b')
@@ -322,8 +341,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div3_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Test kl_div3_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div3_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(22)
     plt.plot(data['train']['layer']['lr_knn_kl_div3_avg'] , 'b')
@@ -335,8 +355,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div3_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Train kl_div3_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_kl_div3_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(23)
     plt.plot(data['test']['layer']['lr_knn_kl_div4_avg'] , 'b')
@@ -348,8 +369,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div4_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Test kl_div4_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div4_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(24)
     plt.plot(data['train']['layer']['lr_knn_kl_div4_avg'] , 'b')
@@ -361,8 +383,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div4_avg')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Train kl_div4_avg on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_kl_div4_avg_vs_layer.png'))
+    plt.close()
 
     plt.figure(25)
     plt.plot(data['test']['layer']['lr_knn_kl_div3_median'] , 'b')
@@ -374,8 +397,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div3_median')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Test kl_div3_median on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div3_median_vs_layer.png'))
+    plt.close()
 
     plt.figure(26)
     plt.plot(data['train']['layer']['lr_knn_kl_div3_median'] , 'b')
@@ -387,8 +411,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div3_median')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Train kl_div3_median on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_kl_div3_median_vs_layer.png'))
+    plt.close()
 
     plt.figure(27)
     plt.plot(data['test']['layer']['lr_knn_kl_div4_median'] , 'b')
@@ -400,8 +425,9 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div4_median')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Test kl_div4_median on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'test_kl_div4_median_vs_layer.png'))
+    plt.close()
 
     plt.figure(28)
     plt.plot(data['train']['layer']['lr_knn_kl_div4_median'] , 'b')
@@ -413,5 +439,6 @@ for root_dir in root_dirs:
     plt.ylabel('kl_div4_median')
     plt.legend(['lr-knn', 'svm-knn', 'svm-lr'])
     plt.title('Train kl_div4_median on {} (is_randomized={})'.format(dataset, is_randomized))
-    plt.show()
+    #plt.show()
     plt.savefig(os.path.join(plot_directory, 'train_kl_div4_median_vs_layer.png'))
+    plt.close()
