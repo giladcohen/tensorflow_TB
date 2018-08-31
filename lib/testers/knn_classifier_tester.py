@@ -46,13 +46,15 @@ class KNNClassifierTester(TesterBase):
             n_neighbors=self.knn_neighbors,
             weights=self.knn_weights,
             p=int(self.knn_norm[-1]),
-            n_jobs=self.knn_jobs)
+            n_jobs=self.knn_jobs,
+            algorithm='brute')
 
         self.knn_train = KNeighborsClassifier(
             n_neighbors=self.knn_neighbors + 1,
             weights=self.knn_weights,
             p=int(self.knn_norm[-1]),
-            n_jobs=self.knn_jobs)
+            n_jobs=self.knn_jobs,
+            algorithm='brute')
 
         self.svm = SVC(
             kernel='linear',
