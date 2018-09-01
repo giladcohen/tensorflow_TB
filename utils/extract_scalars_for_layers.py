@@ -62,12 +62,10 @@ def mkdir_p(directory):
             raise
 
 def main():
-    logdirs   = [
-        '/data/gilad/logs/metrics/wrn/cifar10/log_1147_130818_metrics-SUPERSEED=13081800',
-        '/data/gilad/logs/metrics/wrn/cifar10/random/log_1147_130818_metrics-SUPERSEED=13081800',
-        '/data/gilad/logs/metrics/wrn/cifar100/log_1421_150818_metrics-SUPERSEED=15081800',
-        '/data/gilad/logs/metrics/wrn/cifar100/random/log_1421_150818_metrics-SUPERSEED=15081800'
-    ]
+    logdirs = [
+        '/data/gilad/logs/metrics/wrn/mnist/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800',
+        '/data/gilad/logs/metrics/wrn/mnist/random/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800'
+        ]
 
     run_names = ['test']
 
