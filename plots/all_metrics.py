@@ -16,10 +16,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 
-root_dirs = ['/data/gilad/logs/metrics/wrn/cifar10/log_1147_130818_metrics-SUPERSEED=13081800',
-             '/data/gilad/logs/metrics/wrn/cifar10/random/log_1147_130818_metrics-SUPERSEED=13081800',
-             '/data/gilad/logs/metrics/wrn/cifar100/log_1421_150818_metrics-SUPERSEED=15081800',
-             '/data/gilad/logs/metrics/wrn/cifar100/random/log_1421_150818_metrics-SUPERSEED=15081800']
+root_dirs = ['/data/gilad/logs/metrics/wrn/mnist/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800',
+             '/data/gilad/logs/metrics/wrn/mnist/random/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800',
+             '/data/gilad/logs/metrics/wrn/cifar10/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
+             '/data/gilad/logs/metrics/wrn/cifar10/random/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
+             '/data/gilad/logs/metrics/wrn/cifar100/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
+             '/data/gilad/logs/metrics/wrn/cifar100/random/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800']
 
 for root_dir in root_dirs:
     json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
@@ -95,8 +97,10 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'train_psame.png'))
     plt.close()
 
-
     # plotting confidences (avg/median) - #TODO(gilad): in the future
+
+
+
     # plotting KL div
     plt.figure(5)
     plt.plot(data['test']['regular']['knn_kl_div_avg']['steps'], data['test']['regular']['knn_kl_div_avg']['values'], 'b')
