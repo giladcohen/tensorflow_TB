@@ -97,12 +97,66 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'train_psame.png'))
     plt.close()
 
-    # plotting confidences (avg/median) - #TODO(gilad): in the future
+    # plotting confidences avg
+    plt.figure(3)
+    plt.plot(data['test']['regular']['dnn_confidence_avg']['steps'], data['test']['regular']['dnn_confidence_avg']['values'], 'r')
+    plt.plot(data['test']['regular']['knn_confidence_avg']['steps'], data['test']['regular']['knn_confidence_avg']['values'], 'b')
+    plt.plot(data['test']['regular']['svm_confidence_avg']['steps'], data['test']['regular']['svm_confidence_avg']['values'], 'k')
+    plt.plot(data['test']['regular']['lr_confidence_avg']['steps'] , data['test']['regular']['lr_confidence_avg']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('confidence avg')
+    plt.legend(['dnn', 'knn', 'svm', 'lr'])
+    plt.title('Test confidence (avg) on {} (is_randomized={})'.format(dataset, is_randomized))
+    #plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_confidence_avg.png'))
+    plt.close()
 
+    plt.figure(4)
+    plt.plot(data['train']['regular']['dnn_confidence_avg']['steps'], data['train']['regular']['dnn_confidence_avg']['values'], 'r')
+    plt.plot(data['train']['regular']['knn_confidence_avg']['steps'], data['train']['regular']['knn_confidence_avg']['values'], 'b')
+    plt.plot(data['train']['regular']['svm_confidence_avg']['steps'], data['train']['regular']['svm_confidence_avg']['values'], 'k')
+    plt.plot(data['train']['regular']['lr_confidence_avg']['steps'] , data['train']['regular']['lr_confidence_avg']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('confidence avg')
+    plt.legend(['dnn', 'knn', 'svm', 'lr'])
+    plt.title('Train confidence (avg) on {} (is_randomized={})'.format(dataset, is_randomized))
+    #plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_confidence_avg.png'))
+    plt.close()
 
+    # plotting confidences median
+    plt.figure(5)
+    plt.plot(data['test']['regular']['dnn_confidence_median']['steps'], data['test']['regular']['dnn_confidence_median']['values'], 'r')
+    plt.plot(data['test']['regular']['knn_confidence_median']['steps'], data['test']['regular']['knn_confidence_median']['values'], 'b')
+    plt.plot(data['test']['regular']['svm_confidence_median']['steps'], data['test']['regular']['svm_confidence_median']['values'], 'k')
+    plt.plot(data['test']['regular']['lr_confidence_median']['steps'] , data['test']['regular']['lr_confidence_median']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('confidence median')
+    plt.legend(['dnn', 'knn', 'svm', 'lr'])
+    plt.title('Test confidence (median) on {} (is_randomized={})'.format(dataset, is_randomized))
+    #plt.show()
+    plt.savefig(os.path.join(plot_directory, 'test_confidence_median.png'))
+    plt.close()
+
+    plt.figure(6)
+    plt.plot(data['train']['regular']['dnn_confidence_median']['steps'], data['train']['regular']['dnn_confidence_median']['values'], 'r')
+    plt.plot(data['train']['regular']['knn_confidence_median']['steps'], data['train']['regular']['knn_confidence_median']['values'], 'b')
+    plt.plot(data['train']['regular']['svm_confidence_median']['steps'], data['train']['regular']['svm_confidence_median']['values'], 'k')
+    plt.plot(data['train']['regular']['lr_confidence_median']['steps'] , data['train']['regular']['lr_confidence_median']['values'] , 'g')
+    plt.gca().yaxis.grid(True)
+    plt.ylim(0.0, 1.0)
+    plt.ylabel('confidence median')
+    plt.legend(['dnn', 'knn', 'svm', 'lr'])
+    plt.title('Train confidence (median) on {} (is_randomized={})'.format(dataset, is_randomized))
+    #plt.show()
+    plt.savefig(os.path.join(plot_directory, 'train_confidence_median.png'))
+    plt.close()
 
     # plotting KL div
-    plt.figure(5)
+    plt.figure(7)
     plt.plot(data['test']['regular']['knn_kl_div_avg']['steps'], data['test']['regular']['knn_kl_div_avg']['values'], 'b')
     plt.plot(data['test']['regular']['lr_kl_div_avg']['steps'] , data['test']['regular']['lr_kl_div_avg']['values'] , 'g')
     plt.plot(data['test']['regular']['svm_kl_div_avg']['steps'], data['test']['regular']['svm_kl_div_avg']['values'], 'k')
@@ -115,7 +169,7 @@ for root_dir in root_dirs:
     plt.close()
 
 
-    plt.figure(6)
+    plt.figure(8)
     plt.plot(data['train']['regular']['knn_kl_div_avg']['steps'], data['train']['regular']['knn_kl_div_avg']['values'], 'b')
     plt.plot(data['train']['regular']['lr_kl_div_avg']['steps'] , data['train']['regular']['lr_kl_div_avg']['values'] , 'g')
     plt.plot(data['train']['regular']['svm_kl_div_avg']['steps'], data['train']['regular']['svm_kl_div_avg']['values'], 'k')
@@ -128,7 +182,7 @@ for root_dir in root_dirs:
     plt.close()
 
     # plotting KL div2
-    plt.figure(7)
+    plt.figure(9)
     plt.plot(data['test']['regular']['knn_kl_div2_avg']['steps'], data['test']['regular']['knn_kl_div2_avg']['values'], 'b')
     plt.plot(data['test']['regular']['lr_kl_div2_avg']['steps'] , data['test']['regular']['lr_kl_div2_avg']['values'] , 'g')
     plt.plot(data['test']['regular']['svm_kl_div2_avg']['steps'], data['test']['regular']['svm_kl_div2_avg']['values'], 'k')
@@ -141,7 +195,7 @@ for root_dir in root_dirs:
     plt.close()
 
 
-    plt.figure(8)
+    plt.figure(10)
     plt.plot(data['train']['regular']['knn_kl_div2_avg']['steps'], data['train']['regular']['knn_kl_div2_avg']['values'], 'b')
     plt.plot(data['train']['regular']['lr_kl_div2_avg']['steps'] , data['train']['regular']['lr_kl_div2_avg']['values'] , 'g')
     plt.plot(data['train']['regular']['svm_kl_div2_avg']['steps'], data['train']['regular']['svm_kl_div2_avg']['values'], 'k')
@@ -163,7 +217,7 @@ for root_dir in root_dirs:
     x = np.arange(len(layers))
 
     # scores
-    plt.figure(9)
+    plt.figure(11)
     plt.plot(data['test']['layer']['knn_score'], 'b')
     plt.plot(data['test']['layer']['lr_score'] , 'g')
     plt.plot(data['test']['layer']['svm_score'], 'k')
@@ -177,7 +231,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_accuracy_score_vs_layer.png'))
     plt.close()
 
-    plt.figure(10)
+    plt.figure(12)
     plt.plot(data['train']['layer']['knn_score'], 'b')
     plt.plot(data['train']['layer']['lr_score'] , 'g')
     plt.plot(data['train']['layer']['svm_score'], 'k')
@@ -192,7 +246,7 @@ for root_dir in root_dirs:
     plt.close()
 
     # psame scores
-    plt.figure(11)
+    plt.figure(13)
     plt.plot(data['test']['layer']['svm_knn_psame'], 'b')
     plt.plot(data['test']['layer']['svm_lr_psame'] , 'g')
     plt.plot(data['test']['layer']['lr_knn_psame'] , 'k')
@@ -207,7 +261,7 @@ for root_dir in root_dirs:
     plt.close()
 
 
-    plt.figure(12)
+    plt.figure(14)
     plt.plot(data['train']['layer']['svm_knn_psame'], 'b')
     plt.plot(data['train']['layer']['svm_lr_psame'] , 'g')
     plt.plot(data['train']['layer']['lr_knn_psame'] , 'k')
@@ -222,7 +276,7 @@ for root_dir in root_dirs:
     plt.close()
 
     # confidences
-    plt.figure(13)
+    plt.figure(15)
     plt.plot(data['test']['layer']['knn_confidence_avg'], 'b')
     plt.plot(data['test']['layer']['lr_confidence_avg'] , 'g')
     plt.plot(data['test']['layer']['svm_confidence_avg'], 'k')
@@ -236,7 +290,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_confidence_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(14)
+    plt.figure(16)
     plt.plot(data['train']['layer']['knn_confidence_avg'], 'b')
     plt.plot(data['train']['layer']['lr_confidence_avg'] , 'g')
     plt.plot(data['train']['layer']['svm_confidence_avg'], 'k')
@@ -250,7 +304,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'train_confidence_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(15)
+    plt.figure(17)
     plt.plot(data['test']['layer']['knn_confidence_median'], 'b')
     plt.plot(data['test']['layer']['lr_confidence_median'] , 'g')
     plt.plot(data['test']['layer']['svm_confidence_median'], 'k')
@@ -264,7 +318,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_confidence_median_vs_layer.png'))
     plt.close()
 
-    plt.figure(16)
+    plt.figure(18)
     plt.plot(data['train']['layer']['knn_confidence_median'], 'b')
     plt.plot(data['train']['layer']['lr_confidence_median'] , 'g')
     plt.plot(data['train']['layer']['svm_confidence_median'], 'k')
@@ -279,7 +333,7 @@ for root_dir in root_dirs:
     plt.close()
 
     # KL divergences
-    plt.figure(17)
+    plt.figure(19)
     plt.plot(data['test']['layer']['lr_knn_kl_div_avg'] , 'b')
     plt.plot(data['test']['layer']['svm_knn_kl_div_avg'], 'g')
     plt.plot(data['test']['layer']['svm_lr_kl_div_avg'] , 'k')
@@ -293,7 +347,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_kl_div_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(18)
+    plt.figure(20)
     plt.plot(data['train']['layer']['lr_knn_kl_div_avg'] , 'b')
     plt.plot(data['train']['layer']['svm_knn_kl_div_avg'], 'g')
     plt.plot(data['train']['layer']['svm_lr_kl_div_avg'] , 'k')
@@ -307,7 +361,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_kl_div_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(19)
+    plt.figure(21)
     plt.plot(data['test']['layer']['lr_knn_kl_div2_avg'] , 'b')
     plt.plot(data['test']['layer']['svm_knn_kl_div2_avg'], 'g')
     plt.plot(data['test']['layer']['svm_lr_kl_div2_avg'] , 'k')
@@ -321,7 +375,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_kl_div2_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(20)
+    plt.figure(22)
     plt.plot(data['train']['layer']['lr_knn_kl_div2_avg'] , 'b')
     plt.plot(data['train']['layer']['svm_knn_kl_div2_avg'], 'g')
     plt.plot(data['train']['layer']['svm_lr_kl_div2_avg'] , 'k')
@@ -335,7 +389,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'train_kl_div2_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(21)
+    plt.figure(23)
     plt.plot(data['test']['layer']['lr_knn_kl_div3_avg'] , 'b')
     plt.plot(data['test']['layer']['svm_knn_kl_div3_avg'], 'g')
     plt.plot(data['test']['layer']['svm_lr_kl_div3_avg'] , 'k')
@@ -349,7 +403,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_kl_div3_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(22)
+    plt.figure(24)
     plt.plot(data['train']['layer']['lr_knn_kl_div3_avg'] , 'b')
     plt.plot(data['train']['layer']['svm_knn_kl_div3_avg'], 'g')
     plt.plot(data['train']['layer']['svm_lr_kl_div3_avg'] , 'k')
@@ -363,7 +417,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'train_kl_div3_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(23)
+    plt.figure(25)
     plt.plot(data['test']['layer']['lr_knn_kl_div4_avg'] , 'b')
     plt.plot(data['test']['layer']['svm_knn_kl_div4_avg'], 'g')
     plt.plot(data['test']['layer']['svm_lr_kl_div4_avg'] , 'k')
@@ -377,7 +431,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_kl_div4_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(24)
+    plt.figure(26)
     plt.plot(data['train']['layer']['lr_knn_kl_div4_avg'] , 'b')
     plt.plot(data['train']['layer']['svm_knn_kl_div4_avg'], 'g')
     plt.plot(data['train']['layer']['svm_lr_kl_div4_avg'] , 'k')
@@ -391,7 +445,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'train_kl_div4_avg_vs_layer.png'))
     plt.close()
 
-    plt.figure(25)
+    plt.figure(27)
     plt.plot(data['test']['layer']['lr_knn_kl_div3_median'] , 'b')
     plt.plot(data['test']['layer']['svm_knn_kl_div3_median'], 'g')
     plt.plot(data['test']['layer']['svm_lr_kl_div3_median'] , 'k')
@@ -405,7 +459,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_kl_div3_median_vs_layer.png'))
     plt.close()
 
-    plt.figure(26)
+    plt.figure(28)
     plt.plot(data['train']['layer']['lr_knn_kl_div3_median'] , 'b')
     plt.plot(data['train']['layer']['svm_knn_kl_div3_median'], 'g')
     plt.plot(data['train']['layer']['svm_lr_kl_div3_median'] , 'k')
@@ -419,7 +473,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'train_kl_div3_median_vs_layer.png'))
     plt.close()
 
-    plt.figure(27)
+    plt.figure(29)
     plt.plot(data['test']['layer']['lr_knn_kl_div4_median'] , 'b')
     plt.plot(data['test']['layer']['svm_knn_kl_div4_median'], 'g')
     plt.plot(data['test']['layer']['svm_lr_kl_div4_median'] , 'k')
@@ -433,7 +487,7 @@ for root_dir in root_dirs:
     plt.savefig(os.path.join(plot_directory, 'test_kl_div4_median_vs_layer.png'))
     plt.close()
 
-    plt.figure(28)
+    plt.figure(30)
     plt.plot(data['train']['layer']['lr_knn_kl_div4_median'] , 'b')
     plt.plot(data['train']['layer']['svm_knn_kl_div4_median'], 'g')
     plt.plot(data['train']['layer']['svm_lr_kl_div4_median'] , 'k')
