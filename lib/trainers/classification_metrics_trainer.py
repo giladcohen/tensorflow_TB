@@ -101,10 +101,14 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         for i in range(len(X_train_features)):
             y = int(y_train[i])
             proba = biased_knn_predictions_prob_train[i]
-            assert proba[y] >= 1/(self.knn_neighbors + 1), "for i={}: prob[y={}] = {}, but cannot be smaller than {}"\
-                .format(i, y, proba[y], 1/(self.knn_neighbors + 1))
-            proba[y] -= 1/(self.knn_neighbors + 1)
-            proba *= (self.knn_neighbors + 1)/self.knn_neighbors
+            # assert proba[y] >= 1/(self.knn_neighbors + 1), "for i={}: prob[y={}] = {}, but cannot be smaller than {}"\
+            #     .format(i, y, proba[y], 1/(self.knn_neighbors + 1))
+            if proba[y] >= 1/(self.knn_neighbors + 1):
+                proba[y] -= 1/(self.knn_neighbors + 1)
+                proba *= (self.knn_neighbors + 1)/self.knn_neighbors
+            else:
+                self.log.warn("for i={}: prob[y={}] = {}, but cannot be smaller than {}. Just warning."\
+                    .format(i, y, proba[y], 1/(self.knn_neighbors + 1)))
             assert np.isclose(sum(proba), 1.0), "sum of proba[i={}] is {} instead of 1.0".format(i, sum(proba))
             knn_predictions_prob_train[i] = proba
 
