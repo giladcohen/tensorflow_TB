@@ -64,7 +64,7 @@ def mkdir_p(directory):
 def main():
     logdirs = [
         '/data/gilad/logs/metrics/lenet/mnist/log_0152_140918_metrics-SUPERSEED=14091800',
-        '/data/gilad/logs/metrics/lenet/mnist/random/log_0152_140918_metrics-SUPERSEED=14091800',
+        # '/data/gilad/logs/metrics/lenet/mnist/random/log_0152_140918_metrics-SUPERSEED=14091800',
         '/data/gilad/logs/metrics/lenet/cifar10/log_1319_120918_metrics-SUPERSEED=12091800',
         '/data/gilad/logs/metrics/lenet/cifar100/log_1319_120918_metrics-SUPERSEED=12091800',
         # '/data/gilad/logs/metrics/fc2net/mnist/random/log_0709_150918_metrics-SUPERSEED=15091800'
