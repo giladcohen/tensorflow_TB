@@ -63,11 +63,8 @@ def mkdir_p(directory):
 
 def main():
     logdirs = [
-        '/data/gilad/logs/metrics/lenet/mnist/log_0152_140918_metrics-SUPERSEED=14091800',
-        # '/data/gilad/logs/metrics/lenet/mnist/random/log_0152_140918_metrics-SUPERSEED=14091800',
-        '/data/gilad/logs/metrics/lenet/cifar10/log_1319_120918_metrics-SUPERSEED=12091800',
-        '/data/gilad/logs/metrics/lenet/cifar100/log_1319_120918_metrics-SUPERSEED=12091800',
-        # '/data/gilad/logs/metrics/fc2net/mnist/random/log_0709_150918_metrics-SUPERSEED=15091800'
+        '/data/gilad/logs/metrics/fc2net/mnist/log_0709_150918_metrics-SUPERSEED=15091800',
+        '/data/gilad/logs/metrics/fc2net/cifar10/log_1025_150918_metrics-SUPERSEED=15091800',
     ]
 
     run_names = ['test']
@@ -78,7 +75,8 @@ def main():
     #           'unit_3_0', 'unit_3_1', 'unit_3_2', 'unit_3_3',
     #           'embedding_layer']
 
-    layers = ['input_images', 'conv1', 'pool1', 'conv2', 'pool2', 'embedding_layer']
+    # layers = ['input_images', 'conv1', 'pool1', 'conv2', 'pool2', 'embedding_layer']
+    layers = []
 
     reg_tags = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score',
                 'knn_confidence_avg', 'knn_confidence_median', 'knn_score', 'knn_kl_div_avg', 'knn_kl_div2_avg', 'knn_psame',
