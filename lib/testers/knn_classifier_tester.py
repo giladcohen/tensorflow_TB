@@ -59,7 +59,9 @@ class KNNClassifierTester(TesterBase):
         self.svm = SVC(
             kernel='linear',
             probability=True,
-            random_state=self.rand_gen)
+            random_state=self.rand_gen,
+            tol=0.02
+        )
 
         self.lr = LogisticRegression(
             penalty=self.knn_norm.lower(),
