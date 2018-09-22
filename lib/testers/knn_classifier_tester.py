@@ -60,7 +60,7 @@ class KNNClassifierTester(TesterBase):
             kernel='linear',
             probability=True,
             random_state=self.rand_gen,
-            tol=3.0
+            tol=2.5
         )
 
         self.lr = LogisticRegression(
