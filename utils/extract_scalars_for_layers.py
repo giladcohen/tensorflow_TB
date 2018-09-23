@@ -63,7 +63,7 @@ def mkdir_p(directory):
 
 def main():
     logdirs = [
-        '/data/gilad/logs/metrics/fc2net/cifar10/random/log_1025_150918_metrics-SUPERSEED=15091800'
+        '/data/gilad/logs/metrics/fc2net/cifar100/random/log_1025_150918_metrics-SUPERSEED=15091800'
     ]
 
     run_names = ['test']
