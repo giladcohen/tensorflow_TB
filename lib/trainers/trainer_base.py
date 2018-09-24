@@ -34,8 +34,8 @@ class TrainerBase(Agent):
 
         self.skip_first_evaluation = self.prm.train.train_control.SKIP_FIRST_EVALUATION
         if self.last_step is None:
-            self.log.warning('LAST_STEP is None. Setting LAST_STEP=1000000')
-            self.last_step = 1000000
+            self.log.warning('LAST_STEP is None. Setting LAST_STEP=1000000000')
+            self.last_step = 1000000000
         self.Factories = utils.factories.Factories(self.prm)  # to get hooks
 
         # variables

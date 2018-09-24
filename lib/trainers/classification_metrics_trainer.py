@@ -203,68 +203,68 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         X_test_features  = self.apply_pca(X_test_features , fit=False)
 
         # fittings
-        if self.collect_knn:
-            self.log.info('Fitting KNN model...')
-            self.knn.fit(X_train_features, y_train)
-        if self.collect_svm:
-            self.log.info('Fitting SVM model...')
-            self.svm.fit(X_train_features, y_train)
-        if self.collect_lr:
-            self.log.info('Fitting Logistic Regression model...')
-            self.lr.fit(X_train_features, y_train)
+        # if self.collect_knn:
+        #     self.log.info('Fitting KNN model...')
+        #     self.knn.fit(X_train_features, y_train)
+        # if self.collect_svm:
+        #     self.log.info('Fitting SVM model...')
+        #     self.svm.fit(X_train_features, y_train)
+        # if self.collect_lr:
+        #     self.log.info('Fitting Logistic Regression model...')
+        #     self.lr.fit(X_train_features, y_train)
 
         self.log.info('Predicting test set labels from DNN model...')
         y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
         dnn_score = np.average(y_test == y_pred_dnn)
-        self.log.info('Calculate DNN test confidence scores...')
-        confidence        = test_dnn_predictions_prob.max(axis=1)
-        confidence_avg    = np.average(confidence)
-        confidence_median = np.median(confidence)
+        # self.log.info('Calculate DNN test confidence scores...')
+        # confidence        = test_dnn_predictions_prob.max(axis=1)
+        # confidence_avg    = np.average(confidence)
+        # confidence_median = np.median(confidence)
 
-        np.place(test_dnn_predictions_prob, test_dnn_predictions_prob  == 0.0, [eps])  # for KL divergences
+        # np.place(test_dnn_predictions_prob, test_dnn_predictions_prob  == 0.0, [eps])  # for KL divergences
         self.tb_logger_test.log_scalar('dnn_score'            , dnn_score        , self.global_step)
-        self.tb_logger_test.log_scalar('dnn_confidence_avg'   , confidence_avg   , self.global_step)
-        self.tb_logger_test.log_scalar('dnn_confidence_median', confidence_median, self.global_step)
+        # self.tb_logger_test.log_scalar('dnn_confidence_avg'   , confidence_avg   , self.global_step)
+        # self.tb_logger_test.log_scalar('dnn_confidence_median', confidence_median, self.global_step)
 
-        for model_name in ['knn', 'svm', 'lr']:
-            if not ((model_name is 'knn' and self.collect_knn) or
-                    (model_name is 'svm' and self.collect_svm) or
-                    (model_name is 'lr'  and self.collect_lr)):
-                continue
-            self.process(model_name=model_name,
-                         dataset_name='test',
-                         X=X_test_features,
-                         y=y_test,
-                         dnn_predictions_prob=test_dnn_predictions_prob)
+        # for model_name in ['knn', 'svm', 'lr']:
+        #     if not ((model_name is 'knn' and self.collect_knn) or
+        #             (model_name is 'svm' and self.collect_svm) or
+        #             (model_name is 'lr'  and self.collect_lr)):
+        #         continue
+        #     self.process(model_name=model_name,
+        #                  dataset_name='test',
+        #                  X=X_test_features,
+        #                  y=y_test,
+        #                  dnn_predictions_prob=test_dnn_predictions_prob)
 
         if self.eval_trainset:
-            if self.collect_knn:
-                self.log.info('Fitting KNN model for training set...')
-                self.knn_train.fit(X_train_features, y_train)
+            # if self.collect_knn:
+            #     self.log.info('Fitting KNN model for training set...')
+            #     self.knn_train.fit(X_train_features, y_train)
 
             self.log.info('Predicting train set labels from DNN model...')
             y_pred_dnn = train_dnn_predictions_prob.argmax(axis=1)
             dnn_score = np.average(y_train == y_pred_dnn)
-            self.log.info('Calculate DNN train confidence scores...')
-            confidence        = train_dnn_predictions_prob.max(axis=1)
-            confidence_avg    = np.average(confidence)
-            confidence_median = np.median(confidence)
+            # self.log.info('Calculate DNN train confidence scores...')
+            # confidence        = train_dnn_predictions_prob.max(axis=1)
+            # confidence_avg    = np.average(confidence)
+            # confidence_median = np.median(confidence)
 
-            np.place(train_dnn_predictions_prob, train_dnn_predictions_prob == 0.0, [eps])  # for KL divergences
+            # np.place(train_dnn_predictions_prob, train_dnn_predictions_prob == 0.0, [eps])  # for KL divergences
             self.tb_logger_test.log_scalar('dnn_score_trainset'            , dnn_score        , self.global_step)
-            self.tb_logger_test.log_scalar('dnn_confidence_avg_trainset'   , confidence_avg   , self.global_step)
-            self.tb_logger_test.log_scalar('dnn_confidence_median_trainset', confidence_median, self.global_step)
+            # self.tb_logger_test.log_scalar('dnn_confidence_avg_trainset'   , confidence_avg   , self.global_step)
+            # self.tb_logger_test.log_scalar('dnn_confidence_median_trainset', confidence_median, self.global_step)
 
-            for model_name in ['knn', 'svm', 'lr']:
-                if not ((model_name is 'knn' and self.collect_knn) or
-                        (model_name is 'svm' and self.collect_svm) or
-                        (model_name is 'lr'  and self.collect_lr)):
-                    continue
-                self.process(model_name=model_name,
-                             dataset_name='train',
-                             X=X_train_features,
-                             y=y_train,
-                             dnn_predictions_prob=train_dnn_predictions_prob)
+            # for model_name in ['knn', 'svm', 'lr']:
+            #     if not ((model_name is 'knn' and self.collect_knn) or
+            #             (model_name is 'svm' and self.collect_svm) or
+            #             (model_name is 'lr'  and self.collect_lr)):
+            #         continue
+            #     self.process(model_name=model_name,
+            #                  dataset_name='train',
+            #                  X=X_train_features,
+            #                  y=y_train,
+            #                  dnn_predictions_prob=train_dnn_predictions_prob)
 
         self.test_retention.add_score(dnn_score, self.global_step)
         self.summary_writer_test.flush()
