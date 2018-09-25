@@ -538,6 +538,10 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.KNN_WEIGHTS           = None  # string: either 'distance' or 'uniform'
         self.KNN_JOBS              = None  # integer: number of KNN n_jobs, should be the number of available CPUs
         self.EVAL_TRAINSET         = None  # boolean: whether or not to evaluate the trainset as well
+        self.COLLECT_KNN           = None  # boolean: whether or not to collect KNN metric
+        self.COLLECT_SVM           = None  # boolean: whether or not to collect SVM metric
+        self.COLLECT_LR            = None  # boolean: whether or not to collect LR metric
+        self.SVM_TOLERANCE         = None  # boolean: SVM model tolerance for fitting
         self.DUMP_NET              = None  # boolean: whether or not to dump the net signals to disk
         self.LOAD_FROM_DISK        = None  # boolean: whether or not to load the network data from the .npy files
         self.COLLECTED_LAYERS      = None  # list of strings: layers to collect knn scores from
@@ -559,6 +563,10 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.set_to_config(do_save_none, section_name, config, 'KNN_WEIGHTS'          , self.KNN_WEIGHTS)
         self.set_to_config(do_save_none, section_name, config, 'KNN_JOBS'             , self.KNN_JOBS)
         self.set_to_config(do_save_none, section_name, config, 'EVAL_TRAINSET'        , self.EVAL_TRAINSET)
+        self.set_to_config(do_save_none, section_name, config, 'COLLECT_KNN'          , self.COLLECT_KNN)
+        self.set_to_config(do_save_none, section_name, config, 'COLLECT_SVM'          , self.COLLECT_SVM)
+        self.set_to_config(do_save_none, section_name, config, 'COLLECT_LR'           , self.COLLECT_LR)
+        self.set_to_config(do_save_none, section_name, config, 'SVM_TOLERANCE'        , self.SVM_TOLERANCE)
         self.set_to_config(do_save_none, section_name, config, 'DUMP_NET'             , self.DUMP_NET)
         self.set_to_config(do_save_none, section_name, config, 'LOAD_FROM_DISK'       , self.LOAD_FROM_DISK)
         self.set_to_config(do_save_none, section_name, config, 'COLLECTED_LAYERS'     , self.COLLECTED_LAYERS)
@@ -575,6 +583,10 @@ class ParametersTestControl(parser_utils.FrozenClass):
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_WEIGHTS'     , str)
         self.parse_from_config(self, override_mode, section_name, parser, 'KNN_JOBS'        , int)
         self.parse_from_config(self, override_mode, section_name, parser, 'EVAL_TRAINSET'   , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'COLLECT_KNN'     , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'COLLECT_SVM'     , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'COLLECT_LR'      , bool)
+        self.parse_from_config(self, override_mode, section_name, parser, 'SVM_TOLERANCE'   , float)
         self.parse_from_config(self, override_mode, section_name, parser, 'DUMP_NET'        , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'LOAD_FROM_DISK'  , bool)
         self.parse_from_config(self, override_mode, section_name, parser, 'COLLECTED_LAYERS', list)

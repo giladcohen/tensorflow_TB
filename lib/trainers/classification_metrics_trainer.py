@@ -24,9 +24,10 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
 
         self.eval_trainset      = self.prm.test.test_control.EVAL_TRAINSET
         self.randomized_dataset = 'random' in str(self.dataset)
-        self.collect_knn        = True
-        self.collect_svm        = False
-        self.collect_lr         = False
+        self.collect_knn        = self.prm.test.test_control.COLLECT_KNN
+        self.collect_svm        = self.prm.test.test_control.COLLECT_SVM
+        self.collect_lr         = self.prm.test.test_control.COLLECT_LR
+        self.svm_tolerance      = self.prm.test.test_control.SVM_TOLERANCE
 
         if self.randomized_dataset:
             self.train_handle = 'train_random'
@@ -46,6 +47,9 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             self.log.error(err_str)
             raise AssertionError(err_str)
 
+        if self.svm_tolerance is None:
+            self.svm_tolerance = 0.001
+
         self.knn = KNeighborsClassifier(
             n_neighbors=self.knn_neighbors,
             weights=self.knn_weights,
@@ -61,7 +65,8 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.svm = SVC(
             kernel='linear',
             probability=True,
-            random_state=self.rand_gen)
+            random_state=self.rand_gen,
+            tol=self.svm_tolerance)
 
         self.lr = LogisticRegression(
             penalty=self.knn_norm.lower(),
