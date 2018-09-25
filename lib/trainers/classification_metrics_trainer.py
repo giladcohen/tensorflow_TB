@@ -212,7 +212,7 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
             self.log.info('Fitting KNN model...')
             self.knn.fit(X_train_features, y_train)
         if self.collect_svm:
-            self.log.info('Fitting SVM model...')
+            self.log.info('Fitting SVM model (SVM tol={})...'.format(self.svm.tol))
             self.svm.fit(X_train_features, y_train)
         if self.collect_lr:
             self.log.info('Fitting Logistic Regression model...')
