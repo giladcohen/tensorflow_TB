@@ -25,8 +25,8 @@ class ClassificationMetricsTrainer(ClassificationTrainer):
         self.eval_trainset      = self.prm.test.test_control.EVAL_TRAINSET
         self.randomized_dataset = 'random' in str(self.dataset)
         self.collect_knn        = True
-        self.collect_svm        = True
-        self.collect_lr         = True
+        self.collect_svm        = False
+        self.collect_lr         = False
 
         if self.randomized_dataset:
             self.train_handle = 'train_random'
