@@ -107,7 +107,7 @@ for dataset in datasets:
     plt.gca().yaxis.grid(True)
     plt.ylabel('DNN-SVM KL divergence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
-    plt.title('Train DNN-SVM KL divergence scores on {}'.format('mnist'))
+    plt.title('Train DNN-SVM KL divergence scores on {}'.format(dataset))
     plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_svm_KL_divergence'))
     plt.close()
 
@@ -131,7 +131,7 @@ for dataset in datasets:
     plt.gca().yaxis.grid(True)
     plt.ylabel('DNN-LR KL divergence score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
-    plt.title('Train DNN-LR KL divergence scores on {}'.format('mnist'))
+    plt.title('Train DNN-LR KL divergence scores on {}'.format(dataset))
     plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_lr_KL_divergence'))
     plt.close()
 
