@@ -146,16 +146,19 @@ class DatasetWrapper(AgentBase):
 
         (X_train, y_train), (X_test, y_test) = data.load_data()
 
-        # Take only self.train_set_size and self.test_set_size
-        # TODO(gilad): randomize instead of taking the first samples
-        # train_indices = self.rand_gen.choice(np.arange(X_train.shape[0]), self.train_set_size)
-        # test_indices  = self.rand_gen.choice(np.arange(X_test.shape[0]), self.train_set_size)
-        train_indices = np.arange(self.train_set_size)
-        test_indices  = np.arange(self.test_set_size)
+        randomize_subset = True
+        num_samples_per_class = int(self.train_set_size / self.num_classes)
+        if randomize_subset:
+            # Take only self.train_set_size and self.test_set_size
+            train_indices = []
+            for cls in range(self.num_classes):
+                possible_indices = np.where(y_train == cls)[0]
+                new_train_indices = self.rand_gen.choice(possible_indices, num_samples_per_class, replace=False)
+                train_indices += new_train_indices.tolist()
+        else:
+            train_indices = np.arange(self.train_set_size)
         X_train = X_train[train_indices]
         y_train = y_train[train_indices]
-        X_test  = X_test[test_indices]
-        y_test  = y_test[test_indices]
 
         if 'cifar' in dataset_name:
             y_train = np.squeeze(y_train, axis=1)
