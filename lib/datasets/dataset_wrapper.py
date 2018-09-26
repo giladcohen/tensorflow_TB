@@ -156,7 +156,8 @@ class DatasetWrapper(AgentBase):
                 new_train_indices = self.rand_gen.choice(possible_indices, num_samples_per_class, replace=False)
                 train_indices += new_train_indices.tolist()
         else:
-            train_indices = np.arange(self.train_set_size)
+            train_indices = np.arange(self.train_set_size).tolist()
+        train_indices.sort()
         X_train = X_train[train_indices]
         y_train = y_train[train_indices]
 
