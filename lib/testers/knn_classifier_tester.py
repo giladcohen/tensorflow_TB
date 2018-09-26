@@ -35,12 +35,16 @@ class KNNClassifierTester(TesterBase):
         self.pca = PCA(n_components=self.pca_embedding_dims, random_state=self.rand_gen)
         self.tested_layer       = 'embedding_layer'
         self.eval_trainset      = self.prm.test.test_control.EVAL_TRAINSET
+        self.svm_tolerance      = self.prm.test.test_control.SVM_TOLERANCE
         self.randomized_dataset = 'random' in str(self.dataset)
 
         if self.knn_norm not in ['L1', 'L2']:
             err_str = 'knn_norm {} is not supported'.format(self.knn_norm)
             self.log.error(err_str)
             raise AssertionError(err_str)
+
+        if self.svm_tolerance is None:
+            self.svm_tolerance = 0.001
 
         self.knn = KNeighborsClassifier(
             n_neighbors=self.knn_neighbors,
@@ -59,15 +63,14 @@ class KNNClassifierTester(TesterBase):
         self.svm = SVC(
             kernel='linear',
             probability=True,
-            random_state=self.rand_gen
-        )
+            random_state=self.rand_gen,
+            tol=self.svm_tolerance)
 
         self.lr = LogisticRegression(
             penalty=self.knn_norm.lower(),
             dual=False,
             random_state=self.rand_gen,
-            n_jobs=self.knn_jobs
-        )
+            n_jobs=self.knn_jobs)
 
     def fetch_dump_data_features(self, layer_name=None, test_dir=None):
         """Optionally fetching precomputed train/test features, and labels."""
