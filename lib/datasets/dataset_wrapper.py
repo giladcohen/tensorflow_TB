@@ -146,7 +146,7 @@ class DatasetWrapper(AgentBase):
 
         (X_train, y_train), (X_test, y_test) = data.load_data()
 
-        randomize_subset = False
+        randomize_subset = True
         num_samples_per_class = int(self.train_set_size / self.num_classes)
         if randomize_subset:
             # Take only self.train_set_size and self.test_set_size
