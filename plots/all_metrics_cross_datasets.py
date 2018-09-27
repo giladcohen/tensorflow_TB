@@ -20,17 +20,21 @@ plt.style.use('classic')
 plt.rcParams['interactive'] = True
 
 datasets = ['mnist', 'random_mnist', 'cifar10', 'random_cifar10', 'cifar100', 'random_cifar100']
-metrics_plot_dir = '/data/gilad/logs/metrics'
+plot_root = '/data/gilad/logs/metrics/all_plots/Arch_Comparison'
 
 for dataset in datasets:
+    plot_directory = os.path.join(plot_root, dataset)
+    if not os.path.exists(plot_directory):
+        os.makedirs(plot_directory)
+
     if dataset is 'mnist':
         json_file_wrn    = '/data/gilad/logs/metrics/wrn/mnist/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800'
         json_file_lenet  = '/data/gilad/logs/metrics/lenet/mnist/log_0152_140918_metrics-SUPERSEED=14091800'
         json_file_fc2net = '/data/gilad/logs/metrics/fc2net/mnist/log_0709_150918_metrics-SUPERSEED=15091800'
     elif dataset is 'random_mnist':
-        json_file_wrn    = '/data/gilad/logs/metrics/wrn/mnist/random/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800'
-        json_file_lenet  = '/data/gilad/logs/metrics/lenet/mnist/random/log_0152_140918_metrics-SUPERSEED=14091800'
-        json_file_fc2net = '/data/gilad/logs/metrics/fc2net/mnist/random/log_0709_150918_metrics-SUPERSEED=15091800'
+        json_file_wrn    = '/data/gilad/logs/metrics/wrn/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
+        json_file_lenet  = '/data/gilad/logs/metrics/lenet/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
+        json_file_fc2net = '/data/gilad/logs/metrics/fc2net/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
     elif dataset is 'cifar10':
         json_file_wrn    = '/data/gilad/logs/metrics/wrn/cifar10/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800'
         json_file_lenet  = '/data/gilad/logs/metrics/lenet/cifar10/log_1319_120918_metrics-SUPERSEED=12091800'
@@ -54,9 +58,6 @@ for dataset in datasets:
     json_file_wrn    = os.path.join(json_file_wrn   , 'data_for_figures', 'data.json')
     json_file_lenet  = os.path.join(json_file_lenet , 'data_for_figures', 'data.json')
     json_file_fc2net = os.path.join(json_file_fc2net, 'data_for_figures', 'data.json')
-
-    full_metrics_plot_dir = os.path.join(metrics_plot_dir, dataset + '_plots')
-
     with open(json_file_wrn) as f:
         data_wrn = json.load(f)
     with open(json_file_lenet) as f:
@@ -74,7 +75,7 @@ for dataset in datasets:
     plt.ylabel('DNN-KNN KL divergence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test DNN-KNN KL divergence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_dnn_knn_KL_divergence'))
+    plt.savefig(os.path.join(plot_directory, 'test_dnn_knn_KL_divergence'))
     plt.close()
 
     plt.figure()
@@ -85,7 +86,7 @@ for dataset in datasets:
     plt.ylabel('DNN-KNN KL divergence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train DNN-KNN KL divergence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_knn_KL_divergence'))
+    plt.savefig(os.path.join(plot_directory, 'train_dnn_knn_KL_divergence'))
     plt.close()
 
     # SVM || DNN
@@ -97,7 +98,7 @@ for dataset in datasets:
     plt.ylabel('DNN-SVM KL divergence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test DNN-SVM KL divergence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_dnn_svm_KL_divergence'))
+    plt.savefig(os.path.join(plot_directory, 'test_dnn_svm_KL_divergence'))
     plt.close()
 
     plt.figure()
@@ -108,7 +109,7 @@ for dataset in datasets:
     plt.ylabel('DNN-SVM KL divergence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train DNN-SVM KL divergence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_svm_KL_divergence'))
+    plt.savefig(os.path.join(plot_directory, 'train_dnn_svm_KL_divergence'))
     plt.close()
 
 
@@ -121,7 +122,7 @@ for dataset in datasets:
     plt.ylabel('DNN-LR KL divergence score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test DNN-LR KL divergence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_dnn_lr_KL_divergence'))
+    plt.savefig(os.path.join(plot_directory, 'test_dnn_lr_KL_divergence'))
     plt.close()
 
     plt.figure()
@@ -132,7 +133,7 @@ for dataset in datasets:
     plt.ylabel('DNN-LR KL divergence score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train DNN-LR KL divergence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_lr_KL_divergence'))
+    plt.savefig(os.path.join(plot_directory, 'train_dnn_lr_KL_divergence'))
     plt.close()
 
     # plotting psame values
@@ -145,7 +146,7 @@ for dataset in datasets:
     plt.ylabel('KNN psame score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test KNN psame scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_dnn_knn_psame'))
+    plt.savefig(os.path.join(plot_directory, 'test_dnn_knn_psame'))
     plt.close()
 
     plt.figure()
@@ -156,7 +157,7 @@ for dataset in datasets:
     plt.ylabel('KNN psame accuracy score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train KNN psame scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_knn_psame'))
+    plt.savefig(os.path.join(plot_directory, 'train_dnn_knn_psame'))
     plt.close()
 
     # SVM
@@ -168,7 +169,7 @@ for dataset in datasets:
     plt.ylabel('SVM psame score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test SVM psame scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_dnn_svm_psame'))
+    plt.savefig(os.path.join(plot_directory, 'test_dnn_svm_psame'))
     plt.close()
 
     plt.figure()
@@ -179,7 +180,7 @@ for dataset in datasets:
     plt.ylabel('SVM psame score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train SVM psame scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_svm_psame'))
+    plt.savefig(os.path.join(plot_directory, 'train_dnn_svm_psame'))
     plt.close()
 
     # LR
@@ -191,7 +192,7 @@ for dataset in datasets:
     plt.ylabel('LR psame score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test LR psame scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_dnn_lr_psame'))
+    plt.savefig(os.path.join(plot_directory, 'test_dnn_lr_psame'))
     plt.close()
 
     plt.figure()
@@ -202,7 +203,7 @@ for dataset in datasets:
     plt.ylabel('LR psame score')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train LR psame scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_lr_psame'))
+    plt.savefig(os.path.join(plot_directory, 'train_dnn_lr_psame'))
     plt.close()
 
     # Confidence
@@ -215,7 +216,7 @@ for dataset in datasets:
     plt.ylabel('DNN confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test DNN confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_dnn_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'test_dnn_confidence'))
     plt.close()
 
 
@@ -227,7 +228,7 @@ for dataset in datasets:
     plt.ylabel('DNN confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train DNN confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_dnn_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'train_dnn_confidence'))
     plt.close()
 
     #KNN
@@ -239,7 +240,7 @@ for dataset in datasets:
     plt.ylabel('KNN confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test KNN confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_knn_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'test_knn_confidence'))
     plt.close()
 
     plt.figure()
@@ -250,7 +251,7 @@ for dataset in datasets:
     plt.ylabel('KNN confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train KNN confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_knn_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'train_knn_confidence'))
     plt.close()
 
     #SVM
@@ -262,7 +263,7 @@ for dataset in datasets:
     plt.ylabel('SVM confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test SVM confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_svm_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'test_svm_confidence'))
     plt.close()
 
     plt.figure()
@@ -273,7 +274,7 @@ for dataset in datasets:
     plt.ylabel('SVM confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train SVM confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_svm_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'train_svm_confidence'))
     plt.close()
 
 
@@ -286,7 +287,7 @@ for dataset in datasets:
     plt.ylabel('LR confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Test LR confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'test_lr_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'test_lr_confidence'))
     plt.close()
 
     plt.figure()
@@ -297,5 +298,5 @@ for dataset in datasets:
     plt.ylabel('LR confidence')
     plt.legend(['Wide Resnet 28-10', 'LeNet', 'MLP-640'])
     plt.title('Train LR confidence scores on {}'.format(dataset))
-    plt.savefig(os.path.join(full_metrics_plot_dir, 'train_lr_confidence'))
+    plt.savefig(os.path.join(plot_directory, 'train_lr_confidence'))
     plt.close()

@@ -17,45 +17,53 @@ import numpy as np
 import json
 
 root_dirs = ['/data/gilad/logs/metrics/wrn/mnist/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800',
-             '/data/gilad/logs/metrics/wrn/mnist/random/log_0049_270818_metrics_w_confidence-SUPERSEED=27081800',
+             '/data/gilad/logs/metrics/wrn/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800',
              '/data/gilad/logs/metrics/wrn/cifar10/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
              '/data/gilad/logs/metrics/wrn/cifar10/random/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
              '/data/gilad/logs/metrics/wrn/cifar100/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
              '/data/gilad/logs/metrics/wrn/cifar100/random/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800',
 
              '/data/gilad/logs/metrics/lenet/mnist/log_0152_140918_metrics-SUPERSEED=14091800',
-             '/data/gilad/logs/metrics/lenet/mnist/random/log_0152_140918_metrics-SUPERSEED=14091800',
+             '/data/gilad/logs/metrics/lenet/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800',
              '/data/gilad/logs/metrics/lenet/cifar10/log_1319_120918_metrics-SUPERSEED=12091800',
              '/data/gilad/logs/metrics/lenet/cifar10/random/log_1319_120918_metrics-SUPERSEED=12091800',
              '/data/gilad/logs/metrics/lenet/cifar100/log_1319_120918_metrics-SUPERSEED=12091800',
              '/data/gilad/logs/metrics/lenet/cifar100/random/log_1319_120918_metrics-SUPERSEED=12091800',
 
              '/data/gilad/logs/metrics/fc2net/mnist/log_0709_150918_metrics-SUPERSEED=15091800',
-             '/data/gilad/logs/metrics/fc2net/mnist/random/log_0709_150918_metrics-SUPERSEED=15091800',
+             '/data/gilad/logs/metrics/fc2net/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800',
              '/data/gilad/logs/metrics/fc2net/cifar10/log_1025_150918_metrics-SUPERSEED=15091800',
              '/data/gilad/logs/metrics/fc2net/cifar10/random/log_1025_150918_metrics-SUPERSEED=15091800',
              '/data/gilad/logs/metrics/fc2net/cifar100/log_1025_150918_metrics-SUPERSEED=15091800',
              '/data/gilad/logs/metrics/fc2net/cifar100/random/log_1025_150918_metrics-SUPERSEED=15091800'
              ]
 
+plot_root = '/data/gilad/logs/metrics/all_plots/plots'
+
 for root_dir in root_dirs:
-    json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
-    plot_directory = os.path.join(root_dir, 'plots')
-    if not os.path.exists(plot_directory):
-        os.makedirs(plot_directory)
-
-    with open(json_file) as f:
-        data = json.load(f)
-
     if 'cifar100' in root_dir:
         dataset = 'cifar100'
     elif 'cifar10' in root_dir:
         dataset = 'cifar10'
     else:
         dataset = 'mnist'
-
     if 'random' in root_dir:
         dataset = 'random_' + dataset
+
+    # set plot dir
+    if 'wrn' in root_dir:
+        plot_directory = os.path.join(plot_root, 'wrn')
+    elif 'lenet' in root_dir:
+        plot_directory = os.path.join(plot_root, 'lenet')
+    else:
+        plot_directory = os.path.join(plot_root, 'mlp640')
+    plot_directory = os.path.join(plot_directory, dataset)
+    if not os.path.exists(plot_directory):
+        os.makedirs(plot_directory)
+
+    json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
+    with open(json_file) as f:
+        data = json.load(f)
 
     # regular plots
     # ploting the models' scores
