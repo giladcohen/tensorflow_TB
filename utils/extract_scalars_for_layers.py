@@ -78,9 +78,9 @@ def main():
     layers = []
 
     reg_tags = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score',
-                'knn_confidence_avg', 'knn_confidence_median', 'knn_score', 'knn_kl_div_avg', 'knn_kl_div2_avg', 'knn_psame',
-                'lr_confidence_avg' , 'lr_confidence_median' , 'lr_score' , 'lr_kl_div_avg' , 'lr_kl_div2_avg' , 'lr_psame',
-                'svm_confidence_avg', 'svm_confidence_median', 'svm_score', 'svm_kl_div_avg', 'svm_kl_div2_avg', 'svm_psame']
+                'knn_confidence_avg', 'knn_confidence_median', 'knn_score', 'knn_kl_div_avg', 'knn_kl_div2_avg', 'knn_psame']
+                # 'lr_confidence_avg' , 'lr_confidence_median' , 'lr_score' , 'lr_kl_div_avg' , 'lr_kl_div2_avg' , 'lr_psame',
+                # 'svm_confidence_avg', 'svm_confidence_median', 'svm_score', 'svm_kl_div_avg', 'svm_kl_div2_avg', 'svm_psame']
     reg_tags += [s + '_trainset' for s in reg_tags]
 
     layer_tags = ['knn_confidence_avg', 'knn_confidence_median', 'knn_score',
