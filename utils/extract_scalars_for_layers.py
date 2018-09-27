@@ -63,18 +63,18 @@ def mkdir_p(directory):
 
 def main():
     logdirs = [
-        '/data/gilad/logs/metrics/wrn/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
+        '/data/gilad/logs/metrics/lenet/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
     ]
 
     run_names = ['test']
 
-    layers = ['input_images', 'init_conv',
-              'unit_1_0', 'unit_1_1', 'unit_1_2', 'unit_1_3',
-              'unit_2_0', 'unit_2_1', 'unit_2_2', 'unit_2_3',
-              'unit_3_0', 'unit_3_1', 'unit_3_2', 'unit_3_3',
-              'embedding_layer']
+    # layers = ['input_images', 'init_conv',
+    #           'unit_1_0', 'unit_1_1', 'unit_1_2', 'unit_1_3',
+    #           'unit_2_0', 'unit_2_1', 'unit_2_2', 'unit_2_3',
+    #           'unit_3_0', 'unit_3_1', 'unit_3_2', 'unit_3_3',
+    #           'embedding_layer']
 
-    # layers = ['input_images', 'conv1', 'pool1', 'conv2', 'pool2', 'embedding_layer']
+    layers = ['input_images', 'conv1', 'pool1', 'conv2', 'pool2', 'embedding_layer']
     # layers = []
 
     reg_tags = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score',
