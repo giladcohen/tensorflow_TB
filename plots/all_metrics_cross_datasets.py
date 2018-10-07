@@ -32,9 +32,9 @@ for dataset in datasets:
         json_file_lenet  = '/data/gilad/logs/metrics/lenet/mnist/log_0152_140918_metrics-SUPERSEED=14091800'
         json_file_fc2net = '/data/gilad/logs/metrics/fc2net/mnist/log_0709_150918_metrics-SUPERSEED=15091800'
     elif dataset is 'random_mnist':
-        json_file_wrn    = '/data/gilad/logs/metrics/wrn/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
-        json_file_lenet  = '/data/gilad/logs/metrics/lenet/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
-        json_file_fc2net = '/data/gilad/logs/metrics/fc2net/mnist/random/log_0333_250918_metrics_longer-SUPERSEED=25091800'
+        json_file_wrn    = '/data/gilad/logs/metrics/wrn/mnist/random/log_0420_280918_metrics-SUPERSEED=28091800'
+        json_file_lenet  = '/data/gilad/logs/metrics/lenet/mnist/random/log_0420_280918_metrics-SUPERSEED=28091800'
+        json_file_fc2net = '/data/gilad/logs/metrics/fc2net/mnist/random/log_0420_280918_metrics-SUPERSEED=28091800'
     elif dataset is 'cifar10':
         json_file_wrn    = '/data/gilad/logs/metrics/wrn/cifar10/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800'
         json_file_lenet  = '/data/gilad/logs/metrics/lenet/cifar10/log_1319_120918_metrics-SUPERSEED=12091800'
