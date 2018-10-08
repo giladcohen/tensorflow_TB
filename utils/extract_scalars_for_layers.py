@@ -63,7 +63,8 @@ def mkdir_p(directory):
 
 def main():
     logdirs = [
-        '/data/gilad/logs/metrics/fc2net/mnist/random/log_0420_280918_metrics-SUPERSEED=28091800'
+        '/data/gilad/logs/metrics/wrn/mnist/overfitting/log_2046_061018_metrics-SUPERSEED=06101800',
+        '/data/gilad/logs/metrics/wrn/cifar100/overfitting/log_2046_061018_metrics-SUPERSEED=06101803'
     ]
 
     run_names = ['test']
@@ -78,9 +79,9 @@ def main():
     layers = []
 
     reg_tags = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score',
-                'knn_confidence_avg', 'knn_confidence_median', 'knn_score', 'knn_kl_div_avg', 'knn_kl_div2_avg', 'knn_psame',
-                'lr_confidence_avg' , 'lr_confidence_median' , 'lr_score' , 'lr_kl_div_avg' , 'lr_kl_div2_avg' , 'lr_psame',
-                'svm_confidence_avg', 'svm_confidence_median', 'svm_score', 'svm_kl_div_avg', 'svm_kl_div2_avg', 'svm_psame']
+                'knn_confidence_avg', 'knn_confidence_median', 'knn_score', 'knn_kl_div_avg', 'knn_kl_div2_avg', 'knn_psame']
+                # 'lr_confidence_avg' , 'lr_confidence_median' , 'lr_score' , 'lr_kl_div_avg' , 'lr_kl_div2_avg' , 'lr_psame',
+                # 'svm_confidence_avg', 'svm_confidence_median', 'svm_score', 'svm_kl_div_avg', 'svm_kl_div2_avg', 'svm_psame']
     reg_tags += [s + '_trainset' for s in reg_tags]
 
     layer_tags = ['knn_confidence_avg', 'knn_confidence_median', 'knn_score',
