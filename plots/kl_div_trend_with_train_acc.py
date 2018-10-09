@@ -67,7 +67,6 @@ ax6.set_ylabel('KL divergence (test)', labelpad=0.5, fontdict={'fontsize': 12})
 ax6.yaxis.grid()
 ax6.legend(['$k$-NN||DNN', 'SVM||DNN', 'LR||DNN'])
 
-
 # wrn, random_cifar100
 root_dir = '/data/gilad/logs/metrics/wrn/cifar100/random/log_1405_230818_metrics_w_confidence-SUPERSEED=23081800'
 json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
