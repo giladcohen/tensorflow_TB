@@ -27,7 +27,8 @@ class ResnetMultiSf(ResNet):
         """Build mini FC networks for units: unit_1_3, unit_2_3, and unit_3_2"""
         super(ResnetMultiSf, self)._build_inference()
         for layer in self.sf_layer_list:
-            self.net[layer + '_logits'] = self.calculate_logits(self.net[layer + '_relu_gap'])
+            with tf.variable_scope(layer):
+                self.net[layer + '_logits'] = self.calculate_logits(self.net[layer + '_relu_gap'])
 
     def _build_loss(self):
         self.add_multi_sf_loss()
