@@ -60,7 +60,7 @@ class ResNet(ClassifierModel):
         for key in self.net.keys():
             self.net[key + '_gap'] = global_avg_pool(self.net[key])
 
-        x = self.unit_last(x)
+        self.unit_last(x)
 
     def unit_last(self, x):
         """Implementing the final unit of the resnet"""

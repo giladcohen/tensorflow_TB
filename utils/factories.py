@@ -10,6 +10,7 @@ from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWr
 
 from lib.models.dml_resnet_model import DMLResNet
 from lib.models.resnet_model import ResNet
+from lib.models.resnet_multi_sf_model import ResnetMultiSf
 from lib.models.lenet_model import LeNet
 from lib.models.fc2_model import FC2Net
 
@@ -64,6 +65,7 @@ class Factories(object):
 
     def get_model(self):
         available_networks = {'Wide-Resnet-28-10'               : ResNet,
+                              'Wide-Resnet-28-10_MultiSf'       : ResnetMultiSf,
                               'DML-Wide-Resnet-28-10'           : DMLResNet,
                               'LeNet'                           : LeNet,
                               'FC2Net'                          : FC2Net}
