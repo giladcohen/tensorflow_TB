@@ -42,6 +42,7 @@ class ResnetMultiSf(ResNet):
         """
         for layer in self.sf_layer_list:
             xent_cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=self.net[layer + '_logits'], labels=self.labels)
+            xent_cost = tf.reduce_mean(xent_cost, name=layer + 'cross_entropy_mean')
             xent_cost = tf.multiply(self.sf_wight_dict[layer], xent_cost)
             tf.summary.scalar('xent_cost/' + layer, xent_cost)
             xent_assert_op = tf.verify_tensor_all_finite(xent_cost, 'xent_cost/{} contains NaN or Inf'.format(layer))
