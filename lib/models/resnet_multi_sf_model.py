@@ -12,14 +12,14 @@ class ResnetMultiSf(ResNet):
             'unit_1_0': 0.0,
             'unit_1_1': 0.0,
             'unit_1_2': 0.0,
-            'unit_1_3': 0.0,
+            'unit_1_3': 0.125,
             'unit_2_0': 0.0,
             'unit_2_1': 0.0,
             'unit_2_2': 0.0,
-            'unit_2_3': 0.0,
+            'unit_2_3': 0.25,
             'unit_3_0': 0.0,
             'unit_3_1': 0.0,
-            'unit_3_2': 0.0,
+            'unit_3_2': 0.5,
             'unit_3_3': 0.0
         }
 
