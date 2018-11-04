@@ -23,6 +23,21 @@ class ResnetMultiSf(ResNet):
             'unit_3_3': 0.0
         }
 
+        # self.sf_wight_dict = {
+        #     'unit_1_0': 0.0,
+        #     'unit_1_1': 0.0,
+        #     'unit_1_2': 0.0,
+        #     'unit_1_3': 0.0,
+        #     'unit_2_0': 0.0,
+        #     'unit_2_1': 0.0,
+        #     'unit_2_2': 0.0,
+        #     'unit_2_3': 0.0,
+        #     'unit_3_0': 0.0,
+        #     'unit_3_1': 0.0,
+        #     'unit_3_2': 0.0,
+        #     'unit_3_3': 0.0
+        # }
+
     def _build_inference(self):
         """Build mini FC networks for units: unit_1_3, unit_2_3, and unit_3_2"""
         super(ResnetMultiSf, self)._build_inference()
