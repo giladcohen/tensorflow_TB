@@ -21,6 +21,11 @@ def get_params(train_config, parser_args=None):
     if parser_args is not None:
         # overriding some parameters manually from parser:
         prm.train.train_control.ROOT_DIR           = parser_args.ROOT_DIR
+        prm.train.train_control.TRAIN_DIR          = parser_args.ROOT_DIR + '/train'
+        prm.train.train_control.EVAL_DIR           = parser_args.ROOT_DIR + '/validation'
+        prm.train.train_control.TEST_DIR           = parser_args.ROOT_DIR + '/test'
+        prm.train.train_control.PREDICTION_DIR     = parser_args.ROOT_DIR + '/prediction'
+        prm.train.train_control.CHECKPOINT_DIR     = parser_args.ROOT_DIR + '/checkpoint'
         prm.SUPERSEED                              = int(parser_args.SUPERSEED)
 
     ROOT_DIR = prm.train.train_control.ROOT_DIR
@@ -63,7 +68,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # for automating KNN testing
-    parser.add_argument('--ROOT_DIR'          , action='store')
+    parser.add_argument('--ROOT_DIR'        , action='store')
     parser.add_argument('--SUPERSEED'       , action='store')
 
     parser.add_argument('-c', help='Train configuration file', action='store')
