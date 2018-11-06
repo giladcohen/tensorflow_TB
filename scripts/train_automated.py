@@ -21,7 +21,7 @@ def get_params(train_config, parser_args=None):
     if parser_args is not None:
         # overriding some parameters manually from parser:
         prm.train.train_control.ROOT_DIR           = parser_args.ROOT_DIR
-        prm.SUPERSEED                              = parser_args.SUPERSEED
+        prm.SUPERSEED                              = int(parser_args.SUPERSEED)
 
     ROOT_DIR = prm.train.train_control.ROOT_DIR
 
