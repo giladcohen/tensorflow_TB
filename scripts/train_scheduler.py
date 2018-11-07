@@ -2,16 +2,16 @@ import subprocess
 import time
 
 logdir_vec = [
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111805',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111806',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111807',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111808',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111809',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111810',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111811',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111812',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111813',
-    '/data/gilad/logs/multi_sf/cifar10/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111814',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111805',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111806',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111807',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111808',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111809',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111810',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111811',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111812',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111813',
+    '/data/gilad/logs/multi_sf/cifar100/overfitting/log_1331_011118_no_multi_sf_lr_0.01-SUPERSEED=01111814',
 ]
 
 def run_cmd(cmd):
