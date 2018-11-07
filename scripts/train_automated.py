@@ -27,6 +27,7 @@ def get_params(train_config, parser_args=None):
         prm.train.train_control.PREDICTION_DIR     = parser_args.ROOT_DIR + '/prediction'
         prm.train.train_control.CHECKPOINT_DIR     = parser_args.ROOT_DIR + '/checkpoint'
         prm.SUPERSEED                              = int(parser_args.SUPERSEED)
+        prm.network.MULTI_SF                       = (parser_args.MULTI_SF == 'True')
 
     ROOT_DIR = prm.train.train_control.ROOT_DIR
 
@@ -70,6 +71,7 @@ if __name__ == "__main__":
     # for automating KNN testing
     parser.add_argument('--ROOT_DIR'        , action='store')
     parser.add_argument('--SUPERSEED'       , action='store')
+    parser.add_argument('--MULTI_SF'        , action='store')
 
     parser.add_argument('-c', help='Train configuration file', action='store')
     args = parser.parse_args()
