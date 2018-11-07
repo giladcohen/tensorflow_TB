@@ -25,7 +25,7 @@ for logdir in logdir_vec:
     cmd = 'CUDA_VISIBLE_DEVICES=0 python scripts/train_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --SUPERSEED ' + logdir[-8:] + \
-          ' -c examples/train/train_multi_sf_cifar10.ini'
+          ' -c examples/train/train_multi_sf_cifar100.ini'
     run_cmd(cmd)
 
 print('end of script.')
