@@ -6,37 +6,44 @@ from lib.base.collections import LOSSES
 class ResnetMultiSf(ResNet):
     def __init__(self, *args, **kwargs):
         super(ResnetMultiSf, self).__init__(*args, **kwargs)
+        self.multi_sf = self.prm.network.MULTI_SF
+
         self.sf_layer_list = ['unit_1_3', 'unit_2_3', 'unit_3_2']
 
-        self.sf_wight_dict = {
-            'unit_1_0': 0.0,
-            'unit_1_1': 0.0,
-            'unit_1_2': 0.0,
-            'unit_1_3': 0.125,
-            'unit_2_0': 0.0,
-            'unit_2_1': 0.0,
-            'unit_2_2': 0.0,
-            'unit_2_3': 0.25,
-            'unit_3_0': 0.0,
-            'unit_3_1': 0.0,
-            'unit_3_2': 0.5,
-            'unit_3_3': 0.0
-        }
+        if self.multi_sf:
+            self.sf_wight_dict = {
+                'unit_1_0': 0.0,
+                'unit_1_1': 0.0,
+                'unit_1_2': 0.0,
+                'unit_1_3': 0.125,
+                'unit_2_0': 0.0,
+                'unit_2_1': 0.0,
+                'unit_2_2': 0.0,
+                'unit_2_3': 0.25,
+                'unit_3_0': 0.0,
+                'unit_3_1': 0.0,
+                'unit_3_2': 0.5,
+                'unit_3_3': 0.0
+            }
+        else:
+            self.sf_wight_dict = {
+                'unit_1_0': 0.0,
+                'unit_1_1': 0.0,
+                'unit_1_2': 0.0,
+                'unit_1_3': 0.0,
+                'unit_2_0': 0.0,
+                'unit_2_1': 0.0,
+                'unit_2_2': 0.0,
+                'unit_2_3': 0.0,
+                'unit_3_0': 0.0,
+                'unit_3_1': 0.0,
+                'unit_3_2': 0.0,
+                'unit_3_3': 0.0
+            }
 
-        # self.sf_wight_dict = {
-        #     'unit_1_0': 0.0,
-        #     'unit_1_1': 0.0,
-        #     'unit_1_2': 0.0,
-        #     'unit_1_3': 0.0,
-        #     'unit_2_0': 0.0,
-        #     'unit_2_1': 0.0,
-        #     'unit_2_2': 0.0,
-        #     'unit_2_3': 0.0,
-        #     'unit_3_0': 0.0,
-        #     'unit_3_1': 0.0,
-        #     'unit_3_2': 0.0,
-        #     'unit_3_3': 0.0
-        # }
+    def print_stats(self):
+        super(ResnetMultiSf, self).print_stats()
+        self.log.info(' MULTI_SF: {}'.format(self.multi_sf))
 
     def _build_inference(self):
         """Build mini FC networks for units: unit_1_3, unit_2_3, and unit_3_2"""
