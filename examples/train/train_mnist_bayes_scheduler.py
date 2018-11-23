@@ -11,7 +11,7 @@ def run_cmd(cmd):
 n_vec = np.arange(1, 16)
 for n in n_vec:
     logdir = '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=23111800'.format(n)
-    cmd = 'CUDA_VISIBLE_DEVICES=0 python ' + __file__ + \
+    cmd = 'CUDA_VISIBLE_DEVICES=0 python scripts/train_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --SUPERSEED ' + logdir[-8:] + \
           ' --TRAIN_SET_SIZE ' + str(n)+'000' + \
