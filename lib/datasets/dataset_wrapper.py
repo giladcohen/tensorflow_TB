@@ -28,6 +28,7 @@ class DatasetWrapper(AgentBase):
         self.train_validation_map_ref = self.prm.dataset.TRAIN_VALIDATION_MAP_REF
         self.use_augmentation         = self.prm.dataset.USE_AUGMENTATION
         self.num_channels             = self.prm.dataset.NUM_CHANNELS
+        self.randomize_subset         = self.prm.dataset.RANDOMIZE_SUBSET
         self.flip_image               = self.prm.dataset.data_augmentation.FLIP_IMAGE
         self.drift_x                  = self.prm.dataset.data_augmentation.DRIFT_X
         self.drift_y                  = self.prm.dataset.data_augmentation.DRIFT_Y
@@ -146,9 +147,8 @@ class DatasetWrapper(AgentBase):
 
         (X_train, y_train), (X_test, y_test) = data.load_data()
 
-        randomize_subset = False
         num_samples_per_class = int(self.train_set_size / self.num_classes)
-        if randomize_subset:
+        if self.randomize_subset:
             # Take only self.train_set_size and self.test_set_size
             train_indices = []
             for cls in range(self.num_classes):
