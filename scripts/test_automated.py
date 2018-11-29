@@ -35,6 +35,7 @@ def get_params(test_config, parser_args=None):
         prm.test.test_control.KNN_NEIGHBORS        = int(parser_args.KNN_NEIGHBORS)
         prm.test.test_control.DUMP_NET             = (parser_args.DUMP_NET == 'True')
         prm.test.test_control.LOAD_FROM_DISK       = (parser_args.LOAD_FROM_DISK == 'True')
+        prm.test.test_control.CHECKPOINT_FILE      = parser_args.CHECKPOINT_FILE
 
     ROOT_DIR = prm.train.train_control.ROOT_DIR
 
@@ -74,6 +75,7 @@ def get_params(test_config, parser_args=None):
         prm.test.test_control.KNN_NEIGHBORS        = int(parser_args.KNN_NEIGHBORS)
         prm.test.test_control.DUMP_NET             = (parser_args.DUMP_NET == 'True')
         prm.test.test_control.LOAD_FROM_DISK       = (parser_args.LOAD_FROM_DISK == 'True')
+        prm.test.test_control.CHECKPOINT_FILE      = parser_args.CHECKPOINT_FILE
 
     dir = os.path.dirname(all_parameter_file)
     if not os.path.exists(dir):
@@ -109,6 +111,7 @@ if __name__ == "__main__":
     parser.add_argument('--KNN_NEIGHBORS'     , action='store')
     parser.add_argument('--DUMP_NET'          , action='store')
     parser.add_argument('--LOAD_FROM_DISK'    , action='store')
+    parser.add_argument('--CHECKPOINT_FILE'   , action='store')
 
     parser.add_argument('-c', help='Test configuration file', action='store')
     args = parser.parse_args()
