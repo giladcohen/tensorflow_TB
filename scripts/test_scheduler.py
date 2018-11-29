@@ -1,5 +1,6 @@
 import subprocess
 import time
+import os
 
 def run_cmd(cmd):
     print ('start running command {}'.format(cmd))
@@ -14,12 +15,13 @@ for train_size in range(1, 61):
 knn_norm = 'L1'
 
 for logdir in logdir_vec:
-
+    train_validation_info = os.path.join(logdir, 'train_validation_info.csv')
     cmd = 'CUDA_VISIBLE_DEVICES=2 python scripts/test_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --KNN_NORM ' + knn_norm + \
           ' --CHECKPOINT_FILE ' + 'model_schedule.ckpt-3000' \
-          ' -c examples/test_simple.ini'
+          ' --TRAIN_VALIDATION_MAP_REF ' + train_validation_info + \
+          ' -c examples/test/test_multi_knn.ini'
     run_cmd(cmd)
 
 print('end of script.')
