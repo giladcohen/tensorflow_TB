@@ -102,7 +102,7 @@ def main():
     run_names = ['test']
     reg_tags_dict = {}  # every sample size has its own element (list)
 
-    for i, logdir in logdirs:
+    for i, logdir in enumerate(logdirs):
         reg_tags_dict[logdir] = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score']
 
         max_k = max_ks[i]
@@ -146,6 +146,7 @@ def main():
         # data['train']['regular'] = {}
         # data['test']['regular']  = {}
         # for reg_tag in reg_tags:
+        #     reg_tag = munge_filename(reg_tag)
         #     if 'trainset' in reg_tag:
         #         rec = 'train'
         #     else:
