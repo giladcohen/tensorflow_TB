@@ -28,14 +28,16 @@ logdir_vec = [
     '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.9k-SUPERSEED=23111800',
 ]
 
+num_of_iters_vec = [20000, 15000, 12000, 10000, 8571, 7500, 6667, 6000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000]
+
 knn_norm = 'L1'
 
-for logdir in logdir_vec:
+for i, logdir in enumerate(logdir_vec):
     train_validation_info = os.path.join(logdir, 'train_validation_info.csv')
     cmd = 'CUDA_VISIBLE_DEVICES=2 python scripts/test_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --KNN_NORM ' + knn_norm + \
-          ' --CHECKPOINT_FILE ' + 'model_schedule.ckpt-3000' \
+          ' --CHECKPOINT_FILE ' + 'model_schedule.ckpt-' + str(num_of_iters_vec[i]) + \
           ' --TRAIN_VALIDATION_MAP_REF ' + train_validation_info + \
           ' -c examples/test/test_multi_knn.ini'
     run_cmd(cmd)
