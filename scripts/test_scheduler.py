@@ -30,6 +30,10 @@ logdir_vec = [
 
 num_of_iters_vec = [20000, 15000, 12000, 10000, 8571, 7500, 6667, 6000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000]
 
+for i in range(1, 61):
+    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=23111800'.format(i))
+    num_of_iters_vec.append(3000)
+
 knn_norm = 'L1'
 
 for i, logdir in enumerate(logdir_vec):
