@@ -63,6 +63,19 @@ def mkdir_p(directory):
         if not (e.errno == errno.EEXIST and os.path.isdir(directory)):
             raise
 
+def remove_duplicates(c1, c2):
+    """
+    :param c1: list1
+    :param c2: list2
+    :return: None. deletes elements in c1 and c2 if the same element is already found in c1
+    """
+
+    assert len(c1) == len(c2), "length of c1 must equal the length of c2"
+    for i in range(0, len(c1)):
+        if c1[i] in c1[0:i]:
+            del c1[i]
+            del c2[i]
+
 def main():
 
     all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -138,28 +151,29 @@ def main():
                 print("Exporting (run=%r, tag=%r) to %r..." % (run_name, tag_name, output_filepath))
                 export_scalars(multiplexer, run_name, tag_name, output_filepath)
         print("Done extracting scalars. Now processing the JSON file")
-        # data = {}
-        # data['train']   = {}
-        # data['test']    = {}
-        #
-        # # build regular data
-        # data['train']['regular'] = {}
-        # data['test']['regular']  = {}
-        # for reg_tag in reg_tags:
-        #     reg_tag = munge_filename(reg_tag)
-        #     if 'trainset' in reg_tag:
-        #         rec = 'train'
-        #     else:
-        #         rec = 'test'
-        #     csv_file = os.path.join(regular_dir, 'test___' + reg_tag)
-        #     data[rec]['regular'][rm_str(reg_tag)] = {}
-        #     data[rec]['regular'][rm_str(reg_tag)]['steps'], data[rec]['regular'][rm_str(reg_tag)]['values'] = \
-        #         plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
-        #
-        # # export to JSON file
-        # json_file = os.path.join(output_dir, 'data.json')
-        # with open(json_file, 'w') as fp:
-        #     json.dump(data, fp)
+        data = {}
+        data['train']   = {}
+        data['test']    = {}
+
+        # build regular data
+        data['train']['regular'] = {}
+        data['test']['regular']  = {}
+        for reg_tag in reg_tags:
+            reg_tag = munge_filename(reg_tag)
+            if 'trainset' in reg_tag:
+                rec = 'train'
+            else:
+                rec = 'test'
+            csv_file = os.path.join(regular_dir, 'test___' + reg_tag)
+            data[rec]['regular'][rm_str(reg_tag)] = {}
+            data[rec]['regular'][rm_str(reg_tag)]['steps'], data[rec]['regular'][rm_str(reg_tag)]['values'] = \
+                plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
+            remove_duplicates(data[rec]['regular'][rm_str(reg_tag)]['steps'], data[rec]['regular'][rm_str(reg_tag)]['values'])
+
+        # export to JSON file
+        json_file = os.path.join(output_dir, 'data.json')
+        with open(json_file, 'w') as fp:
+            json.dump(data, fp)
 
 if __name__ == '__main__':
     main()
