@@ -8,7 +8,6 @@ def run_cmd(cmd):
     print ('finished running command {}'.format(cmd))
     time.sleep(3)
 
-
 logdir_vec = [
     '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_30_lr_0.1s_n_0.03k-SUPERSEED=23111800',
     '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_40_lr_0.1s_n_0.04k-SUPERSEED=23111800',
@@ -38,7 +37,7 @@ knn_norm = 'L1'
 
 for i, logdir in enumerate(logdir_vec):
     train_validation_info = os.path.join(logdir, 'train_validation_info.csv')
-    cmd = 'CUDA_VISIBLE_DEVICES=2 python scripts/test_automated.py' + \
+    cmd = 'CUDA_VISIBLE_DEVICES=3 python scripts/test_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --KNN_NORM ' + knn_norm + \
           ' --CHECKPOINT_FILE ' + 'model_schedule.ckpt-' + str(num_of_iters_vec[i]) + \

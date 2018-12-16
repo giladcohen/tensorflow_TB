@@ -15,14 +15,13 @@ class MultiKNNClassifierTester(KNNClassifierTester):
     def __init__(self, *args, **kwargs):
         super(MultiKNNClassifierTester, self).__init__(*args, **kwargs)
 
-        # self.k_list = [1, 3, 4, 5, 6, 7, 8, 9, 10,
-        #                12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
-        #                45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100,
-        #                110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
-        #                220, 240, 260, 280, 300,
-        #                350, 400, 450, 500,
-        #                600, 700, 800, 900, 1000]
-        self.k_list = [18]
+        self.k_list = [1, 3, 4, 5, 6, 7, 8, 9, 10,
+                       12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+                       45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100,
+                       110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
+                       220, 240, 260, 280, 300,
+                       350, 400, 450, 500,
+                       600, 700, 800, 900, 1000]
 
         # taking maximum of <num_of_training_samples>/<num_of_classes>
         num_of_samples_in_a_class = int(self.prm.dataset.TRAIN_SET_SIZE / self.prm.network.NUM_CLASSES)
