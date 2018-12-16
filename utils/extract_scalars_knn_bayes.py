@@ -74,29 +74,30 @@ def main():
               600, 700, 800, 900, 1000]
 
     logdirs = [
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_30_lr_0.1s_n_0.03k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_40_lr_0.1s_n_0.04k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_50_lr_0.1s_n_0.05k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_60_lr_0.1s_n_0.06k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_70_lr_0.1s_n_0.07k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_80_lr_0.1s_n_0.08k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_90_lr_0.1s_n_0.09k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_100_lr_0.1s_n_0.1k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.2k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.3k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.4k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.5k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.6k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.7k-SUPERSEED=23111800',
-        '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.8k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_30_lr_0.1s_n_0.03k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_40_lr_0.1s_n_0.04k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_50_lr_0.1s_n_0.05k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_60_lr_0.1s_n_0.06k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_70_lr_0.1s_n_0.07k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_80_lr_0.1s_n_0.08k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_90_lr_0.1s_n_0.09k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_100_lr_0.1s_n_0.1k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.2k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.3k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.4k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.5k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.6k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.7k-SUPERSEED=23111800',
+        # '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.8k-SUPERSEED=23111800',
         '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_0.9k-SUPERSEED=23111800',
     ]
-    max_ks = [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+    # max_ks = [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]\
+    max_ks = [90]
 
-    for i in range(1, 61):
-        logdir = '/data/gilad/logs/knn_bayes/wrn/mnist/' + 'log_bs_200_lr_0.1s_n_{}k-SUPERSEED=23111800'.format(i)
-        logdirs.append(logdir)
-        max_ks.append(int(i * 100))
+    # for i in range(1, 61):
+    #     logdir = '/data/gilad/logs/knn_bayes/wrn/mnist/' + 'log_bs_200_lr_0.1s_n_{}k-SUPERSEED=23111800'.format(i)
+    #     logdirs.append(logdir)
+    #     max_ks.append(int(i * 100))
 
     run_names = ['test']
     reg_tags_dict = {}  # every sample size has its own element (list)
@@ -122,19 +123,8 @@ def main():
                     reg_tags_dict[logdir].append(common_str + 'knn_psame')
                     reg_tags_dict[logdir].append(common_str + 'knn_score')
 
-
-
-
-    for max_k in enumerate(max_ks):  # for every k (for every logdir)
-        reg_tags = ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score']
-        for k in all_ks:
-            if k <= max_k:
-                reg_tags.append('')
-
-
-
-    ['dnn_confidence_avg', 'dnn_confidence_median', 'dnn_score']
     for logdir in logdirs:
+        reg_tags = reg_tags_dict[logdir]
         output_dir = os.path.join(logdir, 'data_for_figures')
         mkdir_p(output_dir)
         print("Loading data for logdir: {}".format(logdir))
@@ -148,27 +138,27 @@ def main():
                 print("Exporting (run=%r, tag=%r) to %r..." % (run_name, tag_name, output_filepath))
                 export_scalars(multiplexer, run_name, tag_name, output_filepath)
         print("Done extracting scalars. Now processing the JSON file")
-        data = {}
-        data['train']   = {}
-        data['test']    = {}
-
-        # build regular data
-        data['train']['regular'] = {}
-        data['test']['regular']  = {}
-        for reg_tag in reg_tags:
-            if 'trainset' in reg_tag:
-                rec = 'train'
-            else:
-                rec = 'test'
-            csv_file = os.path.join(regular_dir, 'test___' + reg_tag)
-            data[rec]['regular'][rm_str(reg_tag)] = {}
-            data[rec]['regular'][rm_str(reg_tag)]['steps'], data[rec]['regular'][rm_str(reg_tag)]['values'] = \
-                plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
-
-        # export to JSON file
-        json_file = os.path.join(output_dir, 'data.json')
-        with open(json_file, 'w') as fp:
-            json.dump(data, fp)
+        # data = {}
+        # data['train']   = {}
+        # data['test']    = {}
+        #
+        # # build regular data
+        # data['train']['regular'] = {}
+        # data['test']['regular']  = {}
+        # for reg_tag in reg_tags:
+        #     if 'trainset' in reg_tag:
+        #         rec = 'train'
+        #     else:
+        #         rec = 'test'
+        #     csv_file = os.path.join(regular_dir, 'test___' + reg_tag)
+        #     data[rec]['regular'][rm_str(reg_tag)] = {}
+        #     data[rec]['regular'][rm_str(reg_tag)]['steps'], data[rec]['regular'][rm_str(reg_tag)]['values'] = \
+        #         plots.load_data_from_csv_wrapper(csv_file, mult=1.0, round_points=4)
+        #
+        # # export to JSON file
+        # json_file = os.path.join(output_dir, 'data.json')
+        # with open(json_file, 'w') as fp:
+        #     json.dump(data, fp)
 
 if __name__ == '__main__':
     main()
