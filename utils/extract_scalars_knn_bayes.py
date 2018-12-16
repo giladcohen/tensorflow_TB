@@ -71,14 +71,13 @@ def remove_duplicates(c1, c2):
     """
 
     assert len(c1) == len(c2), "length of c1 must equal the length of c2"
-    i = 0
-    while i <= len(c1):
+    i = len(c1) - 1
+    while i >= 0:
         if c1[i] in c1[0:i]:
             del c1[i]
             del c2[i]
-        else:
-            i += 1
-    
+        i -= 1
+
 def main():
 
     all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
