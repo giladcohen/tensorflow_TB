@@ -55,12 +55,13 @@ for i, root_dir in enumerate(logdir_vec):
     max_k = max_ks[i]
     with open(json_file) as f:
         data = json.load(f)
-    best_error_rate = 1.0
+    best_error_rate = np.inf
     best_k          = None
     for k in all_ks:
         if k <= max_k:
-            measure = 'knn_k_{}_norm_L1_knn_score'.format(k)
-            knn_error_rate[n][k] = 1.0 - data['test']['regular'][measure]['values'][0]
+            measure = 'knn_k_{}_norm_L2_knn_kl_div2_avg'.format(k)
+            # knn_error_rate[n][k] = 1.0 - data['test']['regular'][measure]['values'][0]
+            knn_error_rate[n][k] = data['test']['regular'][measure]['values'][0]
             if knn_error_rate[n][k] < best_error_rate:
                 best_error_rate = knn_error_rate[n][k]
                 best_k = k
@@ -82,8 +83,8 @@ for i, k in enumerate(ploted_ks):
     ax.set_xlabel('number of samples')
     ax.set_title('KNN error rate for many ks')
 
-ax.set_xlim(left=1000)
-ax.set_ylim(bottom=0, top=0.03)
+# ax.set_xlim(left=1000)
+# ax.set_ylim(bottom=0, top=0.03)
 plt.legend()
 plt.tight_layout()
 plt.savefig('knn_error_rate_many_ks_1000_and_up.png')

@@ -18,8 +18,6 @@ all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
           350, 400, 450, 500,
           600, 700, 800, 900, 1000]
 
-ploted_ks = [1, 3, 4, 5, 8, 18, 26, 40, 70, 100, 200, 300, 500, 700, 1000]
-
 logdir_vec = [
     '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_30_lr_0.1s_n_0.03k-SUPERSEED=23111800',
     '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_40_lr_0.1s_n_0.04k-SUPERSEED=23111800',
@@ -45,44 +43,35 @@ for i in range(1, 61):
     n_vec.append(int(i * 1000))
     max_ks.append(int(i * 100))
 
-optimal_knn_error_rate = []
-optimal_k              = []
-knn_error_rate         = {}
+knn_error_rate = []
+optimal_k      = []
+knn_minus_dnn_error_rate = []
 for i, root_dir in enumerate(logdir_vec):
-    n = n_vec[i]
-    knn_error_rate[n] = {}  # every k in an element here
     json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
     max_k = max_ks[i]
     with open(json_file) as f:
         data = json.load(f)
+    dnn_err_rate    = 1.0 - data['test']['regular']['dnn_score']['values'][0]
     best_error_rate = 1.0
     best_k          = None
     for k in all_ks:
         if k <= max_k:
             measure = 'knn_k_{}_norm_L1_knn_score'.format(k)
-            knn_error_rate[n][k] = 1.0 - data['test']['regular'][measure]['values'][0]
-            if knn_error_rate[n][k] < best_error_rate:
-                best_error_rate = knn_error_rate[n][k]
+            error_rate = 1.0 - data['test']['regular'][measure]['values'][0]
+            if error_rate < best_error_rate:
+                best_error_rate = error_rate
                 best_k = k
-    optimal_knn_error_rate.append(best_error_rate)
+    knn_error_rate.append(best_error_rate)
     optimal_k.append(best_k)
+    knn_minus_dnn_error_rate.append(best_error_rate - dnn_err_rate)
 
-ax = fig.add_subplot(111)
-for i, k in enumerate(ploted_ks):
-    n_vals   = []
-    err_vals = []
-    for n in n_vec:
-        if k in sorted(knn_error_rate[n].keys()):
-            n_vals.append(n)
-            err_vals.append(knn_error_rate[n][k])
+ax1 = fig.add_subplot(111)
+ax1.plot(n_vec, knn_minus_dnn_error_rate)
+ax1.yaxis.grid()
+ax1.set_ylabel('knn_minus_dnn_error_rate', labelpad=5, fontdict={'fontsize': 12})
+ax1.set_xlabel('number of samples')
+ax1.set_title('Difference between knn-dnn error rates')
 
-    ax.semilogx(n_vals, err_vals, label='k={}'.format(k))
-    ax.yaxis.grid()
-    ax.set_ylabel('k-NN error rate', labelpad=5, fontdict={'fontsize': 12})
-    ax.set_xlabel('number of samples')
-    ax.set_title('KNN error rate for many ks')
-
-plt.legend()
 plt.tight_layout()
-plt.savefig('knn_error_rate_many_ks.png')
+plt.savefig('knn_minus_dnn_error_rate_for_optimal_k.png')
 

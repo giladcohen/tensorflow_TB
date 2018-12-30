@@ -30,6 +30,7 @@ def get_params(train_config, parser_args=None):
         prm.network.MULTI_SF                       = (parser_args.MULTI_SF == 'True')
         prm.network.ARCHITECTURE                   = parser_args.ARCHITECTURE
         prm.dataset.TRAIN_SET_SIZE                 = int(parser_args.TRAIN_SET_SIZE)
+        prm.network.system.DROPOUT_KEEP_PROB       = float(parser_args.DROPOUT_KEEP_PROB)
 
     ROOT_DIR = prm.train.train_control.ROOT_DIR
 
@@ -71,11 +72,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # for automating KNN testing
-    parser.add_argument('--ROOT_DIR'        , action='store')
-    parser.add_argument('--SUPERSEED'       , action='store')
-    parser.add_argument('--MULTI_SF'        , action='store')
-    parser.add_argument('--ARCHITECTURE'    , action='store')
-    parser.add_argument('--TRAIN_SET_SIZE'  , action='store')
+    parser.add_argument('--ROOT_DIR'         , action='store')
+    parser.add_argument('--SUPERSEED'        , action='store')
+    parser.add_argument('--MULTI_SF'         , action='store')
+    parser.add_argument('--ARCHITECTURE'     , action='store')
+    parser.add_argument('--TRAIN_SET_SIZE'   , action='store')
+    parser.add_argument('--DROPOUT_KEEP_PROB', action='store')
 
     parser.add_argument('-c', help='Train configuration file', action='store')
     args = parser.parse_args()
