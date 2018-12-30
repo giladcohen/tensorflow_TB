@@ -8,14 +8,17 @@ def run_cmd(cmd):
     print ('finished running command {}'.format(cmd))
     time.sleep(3)
 
-n_vec = np.arange(1, 16)
+
+n_vec = np.arange(1, 9)
+
 for n in n_vec:
-    logdir = '/data/gilad/logs/knn_bayes/wrn/mnist/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=23111800'.format(n)
-    cmd = 'CUDA_VISIBLE_DEVICES=0 python scripts/train_automated.py' + \
+    logdir = '/data/gilad/logs/knn_bayes/wrn/mnist/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=30121800'.format(n)
+    cmd = 'CUDA_VISIBLE_DEVICES=2 python scripts/train_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --SUPERSEED ' + logdir[-8:] + \
-          ' --TRAIN_SET_SIZE ' + str(n)+'000' + \
+          ' --TRAIN_SET_SIZE ' + str(int(n * 1000)) + \
           ' --ARCHITECTURE ' + 'Wide-Resnet-28-10' \
+          ' --DROPOUT_KEEP_PROB 0.5' + \
           ' -c examples/train/train_simple_mnist.ini'
     run_cmd(cmd)
 
