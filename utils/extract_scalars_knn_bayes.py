@@ -129,7 +129,15 @@ def main():
                     reg_tags_dict[logdir].append(common_str + 'knn_psame')
                     reg_tags_dict[logdir].append(common_str + 'knn_score')
 
-    for logdir in logdirs:
+    for i, logdir in enumerate(logdirs):
+        if i <= 19:  # up to 12k
+            continue
+        if logdir in \
+                [
+                 '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_4k-SUPERSEED=19121800',
+                 '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_13k-SUPERSEED=19121800'
+                ]:
+            continue
         reg_tags = reg_tags_dict[logdir]
         output_dir = os.path.join(logdir, 'data_for_figures')
         mkdir_p(output_dir)
