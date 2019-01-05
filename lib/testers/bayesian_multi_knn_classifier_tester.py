@@ -25,7 +25,7 @@ class BayesianMultiKNNClassifierTester(MultiKNNClassifierTester):
             accumulated_pred_proba = np.zeros((self.dataset.test_set_size, self.dataset.num_classes))
             total_neighbors_cnt  = 0
             total_iterations_cnt = 0
-            while total_neighbors_cnt < 100000:
+            while total_neighbors_cnt < 50000:
                 (tmp_features, ) = collect_features(
                     agent=self,
                     dataset_name='test',
