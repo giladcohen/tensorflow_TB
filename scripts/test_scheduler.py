@@ -36,8 +36,8 @@ for i, logdir in enumerate(logdir_vec):
           ' --PCA_REDUCTION False' + \
           ' --CHECKPOINT_FILE ' + 'model_schedule.ckpt-50000' + \
           ' --TRAIN_VALIDATION_MAP_REF ' + train_validation_info + \
-          ' --DROPOUT_KEEP_PROB 1.0' + \
-          ' -c examples/test/test_multi_knn.ini'
+          ' --DROPOUT_KEEP_PROB 0.5' + \
+          ' -c examples/test/test_bayesian_multi_knn.ini'
     run_cmd(cmd)
 
 print('end of script.')

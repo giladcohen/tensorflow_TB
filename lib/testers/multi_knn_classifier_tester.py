@@ -37,6 +37,20 @@ class MultiKNNClassifierTester(KNNClassifierTester):
                 n_jobs=self.knn_jobs
             )
 
+        self.pre_cstr = 'knn/'
+
+    def predict_proba(self, X, model):
+        """
+        Predict probability of labels for X using the model
+        :param X: input, np.ndarray
+        :param model: scikit-learn model
+        :return: labels probability, np.ndarray
+        """
+        if model == 'dnn':
+            return X  # do nothing, bypassing the probabilities
+        else:
+            return model.predict_proba(X)
+
     def test(self):
         X_train_features, \
         X_test_features, \
@@ -54,6 +68,8 @@ class MultiKNNClassifierTester(KNNClassifierTester):
             self.knn_dict[k].fit(X_train_features, y_train)
 
         self.log.info('Predicting test set labels from DNN model...')
+        test_dnn_predictions_prob = self.predict_proba(X=test_dnn_predictions_prob, model='dnn')  # just to bypass
+
         y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
         dnn_score = np.average(y_test == y_pred_dnn)
         self.log.info('Calculate DNN test confidence scores...')
@@ -61,7 +77,7 @@ class MultiKNNClassifierTester(KNNClassifierTester):
         confidence_avg    = np.average(confidence)
         confidence_median = np.median(confidence)
 
-        np.place(test_dnn_predictions_prob, test_dnn_predictions_prob  == 0.0, [eps])  # for KL divergences
+        np.place(test_dnn_predictions_prob, test_dnn_predictions_prob == 0.0, [eps])  # for KL divergences
         self.tb_logger_test.log_scalar('dnn_score'            , dnn_score        , self.global_step)
         self.tb_logger_test.log_scalar('dnn_confidence_avg'   , confidence_avg   , self.global_step)
         self.tb_logger_test.log_scalar('dnn_confidence_median', confidence_median, self.global_step)
@@ -70,7 +86,7 @@ class MultiKNNClassifierTester(KNNClassifierTester):
         for k in self.k_list:
             self.process(
                 model=self.knn_dict[k],
-                dataset_name= 'test',
+                dataset_name='test',
                 X=X_test_features,
                 y=y_test,
                 dnn_predictions_prob=test_dnn_predictions_prob)
@@ -86,12 +102,11 @@ class MultiKNNClassifierTester(KNNClassifierTester):
         :param dnn_predictions_prob: dnn predictions on the dataset
         :return: None. Saves metrics.
         """
-
         y_pred_dnn = dnn_predictions_prob.argmax(axis=1)
 
         self.log.info('Predicting {} labels for dataset {} using knn model with k={} and norm=L{}\n {}...'
                       .format(y.shape[0], dataset_name, model.n_neighbors, model.p, str(model)))
-        predictions_prob = model.predict_proba(X)
+        predictions_prob = self.predict_proba(X, model)
         y_pred = predictions_prob.argmax(axis=1)
 
         # calculate metrics
@@ -126,7 +141,7 @@ class MultiKNNClassifierTester(KNNClassifierTester):
             suffix = ''
         else:
             suffix = '_trainset'
-        cstr = 'knn/k={}/norm=L{}/'.format(model.n_neighbors, model.p)
+        cstr = self.pre_cstr + 'k={}/norm=L{}/'.format(model.n_neighbors, model.p)
 
         self.tb_logger_test.log_scalar(cstr + 'knn_score'             + suffix, score            , self.global_step)
         self.tb_logger_test.log_scalar(cstr + 'knn_psame'             + suffix, psame            , self.global_step)
