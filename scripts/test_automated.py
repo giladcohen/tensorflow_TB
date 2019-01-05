@@ -30,7 +30,7 @@ def get_params(test_config, parser_args=None):
             prm.train.train_control.PREDICTION_DIR     = parser_args.ROOT_DIR + '/prediction'
             prm.train.train_control.CHECKPOINT_DIR     = parser_args.ROOT_DIR + '/checkpoint'
         if parser_args.SUPERSEED is not None:
-            prm.SUPERSEED                              = parser_args.SUPERSEED
+            prm.SUPERSEED                              = int(parser_args.SUPERSEED)
         if parser_args.KNN_WEIGHTS is not None:
             prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
         if parser_args.KNN_NORM is not None:
@@ -50,7 +50,7 @@ def get_params(test_config, parser_args=None):
         if parser_args.TRAIN_VALIDATION_MAP_REF is not None:
             prm.dataset.TRAIN_VALIDATION_MAP_REF       = parser_args.TRAIN_VALIDATION_MAP_REF
         if parser_args.DROPOUT_KEEP_PROB is not None:
-            prm.network.system.DROPOUT_KEEP_PROB       = parser_args.DROPOUT_KEEP_PROB
+            prm.network.system.DROPOUT_KEEP_PROB       = float(parser_args.DROPOUT_KEEP_PROB)
 
 
     ROOT_DIR = prm.train.train_control.ROOT_DIR
@@ -86,7 +86,7 @@ def get_params(test_config, parser_args=None):
             prm.train.train_control.PREDICTION_DIR     = parser_args.ROOT_DIR + '/prediction'
             prm.train.train_control.CHECKPOINT_DIR     = parser_args.ROOT_DIR + '/checkpoint'
         if parser_args.SUPERSEED is not None:
-            prm.SUPERSEED                              = parser_args.SUPERSEED
+            prm.SUPERSEED                              = int(parser_args.SUPERSEED)
         if parser_args.KNN_WEIGHTS is not None:
             prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
         if parser_args.KNN_NORM is not None:
@@ -106,7 +106,7 @@ def get_params(test_config, parser_args=None):
         if parser_args.TRAIN_VALIDATION_MAP_REF is not None:
             prm.dataset.TRAIN_VALIDATION_MAP_REF       = parser_args.TRAIN_VALIDATION_MAP_REF
         if parser_args.DROPOUT_KEEP_PROB is not None:
-            prm.network.system.DROPOUT_KEEP_PROB       = parser_args.DROPOUT_KEEP_PROB
+            prm.network.system.DROPOUT_KEEP_PROB       = float(parser_args.DROPOUT_KEEP_PROB)
 
     dir = os.path.dirname(all_parameter_file)
     if not os.path.exists(dir):
