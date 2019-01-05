@@ -49,6 +49,9 @@ def get_params(test_config, parser_args=None):
             prm.test.test_control.CHECKPOINT_FILE      = parser_args.CHECKPOINT_FILE
         if parser_args.TRAIN_VALIDATION_MAP_REF is not None:
             prm.dataset.TRAIN_VALIDATION_MAP_REF       = parser_args.TRAIN_VALIDATION_MAP_REF
+        if parser_args.DROPOUT_KEEP_PROB is not None:
+            prm.network.system.DROPOUT_KEEP_PROB       = parser_args.DROPOUT_KEEP_PROB
+
 
     ROOT_DIR = prm.train.train_control.ROOT_DIR
 
@@ -102,6 +105,8 @@ def get_params(test_config, parser_args=None):
             prm.test.test_control.CHECKPOINT_FILE      = parser_args.CHECKPOINT_FILE
         if parser_args.TRAIN_VALIDATION_MAP_REF is not None:
             prm.dataset.TRAIN_VALIDATION_MAP_REF       = parser_args.TRAIN_VALIDATION_MAP_REF
+        if parser_args.DROPOUT_KEEP_PROB is not None:
+            prm.network.system.DROPOUT_KEEP_PROB       = parser_args.DROPOUT_KEEP_PROB
 
     dir = os.path.dirname(all_parameter_file)
     if not os.path.exists(dir):
@@ -140,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument('--LOAD_FROM_DISK'          , action='store')
     parser.add_argument('--CHECKPOINT_FILE'         , action='store')
     parser.add_argument('--TRAIN_VALIDATION_MAP_REF', action='store')
+    parser.add_argument('--DROPOUT_KEEP_PROB'       , action='store')
 
     parser.add_argument('-c', help='Test configuration file', action='store')
     args = parser.parse_args()
