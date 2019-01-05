@@ -21,7 +21,7 @@ class MultiKNNClassifierTester(KNNClassifierTester):
                        110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
                        220, 240, 260, 280, 300,
                        350, 400, 450, 500,
-                       600, 700, 800, 900, 1000]
+                       600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
 
         # taking maximum of <num_of_training_samples>/<num_of_classes>
         num_of_samples_in_a_class = int(self.prm.dataset.TRAIN_SET_SIZE / self.prm.network.NUM_CLASSES)

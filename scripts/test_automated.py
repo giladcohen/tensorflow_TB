@@ -29,6 +29,8 @@ def get_params(test_config, parser_args=None):
             prm.train.train_control.TEST_DIR           = parser_args.ROOT_DIR + '/test'
             prm.train.train_control.PREDICTION_DIR     = parser_args.ROOT_DIR + '/prediction'
             prm.train.train_control.CHECKPOINT_DIR     = parser_args.ROOT_DIR + '/checkpoint'
+        if parser_args.SUPERSEED is not None:
+            prm.SUPERSEED                              = parser_args.SUPERSEED
         if parser_args.KNN_WEIGHTS is not None:
             prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
         if parser_args.KNN_NORM is not None:
@@ -80,6 +82,8 @@ def get_params(test_config, parser_args=None):
             prm.train.train_control.TEST_DIR           = parser_args.ROOT_DIR + '/test'
             prm.train.train_control.PREDICTION_DIR     = parser_args.ROOT_DIR + '/prediction'
             prm.train.train_control.CHECKPOINT_DIR     = parser_args.ROOT_DIR + '/checkpoint'
+        if parser_args.SUPERSEED is not None:
+            prm.SUPERSEED                              = parser_args.SUPERSEED
         if parser_args.KNN_WEIGHTS is not None:
             prm.test.test_control.KNN_WEIGHTS          = parser_args.KNN_WEIGHTS
         if parser_args.KNN_NORM is not None:
@@ -126,6 +130,7 @@ if __name__ == "__main__":
 
     # for automating KNN testing
     parser.add_argument('--ROOT_DIR'                , action='store')
+    parser.add_argument('--SUPERSEED'               , action='store')
     parser.add_argument('--KNN_WEIGHTS'             , action='store')
     parser.add_argument('--KNN_NORM'                , action='store')
     parser.add_argument('--PCA_REDUCTION'           , action='store')
