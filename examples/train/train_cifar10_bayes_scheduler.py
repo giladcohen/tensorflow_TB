@@ -9,7 +9,8 @@ def run_cmd(cmd):
     time.sleep(3)
 
 
-n_vec = np.arange(1, 9)
+# n_vec = np.arange(1, 9)
+n_vec = np.array([4, 5])
 
 for n in n_vec:
     logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=30121800'.format(n)
