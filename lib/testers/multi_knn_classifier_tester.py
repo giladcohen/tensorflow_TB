@@ -46,10 +46,7 @@ class MultiKNNClassifierTester(KNNClassifierTester):
         :param model: scikit-learn model
         :return: labels probability, np.ndarray
         """
-        if model == 'dnn':
-            return X  # do nothing, bypassing the probabilities
-        else:
-            return model.predict_proba(X)
+        return model.predict_proba(X)
 
     def test(self):
         X_train_features, \
@@ -68,8 +65,6 @@ class MultiKNNClassifierTester(KNNClassifierTester):
             self.knn_dict[k].fit(X_train_features, y_train)
 
         self.log.info('Predicting test set labels from DNN model...')
-        test_dnn_predictions_prob = self.predict_proba(X=test_dnn_predictions_prob, model='dnn')  # just to bypass
-
         y_pred_dnn = test_dnn_predictions_prob.argmax(axis=1)
         dnn_score = np.average(y_test == y_pred_dnn)
         self.log.info('Calculate DNN test confidence scores...')
