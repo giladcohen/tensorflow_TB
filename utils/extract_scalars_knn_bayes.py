@@ -86,22 +86,24 @@ def main():
               110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
               220, 240, 260, 280, 300,
               350, 400, 450, 500,
-              600, 700, 800, 900, 1000]
+              600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
 
-    logdirs = [
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.2k-SUPERSEED=19121800',
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.3k-SUPERSEED=19121800',
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.4k-SUPERSEED=19121800',
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.5k-SUPERSEED=19121800',
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.6k-SUPERSEED=19121800',
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.7k-SUPERSEED=19121800',
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.8k-SUPERSEED=19121800',
-        '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.9k-SUPERSEED=19121800',
-    ]
-    max_ks = [20, 30, 40, 50, 60, 70, 80, 90]
+    # logdirs = [
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.2k-SUPERSEED=19121800',
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.3k-SUPERSEED=19121800',
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.4k-SUPERSEED=19121800',
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.5k-SUPERSEED=19121800',
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.6k-SUPERSEED=19121800',
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.7k-SUPERSEED=19121800',
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.8k-SUPERSEED=19121800',
+    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.9k-SUPERSEED=19121800',
+    # ]
+    # max_ks = [20, 30, 40, 50, 60, 70, 80, 90]
 
-    for i in range(1, 51):
-        logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10/' + 'log_bs_200_lr_0.1s_n_{}k-SUPERSEED=19121800'.format(i)
+    logdirs = []
+    max_ks  = []
+    for i in range(1, 17):
+        logdir = '/data/gilad/logs/knn_bayes/wrn/mnist/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=30121800'.format(n)
         logdirs.append(logdir)
         max_ks.append(int(i * 100))
 
@@ -130,14 +132,6 @@ def main():
                     reg_tags_dict[logdir].append(common_str + 'knn_score')
 
     for i, logdir in enumerate(logdirs):
-        if i <= 19:  # up to 12k
-            continue
-        if logdir in \
-                [
-                 '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_4k-SUPERSEED=19121800',
-                 '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_13k-SUPERSEED=19121800'
-                ]:
-            continue
         reg_tags = reg_tags_dict[logdir]
         output_dir = os.path.join(logdir, 'data_for_figures')
         mkdir_p(output_dir)
