@@ -8,6 +8,7 @@ from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.datasets.random_dataset_wrapper import RandomDatasetWrapper
 from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
 from lib.datasets.mnist_1v7 import MNIST_1V7
+from lib.datasets.cifar10_cats_v_dogs import CIFAR10_CatsVDogs
 
 from lib.models.dml_resnet_model import DMLResNet
 from lib.models.resnet_model import ResNet
@@ -48,17 +49,18 @@ class Factories(object):
         self.active_selection_criterion = self.prm.train.train_control.ACTIVE_SELECTION_CRITERION
 
     def get_dataset(self):
-        available_datasets = {'cifar10'         : DatasetWrapper,
-                              'cifar100'        : DatasetWrapper,
-                              'mnist'           : DatasetWrapper,
-                              'mnist_1v7'       : MNIST_1V7,
-                              'active_cifar10'  : ActiveDatasetWrapper,
-                              'active_cifar100' : ActiveDatasetWrapper,
-                              'semi_cifar10'    : SemiSupervisedDatasetWrapper,
-                              'semi_cifar100'   : SemiSupervisedDatasetWrapper,
-                              'random_cifar10'  : RandomDatasetWrapper,
-                              'random_cifar100' : RandomDatasetWrapper,
-                              'random_mnist'    : RandomDatasetWrapper}
+        available_datasets = {'cifar10'            : DatasetWrapper,
+                              'cifar100'           : DatasetWrapper,
+                              'mnist'              : DatasetWrapper,
+                              'mnist_1v7'          : MNIST_1V7,
+                              'cifar10_cats_v_dogs': CIFAR10_CatsVDogs,
+                              'active_cifar10'     : ActiveDatasetWrapper,
+                              'active_cifar100'    : ActiveDatasetWrapper,
+                              'semi_cifar10'       : SemiSupervisedDatasetWrapper,
+                              'semi_cifar100'      : SemiSupervisedDatasetWrapper,
+                              'random_cifar10'     : RandomDatasetWrapper,
+                              'random_cifar100'    : RandomDatasetWrapper,
+                              'random_mnist'       : RandomDatasetWrapper}
         if self.dataset_name in available_datasets:
             dataset = available_datasets[self.dataset_name](self.dataset_name + '_dataset_wrapper', self.prm)
             return dataset
