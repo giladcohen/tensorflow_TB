@@ -7,6 +7,7 @@ from lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
 from lib.datasets.dataset_wrapper import DatasetWrapper
 from lib.datasets.random_dataset_wrapper import RandomDatasetWrapper
 from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
+from lib.datasets.mnist_1v7 import MNIST_1V7
 
 from lib.models.dml_resnet_model import DMLResNet
 from lib.models.resnet_model import ResNet
@@ -50,6 +51,7 @@ class Factories(object):
         available_datasets = {'cifar10'         : DatasetWrapper,
                               'cifar100'        : DatasetWrapper,
                               'mnist'           : DatasetWrapper,
+                              'mnist_1v7'       : MNIST_1V7,
                               'active_cifar10'  : ActiveDatasetWrapper,
                               'active_cifar100' : ActiveDatasetWrapper,
                               'semi_cifar10'    : SemiSupervisedDatasetWrapper,
