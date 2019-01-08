@@ -9,7 +9,7 @@ def run_cmd(cmd):
     time.sleep(3)
 
 
-n_vec = np.arange(1, 9)
+n_vec = np.arange(1, 17)
 
 for n in n_vec:
     logdir = '/data/gilad/logs/knn_bayes/wrn/mnist_1v7/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(n)
@@ -19,7 +19,7 @@ for n in n_vec:
           ' --TRAIN_SET_SIZE ' + str(int(n * 1000)) + \
           ' --ARCHITECTURE ' + 'Wide-Resnet-28-10' \
           ' --DROPOUT_KEEP_PROB 0.5' + \
-          ' -c examples/train/train_simple_mnist.ini'
+          ' -c examples/train/train_mnist_1v7.ini'
     run_cmd(cmd)
 
 print('end of script.')

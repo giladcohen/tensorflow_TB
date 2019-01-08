@@ -40,6 +40,27 @@ class MNIST_1V7(DatasetWrapper):
         X_test  = X_test[test_indices]
         y_test  = y_test[test_indices]
 
+        # replace label 1->0 and 7->1
+        for i, label in enumerate(y_train):
+            if label == 1:
+                y_train[i] = 0
+            elif label == 7:
+                y_train[i] = 1
+            else:
+                err_str = 'y_train[{}] equals {} instead of 1 or 7'.format(i, label)
+                self.log.error(err_str)
+                raise AssertionError(err_str)
+
+        for i, label in enumerate(y_test):
+            if label == 1:
+                y_test[i] = 0
+            elif label == 7:
+                y_test[i] = 1
+            else:
+                err_str = 'y_test[{}] equals {} instead of 1 or 7'.format(i, label)
+                self.log.error(err_str)
+                raise AssertionError(err_str)
+
         X_train = np.expand_dims(X_train, axis=-1)
         X_test  = np.expand_dims(X_test , axis=-1)
 
