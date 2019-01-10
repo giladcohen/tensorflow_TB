@@ -34,7 +34,7 @@ class Agent(AgentBase):
         # self.print_model_info()
         self.dataset.build()
 
-        self.saver = tf.train.Saver(max_to_keep=None, name=str(self), filename='model_ref')
+        self.saver = tf.train.Saver(max_to_keep=1, name=str(self), filename='model_ref')
 
         self.load_pretrained_from_ref()  # For loading params prior to setting monitored session
 
