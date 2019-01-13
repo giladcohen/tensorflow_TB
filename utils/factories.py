@@ -20,7 +20,7 @@ from lib.testers.ensemble_tester import EnsembleTester
 from lib.testers.knn_classifier_tester import KNNClassifierTester
 from lib.testers.multi_layer_knn_classifier_tester import MultiLayerKNNClassifierTester
 from lib.testers.multi_knn_classifier_tester import MultiKNNClassifierTester
-from lib.testers.bayesian_multi_knn_classifier_tester_v2 import BayesianMultiKNNClassifierTester
+from lib.testers.bayesian_multi_knn_classifier_tester import BayesianMultiKNNClassifierTester
 
 from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.classification_ma_trainer import ClassificationMATrainer
