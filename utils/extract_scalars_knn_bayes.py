@@ -100,6 +100,7 @@ def main():
     # ]
     # max_ks = [20, 30, 40, 50, 60, 70, 80, 90]
 
+    bayesian_applied = True
     num_classes = 2
     logdirs = []
     max_ks  = []
@@ -118,19 +119,22 @@ def main():
         for k in all_ks:
             for norm in ['L1', 'L2']:
                 if k <= max_k:
-                    common_str = 'knn/k={}/norm={}/'.format(k, norm)
-                    reg_tags_dict[logdir].append(common_str + 'knn_confidence_avg')
-                    reg_tags_dict[logdir].append(common_str + 'knn_confidence_median')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div_avg')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div_median')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div2_avg')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div2_median')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div3_avg')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div3_median')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div4_avg')
-                    reg_tags_dict[logdir].append(common_str + 'knn_kl_div4_median')
-                    reg_tags_dict[logdir].append(common_str + 'knn_psame')
-                    reg_tags_dict[logdir].append(common_str + 'knn_score')
+                    common_str_list = ['knn/k={}/norm={}/'.format(k, norm)]
+                    if bayesian_applied:
+                        common_str_list.append('knn/dropout=0.5/k={}/norm={}/'.format(k, norm))
+                    for common_str in common_str_list:
+                        reg_tags_dict[logdir].append(common_str + 'knn_confidence_avg')
+                        reg_tags_dict[logdir].append(common_str + 'knn_confidence_median')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div_avg')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div_median')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div2_avg')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div2_median')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div3_avg')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div3_median')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div4_avg')
+                        reg_tags_dict[logdir].append(common_str + 'knn_kl_div4_median')
+                        reg_tags_dict[logdir].append(common_str + 'knn_psame')
+                        reg_tags_dict[logdir].append(common_str + 'knn_score')
 
     for i, logdir in enumerate(logdirs):
         reg_tags = reg_tags_dict[logdir]
