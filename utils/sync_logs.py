@@ -22,9 +22,12 @@ for logdir in logdir_vec:
     if not os.path.exists(data_path):
         os.makedirs(data_path)
     # cmd = 'scp -r gilad@132.66.196.128:' + logdir + '/data_for_figures ' + logdir + '/data_for_figures' # takes too long
-    # cmd = 'scp -r gilad@132.66.196.128:' + logdir + '/data_for_figures/data.json ' + logdir + '/data_for_figures/data.json'
     cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/data_for_figures/data.json ' + logdir + '/data_for_figures/data.json'
-
     run_cmd(cmd)
+    cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/train_validation_info.csv ' + logdir + '/train_validation_info.csv'
+    run_cmd(cmd)
+    cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/test/*.npy ' + logdir + '/test'
+    run_cmd(cmd)
+
 
 print('end of script.')
