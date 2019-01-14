@@ -87,6 +87,7 @@ def main():
               220, 240, 260, 280, 300,
               350, 400, 450, 500,
               600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
+    all_ks.extend(range(1600, 6001, 100))
 
     # logdirs = [
     #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.2k-SUPERSEED=19121800',
