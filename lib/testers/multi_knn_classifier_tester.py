@@ -23,7 +23,7 @@ class MultiKNNClassifierTester(KNNClassifierTester):
         #                350, 400, 450, 500,
         #                600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
 
-        self.k_list = range(1500, 6001, 100)
+        self.k_list = range(1600, 6001, 100)
 
         # taking maximum of <num_of_training_samples>/<num_of_classes>
         num_of_samples_in_a_class = int(self.prm.dataset.TRAIN_SET_SIZE / self.prm.network.NUM_CLASSES)
