@@ -26,8 +26,13 @@ for logdir in logdir_vec:
     run_cmd(cmd)
     cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/train_validation_info.csv ' + logdir + '/train_validation_info.csv'
     run_cmd(cmd)
-    cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/test/*.npy ' + logdir + '/test'
+    cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/test/train_features.npy ' + logdir + '/test/train_features.npy'
     run_cmd(cmd)
-
+    cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/test/test_features.npy ' + logdir + '/test/test_features.npy'
+    run_cmd(cmd)
+    cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/test/train_labels.npy ' + logdir + '/test/train_labels.npy'
+    run_cmd(cmd)
+    cmd = 'scp -r giladdalig@35.233.9.152:' + logdir + '/test/test_labels.npy ' + logdir + '/test/test_labels.npy'
+    run_cmd(cmd)
 
 print('end of script.')
