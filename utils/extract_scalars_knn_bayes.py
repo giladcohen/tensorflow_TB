@@ -101,7 +101,7 @@ def main():
     # ]
     # max_ks = [20, 30, 40, 50, 60, 70, 80, 90]
 
-    bayesian_applied = True
+    bayesian_applied = False
     num_classes = 2
     logdirs = []
     max_ks  = []
