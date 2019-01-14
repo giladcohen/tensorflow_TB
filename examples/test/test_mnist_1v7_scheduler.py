@@ -10,7 +10,7 @@ def run_cmd(cmd):
     time.sleep(3)
 
 knn_norm = 'L1'
-n_vec = np.arange(1, 4)
+n_vec = np.arange(1, 5)
 
 for n in n_vec:
     logdir = '/data/gilad/logs/knn_bayes/wrn/mnist_1v7/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(n)
