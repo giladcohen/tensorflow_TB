@@ -19,7 +19,7 @@ for n in n_vec:
           ' --PCA_REDUCTION False' + \
           ' --CHECKPOINT_FILE ' + 'model_schedule.ckpt-25000' + \
           ' --TRAIN_VALIDATION_MAP_REF ' + train_validation_info + \
-          ' -c examples/test/test_simple.ini'
+          ' -c examples/test/test_simple_cats_v_dogs.ini'
     run_cmd(cmd)
 
 print('end of script.')
