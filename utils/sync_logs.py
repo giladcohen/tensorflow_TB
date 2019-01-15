@@ -8,7 +8,7 @@ def run_cmd(cmd):
     print ('finished running command: {}'.format(cmd))
 
 
-ip = str('35.205.242.229')
+ip = str('84.109.242.225')
 logdir_vec = []
 for i in range(10, 11):
     logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
@@ -35,9 +35,11 @@ for logdir in logdir_vec:
     # run_cmd(cmd)
     # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_labels.npy ' + logdir + '/test/test_labels.npy'
     # run_cmd(cmd)
-    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_dnn_predictions_prob.npy ' + logdir + '/test/train_dnn_predictions_prob.npy'
-    run_cmd(cmd)
-    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_dnn_predictions_prob.npy ' + logdir + '/test/test_dnn_predictions_prob.npy'
+    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_dnn_predictions_prob.npy ' + logdir + '/test/train_dnn_predictions_prob.npy'
+    # run_cmd(cmd)
+    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_dnn_predictions_prob.npy ' + logdir + '/test/test_dnn_predictions_prob.npy'
+    # run_cmd(cmd)
+    cmd = 'scp -r giladcohen@{}:'.format(ip) + logdir + ' ' + logdir
     run_cmd(cmd)
 
 
