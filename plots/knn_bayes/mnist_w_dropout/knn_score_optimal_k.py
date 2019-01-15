@@ -62,5 +62,5 @@ ax2.set_xlabel('number of samples')
 ax2.set_title('optimal K (max knn_score)')
 
 plt.tight_layout()
-plt.savefig('knn_score_optimal_k.png')
+plt.savefig('knn_score_optimal_k_all_measures.png')
 

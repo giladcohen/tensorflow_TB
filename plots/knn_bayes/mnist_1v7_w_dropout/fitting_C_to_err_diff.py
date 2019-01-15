@@ -21,7 +21,6 @@ all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
           220, 240, 260, 280, 300,
           350, 400, 450, 500,
           600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
-all_ks.extend(range(1600, 6001, 100))
 
 logdir_vec  = []
 n_vec       = []
@@ -33,15 +32,17 @@ for i in range(1, 11):
     max_ks.append(int(i * 1000 / num_classes))
 
 measure = 'norm_L2_knn_kl_div2_avg'
-knn_score = []
-optimal_k = []
+knn_score      = []
+optimal_k      = []
+
 for i, root_dir in enumerate(logdir_vec):
     json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
-    max_k = max_ks[i]
+    max_k      = max_ks[i]
     best_score = np.inf  # lower is better
-    best_k = None
+    best_k     = None
     with open(json_file) as f:
         data = json.load(f)
+    dnn_error_rate.append(1.0 - data['test']['regular']['dnn_score']['values'][0])
     for k in all_ks:
         if k <= max_k:
             m_str = 'knn_k_{}_{}'.format(k, measure)
@@ -53,19 +54,15 @@ for i, root_dir in enumerate(logdir_vec):
     optimal_k.append(best_k)
 
 # for just dnn error rate
-measure = 'dnn_score'
 dnn_error_rate = []
-for root_dir in logdir_vec:
-    json_file = os.path.join(root_dir, 'data_for_figures', 'data.json')
-    with open(json_file) as f:
-        data = json.load(f)
-    dnn_error_rate.append(1.0 - data['test']['regular'][measure]['values'][0])
+for i, root_dir in enumerate(logdir_vec):
+    dnn_error_rate.append(1.0 - data['test']['regular']['dnn_score']['values'][0])
 
 dnn_error_rate = np.array(dnn_error_rate)
-approx_bayes_error_rate = 0.089
+approx_bayes_error_rate = np.min(dnn_error_rate)
 dnn_error_rate_min_bayes = dnn_error_rate - approx_bayes_error_rate
 
-C_vec     = np.arange(0, 0.004, 0.0001)
+C_vec     = np.arange(0, 1, 0.01)
 error_vec = []
 
 for C in C_vec:
@@ -99,30 +96,6 @@ for i in range(0, len(n_vec)):
 plt.figure()
 plt.plot(n_vec, dnn_error_rate_min_bayes, 'k')
 plt.plot(n_vec, bound, 'r')
-plt.legend(['DNN error rate - Bayes error rate', 'Bound(C*) (right term)'])
 plt.show()
-
-# now we set different C* for every n
-C_vec = []
-bound = []
-for i in range(0, len(n_vec)):
-    n = n_vec[i]
-    k_opt = optimal_k[i]
-    dnn_err = dnn_error_rate_min_bayes[i]
-    C = 0
-    pos_diff = 1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n) - dnn_err
-    while pos_diff <= 0:
-        C += 0.00001
-        pos_diff = 1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n) - dnn_err
-    C_vec.append(C)
-    bound.append(1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n))
-
-plt.figure()
-plt.plot(n_vec, dnn_error_rate_min_bayes, 'k')
-plt.plot(n_vec, bound, 'r')
-plt.legend(['DNN error rate - Bayes error rate', 'Bound(C*) (right term)'])
-plt.show()
-
-# plotting the
 
 

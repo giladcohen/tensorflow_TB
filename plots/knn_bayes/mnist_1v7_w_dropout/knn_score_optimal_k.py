@@ -28,7 +28,7 @@ n_vec       = []
 max_ks      = []
 num_classes = 2
 for i in range(1, 11):
-    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
+    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/mnist_1v7/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
     n_vec.append(int(i * 1000))
     max_ks.append(int(i * 1000 / num_classes))
 
