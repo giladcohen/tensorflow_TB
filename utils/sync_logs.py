@@ -8,10 +8,10 @@ def run_cmd(cmd):
     print ('finished running command: {}'.format(cmd))
 
 
-ip = str('84.109.242.225')
+ip = str('35.205.242.229')
 logdir_vec = []
-for i in range(1, 11):
-    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
+for i in range(1, 13):
+    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/mnist_1v7/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
 
 # create all dictionaries
 for logdir in logdir_vec:
@@ -27,20 +27,20 @@ for logdir in logdir_vec:
     # run_cmd(cmd)
     # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/train_validation_info.csv ' + logdir + '/train_validation_info.csv'
     # run_cmd(cmd)
-    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_features.npy ' + logdir + '/test/train_features.npy'
-    # run_cmd(cmd)
-    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_features.npy ' + logdir + '/test/test_features.npy'
-    # run_cmd(cmd)
-    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_labels.npy ' + logdir + '/test/train_labels.npy'
-    # run_cmd(cmd)
-    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_labels.npy ' + logdir + '/test/test_labels.npy'
-    # run_cmd(cmd)
-    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_dnn_predictions_prob.npy ' + logdir + '/test/train_dnn_predictions_prob.npy'
-    # run_cmd(cmd)
-    # cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_dnn_predictions_prob.npy ' + logdir + '/test/test_dnn_predictions_prob.npy'
-    # run_cmd(cmd)
-    cmd = 'scp -r giladcohen@{}:'.format(ip) + logdir + ' ' + logdir
+    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_features.npy ' + logdir + '/test/train_features.npy'
     run_cmd(cmd)
+    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_features.npy ' + logdir + '/test/test_features.npy'
+    run_cmd(cmd)
+    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_labels.npy ' + logdir + '/test/train_labels.npy'
+    run_cmd(cmd)
+    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_labels.npy ' + logdir + '/test/test_labels.npy'
+    run_cmd(cmd)
+    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/train_dnn_predictions_prob.npy ' + logdir + '/test/train_dnn_predictions_prob.npy'
+    run_cmd(cmd)
+    cmd = 'scp -r giladdalig@{}:'.format(ip) + logdir + '/test/test_dnn_predictions_prob.npy ' + logdir + '/test/test_dnn_predictions_prob.npy'
+    run_cmd(cmd)
+    # cmd += 'scp -r ' + logdir + ' gilad@{}:'.format(ip) + logdir
+    # run_cmd(cmd)
 
 
 print('end of script.')
