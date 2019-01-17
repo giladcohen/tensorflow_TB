@@ -59,86 +59,90 @@ def get_raw_data(dataset_name):
 
     return (X_test, y_test)
 
+n_vec = np.arange(1, 11)
 
-n = 10
-logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(n)
-test_dir = os.path.join(logdir, 'test')
-train_features_file             = os.path.join(test_dir, 'train_features.npy')
-test_features_file              = os.path.join(test_dir, 'test_features.npy')
-train_dnn_predictions_prob_file = os.path.join(test_dir, 'train_dnn_predictions_prob.npy')
-test_dnn_predictions_prob_file  = os.path.join(test_dir, 'test_dnn_predictions_prob.npy')
-train_labels_file               = os.path.join(test_dir, 'train_labels.npy')
-test_labels_file                = os.path.join(test_dir, 'test_labels.npy')
-
-X_train_features                = np.load(train_features_file)
-y_train                         = np.load(train_labels_file)
-train_dnn_predictions_prob      = np.load(train_dnn_predictions_prob_file)
-X_test_features                 = np.load(test_features_file)
-y_test                          = np.load(test_labels_file)
-test_dnn_predictions_prob       = np.load(test_dnn_predictions_prob_file)
-
-# an ugly way to get the test data again, this should be done as above
+# an ugly way to get the test data again, this should be done as above. Relevant for all n
 (X_test, y_test_ref) = get_raw_data(dataset_name=DATASET_NAME)
-assert (y_test == y_test_ref).all(), 'y_test_ref must match y_test'
 
-train_size = y_train.shape[0]
-test_size  = y_test.shape[0]
+for n in n_vec:
+    print("Start working on #train_samples of n={}".format(n))
+    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(n)
+    test_dir = os.path.join(logdir, 'test')
+    train_features_file             = os.path.join(test_dir, 'train_features.npy')
+    test_features_file              = os.path.join(test_dir, 'test_features.npy')
+    train_dnn_predictions_prob_file = os.path.join(test_dir, 'train_dnn_predictions_prob.npy')
+    test_dnn_predictions_prob_file  = os.path.join(test_dir, 'test_dnn_predictions_prob.npy')
+    train_labels_file               = os.path.join(test_dir, 'train_labels.npy')
+    test_labels_file                = os.path.join(test_dir, 'test_labels.npy')
 
-# calculating the D vectors
-D_train = calc_D_vec(train_dnn_predictions_prob)
-D_test  = calc_D_vec(test_dnn_predictions_prob)
+    X_train_features                = np.load(train_features_file)
+    y_train                         = np.load(train_labels_file)
+    train_dnn_predictions_prob      = np.load(train_dnn_predictions_prob_file)
+    X_test_features                 = np.load(test_features_file)
+    y_test                          = np.load(test_labels_file)
+    test_dnn_predictions_prob       = np.load(test_dnn_predictions_prob_file)
 
-# taking only a small subset for debug
-# test_size  = 200
-# indices = np.random.choice(range(test_size), 200, replace=False)
-# X_test_features           = X_test_features[indices]
-# y_test                    = y_test[indices]
-# test_dnn_predictions_prob = test_dnn_predictions_prob[indices]
-# D_test                    = D_test[indices]
+    assert (y_test == y_test_ref).all(), 'y_test_ref must match y_test'
 
-# creating features mat and D mat
-if INPUT == 'image':
-    X_test_2D_vec = X_test.reshape(-1, 3)
-    features_mat = distance_matrix(X_test_2D_vec, X_test_2D_vec, int(NORM[-1]))
-else:
-    features_mat = distance_matrix(X_test_features, X_test_features, int(NORM[-1]))
-D_mat = np.subtract.outer(D_test, D_test)
-D_mat = np.abs(D_mat)
+    train_size = y_train.shape[0]
+    test_size  = y_test.shape[0]
 
-# aggregating all distances
-cnt = 0
-all_feature_distances = []
-for i in range(0, test_size):
-    for j in range(i+1, test_size):
-        all_feature_distances.append(features_mat[i, j])
-        cnt += 1
-assert cnt == ((test_size - 1)*test_size / 2)
-all_feature_distances = np.array(all_feature_distances)
-all_feature_distances.sort()
+    # calculating the D vectors
+    D_train = calc_D_vec(train_dnn_predictions_prob)
+    D_test  = calc_D_vec(test_dnn_predictions_prob)
 
-# I want to take just PERCENTAGE of the distances. therefore...
-index = int(all_feature_distances.shape[0] * PERCENTAGE / 100)
-max_embedded_dist = all_feature_distances[index]
+    # taking only a small subset for debug
+    # test_size  = 200
+    # indices = np.random.choice(range(test_size), 200, replace=False)
+    # X_test_features           = X_test_features[indices]
+    # y_test                    = y_test[indices]
+    # test_dnn_predictions_prob = test_dnn_predictions_prob[indices]
+    # D_test                    = D_test[indices]
 
-# num_bins = int(cnt/100)  # I want just one percent of the distances
-# dist_hist, bin_edges = np.histogram(all_feature_distances, num_bins)
-# max_embedded_dist = bin_edges[1]
+    # creating features mat and D mat
+    if INPUT == 'image':
+        X_test_2D_vec = X_test.reshape(-1, 3)
+        features_mat = distance_matrix(X_test_2D_vec, X_test_2D_vec, int(NORM[-1]))
+    else:
+        features_mat = distance_matrix(X_test_features, X_test_features, int(NORM[-1]))
+    D_mat = np.subtract.outer(D_test, D_test)
+    D_mat = np.abs(D_mat)
 
-# for every ||x-y|| < max_embedded_dist, we need to find |D(x)-D(z)|
-all_feature_distances = []
-all_D_distances       = []
-for i in range(0, test_size):
-    for j in range(i+1, test_size):
-        if features_mat[i, j] < max_embedded_dist:
+    # aggregating all distances
+    cnt = 0
+    all_feature_distances = []
+    for i in range(0, test_size):
+        for j in range(i+1, test_size):
             all_feature_distances.append(features_mat[i, j])
-            all_D_distances.append(D_mat[i, j])
+            cnt += 1
+    assert cnt == ((test_size - 1)*test_size / 2)
+    all_feature_distances = np.array(all_feature_distances)
+    all_feature_distances.sort()
 
-# plot the scatter plot
-all_feature_distances = np.array(all_feature_distances)
-all_D_distances       = np.array(all_D_distances)
-D_div_xz              = all_D_distances/all_feature_distances
-plt.scatter(all_feature_distances, D_div_xz, s=0.5)
-plt.xlabel('||x-z||')
-plt.ylabel('|D(x)-D(z)|/||x-z||')
-C_Lipschits = np.max(D_div_xz)
-plt.savefig('norm_{}/input_{}/percentage_{}/n_{}/C_Lipschits_C={:0.5f}.png'.format(NORM, INPUT, PERCENTAGE, n, C_Lipschits))
+    # I want to take just PERCENTAGE of the distances. therefore...
+    index = int(all_feature_distances.shape[0] * PERCENTAGE / 100)
+    max_embedded_dist = all_feature_distances[index]
+
+    # num_bins = int(cnt/100)  # I want just one percent of the distances
+    # dist_hist, bin_edges = np.histogram(all_feature_distances, num_bins)
+    # max_embedded_dist = bin_edges[1]
+
+    # for every ||x-y|| < max_embedded_dist, we need to find |D(x)-D(z)|
+    all_feature_distances = []
+    all_D_distances       = []
+    for i in range(0, test_size):
+        for j in range(i+1, test_size):
+            if features_mat[i, j] < max_embedded_dist:
+                all_feature_distances.append(features_mat[i, j])
+                all_D_distances.append(D_mat[i, j])
+
+    # plot the scatter plot
+    all_feature_distances = np.array(all_feature_distances)
+    all_D_distances       = np.array(all_D_distances)
+    D_div_xz              = all_D_distances/all_feature_distances
+    plt.scatter(all_feature_distances, D_div_xz, s=0.5)
+    plt.xlabel('||x-z||')
+    plt.ylabel('|D(x)-D(z)|/||x-z||')
+    plt.title('|D(x)-D(z)|/||x-z|| measure for norm {}, input {}, percentage {}, n={}'.format(NORM, INPUT, PERCENTAGE, n))
+    C_Lipschits = np.max(D_div_xz)
+    plt.savefig('norm_{}/input_{}/percentage_{}/n_{}/C_Lipschits_C={:0.5f}.png'.format(NORM, INPUT, PERCENTAGE, n, C_Lipschits))
