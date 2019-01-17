@@ -2,7 +2,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from utils.plots import load_data_from_csv_wrapper, add_subplot_axes
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
