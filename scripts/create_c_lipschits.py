@@ -17,6 +17,8 @@ for NORM in norm_vec:
     for PERCENTAGE in percentage_vec:
         for INPUT in input_vec:
             for n in n_vec:
+                if NORM == 'L2' and int(PERCENTAGE) < 100:
+                    continue
                 cmd = 'python plots/knn_bayes/cifar10_cats_v_dogs_w_dropout/calc_lipschits_constant.py' + \
                       ' --NORM ' + NORM + \
                       ' --PERCENTAGE ' + PERCENTAGE + \

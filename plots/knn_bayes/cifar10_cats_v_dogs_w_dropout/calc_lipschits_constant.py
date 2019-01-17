@@ -117,19 +117,22 @@ def print_c_lipshits(NORM, PERCENTAGE, INPUT, DATASET_NAME, n):
     all_feature_distances.sort()
 
     # I want to take just PERCENTAGE of the distances. therefore...
-    index = int(all_feature_distances.shape[0] * PERCENTAGE / 100)
-    max_embedded_dist = all_feature_distances[index]
+    if PERCENTAGE == 100.0:
+        index = -1
+    else:
+        index = int(all_feature_distances.shape[0] * PERCENTAGE / 100)
+    max_dist = all_feature_distances[index]
 
     # num_bins = int(cnt/100)  # I want just one percent of the distances
     # dist_hist, bin_edges = np.histogram(all_feature_distances, num_bins)
-    # max_embedded_dist = bin_edges[1]
+    # max_dist = bin_edges[1]
 
-    # for every ||x-y|| < max_embedded_dist, we need to find |D(x)-D(z)|
+    # for every ||x-y|| < max_dist, we need to find |D(x)-D(z)|
     all_feature_distances = []
     all_D_distances       = []
     for i in range(0, test_size):
         for j in range(i+1, test_size):
-            if features_mat[i, j] < max_embedded_dist:
+            if features_mat[i, j] <= max_dist:
                 all_feature_distances.append(features_mat[i, j])
                 all_D_distances.append(D_mat[i, j])
 
