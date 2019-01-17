@@ -137,11 +137,12 @@ def print_c_lipshits(NORM, PERCENTAGE, INPUT, DATASET_NAME, n):
     all_feature_distances = np.array(all_feature_distances)
     all_D_distances       = np.array(all_D_distances)
     D_div_xz              = all_D_distances/all_feature_distances
-    plt.scatter(all_feature_distances, D_div_xz, s=0.5, auto=True)
+    C_Lipschits = np.max(D_div_xz)
+    plt.scatter(all_feature_distances, D_div_xz, s=0.5)
+    plt.ylim([0, 1.1*C_Lipschits])
     plt.xlabel('||x-z||')
     plt.ylabel('|D(x)-D(z)|/||x-z||')
     plt.title('|D(x)-D(z)|/||x-z|| measure for norm {}, input {}, percentage {}, n={}'.format(NORM, INPUT, PERCENTAGE, n))
-    C_Lipschits = np.max(D_div_xz)
     dir = 'norm_{}/input_{}/percentage_{}/n_{}'.format(NORM, INPUT, PERCENTAGE, n)
     if not os.path.exists(dir):
         os.makedirs(dir)

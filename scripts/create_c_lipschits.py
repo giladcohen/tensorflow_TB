@@ -22,7 +22,7 @@ for NORM in norm_vec:
                       ' --PERCENTAGE ' + PERCENTAGE + \
                       ' --INPUT ' + INPUT + \
                       ' --DATASET_NAME cifar10_cats_v_dogs' + \
-                      ' --n' + str(n)
+                      ' --n ' + str(n)
                 run_cmd(cmd)
 
 print('end of script.')
