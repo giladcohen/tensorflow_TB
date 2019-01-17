@@ -8,18 +8,21 @@ def run_cmd(cmd):
     print ('finished running command {}'.format(cmd))
     time.sleep(3)
 
-norm_vec       = ['L1', 'L2']
+norm_vec       = ['L2', 'L1']
 percentage_vec = ['0.5', '10', '100']
 input_vec      = ['image', 'embedding']
+n_vec          = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 for NORM in norm_vec:
     for PERCENTAGE in percentage_vec:
         for INPUT in input_vec:
-            cmd = 'python plots/knn_bayes/cifar10_cats_v_dogs_w_dropout/calc_lipschits_constant.py' + \
-                  ' --NORM ' + NORM + \
-                  ' --PERCENTAGE ' + PERCENTAGE + \
-                  ' --INPUT ' + INPUT + \
-                  ' --DATASET_NAME cifar10_cats_v_dogs'
-            run_cmd(cmd)
+            for n in n_vec:
+                cmd = 'python plots/knn_bayes/cifar10_cats_v_dogs_w_dropout/calc_lipschits_constant.py' + \
+                      ' --NORM ' + NORM + \
+                      ' --PERCENTAGE ' + PERCENTAGE + \
+                      ' --INPUT ' + INPUT + \
+                      ' --DATASET_NAME cifar10_cats_v_dogs' + \
+                      ' --n' + str(n)
+                run_cmd(cmd)
 
 print('end of script.')
