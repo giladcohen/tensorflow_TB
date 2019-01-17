@@ -158,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('--DATASET_NAME'      , action='store')
     args = parser.parse_args()
 
-    print_c_lipshits(args.NORM, args.PERCENTAGE, args.INPUT, args.DATASET_NAME)
+    print_c_lipshits(args.NORM, float(args.PERCENTAGE), args.INPUT, args.DATASET_NAME)
 
     print('script done')
 
