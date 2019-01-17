@@ -145,4 +145,7 @@ for n in n_vec:
     plt.ylabel('|D(x)-D(z)|/||x-z||')
     plt.title('|D(x)-D(z)|/||x-z|| measure for norm {}, input {}, percentage {}, n={}'.format(NORM, INPUT, PERCENTAGE, n))
     C_Lipschits = np.max(D_div_xz)
-    plt.savefig('norm_{}/input_{}/percentage_{}/n_{}/C_Lipschits_C={:0.5f}.png'.format(NORM, INPUT, PERCENTAGE, n, C_Lipschits))
+    dir = 'norm_{}/input_{}/percentage_{}/n_{}'.format(NORM, INPUT, PERCENTAGE, n)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    plt.savefig(os.path.join(dir, 'C_Lipschits_C={:0.5f}.png'.format(C_Lipschits)))
