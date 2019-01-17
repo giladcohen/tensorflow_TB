@@ -17,8 +17,8 @@ for NORM in norm_vec:
         for INPUT in input_vec:
             cmd = 'python plots/knn_bayes/cifar10_cats_v_dogs_w_dropout/calc_lipschits_constant.py' + \
                   ' --NORM ' + NORM + \
-                  ' --PERCENTAGE' + PERCENTAGE + \
-                  ' --INPUT' + INPUT
+                  ' --PERCENTAGE ' + PERCENTAGE + \
+                  ' --INPUT ' + INPUT
             run_cmd(cmd)
 
 print('end of script.')
