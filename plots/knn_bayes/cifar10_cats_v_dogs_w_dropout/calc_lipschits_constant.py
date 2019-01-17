@@ -139,7 +139,7 @@ def print_c_lipshits(NORM, PERCENTAGE, INPUT, DATASET_NAME):
         all_feature_distances = np.array(all_feature_distances)
         all_D_distances       = np.array(all_D_distances)
         D_div_xz              = all_D_distances/all_feature_distances
-        plt.scatter(all_feature_distances, D_div_xz, s=0.5)
+        plt.scatter(all_feature_distances, D_div_xz, s=0.5, auto=True)
         plt.xlabel('||x-z||')
         plt.ylabel('|D(x)-D(z)|/||x-z||')
         plt.title('|D(x)-D(z)|/||x-z|| measure for norm {}, input {}, percentage {}, n={}'.format(NORM, INPUT, PERCENTAGE, n))
@@ -147,7 +147,8 @@ def print_c_lipshits(NORM, PERCENTAGE, INPUT, DATASET_NAME):
         dir = 'norm_{}/input_{}/percentage_{}/n_{}'.format(NORM, INPUT, PERCENTAGE, n)
         if not os.path.exists(dir):
             os.makedirs(dir)
-        plt.savefig(os.path.join(dir, 'C_Lipschits_C={:0.5f}.png'.format(C_Lipschits)))
+        # plt.savefig(os.path.join(dir, 'C_Lipschits_C={:0.5f}.png'.format(C_Lipschits)))
+        plt.savefig(os.path.join(dir, 'C_Lipschits_C={}.png'.format(C_Lipschits)))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
