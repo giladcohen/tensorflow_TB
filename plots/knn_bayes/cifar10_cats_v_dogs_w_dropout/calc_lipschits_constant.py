@@ -101,7 +101,7 @@ for n in n_vec:
 
     # creating features mat and D mat
     if INPUT == 'image':
-        X_test_2D_vec = X_test.reshape(-1, 3)
+        X_test_2D_vec = X_test.reshape(X_test.shape[0], -1)
         features_mat = distance_matrix(X_test_2D_vec, X_test_2D_vec, int(NORM[-1]))
     else:
         features_mat = distance_matrix(X_test_features, X_test_features, int(NORM[-1]))
