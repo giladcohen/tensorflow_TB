@@ -103,18 +103,19 @@ plt.legend(['DNN error rate - Bayes error rate', 'Bound(C*) (right term)'])
 plt.show()
 
 # now we set different C* for every n
-C_vec = []
+C_vec = [0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156]
 bound = []
 for i in range(0, len(n_vec)):
     n = n_vec[i]
     k_opt = optimal_k[i]
     dnn_err = dnn_error_rate_min_bayes[i]
-    C = 0
-    pos_diff = 1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n) - dnn_err
-    while pos_diff <= 0:
-        C += 0.00001
-        pos_diff = 1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n) - dnn_err
-    C_vec.append(C)
+    # C = 0
+    # pos_diff = 1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n) - dnn_err
+    # while pos_diff <= 0:
+    #     C += 0.00001
+    #     pos_diff = 1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n) - dnn_err
+    # C_vec.append(C)
+    C = C_vec[i]
     bound.append(1.2 / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n))
 
 plt.figure()

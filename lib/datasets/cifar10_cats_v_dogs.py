@@ -41,7 +41,7 @@ class CIFAR10_CatsVDogs(DatasetWrapper):
         X_test  = X_test[test_indices]
         y_test  = y_test[test_indices]
 
-        # replace label 1->0 and 7->1
+        # replace label 3->0 and 5->1
         for i, label in enumerate(y_train):
             if label == 3:
                 y_train[i] = 0

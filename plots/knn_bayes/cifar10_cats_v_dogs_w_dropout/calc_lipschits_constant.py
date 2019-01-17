@@ -9,10 +9,56 @@ import numpy as np
 import os
 import json
 from scipy.spatial import distance_matrix
-norm = 'L2'
+import tensorflow as tf
+
+NORM = 'L2'
+PERCENTAGE = 0.5
+INPUT = 'image'  # 'image' or 'embedding'
+
+assert NORM in ['L1', 'L2']
+assert 0.0 < PERCENTAGE <= 100.0
+assert INPUT in ['image', 'embedding']
+DATASET_NAME = 'cifar10_cats_v_dogs'
 
 def calc_D_vec(sf_vec):
     return sf_vec[:, 1] - sf_vec[:, 0]
+
+def get_raw_data(dataset_name):
+    """
+    output raw data
+    :param dataset_name: 'cifar10_cats_v_dogs' or 'mnist_1v7'
+    :return: np.ndarrays (X_test, y_test)
+    """
+    assert dataset_name in ['cifar10_cats_v_dogs', 'mnist_1v7']
+    if dataset_name == 'cifar10_cats_v_dogs':
+        data = tf.keras.datasets.cifar10
+    else:
+        data  = tf.keras.datasets.mnist
+    (_, _), (X_test, y_test) = data.load_data()
+    test_indices = []
+    for cls in [3, 5]:
+        test_indices += np.where(y_test == cls)[0].tolist()
+    test_indices.sort()
+    X_test = X_test[test_indices]
+    y_test = y_test[test_indices]
+
+    # replace label 3->0 and 5->1
+    for i, label in enumerate(y_test):
+        if label == 3:
+            y_test[i] = 0
+        elif label == 5:
+            y_test[i] = 1
+        else:
+            err_str = 'y_test[{}] equals {} instead of 3 or 5'.format(i, label)
+            raise AssertionError(err_str)
+
+    if 'cifar' in dataset_name:
+        y_test = np.squeeze(y_test, axis=1)
+    if 'mnist' in dataset_name:
+        X_test = np.expand_dims(X_test, axis=-1)
+
+    return (X_test, y_test)
+
 
 n = 10
 logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(n)
@@ -31,6 +77,10 @@ X_test_features                 = np.load(test_features_file)
 y_test                          = np.load(test_labels_file)
 test_dnn_predictions_prob       = np.load(test_dnn_predictions_prob_file)
 
+# an ugly way to get the test data again, this should be done as above
+(X_test, y_test_ref) = get_raw_data(dataset_name=DATASET_NAME)
+assert (y_test == y_test_ref).all(), 'y_test_ref must match y_test'
+
 train_size = y_train.shape[0]
 test_size  = y_test.shape[0]
 
@@ -47,11 +97,15 @@ D_test  = calc_D_vec(test_dnn_predictions_prob)
 # D_test                    = D_test[indices]
 
 # creating features mat and D mat
-features_mat = distance_matrix(X_test_features, X_test_features, int(norm[-1]))
+if INPUT == 'image':
+    X_test_2D_vec = X_test.reshape(-1, 3)
+    features_mat = distance_matrix(X_test_2D_vec, X_test_2D_vec, int(NORM[-1]))
+else:
+    features_mat = distance_matrix(X_test_features, X_test_features, int(NORM[-1]))
 D_mat = np.subtract.outer(D_test, D_test)
 D_mat = np.abs(D_mat)
 
-# calculating a histogram for
+# aggregating all distances
 cnt = 0
 all_feature_distances = []
 for i in range(0, test_size):
@@ -62,8 +116,8 @@ assert cnt == ((test_size - 1)*test_size / 2)
 all_feature_distances = np.array(all_feature_distances)
 all_feature_distances.sort()
 
-# I want to take just the 0.05% of the distances. therefore...
-index = all_feature_distances.shape[0] // 200
+# I want to take just PERCENTAGE of the distances. therefore...
+index = int(all_feature_distances.shape[0] * PERCENTAGE / 100)
 max_embedded_dist = all_feature_distances[index]
 
 # num_bins = int(cnt/100)  # I want just one percent of the distances
@@ -87,4 +141,4 @@ plt.scatter(all_feature_distances, D_div_xz, s=0.5)
 plt.xlabel('||x-z||')
 plt.ylabel('|D(x)-D(z)|/||x-z||')
 C_Lipschits = np.max(D_div_xz)
-plt.savefig('C_Lipschits_n={}_C={}.png'.format(n, C_Lipschits))
+plt.savefig('norm_{}/input_{}/percentage_{}/n_{}/C_Lipschits_C={:0.5f}.png'.format(NORM, INPUT, PERCENTAGE, n, C_Lipschits))
