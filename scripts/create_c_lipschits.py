@@ -9,7 +9,7 @@ def run_cmd(cmd):
     time.sleep(3)
 
 norm_vec       = ['L2', 'L1']
-percentage_vec = ['0.5']
+percentage_vec = ['1', '2']
 input_vec      = ['embedding']
 n_vec          = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
