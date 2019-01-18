@@ -23,27 +23,26 @@ def get_raw_data():
     output raw data
     :return: np.ndarrays (X_test, y_test)
     """
-    data = tf.keras.datasets.cifar10
+    data = tf.keras.datasets.mnist
     (_, _), (X_test, y_test) = data.load_data()
     test_indices = []
-    for cls in [3, 5]:
+    for cls in [1, 7]:
         test_indices += np.where(y_test == cls)[0].tolist()
     test_indices.sort()
     X_test = X_test[test_indices]
     y_test = y_test[test_indices]
 
-    # replace label 3->0 and 5->1
+    # replace label 1->0 and 7->1
     for i, label in enumerate(y_test):
-        if label == 3:
+        if label == 1:
             y_test[i] = 0
-        elif label == 5:
+        elif label == 7:
             y_test[i] = 1
         else:
-            err_str = 'y_test[{}] equals {} instead of 3 or 5'.format(i, label)
+            err_str = 'y_test[{}] equals {} instead of 1 or 7'.format(i, label)
             raise AssertionError(err_str)
 
-    y_test = np.squeeze(y_test, axis=1)
-    #     X_test = np.expand_dims(X_test, axis=-1)
+    X_test = np.expand_dims(X_test, axis=-1)
 
     return (X_test, y_test)
 
@@ -56,7 +55,7 @@ def print_c_lipshits(NORM, PERCENTAGE, INPUT, n):
     (X_test, y_test_ref) = get_raw_data()
 
     print("Start working on norm={}, percentage={}, input={}, n={}".format(NORM, PERCENTAGE, INPUT, n))
-    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(n)
+    logdir = '/data/gilad/logs/knn_bayes/wrn/mnist_1v7/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(n)
     test_dir = os.path.join(logdir, 'test')
     train_features_file             = os.path.join(test_dir, 'train_features.npy')
     test_features_file              = os.path.join(test_dir, 'test_features.npy')
