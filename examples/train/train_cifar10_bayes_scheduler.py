@@ -11,14 +11,14 @@ def run_cmd(cmd):
 n_vec = np.array([1])
 
 for n in n_vec:
-    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
+    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
     cmd = 'CUDA_VISIBLE_DEVICES=0 python scripts/train_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --SUPERSEED ' + logdir[-8:] + \
           ' --TRAIN_SET_SIZE ' + str(int(n * 1000)) + \
           ' --ARCHITECTURE ' + 'Wide-Resnet-28-10' + \
           ' --DROPOUT_KEEP_PROB 0.5' + \
-          ' --DATASET_NAME cifar10_cars_v_trucks' + \
+          ' --DATASET_NAME cifar10_airplanes_v_ships' + \
           ' -c examples/train/train_cifar10_binary.ini'
     run_cmd(cmd)
 
