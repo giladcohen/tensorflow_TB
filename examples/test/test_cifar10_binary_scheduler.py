@@ -14,7 +14,7 @@ n_vec = np.array([1, 2, 3, 4, 5, 6, 7, 8])
 
 for n in n_vec:
     # logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
-    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_vs_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
+    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
     train_validation_info = os.path.join(logdir, 'train_validation_info.csv')
     cmd = 'CUDA_VISIBLE_DEVICES=0 python scripts/test_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
