@@ -12,7 +12,6 @@ import scipy.optimize as opt
 
 plt.rcParams['interactive'] = False
 subpos = np.array([0.35, 0.25, 0.5, 0.4])
-fig = plt.figure(figsize=(15.0, 8.0))
 
 # setting all experiments
 all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -26,11 +25,12 @@ all_ks.extend(range(1600, 6001, 100))
 
 NORM   = 'L1'
 C_FIT  = True
-C1_FIT = 'n_1'  # n_1 or n_all
+C1_FIT = None  # n_1, n_all, ot None
 K_FIT = True
 NOM = 2.426
 
-approx_bayes_error_rate = 0.089
+# approx_bayes_error_rate = 0.089
+approx_bayes_error_rate = 0.08
 
 logdir_vec  = []
 n_vec       = []
@@ -67,16 +67,16 @@ for i, root_dir in enumerate(logdir_vec):
 optimal_k = np.array(optimal_k)
 if K_FIT:
     print("fitting k_opt to a linear curve")
-    plt.figure()
-    plt.plot(n_vec, optimal_k, 'b')
-    plt.title("optimal k")
-    plt.ylabel("k*")
-    plt.xlabel("Num of training samples")
     A = np.vstack([n_vec, np.ones(len(n_vec))]).T
     m, c = np.linalg.lstsq(A, optimal_k, rcond=None)[0]
     optimal_k_fitted = n_vec * m + c
     optimal_k_fitted = (np.round(optimal_k_fitted)).astype(np.int)
-    plt.plot(n_vec, optimal_k_fitted, '--r')
+    # plt.figure()
+    # plt.plot(n_vec, optimal_k, 'b')
+    # plt.title("optimal k")
+    # plt.ylabel("k*")
+    # plt.xlabel("Num of training samples")
+    # plt.plot(n_vec, optimal_k_fitted, '--r')
 
     optimal_k = optimal_k_fitted
 
@@ -116,7 +116,7 @@ else:
 if C_FIT:
     # we need to fit C*
     if NORM == 'L1':
-        C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
+        C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.00056, 0.000543, 0.000532, 0.000525, 0.00052])
     elif NORM == 'L2':
         pass
         # C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
@@ -153,7 +153,7 @@ if C1_FIT == 'n_1':
             print('fitted C1={}'.format(C1))
         b = NOM / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + C1 * C * (k_opt / n)
         bound.append(b)
-else:
+elif C1_FIT == 'n_all':
     print('fit to all n=1k,...,10k')
     C1_vec    = np.arange(0, 100, 0.001)
     error_vec = []
@@ -179,16 +179,27 @@ else:
         C = C_vec[i]
         b = NOM / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + C1 * C * (k_opt / n)
         bound.append(b)
+else:
+    assert C1_FIT is None
+    print("not fitting C1 at all - it is 4")
+    for i in range(0, len(n_vec)):
+        n = n_vec[i]
+        k_opt = optimal_k[i]
+        C = C_vec[i]
+        b = NOM / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n)
+        bound.append(b)
 
-plt.figure()
-plt.plot(n_vec, dnn_error_rate_min_bayes, 'k')
-# plt.plot(n_vec, knn_error_rate_min_bayes, 'r')
-plt.plot(n_vec, bound, 'b')
-plt.title('error rates & bound: norm={}, C1_FIT={}, C1={}'.format(NORM, C1_FIT, C1))
-# plt.legend(['DNN error rate', 'kNN error rate', 'Bound(C*, C1) (right term)'])
-plt.legend(['DNN error rate', 'Bound(C*, C1) (right term)'])
-plt.show()
+fig = plt.figure(figsize=(6.0, 8.0))
+ax = fig.add_subplot(111)
+# ax.set_ylabel('DNN error rate', labelpad=5, fontdict={'fontsize': 12})
+ax.set_xlabel('number of samples')
+ax.yaxis.grid()
+ax.plot(n_vec, dnn_error_rate_min_bayes, 'k')
+ax.plot(n_vec, bound, 'r')
+ax.legend(['$E\{DNN\} - E^*$', 'Theoretical bound'], prop={'size': 12})
 
+plt.tight_layout()
+plt.savefig('dnn_err_and_bound.png')
 
 # L2, C1=1.164
 # L1, C1=31.096

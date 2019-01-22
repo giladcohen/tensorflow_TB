@@ -116,10 +116,12 @@ class TrainerBase(Agent):
 
     def build_session(self):
         # create session
+        self.scaffold = tf.train.Scaffold(saver=self.saver)
         self.sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=self.checkpoint_dir,
             hooks=self.train_session_hooks,
             save_checkpoint_secs=self.checkpoint_secs,
+            scaffold=self.scaffold,
             config=tf.ConfigProto(allow_soft_placement=True))
 
         self.plain_sess = self.sess._tf_sess()
