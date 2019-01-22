@@ -105,8 +105,12 @@ def main():
     num_classes = 2
     logdirs = []
     max_ks  = []
-    for i in range(1, 9):
+    for i in range(9, 11):
         logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i)
+        logdirs.append(logdir)
+        max_ks.append(int(i * 1000 / num_classes))
+    for i in range(9, 11):
+        logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i)
         logdirs.append(logdir)
         max_ks.append(int(i * 1000 / num_classes))
 

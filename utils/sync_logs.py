@@ -8,10 +8,10 @@ def run_cmd(cmd):
     print ('finished running command: {}'.format(cmd))
 
 
-ip = str('35.241.190.74')
+ip = str('35.241.215.19')
 logdir_vec = []
 for i in range(1, 9):
-    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i))
+    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i))
 
 # create all dictionaries
 for logdir in logdir_vec:
