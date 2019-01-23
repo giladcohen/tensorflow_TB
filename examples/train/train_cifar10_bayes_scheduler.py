@@ -8,10 +8,10 @@ def run_cmd(cmd):
     print ('finished running command {}'.format(cmd))
     time.sleep(3)
 
-n_vec = np.array([1])
+n_vec = np.array([7])
 
 for n in n_vec:
-    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
+    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011901'.format(n)
     cmd = 'CUDA_VISIBLE_DEVICES=0 python scripts/train_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --SUPERSEED ' + logdir[-8:] + \
