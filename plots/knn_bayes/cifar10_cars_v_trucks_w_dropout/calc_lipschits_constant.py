@@ -139,7 +139,7 @@ def print_c_lipshits(NORM, PERCENTAGE, INPUT, n):
     plt.xlabel('||x-z||')
     plt.ylabel('|D(x)-D(z)|/||x-z||')
     plt.title('|D(x)-D(z)|/||x-z|| measure for norm {}, input {}, percentage {}, n={}'.format(NORM, INPUT, PERCENTAGE, n))
-    dir = 'norm_{}/input_{}/percentage_{}/n_{}'.format(NORM, INPUT, PERCENTAGE, n)
+    dir = os.path.join(os.path.dirname(__file__), 'norm_{}/input_{}/percentage_{}/n_{}'.format(NORM, INPUT, PERCENTAGE, n))
     if not os.path.exists(dir):
         os.makedirs(dir)
     # plt.savefig(os.path.join(dir, 'C_Lipschits_C={:0.5f}.png'.format(C_Lipschits)))
