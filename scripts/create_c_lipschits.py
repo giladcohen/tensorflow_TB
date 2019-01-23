@@ -17,7 +17,7 @@ for NORM in norm_vec:
     for PERCENTAGE in percentage_vec:
         for INPUT in input_vec:
             for n in n_vec:
-                cmd = 'python plots/knn_bayes/cifar10_cars_v_trucks_w_dropout/calc_lipschits_constant.py' + \
+                cmd = 'python plots/knn_bayes/cifar10_airplanes_v_ships_w_dropout/calc_lipschits_constant.py' + \
                       ' --NORM ' + NORM + \
                       ' --PERCENTAGE ' + PERCENTAGE + \
                       ' --INPUT ' + INPUT + \

@@ -30,7 +30,7 @@ n_vec       = []
 max_ks      = []
 num_classes = 2
 for i in range(1, 11):
-    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
+    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i))
     n_vec.append(int(i * 1000))
     max_ks.append(int(i * 1000 / num_classes))
 
@@ -63,29 +63,23 @@ A = np.vstack([n_vec, np.ones(len(n_vec))]).T
 m, c = np.linalg.lstsq(A, optimal_k, rcond=None)[0]
 optimal_k_fitted = n_vec * m + c
 
-if NORM == 'L1':
-    C_vec = 1e-4 * np.array([9.611, 6.989, 6.308, 6.192, 5.466, 5.391, 5.871, 5.16, 5.273, 5.379])
-elif NORM == 'L2':
-    C_vec = np.array([0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156])
-else:
-    raise AssertionError("No such metric {}".format(NORM))
-
 # calc C
 if NORM == 'L1':
-    C_vec = 1e-4 * np.array([9.611, 6.989, 6.308, 6.192, 5.466, 5.391, 5.871, 5.16, 5.273, 5.379])
+    C_vec = 1e-4 * np.array([12, 9.2, 7, 5.9, 5.4, 4.2, 3.8, 3.75, 3.4, 3.3])
 elif NORM == 'L2':
-    C_vec = np.array([0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156])
+    pass
+    # C_vec = np.array([0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156])
 else:
     raise AssertionError("No such metric {}".format(NORM))
 
-# fit C
-if NORM == 'L1':
-    C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.00056, 0.000543, 0.000532, 0.000525, 0.00052])
-elif NORM == 'L2':
-    pass
-    # C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
-else:
-    raise AssertionError('No such norm {}'.format(NORM))
+# # fit C
+# if NORM == 'L1':
+#     C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.00056, 0.000543, 0.000532, 0.000525, 0.00052])
+# elif NORM == 'L2':
+#     pass
+#     # C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
+# else:
+#     raise AssertionError('No such norm {}'.format(NORM))
 
 # plotting the C_vec and its fitted version:
 fig = plt.figure(figsize=(6.0, 6.0))
@@ -95,6 +89,7 @@ ax1.set_xlabel('number of samples')
 ax1.plot(n_vec, optimal_k, 'ko')
 ax1.plot(n_vec, optimal_k_fitted, '--r')
 ax1.yaxis.grid()
+
 ax1.get_xaxis().set_visible(False)
 
 ax2 = fig.add_subplot(212)
@@ -102,9 +97,12 @@ ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 12})
 ax2.set_xlabel('number of samples')
 ax2.yaxis.grid()
 ax2.plot(n_vec, C_vec, 'ko')
-ax2.plot(n_vec, C_vec_fitted, '--r')
 
-plt.tight_layout()
-plt.savefig('opt_k_and_c.png')
+plt.show()
+
+# ax2.plot(n_vec, C_vec_fitted, '--r')
+#
+# plt.tight_layout()
+# plt.savefig('opt_k_and_c.png')
 
 
