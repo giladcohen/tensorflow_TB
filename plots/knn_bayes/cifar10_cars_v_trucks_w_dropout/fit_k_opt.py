@@ -11,6 +11,7 @@ import json
 import scipy.optimize as opt
 
 plt.rcParams['interactive'] = False
+subpos = np.array([0.35, 0.25, 0.5, 0.4])
 
 # setting all experiments
 all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -23,7 +24,6 @@ all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
 all_ks.extend(range(1600, 6001, 100))
 
 NORM   = 'L1'
-NOM = 2.426
 
 logdir_vec  = []
 n_vec       = []
@@ -37,7 +37,6 @@ for i in range(1, 11):
 n_vec = np.array(n_vec)
 max_ks = np.array(max_ks)
 
-# calc k
 measure = 'norm_{}_knn_kl_div2_avg'.format(NORM)
 knn_score = []
 optimal_k = []
@@ -58,53 +57,27 @@ for i, root_dir in enumerate(logdir_vec):
     knn_score.append(best_score)
     optimal_k.append(best_k)
 
-# fitting k
+# ax1 = fig.add_subplot(211)
+# ax2 = fig.add_subplot(212)
+# ax1.set_ylabel('$D_{KL}$($k$-NN||DNN)', labelpad=5, fontdict={'fontsize': 12})
+# ax1.yaxis.grid()
+# ax1.get_xaxis().set_visible(False)
+# ax1.plot(n_vec, knn_score, 'ko')
+#
+# ax1.set_xlabel('Number of training samples')
+fig = plt.figure(figsize=(8.0, 5.0))
+ax2 = fig.add_subplot(111)
+ax2.yaxis.grid()
+ax2.set_ylabel('$k^*$', labelpad=5, fontdict={'fontsize': 12})
+ax2.set_xlabel('number of samples')
+ax2.plot(n_vec, optimal_k, 'ko')
+
+# fitting
 A = np.vstack([n_vec, np.ones(len(n_vec))]).T
 m, c = np.linalg.lstsq(A, optimal_k, rcond=None)[0]
 optimal_k_fitted = n_vec * m + c
-
-if NORM == 'L1':
-    C_vec = 1e-4 * np.array([9.611, 6.989, 6.308, 6.192, 5.466, 5.391, 5.871, 5.16, 5.273, 5.379])
-elif NORM == 'L2':
-    C_vec = np.array([0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156])
-else:
-    raise AssertionError("No such metric {}".format(NORM))
-
-# calc C
-if NORM == 'L1':
-    C_vec = 1e-4 * np.array([9.611, 6.989, 6.308, 6.192, 5.466, 5.391, 5.871, 5.16, 5.273, 5.379])
-elif NORM == 'L2':
-    C_vec = np.array([0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156])
-else:
-    raise AssertionError("No such metric {}".format(NORM))
-
-# fit C
-if NORM == 'L1':
-    C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.00056, 0.000543, 0.000532, 0.000525, 0.00052])
-elif NORM == 'L2':
-    pass
-    # C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
-else:
-    raise AssertionError('No such norm {}'.format(NORM))
-
-# plotting the C_vec and its fitted version:
-fig = plt.figure(figsize=(6.0, 6.0))
-ax1 = fig.add_subplot(211)
-ax1.set_ylabel('$k^*$', labelpad=5, fontdict={'fontsize': 12})
-ax1.set_xlabel('number of samples')
-ax1.plot(n_vec, optimal_k, 'ko')
-ax1.plot(n_vec, optimal_k_fitted, '--r')
-ax1.yaxis.grid()
-ax1.get_xaxis().set_visible(False)
-
-ax2 = fig.add_subplot(212)
-ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 12})
-ax2.set_xlabel('number of samples')
-ax2.yaxis.grid()
-ax2.plot(n_vec, C_vec, 'ko')
-ax2.plot(n_vec, C_vec_fitted, '--r')
+# optimal_k_fitted = (np.round(optimal_k_fitted)).astype(np.int)
+ax2.plot(n_vec, optimal_k_fitted, '--r')
 
 plt.tight_layout()
-plt.savefig('opt_k_and_c.png')
-
-
+plt.savefig('knn_optimal_k.png')
