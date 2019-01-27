@@ -9,14 +9,20 @@ def run_cmd(cmd):
     print ('finished running command {}'.format(cmd))
     time.sleep(3)
 
-knn_norm = 'L1'
-n_vec = np.array([8])
+# knn_norm = 'L1'
+# n_vec = np.array([8])
 
-for n in n_vec:
-    # logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
-    logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(n)
+logdir_vec = [
+    '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_7k-SUPERSEED=21011903',
+    '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_8k-SUPERSEED=21011901',
+    '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_9k-SUPERSEED=21011901',
+    '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_10k-SUPERSEED=21011901'
+]
+
+# for n in n_vec:
+for logdir in logdir_vec:
     train_validation_info = os.path.join(logdir, 'train_validation_info.csv')
-    cmd = 'CUDA_VISIBLE_DEVICES=1 python scripts/test_automated.py' + \
+    cmd = 'CUDA_VISIBLE_DEVICES=3 python scripts/test_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --KNN_NORM ' + 'L1' + \
           ' --PCA_REDUCTION False' + \
@@ -25,7 +31,7 @@ for n in n_vec:
           ' --DROPOUT_KEEP_PROB 1.0' + \
           ' -c examples/test/test_multi_knn.ini'
     run_cmd(cmd)
-    cmd = 'CUDA_VISIBLE_DEVICES=1 python scripts/test_automated.py' + \
+    cmd = 'CUDA_VISIBLE_DEVICES=3 python scripts/test_automated.py' + \
           ' --ROOT_DIR ' + logdir + \
           ' --KNN_NORM ' + 'L2' + \
           ' --PCA_REDUCTION False' + \

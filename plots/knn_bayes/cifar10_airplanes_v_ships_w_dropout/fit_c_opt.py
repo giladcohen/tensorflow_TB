@@ -9,6 +9,7 @@ import numpy as np
 import os
 import json
 import scipy.optimize as opt
+import matplotlib.ticker as mtick
 
 plt.rcParams['interactive'] = False
 
@@ -24,11 +25,11 @@ all_ks.extend(range(1600, 6001, 100))
 
 NORM   = 'L1'
 NOM = 2.426
+num_classes = 2
 
 logdir_vec  = []
 n_vec       = []
 max_ks      = []
-num_classes = 2
 for i in range(1, 11):
     logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i))
     n_vec.append(int(i * 1000))
@@ -65,8 +66,7 @@ optimal_k_fitted = n_vec * m + c
 
 # calc C
 if NORM == 'L1':
-    pass
-    # C_vec = 1e-4 * np.array([12, 9.2, 7, 5.9, 5.4, 4.2, 3.8, 3.75, 3.4, 3.3])
+    C_vec = 1e-4 * np.array([10, 7.1, 6.8, 4.4, 4.9, 4.1, 4.2, 3.85, 3.8, 3.55])
 elif NORM == 'L2':
     pass
     # C_vec = np.array([0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156])
@@ -74,36 +74,38 @@ else:
     raise AssertionError("No such metric {}".format(NORM))
 
 # # fit C
-# if NORM == 'L1':
-#     C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.00056, 0.000543, 0.000532, 0.000525, 0.00052])
-# elif NORM == 'L2':
-#     pass
-#     # C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
-# else:
-#     raise AssertionError('No such norm {}'.format(NORM))
+if NORM == 'L1':
+    C_vec_fitted = np.array([C_vec[0], C_vec[1], 0.000598, 0.00052, 0.00047, 0.00043, 0.000405, C_vec[7], 0.000375, 0.00037])
+elif NORM == 'L2':
+    pass
+    # C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
+else:
+    raise AssertionError('No such norm {}'.format(NORM))
 
 # plotting the C_vec and its fitted version:
 fig = plt.figure(figsize=(6.0, 6.0))
 ax1 = fig.add_subplot(211)
-ax1.set_ylabel('$k^*$', labelpad=5, fontdict={'fontsize': 12})
-ax1.set_xlabel('number of samples')
+ax1.set_ylabel('$k^*$', labelpad=5, fontdict={'fontsize': 16})
+# ax1.set_xlabel('number of samples')
 ax1.plot(n_vec, optimal_k, 'ko')
 ax1.plot(n_vec, optimal_k_fitted, '--r')
-ax1.yaxis.grid()
-
+ax1.grid(True)
 # ax1.get_xaxis().set_visible(False)
-#
-# ax2 = fig.add_subplot(212)
-# ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 12})
-# ax2.set_xlabel('number of samples')
-# ax2.yaxis.grid()
-# ax2.plot(n_vec, C_vec, 'ko')
+ax1.set_xticklabels([])
+ax1.tick_params(labelsize=14)
 
-plt.show()
+ax2 = fig.add_subplot(212)
+ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 16})
+ax2.set_xlabel('number of samples', fontdict={'fontsize': 14})
+ax2.grid()
+ax2.plot(n_vec, C_vec, 'ko')
+ax2.tick_params(labelsize=14)
+ax2.plot(n_vec, C_vec_fitted, '--r')
 
-# ax2.plot(n_vec, C_vec_fitted, '--r')
-#
-# plt.tight_layout()
-# plt.savefig('opt_k_and_c.png')
+# ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
+
+
+plt.tight_layout()
+plt.savefig('opt_k_and_c.png', dpi=350)
 
 

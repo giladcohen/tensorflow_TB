@@ -24,20 +24,20 @@ all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
 all_ks.extend(range(1600, 6001, 100))
 
 NORM   = 'L1'
-C_FIT  = False
+C_FIT  = True
 C1_FIT = None  # n_1, n_all, ot None
-K_FIT = False
+K_FIT = True
 NOM = 2.426
 
 # approx_bayes_error_rate = 0.089
-approx_bayes_error_rate = 0.08
+approx_bayes_error_rate = 0.02
 
 logdir_vec  = []
 n_vec       = []
 max_ks      = []
 num_classes = 2
 for i in range(1, 11):
-    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i))
+    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i))
     n_vec.append(int(i * 1000))
     max_ks.append(int(i * 1000 / num_classes))
 
@@ -80,7 +80,9 @@ if K_FIT:
     # plt.xlabel("Num of training samples")
     # plt.plot(n_vec, optimal_k_fitted, '--r')
 
-    optimal_k = optimal_k_fitted
+    for i, k in enumerate(optimal_k_fitted):
+        if k > 0:
+            optimal_k[i] = optimal_k_fitted[i]
 
 # get dnn error rate
 measure = 'dnn_score'
@@ -108,18 +110,17 @@ dnn_error_rate_min_bayes = dnn_error_rate - approx_bayes_error_rate
 
 # now we set different C* for every n
 if NORM == 'L1':
-    C_vec = 1e-4 * np.array([12, 9.2, 7, 5.9, 5.4, 4.2, 3.8, 3.75, 3.4, 3.3])
+    C_vec = 1e-4 * np.array([10, 7.1, 6.8, 4.4, 4.9, 4.1, 4.2, 3.85, 3.8, 3.55])
 elif NORM == 'L2':
     pass
     # C_vec = np.array([0.02066, 0.01482, 0.01367, 0.0141, 0.0122, 0.01281, 0.01319, 0.01183, 0.01197, 0.01156])
 else:
     raise AssertionError("No such metric {}".format(NORM))
 
-
 if C_FIT:
     # we need to fit C*
     if NORM == 'L1':
-        C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.00056, 0.000543, 0.000532, 0.000525, 0.00052])
+        C_vec_fitted = np.array([C_vec[0], C_vec[1], 0.000598, 0.00052, 0.00047, 0.00043, 0.000405, C_vec[7], 0.000375, 0.00037])
     elif NORM == 'L2':
         pass
         # C_vec_fitted = np.array([C_vec[0], C_vec[1], C_vec[2], 0.0006, 0.000578, 0.000565, 0.00055, 0.00053, 0.000525, 0.00052])
@@ -192,17 +193,17 @@ else:
         b = NOM / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n)
         bound.append(b)
 
-fig = plt.figure(figsize=(6.0, 8.0))
+fig = plt.figure(figsize=(6.0, 6.0))
 ax = fig.add_subplot(111)
-# ax.set_ylabel('DNN error rate', labelpad=5, fontdict={'fontsize': 12})
-ax.set_xlabel('number of samples')
+ax.set_xlabel('number of samples', fontdict={'fontsize': 14})
 ax.yaxis.grid()
 ax.plot(n_vec, dnn_error_rate_min_bayes, 'k')
 ax.plot(n_vec, bound, 'r')
-ax.legend(['$E\{DNN\} - E^*$', 'Theoretical bound'], prop={'size': 12})
+ax.legend(['$E\{DNN\} - E^*$', 'Theoretical bound'], prop={'size': 18})
+plt.tick_params(labelsize=14)
 
 plt.tight_layout()
-plt.savefig('dnn_err_and_bound.png')
+plt.savefig('dnn_err_and_bound.png', dpi=350)
 
 # L2, C1=1.164
 # L1, C1=31.096

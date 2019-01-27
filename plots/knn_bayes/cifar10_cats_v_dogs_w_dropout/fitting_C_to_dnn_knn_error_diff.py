@@ -28,6 +28,7 @@ C_FIT  = True
 C1_FIT = None  # n_1, n_all, ot None
 K_FIT = True
 NOM = 2.426
+num_classes = 2
 
 # approx_bayes_error_rate = 0.089
 approx_bayes_error_rate = 0.08
@@ -35,7 +36,6 @@ approx_bayes_error_rate = 0.08
 logdir_vec  = []
 n_vec       = []
 max_ks      = []
-num_classes = 2
 for i in range(1, 11):
     logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
     n_vec.append(int(i * 1000))
@@ -189,17 +189,17 @@ else:
         b = NOM / np.sqrt(k_opt) + np.exp(-3 * k_opt / 14) + 4 * C * (k_opt / n)
         bound.append(b)
 
-fig = plt.figure(figsize=(6.0, 8.0))
+fig = plt.figure(figsize=(6.0, 4.0))
 ax = fig.add_subplot(111)
-# ax.set_ylabel('DNN error rate', labelpad=5, fontdict={'fontsize': 12})
-ax.set_xlabel('number of samples')
+ax.set_xlabel('number of samples', fontdict={'fontsize': 14})
 ax.yaxis.grid()
 ax.plot(n_vec, dnn_error_rate_min_bayes, 'k')
 ax.plot(n_vec, bound, 'r')
-ax.legend(['$E\{DNN\} - E^*$', 'Theoretical bound'], prop={'size': 12})
+ax.legend(['$E\{DNN\} - E^*$', 'Theoretical bound'], prop={'size': 18})
+plt.tick_params(labelsize=14)
 
 plt.tight_layout()
-plt.savefig('dnn_err_and_bound.png')
+plt.savefig('dnn_err_and_bound.png', dpi=350)
 
 # L2, C1=1.164
 # L1, C1=31.096

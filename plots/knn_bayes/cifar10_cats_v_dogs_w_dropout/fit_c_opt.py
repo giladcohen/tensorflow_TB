@@ -83,21 +83,25 @@ else:
 # plotting the C_vec and its fitted version:
 fig = plt.figure(figsize=(6.0, 6.0))
 ax1 = fig.add_subplot(211)
-ax1.set_ylabel('$k^*$', labelpad=5, fontdict={'fontsize': 12})
-ax1.set_xlabel('number of samples')
+ax1.set_ylabel('$k^*$', labelpad=5, fontdict={'fontsize': 16})
+# ax1.set_xlabel('number of samples')
 ax1.plot(n_vec, optimal_k, 'ko')
 ax1.plot(n_vec, optimal_k_fitted, '--r')
-ax1.yaxis.grid()
-ax1.get_xaxis().set_visible(False)
+ax1.grid(True)
+# ax1.get_xaxis().set_visible(False)
+ax1.set_xticklabels([])
+ax1.tick_params(labelsize=14)
 
 ax2 = fig.add_subplot(212)
-ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 12})
-ax2.set_xlabel('number of samples')
-ax2.yaxis.grid()
+ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 16})
+ax2.set_xlabel('number of samples', fontdict={'fontsize': 14})
+ax2.grid()
 ax2.plot(n_vec, C_vec, 'ko')
+ax2.tick_params(labelsize=14)
 ax2.plot(n_vec, C_vec_fitted, '--r')
 
+# ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
 plt.tight_layout()
-plt.savefig('opt_k_and_c.png')
+plt.savefig('opt_k_and_c.png', dpi=350)
 
 
