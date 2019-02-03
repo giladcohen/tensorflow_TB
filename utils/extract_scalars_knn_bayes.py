@@ -89,30 +89,22 @@ def main():
               600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
     all_ks.extend(range(1600, 6001, 100))
 
-    # logdirs = [
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.2k-SUPERSEED=19121800',
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.3k-SUPERSEED=19121800',
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.4k-SUPERSEED=19121800',
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.5k-SUPERSEED=19121800',
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.6k-SUPERSEED=19121800',
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.7k-SUPERSEED=19121800',
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.8k-SUPERSEED=19121800',
-    #     '/data/gilad/logs/knn_bayes/wrn/cifar10/log_bs_200_lr_0.1s_n_0.9k-SUPERSEED=19121800',
-    # ]
-    # max_ks = [20, 30, 40, 50, 60, 70, 80, 90]
+    logdirs = [
+        '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_7k-SUPERSEED=21011903',
+        '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_8k-SUPERSEED=21011901',
+        '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_9k-SUPERSEED=21011901',
+        '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_10k-SUPERSEED=21011901'
+    ]
+    max_ks = [3500, 4000, 4500, 5000]
 
     bayesian_applied = False
     num_classes = 2
-    logdirs = []
-    max_ks  = []
-    for i in range(9, 11):
-        logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_airplanes_v_ships/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i)
-        logdirs.append(logdir)
-        max_ks.append(int(i * 1000 / num_classes))
-    for i in range(9, 11):
-        logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i)
-        logdirs.append(logdir)
-        max_ks.append(int(i * 1000 / num_classes))
+    # logdirs = []
+    # max_ks  = []
+    # for i in range(9, 11):
+    #     logdir = '/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i)
+    #     logdirs.append(logdir)
+    #     max_ks.append(int(i * 1000 / num_classes))
 
     run_names = ['test']
     reg_tags_dict = {}  # every sample size has its own element (list)
