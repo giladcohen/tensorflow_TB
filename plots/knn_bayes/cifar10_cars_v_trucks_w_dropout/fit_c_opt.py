@@ -22,7 +22,7 @@ all_ks = [1, 3, 4, 5, 6, 7, 8, 9, 10,
           600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
 all_ks.extend(range(1600, 6001, 100))
 
-NORM   = 'L1'
+NORM   = 'L2'
 NOM = 2.426
 
 logdir_vec  = []
@@ -38,7 +38,7 @@ n_vec = np.array(n_vec)
 max_ks = np.array(max_ks)
 
 # calc k
-measure = 'norm_{}_knn_kl_div2_avg'.format(NORM)
+measure = 'norm_{}_knn_kl_div4_median'.format(NORM)
 knn_score = []
 optimal_k = []
 for i, root_dir in enumerate(logdir_vec):
@@ -91,14 +91,13 @@ ax1.plot(n_vec, optimal_k_fitted, '--r')
 ax1.yaxis.grid()
 
 ax1.get_xaxis().set_visible(False)
-
-ax2 = fig.add_subplot(212)
-ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 12})
-ax2.set_xlabel('number of samples')
-ax2.yaxis.grid()
-ax2.plot(n_vec, C_vec, 'ko')
-
 plt.show()
+
+# ax2 = fig.add_subplot(212)
+# ax2.set_ylabel('C', labelpad=5, fontdict={'fontsize': 12})
+# ax2.set_xlabel('number of samples')
+# ax2.yaxis.grid()
+# ax2.plot(n_vec, C_vec, 'ko')
 
 # ax2.plot(n_vec, C_vec_fitted, '--r')
 #

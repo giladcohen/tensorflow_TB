@@ -29,10 +29,26 @@ logdir_vec  = []
 n_vec       = []
 max_ks      = []
 num_classes = 2
-for i in range(1, 11):
-    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
+# for i in range(1, 11):
+#     logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cats_v_dogs/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=08011900'.format(i))
+#     n_vec.append(int(i * 1000))
+#     max_ks.append(int(i * 1000 / num_classes))
+for i in range(1, 7):
+    logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_{}k-SUPERSEED=21011900'.format(i))
     n_vec.append(int(i * 1000))
     max_ks.append(int(i * 1000 / num_classes))
+logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_7k-SUPERSEED=21011903')
+n_vec.append(7000)
+max_ks.append(3500)
+logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_8k-SUPERSEED=21011901')
+n_vec.append(8000)
+max_ks.append(4000)
+logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_9k-SUPERSEED=21011901')
+n_vec.append(9000)
+max_ks.append(4500)
+logdir_vec.append('/data/gilad/logs/knn_bayes/wrn/cifar10_cars_v_trucks/w_dropout/log_bs_200_lr_0.1s_n_10k-SUPERSEED=21011901')
+n_vec.append(10000)
+max_ks.append(5000)
 
 n_vec = np.array(n_vec)
 max_ks = np.array(max_ks)
