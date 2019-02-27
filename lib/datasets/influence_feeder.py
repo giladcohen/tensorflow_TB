@@ -6,7 +6,7 @@ import darkon
 import tensorflow as tf
 import numpy as np
 from lib.base.agent_base import AgentBase
-from utils.misc import err_n_assert
+from utils.misc import err_n_assert, one_hot
 
 class Feeder(darkon.InfluenceFeeder, AgentBase):
     def __init__(self, name, prm):
@@ -15,7 +15,9 @@ class Feeder(darkon.InfluenceFeeder, AgentBase):
         self.prm = prm
         super(Feeder, self).__init__(name)
 
-        self.dataset_name = self.prm.dataset.DATASET_NAME
+        self.dataset_name   = self.prm.dataset.DATASET_NAME
+        self.num_classes    = self.prm.network.NUM_CLASSES
+        self.one_hot_labels = self.prm.network.ONE_HOT_LABELS
 
     def build(self):
         """
@@ -47,11 +49,16 @@ class Feeder(darkon.InfluenceFeeder, AgentBase):
 
         self.train_origin_data = X_train / 255.0
         self.train_data        = self.whitening_image(X_train)
-        self.train_label       = y_train
 
         self.test_origin_data  = X_test / 255.0
         self.test_data         = self.whitening_image(X_test)
-        self.test_label        = y_test
+
+        if self.one_hot_labels:
+            self.train_label = one_hot(y_train, self.num_classes)
+            self.test_label  = one_hot(y_test , self.num_classes)
+        else:
+            self.train_label = y_train
+            self.test_label  = y_test
 
     def test_indices(self, indices):
         return self.test_data[indices], self.test_label[indices]

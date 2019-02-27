@@ -40,6 +40,8 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
         self.train_unpool_handle           = None
         self.train_unpool_eval_handle      = None
 
+        self.one_hot_labels = True
+
     def build(self):
         self.init_soft_labels()
         super(SemiSupervisedDatasetWrapper, self).build()
@@ -111,18 +113,6 @@ class SemiSupervisedDatasetWrapper(DatasetWrapper):
                 indices.append(sample['index'])
         indices.sort()
         return indices
-
-    def get_raw_data(self, dataset_name):
-        """This function get the string dataset_name (such as cifar10 or cifar100) and returns images and labels
-        :param dataset_name: the name of the dataset
-        :return (X_train, y_train), (X_test, y_test) where
-        X_train/test.shape = [?, H, W, 3], dtype=float32
-        y_train/test.shape = [?. num_classes] (one hot), dtype=int
-        """
-        (X_train, y_train), (X_test, y_test) = super(SemiSupervisedDatasetWrapper, self).get_raw_data(dataset_name)
-        y_train = one_hot(y_train, self.num_classes)
-        y_test  = one_hot(y_test , self.num_classes)
-        return (X_train, y_train), (X_test, y_test)
 
     def set_datasets(self, X_train, y_train, X_test, y_test):
         super(SemiSupervisedDatasetWrapper, self).set_datasets(X_train, y_train, X_test, y_test)

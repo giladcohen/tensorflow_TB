@@ -21,6 +21,8 @@ class KNNInfluenceTester(KNNClassifierTester):
 
         self.feeder = Feeder('influence_feeder', self.prm)
 
+        self.one_hot_labels = self.prm.network.ONE_HOT_LABELS
+
         self._classes = (
             'airplane',
             'automobile',
@@ -112,7 +114,11 @@ class KNNInfluenceTester(KNNClassifierTester):
                 idx = helpful[target_idx]
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(self.feeder.train_origin_data[idx])
-                label_str = self._classes[int(self.feeder.train_label[idx])]
+                if self.one_hot_labels:
+                    label = np.argmax(self.feeder.train_label[idx])
+                else:
+                    label = self.feeder.train_label[idx]
+                label_str = self._classes[int(label)]
                 axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
 
                 target_idx += 1
@@ -126,7 +132,11 @@ class KNNInfluenceTester(KNNClassifierTester):
                 idx = harmful[target_idx]
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(self.feeder.train_origin_data[idx])
-                label_str = self._classes[int(self.feeder.train_label[idx])]
+                if self.one_hot_labels:
+                    label = np.argmax(self.feeder.train_label[idx])
+                else:
+                    label = self.feeder.train_label[idx]
+                label_str = self._classes[int(label)]
                 axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
 
                 target_idx += 1

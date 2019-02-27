@@ -9,7 +9,7 @@ import lib.logger.logger as logger
 import csv
 import tensorflow as tf
 from utils.enums import Mode
-from utils.misc import numericalSort
+from utils.misc import numericalSort, one_hot
 from PIL import Image
 import matplotlib.pyplot as plt
 
@@ -22,6 +22,7 @@ class DatasetWrapper(AgentBase):
         self.log = logger.get_logger(name)
         self.dataset_name             = self.prm.dataset.DATASET_NAME
         self.num_classes              = self.prm.network.NUM_CLASSES
+        self.one_hot_labels           = self.prm.network.ONE_HOT_LABELS
         self.train_set_size           = self.prm.dataset.TRAIN_SET_SIZE
         self.validation_set_size      = self.prm.dataset.VALIDATION_SET_SIZE
         self.test_set_size            = self.prm.dataset.TEST_SET_SIZE
@@ -167,6 +168,11 @@ class DatasetWrapper(AgentBase):
         if 'mnist' in dataset_name:
             X_train = np.expand_dims(X_train, axis=-1)
             X_test  = np.expand_dims(X_test, axis=-1)
+
+        # optionally convert to one hot representation
+        if self.one_hot_labels:
+            y_train = one_hot(y_train, self.num_classes)
+            y_test  = one_hot(y_test , self.num_classes)
 
         if self.train_validation_size != X_train.shape[0]:
             err_str = 'train_set_size + validation_set_size = {} instead of {}'.format(self.train_validation_size, X_train.shape[0])
