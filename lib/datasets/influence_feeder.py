@@ -45,11 +45,11 @@ class Feeder(darkon.InfluenceFeeder, AgentBase):
             X_train = np.expand_dims(X_train, axis=-1)
             X_test  = np.expand_dims(X_test, axis=-1)
 
-        self.train_origin_data = X_train
+        self.train_origin_data = X_train / 255.0
         self.train_data        = self.whitening_image(X_train)
         self.train_label       = y_train
 
-        self.test_origin_data  = X_test
+        self.test_origin_data  = X_test / 255.0
         self.test_data         = self.whitening_image(X_test)
         self.test_label        = y_test
 

@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-check_point = '/Users/giladcohen/workspace/tensorflow-TB/darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
+check_point = '/Users/giladcohen/workspace/tensorflow_TB/darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
 
 # cifar-10 classes
 _classes = (
