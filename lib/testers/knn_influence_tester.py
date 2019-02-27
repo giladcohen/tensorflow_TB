@@ -95,6 +95,7 @@ class KNNInfluenceTester(KNNClassifierTester):
             print('[{}] {}'.format(idx, scores[idx]))
             if idx in neighbors_indices:
                 cnt_harmful_in_knn += 1
+        print('{} out of {} harmful images are in the {}-NN'.format(cnt_harmful_in_knn, len(harmful), self.knn_neighbors))
 
         cnt_helpful_in_knn = 0
         print('\nHelpful:')
@@ -102,6 +103,7 @@ class KNNInfluenceTester(KNNClassifierTester):
             print('[{}] {}'.format(idx, scores[idx]))
             if idx in neighbors_indices:
                 cnt_helpful_in_knn += 1
+        print('{} out of {} helpful images are in the {}-NN'.format(cnt_helpful_in_knn, len(helpful), self.knn_neighbors))
 
         fig, axes1 = plt.subplots(5, 10, figsize=(15, 5))
         target_idx = 0
@@ -114,6 +116,8 @@ class KNNInfluenceTester(KNNClassifierTester):
                 axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
 
                 target_idx += 1
+        plt.savefig('./influence_workspace/helpful.png', dpi=350)
+        plt.clf()
 
         fig, axes1 = plt.subplots(5, 10, figsize=(15, 5))
         target_idx = 0
@@ -126,5 +130,6 @@ class KNNInfluenceTester(KNNClassifierTester):
                 axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
 
                 target_idx += 1
-
+        plt.savefig('./influence_workspace/harmful.png', dpi=350)
+        plt.clf()
         print('done')
