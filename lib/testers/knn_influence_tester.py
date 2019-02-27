@@ -82,9 +82,9 @@ class KNNInfluenceTester(KNNClassifierTester):
         scores = inspector.upweighting_influence_batch(
             sess=self.sess,
             test_indices=[test_index],
-            test_batch_size=self.prm.train.train_control.EVAL_BATCH_SIZE,
+            test_batch_size=100, #self.prm.train.train_control.EVAL_BATCH_SIZE,
             approx_params=approx_params,
-            train_batch_size=self.prm.train.train_control.TRAIN_BATCH_SIZE,
+            train_batch_size=100, # self.prm.train.train_control.TRAIN_BATCH_SIZE,
             train_iterations=500)
 
         sorted_indices = np.argsort(scores)
