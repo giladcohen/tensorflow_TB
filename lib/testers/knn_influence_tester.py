@@ -40,12 +40,12 @@ class KNNInfluenceTester(KNNClassifierTester):
         test_index = 99
         test_image = self.feeder.test_origin_data[test_index]
         test_label = self.feeder.test_label[test_index]
-        # test_embedding = self.sess.run(fetches=[self.model.net['embedding_layer']],
-        #                                feed_dict={self.model.images: np.expand_dims(test_image, axis=0),
-        #                                           self.model.labels: }
-        #                                )
+        test_features = X_test_features[test_index]
 
         # find all its nearest neighbors
+        self.knn.fit(X_train_features)
+        neighbors = self.knn.kneighbors(test_features)
+        print('cool')
 
 
 
