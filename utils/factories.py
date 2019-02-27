@@ -23,6 +23,7 @@ from lib.testers.knn_classifier_tester import KNNClassifierTester
 from lib.testers.multi_layer_knn_classifier_tester import MultiLayerKNNClassifierTester
 from lib.testers.multi_knn_classifier_tester import MultiKNNClassifierTester
 from lib.testers.bayesian_multi_knn_classifier_tester import BayesianMultiKNNClassifierTester
+from lib.testers.knn_influence_tester import KNNInfluenceTester
 
 from lib.trainers.active_trainer import ActiveTrainer
 from lib.trainers.classification_ma_trainer import ClassificationMATrainer
@@ -111,7 +112,8 @@ class Factories(object):
                              'multi_layer_knn_classifier'           : MultiLayerKNNClassifierTester,
                              'ensemble_classifier'                  : EnsembleTester,
                              'multi_knn_classifier'                 : MultiKNNClassifierTester,
-                             'bayesian_multi_knn_classifier_tester' : BayesianMultiKNNClassifierTester}
+                             'bayesian_multi_knn_classifier_tester' : BayesianMultiKNNClassifierTester,
+                             'knn_influence'                        : KNNInfluenceTester}
         if self.tester in available_testers:
             tester = available_testers[self.tester](self.tester, self.prm, model, dataset)
             self.log.info('get_tester: returning ' + str(tester))

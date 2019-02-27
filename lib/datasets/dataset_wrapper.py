@@ -147,9 +147,9 @@ class DatasetWrapper(AgentBase):
 
         (X_train, y_train), (X_test, y_test) = data.load_data()
 
-        num_samples_per_class = int(self.train_set_size / self.num_classes)
         if self.randomize_subset:
-            # Take only self.train_set_size and self.test_set_size
+            num_samples_per_class = int(self.train_set_size / self.num_classes)
+            # Take only self.train_set_size
             train_indices = []
             for cls in range(self.num_classes):
                 possible_indices = np.where(y_train == cls)[0]

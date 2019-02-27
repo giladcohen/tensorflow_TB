@@ -354,3 +354,6 @@ def one_hot(indices, depth):
     ohm[np.arange(indices.shape[0]), indices] = 1
     return ohm
 
+def err_n_assert(logger, s):
+    logger.error(s)
+    raise AssertionError(s)
