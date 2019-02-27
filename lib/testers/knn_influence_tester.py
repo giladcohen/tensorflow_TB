@@ -31,19 +31,19 @@ class KNNInfluenceTester(KNNClassifierTester):
         test_dnn_predictions_prob, \
         y_train, \
         y_test = self.fetch_dump_data_features()
-
         # debug:
         assert (y_train == self.feeder.train_label).all()
         assert (y_test  == self.feeder.test_label).all()
-
-
 
         # start by the "normal" knn, find for every test sample all its nearest neighbors.
         # we start just with one testing sample
         test_index = 99
         test_image = self.feeder.test_origin_data[test_index]
         test_label = self.feeder.test_label[test_index]
-        # plt.imshow(test_image)
+        # test_embedding = self.sess.run(fetches=[self.model.net['embedding_layer']],
+        #                                feed_dict={self.model.images: np.expand_dims(test_image, axis=0),
+        #                                           self.model.labels: }
+        #                                )
 
         # find all its nearest neighbors
 

@@ -5,7 +5,6 @@ from __future__ import print_function
 
 import sys
 import numpy as np
-from tensorflow.keras.datasets import cifar10, cifar100
 import cv2
 import os
 import contextlib
@@ -40,28 +39,6 @@ def convert_numpy_to_bin(images, labels, save_file, h=32, w=32):
         label = labels[i]
         out[i*record_bytes:(i+1)*record_bytes] = np.array(list(label) + list(r) + list(g) + list(b), np.uint8)
     out.tofile(save_file)
-
-def save_dataset_to_disk(dataset_name, train_data_dir, train_labels_file, test_data_dir, test_labels_file):
-    """Saving CIFAR10/100 train/test data to specified dirs
-       Saving CIFAR10/100 train/test labels to specified files"""
-    if 'cifar100' in dataset_name:
-        dataset = cifar100
-    elif 'cifar10' in dataset_name:
-        dataset = cifar10
-    else:
-        raise AssertionError('dataset {} is not supported'.format(dataset_name))
-
-    (X_train, Y_train), (X_test, Y_test) = dataset.load_data()
-    np.savetxt(train_labels_file, Y_train, fmt='%0d')
-    np.savetxt(test_labels_file,  Y_test,  fmt='%0d')
-    for i in range(X_train.shape[0]):
-        img = X_train[i]
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(os.path.join(train_data_dir, 'train_image_%0d.png' % i), img_bgr)
-    for i in range(X_test.shape[0]):
-        img = X_test[i]
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(os.path.join(test_data_dir,  'test_image_%0d.png'  % i), img_bgr)
 
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
