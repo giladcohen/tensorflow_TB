@@ -44,8 +44,9 @@ class KNNInfluenceTester(KNNClassifierTester):
 
         # find all its nearest neighbors
         self.knn.fit(X_train_features)
-        neighbors = self.knn.kneighbors(np.expand_dims(test_features, axis=0))
-        print('cool')
+        neighbors_indices, neighbors_dists = self.knn.kneighbors(np.expand_dims(test_features, axis=0))
+
+        
 
 
 
