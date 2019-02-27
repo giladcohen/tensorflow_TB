@@ -24,12 +24,30 @@ class KNNInfluenceTester(KNNClassifierTester):
         # building the feeder
         self.feeder.build()
 
+        # get all train and test embeddings
+        X_train_features, \
+        X_test_features, \
+        train_dnn_predictions_prob, \
+        test_dnn_predictions_prob, \
+        y_train, \
+        y_test = self.fetch_dump_data_features()
+
+        # debug:
+        assert (y_train == self.feeder.train_label).all()
+        assert (y_test  == self.feeder.test_label).all()
+
+
+
         # start by the "normal" knn, find for every test sample all its nearest neighbors.
         # we start just with one testing sample
         test_index = 99
         test_image = self.feeder.test_origin_data[test_index]
         test_label = self.feeder.test_label[test_index]
-        plt.imshow(test_image)
+        # plt.imshow(test_image)
+
+        # find all its nearest neighbors
+
+
 
 
 
