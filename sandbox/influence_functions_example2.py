@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 
-check_point = '/Users/giladcohen/workspace/tensorflow_TB/darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
+check_point = 'darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
 
 # cifar-10 classes
 _classes = (
