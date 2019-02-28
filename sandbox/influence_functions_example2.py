@@ -80,10 +80,12 @@ X_train, y_train = feeder.train_batch(50000)
 X_test, y_test = feeder.test_indices(range(10000))
 
 # display
-influence_target = 99
-test_indices = [influence_target]
-print(_classes[int(feeder.test_label[influence_target])])
-plt.imshow(feeder.test_origin_data[influence_target])
+# influence_target = 99
+# test_indices = [influence_target]
+# print(_classes[int(feeder.test_label[influence_target])])
+# plt.imshow(feeder.test_origin_data[influence_target])
+
+test_indices = range(10000)
 
 # get the training features
 train_features = -1000 * np.ones((50000, 64))
@@ -103,14 +105,14 @@ assert np.sum(test_features == -1000) == 0
 
 # fit the knn and predict
 knn.fit(train_features)
-neighbors_indices = knn.kneighbors(test_features[influence_target:influence_target+1], return_distance=False)
-neighbors_labels = []
-for i in range(50):
-    neighbors_labels.append(_classes[int(y_train[neighbors_indices[0, i]])])
-
-# printing:
-print('neighbors_indices={}'.format(neighbors_indices))
-print('neighbors_labels={}'.format(neighbors_labels))
+neighbors_indices = knn.kneighbors(test_features, return_distance=False)
+# neighbors_labels = []
+# for i in range(50):
+#     neighbors_labels.append(_classes[int(y_train[neighbors_indices[0, i]])])
+#
+# # printing:
+# print('neighbors_indices={}'.format(neighbors_indices))
+# print('neighbors_labels={}'.format(neighbors_labels))
 
 # now finding the influence
 feeder.reset()
@@ -142,49 +144,66 @@ scores = inspector.upweighting_influence_batch(
     train_batch_size=train_batch_size,
     train_iterations=train_iterations)
 
-sorted_indices = np.argsort(scores)
-harmful = sorted_indices[:50]
-helpful = sorted_indices[-50:][::-1]
+# sorted_indices = np.argsort(scores)
+# harmful = sorted_indices[:50]
+# helpful = sorted_indices[-50:][::-1]
 
-cnt_harmful_in_knn = 0
-print('\nHarmful:')
-for idx in harmful:
-    print('[{}] {}'.format(idx, scores[idx]))
-    if idx in neighbors_indices:
-        cnt_harmful_in_knn += 1
-print('{} out of {} harmful images are in the {}-NN'.format(cnt_harmful_in_knn, len(harmful), 50))
+# cnt_harmful_in_knn = 0
+# print('\nHarmful:')
+# for idx in harmful:
+#     print('[{}] {}'.format(idx, scores[idx]))
+#     if idx in neighbors_indices:
+#         cnt_harmful_in_knn += 1
+# print('{} out of {} harmful images are in the {}-NN'.format(cnt_harmful_in_knn, len(harmful), 50))
+#
+# cnt_helpful_in_knn = 0
+# print('\nHelpful:')
+# for idx in helpful:
+#     print('[{}] {}'.format(idx, scores[idx]))
+#     if idx in neighbors_indices:
+#         cnt_helpful_in_knn += 1
+# print('{} out of {} helpful images are in the {}-NN'.format(cnt_helpful_in_knn, len(helpful), 50))
+#
+# fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+# target_idx = 0
+# for j in range(5):
+#     for k in range(10):
+#         idx = neighbors_indices[0][target_idx]
+#         axes1[j][k].set_axis_off()
+#         axes1[j][k].imshow(feeder.train_origin_data[idx])
+#         label_str = _classes[int(feeder.train_label[idx])]
+#         axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
+#         target_idx += 1
+# plt.savefig('./influence_workspace/nearest.png', dpi=350)
+# plt.clf()
+#
+# fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+# target_idx = 0
+# for j in range(5):
+#     for k in range(10):
+#         idx = helpful[target_idx]
+#         axes1[j][k].set_axis_off()
+#         axes1[j][k].imshow(feeder.train_origin_data[idx])
+#         label_str = _classes[int(feeder.train_label[idx])]
+#         axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
+#         target_idx += 1
+# plt.savefig('./influence_workspace/helpful.png', dpi=350)
+# plt.clf()
+#
+# fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+# target_idx = 0
+# for j in range(5):
+#     for k in range(10):
+#         idx = harmful[target_idx]
+#         axes1[j][k].set_axis_off()
+#         axes1[j][k].imshow(feeder.train_origin_data[idx])
+#         label_str = _classes[int(feeder.train_label[idx])]
+#         axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
+#         target_idx += 1
+# plt.savefig('./influence_workspace/harmful.png', dpi=350)
+# plt.clf()
+# print('done')
 
-cnt_helpful_in_knn = 0
-print('\nHelpful:')
-for idx in helpful:
-    print('[{}] {}'.format(idx, scores[idx]))
-    if idx in neighbors_indices:
-        cnt_helpful_in_knn += 1
-print('{} out of {} helpful images are in the {}-NN'.format(cnt_helpful_in_knn, len(helpful), 50))
-
-fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-target_idx = 0
-for j in range(5):
-    for k in range(10):
-        idx = helpful[target_idx]
-        axes1[j][k].set_axis_off()
-        axes1[j][k].imshow(feeder.train_origin_data[idx])
-        label_str = _classes[int(feeder.train_label[idx])]
-        axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
-        target_idx += 1
-plt.savefig('./influence_workspace/helpful.png', dpi=350)
-plt.clf()
-
-fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-target_idx = 0
-for j in range(5):
-    for k in range(10):
-        idx = harmful[target_idx]
-        axes1[j][k].set_axis_off()
-        axes1[j][k].imshow(feeder.train_origin_data[idx])
-        label_str = _classes[int(feeder.train_label[idx])]
-        axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
-        target_idx += 1
-plt.savefig('./influence_workspace/harmful.png', dpi=350)
-plt.clf()
-print('done')
+# save to disk
+np.save('./influence_workspace/scores.npy', scores)
+np.save('./influence_workspace/neighbors_indices.npy', neighbors_indices)
