@@ -1,3 +1,7 @@
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+
 from darkon_examples.cifar10_resnet.cifar10_train import Train
 import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 import darkon
