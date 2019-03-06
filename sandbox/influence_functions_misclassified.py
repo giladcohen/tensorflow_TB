@@ -13,7 +13,7 @@ from darkon.log import logger
 import os
 
 check_point = 'darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
-workspace = 'influence_workspace_060319'
+workspace = 'influence_workspace_misclassified_060319'
 superseed = 15101985
 rand_gen = np.random.RandomState(superseed)
 
@@ -90,15 +90,17 @@ X_test, y_test = feeder.test_indices(range(10000))
 # print(_classes[int(feeder.test_label[influence_target])])
 # plt.imshow(feeder.test_origin_data[influence_target])
 
-test_indices = []
-for cls in range(len(_classes)):
-    cls_test_indices = rand_gen.choice(np.where(y_test==cls)[0], 5, replace=False).tolist()
-    test_indices.extend(cls_test_indices)
-
 # get the training features
 train_preds_prob, train_features = net.test(X_train, return_embedding=True)
 # get the test features
 test_preds_prob, test_features = net.test(X_test, return_embedding=True)
+
+# I want to select only from the misclassified test indices
+test_preds = np.argmax(test_preds_prob, axis=1)
+test_correct = test_preds == y_test
+test_misclassified = np.where(test_correct == False)[0]
+# choosing 25 misclassified indices in random
+test_indices = rand_gen.choice(test_misclassified, 25, replace=False).tolist()
 
 test_features = test_features[test_indices]  # just for these specific test indices
 

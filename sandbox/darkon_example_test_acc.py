@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-check_point = '/Users/giladcohen/workspace/tensorflow-TB/darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
+check_point = 'darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
 
 # cifar-10 classes
 _classes = (
@@ -61,42 +61,15 @@ class MyFeeder(darkon.InfluenceFeeder):
 feeder = MyFeeder()
 
 net = Train()
-# net.build_train_validation_graph()
-#
-# saver = tf.train.Saver(tf.global_variables())
-# sess = tf.InteractiveSession()
-# saver.restore(sess, check_point)
-#
-# inspector = darkon.Influence(
-#     workspace='./influence_workspace',
-#     feeder=feeder,
-#     loss_op_train=net.full_loss,
-#     loss_op_test=net.loss_op,
-#     x_placeholder=net.image_placeholder,
-#     y_placeholder=net.label_placeholder)
-#
-# influence_target = 99
-#
-# # display
-# print(_classes[int(feeder.test_label[influence_target])])
-# plt.imshow(feeder.test_origin_data[influence_target])
-#
-# test_indices = [influence_target]
-# testset_batch_size = 100
-#
-# train_batch_size = 100
-# train_iterations = 500
+net.build_train_validation_graph()
 
-# train_batch_size = 100
-# train_iterations = 50
-
-# batch_indices = range(32)
-# batch_images, batch_labels = feeder.test_indices(batch_indices)
-# batch_pred = sess.run(net.)
+saver = tf.train.Saver(tf.global_variables())
+sess = tf.InteractiveSession()
+saver.restore(sess, check_point)
 
 test_indices = range(10000)
 test_images, test_labels = feeder.test_indices(test_indices)
-test_pred = net.test(test_images)
+test_pred, test_embedding = net.test(test_images, return_embedding=True)
 test_pred_2 = np.argmax(test_pred, axis=1)
 
 test_acc = np.sum(test_pred_2 == test_labels) / 10000.0
