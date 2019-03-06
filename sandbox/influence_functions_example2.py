@@ -130,6 +130,12 @@ approx_params = {
 
 for i, test_index in enumerate(test_indices):
     logger.info("sample {}/{}: calculating scores for test index {}".format(i+1, len(test_indices), test_index))
+
+    # creating the relevant index folder
+    dir = os.path.join(workspace, 'test_index_{}'.format(test_index))
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
     scores = inspector.upweighting_influence_batch(
         sess=sess,
         test_indices=[test_index],
