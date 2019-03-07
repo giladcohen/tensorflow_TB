@@ -181,7 +181,7 @@ for i, test_index in enumerate(test_indices):
             axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
             target_idx += 1
     plt.savefig(os.path.join(workspace, 'test_index_{}'.format(test_index), 'nearest_neighbors.png'), dpi=350)
-    plt.clf()
+    plt.close()
 
     fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
     target_idx = 0
@@ -195,7 +195,7 @@ for i, test_index in enumerate(test_indices):
             axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
             target_idx += 1
     plt.savefig(os.path.join(workspace, 'test_index_{}'.format(test_index), 'helpful.png'), dpi=350)
-    plt.clf()
+    plt.close()
 #
     fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
     target_idx = 0
@@ -209,7 +209,7 @@ for i, test_index in enumerate(test_indices):
             axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
             target_idx += 1
     plt.savefig(os.path.join(workspace, 'test_index_{}'.format(test_index), 'harmful.png'), dpi=350)
-    plt.clf()
+    plt.close()
     print('done')
 
     # save to disk
