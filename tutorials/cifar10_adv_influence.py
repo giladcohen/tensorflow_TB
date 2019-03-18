@@ -143,12 +143,13 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
               dataset_train=dataset_train, dataset_size=dataset_size,
               evaluate=evaluate, args=train_params, rng=rng,
               var_list=model.get_params(),
-              optimizer=tf.train.MomentumOptimizer(learning_rate=train_params['learning_rate'],
-                                                   momentum=0.9,
-                                                   use_nesterov=True)
+              # optimizer=tf.train.MomentumOptimizer(learning_rate=train_params['learning_rate'],
+              #                                      momentum=0.9,
+              #                                      use_nesterov=True)
+              optimizer=tf.train.GradientDescentOptimizer(learning_rate=train_params['learning_rate'])
               )
 
-        save_path = os.path.join("model_save_dir", "model_checkpoint.ckpt")
+        save_path = os.path.join("model_save_dir", "model_checkpoint_lr_0.001_sgd.ckpt")
         saver = tf.train.Saver()
         saver.save(sess, save_path)
 
