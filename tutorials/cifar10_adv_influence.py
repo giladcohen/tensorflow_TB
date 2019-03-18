@@ -76,9 +76,9 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
 
     # Create TF session
     if num_threads:
-        config_args = dict(intra_op_parallelism_threads=1)
+        config_args = dict(intra_op_parallelism_threads=1, allow_soft_placement=True)
     else:
-        config_args = {}
+        config_args = dict(allow_soft_placement=True)
     sess = tf.Session(config=tf.ConfigProto(**config_args))
 
     # Get CIFAR10 data
