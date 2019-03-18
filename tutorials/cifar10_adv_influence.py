@@ -114,9 +114,6 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
     }
     rng = np.random.RandomState([2017, 8, 30])
 
-    save_path = os.path.join("model_save_dir", "model_checkpoint.ckpt")
-    saver = tf.train.Saver()
-
     def do_eval(preds, x_set, y_set, report_key, is_adv=None):
         acc = model_eval(sess, x, y, preds, x_set, y_set, args=eval_params)
         setattr(report, report_key, acc)
@@ -137,7 +134,7 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
         loss = CrossEntropy(model, smoothing=label_smoothing)
         regu_losses = WeightDecay(model)
         full_loss = WeightedSum(model, [(1.0, loss), (0.0002, regu_losses)])
-        # full_loss = tf.add_n([loss] + regu_losses)
+
 
         def evaluate():
             do_eval(preds, x_test, y_test, 'clean_train_clean_eval', False)
@@ -150,6 +147,9 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
                                                    momentum=0.9,
                                                    use_nesterov=True)
               )
+
+        save_path = os.path.join("model_save_dir", "model_checkpoint.ckpt")
+        saver = tf.train.Saver()
         saver.save(sess, save_path)
 
         # Calculate training error
