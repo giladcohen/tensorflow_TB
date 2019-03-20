@@ -1,4 +1,4 @@
-from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
+from tensorflow_TB.lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 
 class DecayByScoreSetter(LearningRateSetterBase):
     """Decaying the learning rate based on the score retention.

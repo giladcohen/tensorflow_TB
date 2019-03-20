@@ -23,7 +23,8 @@ from cleverhans.dataset import CIFAR10
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 # from cleverhans.model_zoo.all_convolutional import ModelAllConvolutional
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
-from cleverhans.train import train
+# from cleverhans.train import train
+from tensorflow_TB.cleverhans_alias.train_alias import train
 from cleverhans.utils import AccuracyReport, set_log_level
 from cleverhans.utils_tf import model_eval
 
@@ -116,6 +117,7 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
             report_text = 'legitimate'
         if report_text:
             print('Test accuracy on %s examples: %0.4f' % (report_text, acc))
+        return acc
 
     # model = make_wresnet(nb_classes=nb_classes, input_shape=(None, 32, 32, 3))  # TODO(add scope)
     model = DarkonReplica(scope='model1', nb_classes=10, n=5, input_shape=[32, 32, 3])
@@ -125,19 +127,6 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
     regu_losses = WeightDecay(model)
     full_loss = WeightedSum(model, [(1.0, loss), (0.0002, regu_losses)])
 
-    # setting the optimizer
-    if optimizer == 'adam':
-        opt = tf.train.AdamOptimizer(learning_rate=learning_rate)
-    elif optimizer == 'rmsprop':
-        opt = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
-    elif optimizer == 'momentum':
-        opt = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9, use_nesterov=True)
-    elif optimizer == 'sgd':
-        opt = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    else:
-        raise AssertionError('optimizer {} is not valid'.format(optimizer))
-    print("set optimizer of {} with learning rate={}".format(opt.get_name(), learning_rate))
-
     def evaluate():
         do_eval(preds, x_test, y_test, 'clean_train_clean_eval', False)
 
@@ -145,7 +134,7 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
           dataset_train=dataset_train, dataset_size=dataset_size,
           evaluate=evaluate, args=train_params, rng=rng,
           var_list=model.get_params(),
-          optimizer=opt)
+          optimizer=optimizer)
 
     save_path = os.path.join("model_save_dir",
                              "model_checkpoint_{}_lr_{}.ckpt".format(opt.get_name(), learning_rate))
