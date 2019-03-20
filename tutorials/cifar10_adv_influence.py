@@ -31,19 +31,16 @@ FLAGS = flags.FLAGS
 
 NB_EPOCHS = 200
 BATCH_SIZE = 128
+OPTIMIZER = 'sgd'
 LEARNING_RATE = 0.001
-CLEAN_TRAIN = True
 BACKPROP_THROUGH_ATTACK = False
 NB_FILTERS = 64
 
 
 def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
                      test_end=10000, nb_epochs=NB_EPOCHS, batch_size=BATCH_SIZE,
-                     learning_rate=LEARNING_RATE,
-                     clean_train=CLEAN_TRAIN,
-                     testing=False,
-                     backprop_through_attack=BACKPROP_THROUGH_ATTACK,
-                     nb_filters=NB_FILTERS, num_threads=None,
+                     optimizer=OPTIMIZER, learning_rate=LEARNING_RATE,
+                     num_threads=None,
                      label_smoothing=0.1):
     """
     CIFAR10 cleverhans tutorial
@@ -53,14 +50,8 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
     :param test_end: index of last test set example
     :param nb_epochs: number of epochs to train model
     :param batch_size: size of training batches
+    :param optimizer: tf.train.optimizer
     :param learning_rate: learning rate for training
-    :param clean_train: perform normal training on clean examples only
-                      before performing adversarial training.
-    :param testing: if true, complete an AccuracyReport for unit tests
-                  to verify that performance is adequate
-    :param backprop_through_attack: If True, backprop through adversarial
-                                  example construction process during
-                                  adversarial training.
     :param label_smoothing: float, amount of label smoothing for cross entropy
     :return: an AccuracyReport object
     """
@@ -100,7 +91,7 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
     x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
     y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 
-    # Train an MNIST model
+    # Train an CIFAR-10 model
     train_params = {
         'nb_epochs': nb_epochs,
         'batch_size': batch_size,
@@ -126,48 +117,48 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
         if report_text:
             print('Test accuracy on %s examples: %0.4f' % (report_text, acc))
 
-    if clean_train:
-        # model = make_wresnet(nb_classes=nb_classes, input_shape=(None, 32, 32, 3))  # TODO(add scope)
-        model = DarkonReplica(scope='model1', nb_classes=10, n=5, input_shape=[32, 32, 3])
+    # model = make_wresnet(nb_classes=nb_classes, input_shape=(None, 32, 32, 3))  # TODO(add scope)
+    model = DarkonReplica(scope='model1', nb_classes=10, n=5, input_shape=[32, 32, 3])
 
-        preds = model.get_logits(x)
-        loss = CrossEntropy(model, smoothing=label_smoothing)
-        regu_losses = WeightDecay(model)
-        full_loss = WeightedSum(model, [(1.0, loss), (0.0002, regu_losses)])
+    preds = model.get_logits(x)
+    loss = CrossEntropy(model, smoothing=label_smoothing)
+    regu_losses = WeightDecay(model)
+    full_loss = WeightedSum(model, [(1.0, loss), (0.0002, regu_losses)])
 
+    # setting the optimizer
+    if optimizer == 'adam':
+        opt = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    elif optimizer == 'rmsprop':
+        opt = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+    elif optimizer == 'momentum':
+        opt = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9, use_nesterov=True)
+    elif optimizer == 'sgd':
+        opt = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    else:
+        raise AssertionError('optimizer {} is not valid'.format(optimizer))
+    print("set optimizer of {} with learning rate={}".format(opt.get_name(), learning_rate))
 
-        def evaluate():
-            do_eval(preds, x_test, y_test, 'clean_train_clean_eval', False)
+    def evaluate():
+        do_eval(preds, x_test, y_test, 'clean_train_clean_eval', False)
 
-        train(sess, full_loss, None, None,
-              dataset_train=dataset_train, dataset_size=dataset_size,
-              evaluate=evaluate, args=train_params, rng=rng,
-              var_list=model.get_params(),
-              # optimizer=tf.train.MomentumOptimizer(learning_rate=train_params['learning_rate'],
-              #                                      momentum=0.9,
-              #                                      use_nesterov=True)
-              optimizer=tf.train.GradientDescentOptimizer(learning_rate=train_params['learning_rate'])
-              )
+    train(sess, full_loss, None, None,
+          dataset_train=dataset_train, dataset_size=dataset_size,
+          evaluate=evaluate, args=train_params, rng=rng,
+          var_list=model.get_params(),
+          optimizer=opt)
 
-        save_path = os.path.join("model_save_dir", "model_checkpoint_lr_0.001_sgd.ckpt")
-        saver = tf.train.Saver()
-        saver.save(sess, save_path)
+    save_path = os.path.join("model_save_dir",
+                             "model_checkpoint_{}_lr_{}.ckpt".format(opt.get_name(), learning_rate))
+    saver = tf.train.Saver()
+    saver.save(sess, save_path, global_step=tf.train.get_global_step())
 
-        # Calculate training error
-        if testing:
-            do_eval(preds, x_train, y_train, 'train_clean_train_clean_eval')
+    # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
+    fgsm = FastGradientMethod(model, sess=sess)
+    adv_x = fgsm.generate(x, **fgsm_params)
+    preds_adv = model.get_logits(adv_x)
 
-        # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
-        fgsm = FastGradientMethod(model, sess=sess)
-        adv_x = fgsm.generate(x, **fgsm_params)
-        preds_adv = model.get_logits(adv_x)
-
-        # Evaluate the accuracy of the MNIST model on adversarial examples
-        do_eval(preds_adv, x_test, y_test, 'clean_train_adv_eval', True)
-
-        # Calculate training error
-        if testing:
-            do_eval(preds_adv, x_train, y_train, 'train_clean_train_adv_eval')
+    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
+    do_eval(preds_adv, x_test, y_test, 'clean_train_adv_eval', True)
 
     return report
 
@@ -177,20 +168,13 @@ def main(argv=None):
     check_installation(__file__)
 
     cifar10_tutorial(nb_epochs=FLAGS.nb_epochs, batch_size=FLAGS.batch_size,
-                   learning_rate=FLAGS.learning_rate,
-                   clean_train=FLAGS.clean_train,
-                   backprop_through_attack=FLAGS.backprop_through_attack,
-                   nb_filters=FLAGS.nb_filters)
+                     optimizer=FLAGS.optimizer, learning_rate=FLAGS.learning_rate)
 
 
 if __name__ == '__main__':
-    flags.DEFINE_integer('nb_filters', NB_FILTERS, 'Model size multiplier')
     flags.DEFINE_integer('nb_epochs', NB_EPOCHS, 'Number of epochs to train model')
     flags.DEFINE_integer('batch_size', BATCH_SIZE, 'Size of training batches')
     flags.DEFINE_float('learning_rate', LEARNING_RATE, 'Learning rate for training')
-    flags.DEFINE_bool('clean_train', CLEAN_TRAIN, 'Train on clean examples')
-    flags.DEFINE_bool('backprop_through_attack', BACKPROP_THROUGH_ATTACK,
-                     ('If True, backprop through adversarial example '
-                      'construction process during adversarial training'))
+    flags.DEFINE_string('optimizer', OPTIMIZER, 'optimizer')
 
     tf.app.run()
