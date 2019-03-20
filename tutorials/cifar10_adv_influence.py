@@ -34,6 +34,7 @@ NB_EPOCHS = 200
 BATCH_SIZE = 128
 OPTIMIZER = 'sgd'
 LEARNING_RATE = 0.001
+WEIGHT_DECAY = 0.0002
 BACKPROP_THROUGH_ATTACK = False
 NB_FILTERS = 64
 CHECKPOINT_NAME = ''
@@ -42,7 +43,7 @@ CHECKPOINT_NAME = ''
 def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
                      test_end=10000, nb_epochs=NB_EPOCHS, batch_size=BATCH_SIZE,
                      optimizer=OPTIMIZER, learning_rate=LEARNING_RATE,
-                     num_threads=None, checkpoint_name=CHECKPOINT_NAME,
+                     weight_decay=WEIGHT_DECAY, num_threads=None, checkpoint_name=CHECKPOINT_NAME,
                      label_smoothing=0.1):
     """
     CIFAR10 cleverhans tutorial
@@ -128,7 +129,7 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
     preds = model.get_logits(x)
     loss = CrossEntropy(model, smoothing=label_smoothing)
     regu_losses = WeightDecay(model)
-    full_loss = WeightedSum(model, [(1.0, loss), (0.0002, regu_losses)])
+    full_loss = WeightedSum(model, [(1.0, loss), (weight_decay, regu_losses)])
 
     def evaluate():
         do_eval(preds, x_test, y_test, 'clean_train_clean_eval', False)
@@ -161,14 +162,15 @@ def main(argv=None):
 
     cifar10_tutorial(nb_epochs=FLAGS.nb_epochs, batch_size=FLAGS.batch_size,
                      optimizer=FLAGS.optimizer, learning_rate=FLAGS.learning_rate,
-                     checkpoint_name=FLAGS.checkpoint_name)
+                     weight_decay=FLAGS.weight_decay, checkpoint_name=FLAGS.checkpoint_name)
 
 
 if __name__ == '__main__':
     flags.DEFINE_integer('nb_epochs', NB_EPOCHS, 'Number of epochs to train model')
     flags.DEFINE_integer('batch_size', BATCH_SIZE, 'Size of training batches')
     flags.DEFINE_float('learning_rate', LEARNING_RATE, 'Learning rate for training')
+    flags.DEFINE_float('weight_decay', WEIGHT_DECAY, 'weight decay')
     flags.DEFINE_string('optimizer', OPTIMIZER, 'optimizer')
-    flags.DEFINE_string('checkpoint_name', CHECKPOINT_NAME, 'optimizer')
+    flags.DEFINE_string('checkpoint_name', CHECKPOINT_NAME, 'checkpoint name')
 
     tf.app.run()
