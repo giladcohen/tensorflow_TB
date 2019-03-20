@@ -114,7 +114,7 @@ def train(sess, loss, x_train, y_train,
   if rng is None:
     rng = np.random.RandomState()
 
-  # global_step = tf.train.get_or_create_global_step()
+  global_step = tf.train.get_or_create_global_step()
   learning_rate = tf.placeholder(tf.float32, shape=[])  # is fed first with args.learning_rate and then decreased
   reduce_lr_on_plateau = ReduceLROnPlateau(factor=0.9, patience=3, cooldown=2, init_lr=args.learning_rate)
 
@@ -168,7 +168,7 @@ def train(sess, loss, x_train, y_train,
   grad = avg_grads(grads)
   # Trigger update operations within the default graph (such as batch_norm).
   with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-    train_step = opt.apply_gradients(grad)  # , global_step=global_step)
+    train_step = opt.apply_gradients(grad, global_step=global_step)
 
   epoch_tf = tf.placeholder(tf.int32, [])
   batch_tf = tf.placeholder(tf.int32, [])

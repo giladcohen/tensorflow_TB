@@ -36,12 +36,13 @@ OPTIMIZER = 'sgd'
 LEARNING_RATE = 0.001
 BACKPROP_THROUGH_ATTACK = False
 NB_FILTERS = 64
+CHECKPOINT_NAME = ''
 
 
 def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
                      test_end=10000, nb_epochs=NB_EPOCHS, batch_size=BATCH_SIZE,
                      optimizer=OPTIMIZER, learning_rate=LEARNING_RATE,
-                     num_threads=None,
+                     num_threads=None, checkpoint_name=CHECKPOINT_NAME,
                      label_smoothing=0.1):
     """
     CIFAR10 cleverhans tutorial
@@ -54,6 +55,8 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
     :param optimizer: tf.train.optimizer
     :param learning_rate: learning rate for training
     :param label_smoothing: float, amount of label smoothing for cross entropy
+    :param num_threads: num of threads
+    :param checkpoint_name: checkpoint suffix
     :return: an AccuracyReport object
     """
 
@@ -137,7 +140,7 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
           optimizer=optimizer)
 
     save_path = os.path.join("model_save_dir",
-                             "model_checkpoint_{}_lr_{}.ckpt".format(opt.get_name(), learning_rate))
+                             "model_checkpoint_{}.ckpt".format(checkpoint_name))
     saver = tf.train.Saver()
     saver.save(sess, save_path, global_step=tf.train.get_global_step())
 
@@ -157,7 +160,8 @@ def main(argv=None):
     check_installation(__file__)
 
     cifar10_tutorial(nb_epochs=FLAGS.nb_epochs, batch_size=FLAGS.batch_size,
-                     optimizer=FLAGS.optimizer, learning_rate=FLAGS.learning_rate)
+                     optimizer=FLAGS.optimizer, learning_rate=FLAGS.learning_rate,
+                     checkpoint_name=FLAGS.checkpoint_name)
 
 
 if __name__ == '__main__':
@@ -165,5 +169,6 @@ if __name__ == '__main__':
     flags.DEFINE_integer('batch_size', BATCH_SIZE, 'Size of training batches')
     flags.DEFINE_float('learning_rate', LEARNING_RATE, 'Learning rate for training')
     flags.DEFINE_string('optimizer', OPTIMIZER, 'optimizer')
+    flags.DEFINE_string('checkpoint_name', CHECKPOINT_NAME, 'optimizer')
 
     tf.app.run()
