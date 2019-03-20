@@ -132,7 +132,7 @@ def cifar10_tutorial(train_start=0, train_end=60000, test_start=0,
     full_loss = WeightedSum(model, [(1.0, loss), (weight_decay, regu_losses)])
 
     def evaluate():
-        do_eval(preds, x_test, y_test, 'clean_train_clean_eval', False)
+        return do_eval(preds, x_test, y_test, 'clean_train_clean_eval', False)
 
     train(sess, full_loss, None, None,
           dataset_train=dataset_train, dataset_size=dataset_size,
