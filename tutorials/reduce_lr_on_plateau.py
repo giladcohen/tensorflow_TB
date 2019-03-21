@@ -80,10 +80,6 @@ class ReduceLROnPlateau(object):
     self._reset()
 
   def on_epoch_end(self, epoch, metric):
-    if self.in_cooldown():
-      self.cooldown_counter -= 1
-      self.wait = 0
-
     if self.monitor_op(metric, self.best):
       self.best = metric
       self.wait = 0
@@ -98,6 +94,10 @@ class ReduceLROnPlateau(object):
           self.curr_lr = new_lr
           self.cooldown_counter = self.cooldown
           self.wait = 0
+
+    if self.in_cooldown():
+      self.cooldown_counter -= 1
+      self.wait = 0
 
   def in_cooldown(self):
     return self.cooldown_counter > 0
