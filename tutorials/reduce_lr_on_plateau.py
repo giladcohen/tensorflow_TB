@@ -22,19 +22,16 @@ class ReduceLROnPlateau(object):
       patience: number of epochs with no improvement
           after which learning rate will be reduced.
       verbose: int. 0: quiet, 1: update messages.
-      mode: one of {auto, min, max}. In `min` mode,
+      mode: one of {min, max}. In `min` mode,
           lr will be reduced when the quantity
           monitored has stopped decreasing; in `max`
           mode it will be reduced when the quantity
-          monitored has stopped increasing; in `auto`
-          mode, the direction is automatically inferred
-          from the name of the monitored quantity.
+          monitored has stopped increasing.
       min_delta: threshold for measuring the new optimum,
           to only focus on significant changes.
       cooldown: number of epochs to wait before resuming
           normal operation after lr has been reduced.
       min_lr: lower bound on the learning rate.
-      sess: session
   """
 
   def __init__(self,
