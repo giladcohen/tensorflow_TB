@@ -40,7 +40,7 @@ def train(sess, loss, x_train, y_train,
           rng=None, var_list=None, fprop_args=None, optimizer=None,
           devices=None, x_batch_preprocessor=None, use_ema=False,
           ema_decay=.998, run_canary=None,
-          loss_threshold=1e5, dataset_train=None, dataset_size=None, retention=None):
+          loss_threshold=1e5, dataset_train=None, dataset_size=None):
   """
   Run (optionally multi-replica, synchronous) training to minimize `loss`
   :param sess: TF session to use when training the graph
@@ -84,7 +84,6 @@ def train(sess, loss, x_train, y_train,
   :param dataset_train: tf Dataset instance.
       Used as a replacement for x_train, y_train for faster performance.
   :param dataset_size: integer, the size of the dataset_train.
-  :param retention: Retention class to hold previous metric
   :return: True if model trained
   """
 
@@ -116,7 +115,7 @@ def train(sess, loss, x_train, y_train,
 
   global_step = tf.train.get_or_create_global_step()
   learning_rate = tf.placeholder(tf.float32, shape=[])  # is fed first with args.learning_rate and then decreased
-  reduce_lr_on_plateau = ReduceLROnPlateau(factor=0.9, patience=3, cooldown=2, init_lr=args.learning_rate)
+  reduce_lr_on_plateau = ReduceLROnPlateau(factor=args.lr_factor, patience=args.lr_patience, cooldown=args.lr_cooldown, init_lr=args.learning_rate)
 
   # setting the optimizer
   if optimizer == 'adam':
