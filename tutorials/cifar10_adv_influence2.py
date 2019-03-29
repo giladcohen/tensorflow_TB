@@ -60,18 +60,20 @@ class MyFeeder(darkon.InfluenceFeeder):
         # load train data
         data, label = cifar10_input.prepare_train_data(padding_size=0)
         self.train_origin_data = data / 255.
+        #self.train_data = cifar10_input.whitening_image(data)
+        self.train_data        = data / 255.
         #self.train_label = label
         label = label.astype(np.int)
         self.train_label = one_hot(label, 10).astype(np.float32)
-        self.train_data = cifar10_input.whitening_image(data)
 
         # load test data
         data, label = cifar10_input.read_validation_data_wo_whitening()
         self.test_origin_data = data / 255.
+        # self.test_data = cifar10_input.whitening_image(data)
+        self.test_data        = data / 255.
         #self.test_label = label
         label = label.astype(np.int)
         self.test_label = one_hot(label, 10).astype(np.float32)
-        self.test_data = cifar10_input.whitening_image(data)
 
         self.train_batch_offset = 0
 
