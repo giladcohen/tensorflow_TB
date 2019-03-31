@@ -101,6 +101,51 @@ def get_plain_session(sess):
         session = session._sess
     return session
 
+def np_evaluate(sess, fetches, x_set, y_set, x, y, batch_size, feed_dict=None, log=None):
+    """
+    Collecting tensorfow operators in a numpy API
+    :param sess: tf.Session
+    :param fetches: list of all the tf tensors (tf.Tensor) to collect
+    :param x_set: dataset in np.ndarray
+    :param y_set: dataset labels in np.ndarray
+    :param x: input placeholder (tf.placeholder) with size of [? , x_set.shape[1:]]
+    :param y: label placeholder (tf.placeholder). Can be sparse or one hot
+    :param batch_size: batch size to process
+    :param feed_dict: default feed_dict (dictionary) to apply in sess.run calls
+    :param log: logger
+    :return: fetches as np.ndarray.
+    """
+
+    if feed_dict is None:
+        feed_dict = {}
+
+    num_samples = len(x_set)
+    batch_count = int(ceil(num_samples / batch_size))
+    last_batch_size = num_samples % batch_size
+
+    fetches_dims = [(num_samples,) + tuple(fetches[i].get_shape().as_list()[1:]) for i in xrange(len(fetches))]
+    fetches_np = [np.empty(fetches_dims[i], dtype=np.float32) for i in xrange(len(fetches))]
+
+    for i in range(batch_count):
+        b = i * batch_size
+        if i < (batch_count - 1) or (last_batch_size == 0):
+            e = (i + 1) * batch_size
+        else:
+            e = i * batch_size + last_batch_size
+        images = x_set[b:e]
+        labels = y_set[b:e]
+        tmp_feed_dict = {x: images, y: labels}
+        tmp_feed_dict.update(feed_dict)
+        fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
+        for i in xrange(len(fetches)):
+            fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b,) + fetches_dims[i][1:])
+        progress_str = 'Storing completed: {}%'.format(int(100.0 * e / num_samples))
+        if log is None:
+            print(progress_str)
+        else:
+            log.info(progress_str)
+    return tuple(fetches_np)
+
 def collect_features(agent, dataset_name, fetches, feed_dict=None):
     """Collecting all fetches from the DNN in the dataset (train/validation/test/train_eval)
     :param agent: The agent (trainer/tester).
@@ -334,3 +379,4 @@ def one_hot(indices, depth):
 def err_n_assert(logger, s):
     logger.error(s)
     raise AssertionError(s)
+

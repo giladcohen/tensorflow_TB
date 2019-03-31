@@ -22,7 +22,8 @@ from tensorflow_TB.utils.misc import one_hot
 from math import ceil
 from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
-
+from tensorflow_TB.lib.datasets.influence_feeder import MyFeeder
+from tensorflow_TB.utils.misc import np_evaluate
 
 FLAGS = flags.FLAGS
 
@@ -64,52 +65,10 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 # Get CIFAR-10 data
 cifar10_input.maybe_download_and_extract()
 
-class MyFeeder(darkon.InfluenceFeeder):
-    def __init__(self):
-        # load train data
-        data, label = cifar10_input.prepare_train_data(padding_size=0)
-        self.train_origin_data = data / 255.
-        #self.train_data = cifar10_input.whitening_image(data)
-        self.train_data        = data / 255.
-        #self.train_label = label
-        label = label.astype(np.int)
-        self.train_label = one_hot(label, 10).astype(np.float32)
-
-        # load test data
-        data, label = cifar10_input.read_validation_data_wo_whitening()
-        self.test_origin_data = data / 255.
-        # self.test_data = cifar10_input.whitening_image(data)
-        self.test_data        = data / 255.
-        #self.test_label = label
-        label = label.astype(np.int)
-        self.test_label = one_hot(label, 10).astype(np.float32)
-
-        self.train_batch_offset = 0
-
-    def train_indices(self, indices):
-        return self.train_data[indices], self.train_label[indices]
-
-    def test_indices(self, indices):
-        return self.test_data[indices], self.test_label[indices]
-
-    def train_batch(self, batch_size):
-        # calculate offset
-        start = self.train_batch_offset
-        end = start + batch_size
-        self.train_batch_offset += batch_size
-
-        return self.train_data[start:end, ...], self.train_label[start:end, ...]
-
-    def train_one(self, idx):
-        return self.train_data[idx, ...], self.train_label[idx, ...]
-
-    def reset(self):
-        self.train_batch_offset = 0
-
-feeder = MyFeeder()
+feeder = MyFeeder(as_one_hot=True)
 
 # get the data
-X_train, y_train = feeder.train_batch(50000)
+X_train, y_train = feeder.train_indices(range(50000))
 X_test, y_test   = feeder.test_indices(range(10000))
 y_train_sparse   = y_train.argmax(axis=-1).astype(np.int32)
 y_test_sparse    = y_test.argmax(axis=-1).astype(np.int32)
@@ -151,44 +110,17 @@ def do_eval(preds, x_set, y_set, report_key, is_adv=None):
         print('Test accuracy on %s examples: %0.4f' % (report_text, acc))
     return acc
 
-def evaluate():
-    return do_eval(preds, X_test, y_test, 'clean_train_clean_eval', False)
-
-def np_evaluate(fetches, x_set, y_set):
-    num_samples = len(x_set)
-    batch_count = int(ceil(num_samples / FLAGS.batch_size))
-    last_batch_size = num_samples % FLAGS.batch_size
-
-    fetches_dims = [(num_samples,) + tuple(fetches[i].get_shape().as_list()[1:]) for i in xrange(len(fetches))]
-    fetches_np = [np.empty(fetches_dims[i], dtype=np.float32) for i in xrange(len(fetches))]
-
-    for i in range(batch_count):
-        b = i * FLAGS.batch_size
-        if i < (batch_count - 1) or (last_batch_size == 0):
-            e = (i + 1) * FLAGS.batch_size
-        else:
-            e = i * FLAGS.batch_size + last_batch_size
-        images = x_set[b:e]
-        labels = y_set[b:e]
-        tmp_feed_dict = {x: images, y: labels}
-        fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
-        for i in xrange(len(fetches)):
-            fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b,) + fetches_dims[i][1:])
-        progress_str = 'Storing completed: {}%'.format(int(100.0 * e / num_samples))
-        logging.info(progress_str)
-    return tuple(fetches_np)
-
 # loading the checkpoint
 save_path = os.path.join("model_save_dir", "model_checkpoint_{}.ckpt-80000".format(FLAGS.checkpoint_name))
 saver = tf.train.Saver()
 saver.restore(sess, save_path)
 
 # predict labels from trainset
-x_train_preds, x_train_features = np_evaluate([preds, embeddings], X_train, y_train)
+x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
 x_train_preds = x_train_preds.astype(np.int32)
 do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
 # predict labels from testset
-x_test_preds, x_test_features = np_evaluate([preds, embeddings], X_test, y_test)
+x_test_preds, x_test_features = np_evaluate(sess, [preds, embeddings], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
 x_test_preds = x_test_preds.astype(np.int32)
 do_eval(logits, X_test, y_test, 'clean_train_clean_eval_testset', False)
 #np.mean(y_test.argmax(axis=-1) == x_test_preds)
@@ -201,7 +133,7 @@ logits_adv     = model.get_logits(adv_x)
 embeddings_adv = model.get_embeddings(adv_x)
 
 # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
-X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate([adv_x, preds_adv, embeddings_adv], X_test, y_test)
+X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
 x_test_preds_adv = x_test_preds_adv.astype(np.int32)
 do_eval(logits_adv, X_test, y_test, 'clean_train_adv_eval', True)
 
@@ -246,7 +178,7 @@ inspector = darkon.Influence(
     y_placeholder=y)
 
 # setting up an adversarial feeder
-adv_feeder = MyFeeder()
+adv_feeder = MyFeeder(as_one_hot=True)
 adv_feeder.test_origin_data = X_test_adv
 adv_feeder.test_data = X_test_adv
 adv_feeder.test_label = one_hot(x_test_preds_adv, 10).astype(np.float32)

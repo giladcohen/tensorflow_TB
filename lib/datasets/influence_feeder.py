@@ -1,64 +1,39 @@
-from __future__ import division
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
-import darkon
-import tensorflow as tf
 import numpy as np
-from lib.base.agent_base import AgentBase
-from utils.misc import err_n_assert, one_hot
+import darkon
+import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
+from tensorflow_TB.utils.misc import one_hot
 
-class Feeder(darkon.InfluenceFeeder, AgentBase):
-    def __init__(self, name, prm):
+class MyFeeder(darkon.InfluenceFeeder):
+    def __init__(self, as_one_hot):
         # load train data
-        self.name = name
-        self.prm = prm
-        super(Feeder, self).__init__(name)
-
-        self.dataset_name   = self.prm.dataset.DATASET_NAME
-        self.num_classes    = self.prm.network.NUM_CLASSES
-        self.one_hot_labels = self.prm.network.ONE_HOT_LABELS
-
-    def build(self):
-        """
-        Builds the train/eval/test data and labels
-        """
-        self.build_dataset()
-        self.reset()
-
-    def build_dataset(self):
-        # reading the dataset from the parameters
-        if 'cifar100' in self.dataset_name:
-            data = tf.keras.datasets.cifar100
-        elif 'cifar10' in self.dataset_name:
-            data = tf.keras.datasets.cifar10
-        elif 'mnist' in self.dataset_name:
-            data = tf.keras.datasets.mnist
+        data, label = cifar10_input.prepare_train_data(padding_size=0)
+        self.train_origin_data = data / 255.
+        self.train_data        = data / 255.
+        if as_one_hot:
+            label = label.astype(np.int32)
+            self.train_label = one_hot(label, 10).astype(np.float32)
         else:
-            data = None
-            err_n_assert(self.log, 'dataset {} is not legal'.format(self.dataset_name))
+            self.train_label = label
 
-        (X_train, y_train), (X_test, y_test) = data.load_data()
-
-        if 'cifar' in self.dataset_name:
-            y_train = np.squeeze(y_train, axis=1)
-            y_test  = np.squeeze(y_test , axis=1)
-        if 'mnist' in self.dataset_name:
-            X_train = np.expand_dims(X_train, axis=-1)
-            X_test  = np.expand_dims(X_test, axis=-1)
-
-        self.train_origin_data = X_train / 255.0
-        self.train_data        = self.whitening_image(X_train)
-
-        self.test_origin_data  = X_test / 255.0
-        self.test_data         = self.whitening_image(X_test)
-
-        if self.one_hot_labels:
-            self.train_label = one_hot(y_train, self.num_classes)
-            self.test_label  = one_hot(y_test , self.num_classes)
+        # load test data
+        data, label = cifar10_input.read_validation_data_wo_whitening()
+        self.test_origin_data = data / 255.
+        self.test_data        = data / 255.
+        if as_one_hot:
+            label = label.astype(np.int32)
+            self.test_label = one_hot(label, 10).astype(np.float32)
         else:
-            self.train_label = y_train
-            self.test_label  = y_test
+            self.test_label = label
+
+        self.train_batch_offset = 0
+
+    def train_indices(self, indices):
+        return self.train_data[indices], self.train_label[indices]
 
     def test_indices(self, indices):
         return self.test_data[indices], self.test_label[indices]
@@ -76,17 +51,3 @@ class Feeder(darkon.InfluenceFeeder, AgentBase):
 
     def reset(self):
         self.train_batch_offset = 0
-
-    def whitening_image(self, image_np):
-        '''
-        Performs per_image_whitening
-        :param image_np: a 4D numpy array representing a batch of images
-        :return: the image numpy array after whitened
-        '''
-        im_shape = image_np.shape
-        for i in range(im_shape[0]):
-            mean = np.mean(image_np[i, ...])
-            # Use adjusted standard deviation here, in case the std == 0.
-            std = np.max([np.std(image_np[i, ...]), 1.0/np.sqrt(im_shape[1] * im_shape[2] * im_shape[3])])
-            image_np[i,...] = (image_np[i, ...] - mean) / std
-        return image_np
