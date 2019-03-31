@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
-flags.DEFINE_float('weight_decay', 0.0002, 'weight decay')
+flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('checkpoint_name', 'batch_125_mom_lr_0.1_decay_p3_c2_f0.9_regu_0.0004_290319', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_310319', 'workspace dir')
@@ -65,7 +65,6 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 
 # Get CIFAR-10 data
 cifar10_input.maybe_download_and_extract()
-
 
 class MyFeeder(darkon.InfluenceFeeder):
     def __init__(self):
@@ -116,9 +115,6 @@ X_train, y_train = feeder.train_batch(50000)
 X_test, y_test   = feeder.test_indices(range(10000))
 y_train_sparse   = y_train.argmax(axis=-1).astype(np.int32)
 y_test_sparse    = y_test.argmax(axis=-1).astype(np.int32)
-
-trainset_size = X_train.shape[0]
-testset_size  = X_test.shape[0]
 
 # Use Image Parameters
 img_rows, img_cols, nchannels = X_test.shape[1:4]
@@ -182,7 +178,6 @@ def np_evaluate(fetches, x_set, y_set):
             fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b,) + fetches_dims[i][1:])
         progress_str = 'Storing completed: {}%'.format(int(100.0 * e / num_samples))
         logging.info(progress_str)
-        print(progress_str)
     return tuple(fetches_np)
 
 # loading the checkpoint
@@ -191,7 +186,7 @@ saver = tf.train.Saver()
 saver.restore(sess, save_path)
 
 # predict labels from trainset
-x_train_preds, x_train_features = np_evaluate([model.get_predicted_class(x), model.get_embeddings(x)], X_train, y_train)
+x_train_preds, x_train_features = np_evaluate([preds, embeddings], X_train, y_train)
 x_train_preds = x_train_preds.astype(np.int32)
 do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
 # predict labels from testset
@@ -232,6 +227,9 @@ for cls in range(len(_classes)):
             cls_test_indices.append(cls_test_index)
             got_so_far += 1
     test_indices.extend(cls_test_indices)
+
+# optional: divide test indices
+# test_indices = test_indices[b:e]
 
 # start the knn observation
 knn = NearestNeighbors(n_neighbors=50000, p=2, n_jobs=20)
@@ -315,7 +313,8 @@ for i, test_index in enumerate(test_indices):
             print('[{}] {}'.format(idx, scores[idx]))
             if idx in all_neighbor_indices[test_index, 0:50]:
                 cnt_harmful_in_knn += 1
-        print('{}: {} out of {} harmful images are in the {}-NN'.format(case, cnt_harmful_in_knn, len(harmful), 50))
+        harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
+        print(harmful_summary_str)
 
         cnt_helpful_in_knn = 0
         print('\nHelpful:')
@@ -323,7 +322,8 @@ for i, test_index in enumerate(test_indices):
             print('[{}] {}'.format(idx, scores[idx]))
             if idx in all_neighbor_indices[test_index, 0:50]:
                 cnt_helpful_in_knn += 1
-        print('{}: {} out of {} helpful images are in the {}-NN'.format(case, cnt_helpful_in_knn, len(helpful), 50))
+        helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
+        print(helpful_summary_str)
 
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
@@ -371,9 +371,16 @@ for i, test_index in enumerate(test_indices):
 
         # save to disk
         np.save(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'scores'), scores)
+        if case == 'real':
+            image = X_test[test_index]
+        else:
+            image = X_test_adv[test_index]
+        np.save(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'image'), image)
 
         # getting two ranks - one rank for the real label and another rank for the adv label.
         # what is a "rank"?
         # A rank is the average nearest neighbor location of all the helpful training indices.
         with open(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'summary.txt'), 'w+') as f:
+            f.write(harmful_summary_str)
+            f.write(helpful_summary_str)
             f.write('label ({} -> {}) {} rank: {}'.format(_classes[real_label], _classes[adv_label], case, label_rank))
