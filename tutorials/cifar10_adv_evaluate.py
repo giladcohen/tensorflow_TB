@@ -1,0 +1,379 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import logging
+import numpy as np
+import tensorflow as tf
+import os
+
+import darkon
+from cleverhans.attacks import FastGradientMethod
+from cleverhans.augmentation import random_horizontal_flip, random_shift
+# from cleverhans.compat import flags
+from tensorflow.python.platform import flags
+import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
+from cleverhans.dataset import CIFAR10
+from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
+from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
+from tensorflow_TB.cleverhans_alias.train_alias import train
+from cleverhans.utils import AccuracyReport, set_log_level
+from cleverhans.utils_tf import model_eval
+from tensorflow_TB.utils.misc import one_hot
+from math import ceil
+from sklearn.neighbors import NearestNeighbors
+import matplotlib.pyplot as plt
+
+
+FLAGS = flags.FLAGS
+
+flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
+flags.DEFINE_float('weight_decay', 0.0002, 'weight decay')
+flags.DEFINE_string('checkpoint_name', 'batch_125_mom_lr_0.1_decay_p3_c2_f0.9_regu_0.0004_290319', 'checkpoint name')
+flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
+flags.DEFINE_string('workspace', 'influence_workspace_310319', 'workspace dir')
+
+# cifar-10 classes
+_classes = (
+    'airplane',
+    'car',
+    'bird',
+    'cat',
+    'deer',
+    'dog',
+    'frog',
+    'horse',
+    'ship',
+    'truck'
+)
+
+# Object used to keep track of (and return) key accuracies
+report = AccuracyReport()
+
+# Set TF random seed to improve reproducibility
+superseed = 15101985
+rand_gen = np.random.RandomState(superseed)
+tf.set_random_seed(superseed)
+
+# Set logging level to see debug information
+set_log_level(logging.DEBUG)
+
+# Create TF session
+config_args = dict(allow_soft_placement=True)
+sess = tf.Session(config=tf.ConfigProto(**config_args))
+
+# Get CIFAR-10 data
+cifar10_input.maybe_download_and_extract()
+
+
+class MyFeeder(darkon.InfluenceFeeder):
+    def __init__(self):
+        # load train data
+        data, label = cifar10_input.prepare_train_data(padding_size=0)
+        self.train_origin_data = data / 255.
+        #self.train_data = cifar10_input.whitening_image(data)
+        self.train_data        = data / 255.
+        #self.train_label = label
+        label = label.astype(np.int)
+        self.train_label = one_hot(label, 10).astype(np.float32)
+
+        # load test data
+        data, label = cifar10_input.read_validation_data_wo_whitening()
+        self.test_origin_data = data / 255.
+        # self.test_data = cifar10_input.whitening_image(data)
+        self.test_data        = data / 255.
+        #self.test_label = label
+        label = label.astype(np.int)
+        self.test_label = one_hot(label, 10).astype(np.float32)
+
+        self.train_batch_offset = 0
+
+    def train_indices(self, indices):
+        return self.train_data[indices], self.train_label[indices]
+
+    def test_indices(self, indices):
+        return self.test_data[indices], self.test_label[indices]
+
+    def train_batch(self, batch_size):
+        # calculate offset
+        start = self.train_batch_offset
+        end = start + batch_size
+        self.train_batch_offset += batch_size
+
+        return self.train_data[start:end, ...], self.train_label[start:end, ...]
+
+    def train_one(self, idx):
+        return self.train_data[idx, ...], self.train_label[idx, ...]
+
+    def reset(self):
+        self.train_batch_offset = 0
+
+feeder = MyFeeder()
+
+# get the data
+X_train, y_train = feeder.train_batch(50000)
+X_test, y_test   = feeder.test_indices(range(10000))
+y_train_sparse   = y_train.argmax(axis=-1).astype(np.int32)
+y_test_sparse    = y_test.argmax(axis=-1).astype(np.int32)
+
+trainset_size = X_train.shape[0]
+testset_size  = X_test.shape[0]
+
+# Use Image Parameters
+img_rows, img_cols, nchannels = X_test.shape[1:4]
+nb_classes = y_test.shape[1]
+
+# Define input TF placeholder
+x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
+y = tf.placeholder(tf.float32, shape=(None, nb_classes))
+
+eval_params = {'batch_size': FLAGS.batch_size}
+fgsm_params = {
+    'eps': 0.3,
+    'clip_min': 0.,
+    'clip_max': 1.
+}
+
+model = DarkonReplica(scope='model1', nb_classes=10, n=5, input_shape=[32, 32, 3])
+preds      = model.get_predicted_class(x)
+logits     = model.get_logits(x)
+embeddings = model.get_embeddings(x)
+
+loss = CrossEntropy(model, smoothing=FLAGS.label_smoothing)
+regu_losses = WeightDecay(model)
+full_loss = WeightedSum(model, [(1.0, loss), (FLAGS.weight_decay, regu_losses)])
+
+def do_eval(preds, x_set, y_set, report_key, is_adv=None):
+    acc = model_eval(sess, x, y, preds, x_set, y_set, args=eval_params)
+    setattr(report, report_key, acc)
+    if is_adv is None:
+        report_text = None
+    elif is_adv:
+        report_text = 'adversarial'
+    else:
+        report_text = 'legitimate'
+    if report_text:
+        print('Test accuracy on %s examples: %0.4f' % (report_text, acc))
+    return acc
+
+def evaluate():
+    return do_eval(preds, X_test, y_test, 'clean_train_clean_eval', False)
+
+def np_evaluate(fetches, x_set, y_set):
+    num_samples = len(x_set)
+    batch_count = int(ceil(num_samples / FLAGS.batch_size))
+    last_batch_size = num_samples % FLAGS.batch_size
+
+    fetches_dims = [(num_samples,) + tuple(fetches[i].get_shape().as_list()[1:]) for i in xrange(len(fetches))]
+    fetches_np = [np.empty(fetches_dims[i], dtype=np.float32) for i in xrange(len(fetches))]
+
+    for i in range(batch_count):
+        b = i * FLAGS.batch_size
+        if i < (batch_count - 1) or (last_batch_size == 0):
+            e = (i + 1) * FLAGS.batch_size
+        else:
+            e = i * FLAGS.batch_size + last_batch_size
+        images = x_set[b:e]
+        labels = y_set[b:e]
+        tmp_feed_dict = {x: images, y: labels}
+        fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
+        for i in xrange(len(fetches)):
+            fetches_np[i][b:e] = np.reshape(fetches_out[i], (e - b,) + fetches_dims[i][1:])
+        progress_str = 'Storing completed: {}%'.format(int(100.0 * e / num_samples))
+        logging.info(progress_str)
+        print(progress_str)
+    return tuple(fetches_np)
+
+# loading the checkpoint
+save_path = os.path.join("model_save_dir", "model_checkpoint_{}.ckpt-80000".format(FLAGS.checkpoint_name))
+saver = tf.train.Saver()
+saver.restore(sess, save_path)
+
+# predict labels from trainset
+x_train_preds, x_train_features = np_evaluate([model.get_predicted_class(x), model.get_embeddings(x)], X_train, y_train)
+x_train_preds = x_train_preds.astype(np.int32)
+do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
+# predict labels from testset
+x_test_preds, x_test_features = np_evaluate([preds, embeddings], X_test, y_test)
+x_test_preds = x_test_preds.astype(np.int32)
+do_eval(logits, X_test, y_test, 'clean_train_clean_eval_testset', False)
+#np.mean(y_test.argmax(axis=-1) == x_test_preds)
+
+# Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
+fgsm = FastGradientMethod(model, sess=sess)
+adv_x = fgsm.generate(x, **fgsm_params)
+preds_adv      = model.get_predicted_class(adv_x)
+logits_adv     = model.get_logits(adv_x)
+embeddings_adv = model.get_embeddings(adv_x)
+
+# Evaluate the accuracy of the CIFAR-10 model on adversarial examples
+X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate([adv_x, preds_adv, embeddings_adv], X_test, y_test)
+x_test_preds_adv = x_test_preds_adv.astype(np.int32)
+do_eval(logits_adv, X_test, y_test, 'clean_train_adv_eval', True)
+
+# what are the indices of the test set which the network succeeded classifying correctly,
+# but the FGSM attack changed to a different class?
+net_succ_attack_succ = []
+for i in range(len(X_test)):
+    net_succ    = x_test_preds[i] == y_test_sparse[i]
+    attack_succ = x_test_preds[i] != x_test_preds_adv[i]
+    if net_succ and attack_succ:
+        net_succ_attack_succ.append(i)
+
+# Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
+test_indices = []
+for cls in range(len(_classes)):
+    cls_test_indices = []
+    got_so_far = 0
+    while got_so_far < 5:
+        cls_test_index = rand_gen.choice(np.where(y_test_sparse == cls)[0])
+        if cls_test_index in net_succ_attack_succ:
+            cls_test_indices.append(cls_test_index)
+            got_so_far += 1
+    test_indices.extend(cls_test_indices)
+
+# start the knn observation
+knn = NearestNeighbors(n_neighbors=50000, p=2, n_jobs=20)
+knn.fit(x_train_features)
+all_neighbor_indices = knn.kneighbors(x_test_features, return_distance=False)
+
+# now finding the influence
+feeder.reset()
+
+inspector = darkon.Influence(
+    workspace=FLAGS.workspace,
+    feeder=feeder,
+    loss_op_train=full_loss.fprop(x=x, y=y),
+    loss_op_test=loss.fprop(x=x, y=y),
+    x_placeholder=x,
+    y_placeholder=y)
+
+# setting up an adversarial feeder
+adv_feeder = MyFeeder()
+adv_feeder.test_origin_data = X_test_adv
+adv_feeder.test_data = X_test_adv
+adv_feeder.test_label = one_hot(x_test_preds_adv, 10).astype(np.float32)
+adv_feeder.reset()
+
+inspector_adv = darkon.Influence(
+    workspace=FLAGS.workspace,
+    feeder=adv_feeder,
+    loss_op_train=full_loss.fprop(x=x, y=y),
+    loss_op_test=loss.fprop(x=x, y=y),
+    x_placeholder=x,
+    y_placeholder=y)
+
+testset_batch_size = 100
+train_batch_size = 100
+train_iterations = 500
+
+approx_params = {
+    'scale': 200,
+    'num_repeats': 5,
+    'recursion_depth': 100,
+    'recursion_batch_size': 100
+}
+
+for i, test_index in enumerate(test_indices):
+    real_label = y_test_sparse[test_index]
+    adv_label  = x_test_preds_adv[test_index]
+
+    logging.info("sample {}/{}: calculating scores for test index {}. real label: {}, adv label: {}"
+                 .format(i+1, len(test_indices), test_index, _classes[real_label], _classes[adv_label]))
+
+    for case in ['real', 'adv']:
+        if case == 'real':
+            insp = inspector
+        elif case == 'adv':
+            insp = inspector_adv
+        else:
+            raise AssertionError('only real and adv are accepted.')
+
+        # creating the relevant index folders
+        dir = os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        scores = insp.upweighting_influence_batch(
+            sess=sess,
+            test_indices=[test_index],
+            test_batch_size=testset_batch_size,
+            approx_params=approx_params,
+            train_batch_size=train_batch_size,
+            train_iterations=train_iterations,
+            force_refresh=True)
+
+        sorted_indices = np.argsort(scores)
+        harmful = sorted_indices[:50]
+        helpful = sorted_indices[-50:][::-1]
+
+        # have some figures
+        cnt_harmful_in_knn = 0
+        print('\nHarmful:')
+        for idx in harmful:
+            print('[{}] {}'.format(idx, scores[idx]))
+            if idx in all_neighbor_indices[test_index, 0:50]:
+                cnt_harmful_in_knn += 1
+        print('{}: {} out of {} harmful images are in the {}-NN'.format(case, cnt_harmful_in_knn, len(harmful), 50))
+
+        cnt_helpful_in_knn = 0
+        print('\nHelpful:')
+        for idx in helpful:
+            print('[{}] {}'.format(idx, scores[idx]))
+            if idx in all_neighbor_indices[test_index, 0:50]:
+                cnt_helpful_in_knn += 1
+        print('{}: {} out of {} helpful images are in the {}-NN'.format(case, cnt_helpful_in_knn, len(helpful), 50))
+
+        fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+        target_idx = 0
+        for j in range(5):
+            for k in range(10):
+                idx = all_neighbor_indices[test_index, target_idx]
+                axes1[j][k].set_axis_off()
+                axes1[j][k].imshow(X_train[idx])
+                label_str = _classes[y_train_sparse[idx]]
+                axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
+                target_idx += 1
+        plt.savefig(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'nearest_neighbors.png'), dpi=350)
+        plt.close()
+
+        total_rank = 0.0
+        fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+        target_idx = 0
+        for j in range(5):
+            for k in range(10):
+                idx = helpful[target_idx]
+                axes1[j][k].set_axis_off()
+                axes1[j][k].imshow(X_train[idx])
+                label_str = _classes[y_train_sparse[idx]]
+                loc_in_knn = np.where(all_neighbor_indices[test_index] == idx)[0][0]
+                total_rank += loc_in_knn
+                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
+                target_idx += 1
+        label_rank = total_rank / 50
+        plt.savefig(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'helpful.png'), dpi=350)
+        plt.close()
+
+        fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+        target_idx = 0
+        for j in range(5):
+            for k in range(10):
+                idx = harmful[target_idx]
+                axes1[j][k].set_axis_off()
+                axes1[j][k].imshow(X_train[idx])
+                label_str = _classes[y_train_sparse[idx]]
+                loc_in_knn = np.where(all_neighbor_indices[test_index] == idx)[0][0]
+                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
+                target_idx += 1
+        plt.savefig(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'harmful.png'), dpi=350)
+        plt.close()
+
+        # save to disk
+        np.save(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'scores'), scores)
+
+        # getting two ranks - one rank for the real label and another rank for the adv label.
+        # what is a "rank"?
+        # A rank is the average nearest neighbor location of all the helpful training indices.
+        with open(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'summary.txt'), 'w+') as f:
+            f.write('label ({} -> {}) {} rank: {}'.format(_classes[real_label], _classes[adv_label], case, label_rank))

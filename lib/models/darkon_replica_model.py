@@ -203,3 +203,11 @@ class DarkonReplica(Model):
             return {self.O_EMBEDDINGS: embedding_vector,
                     self.O_LOGITS: logits,
                     self.O_PROBS: tf.nn.softmax(logits=logits)}
+
+    def get_embeddings(self, x, **kwargs):
+        outputs = self.fprop(x, **kwargs)
+        if self.O_EMBEDDINGS in outputs:
+            return outputs[self.O_EMBEDDINGS]
+        raise NotImplementedError(str(type(self)) + "must implement `get_embeddings`"
+                                  " or must define a " + self.O_EMBEDDINGS +
+                                  " output in `fprop`")
