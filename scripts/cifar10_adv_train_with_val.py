@@ -17,7 +17,7 @@ from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
 from tensorflow_TB.cleverhans_alias.train_alias import train
 from cleverhans.utils import AccuracyReport, set_log_level
 from cleverhans.utils_tf import model_eval
-from tensorflow_TB.lib.datasets.influence_feeder import MyFeeder
+from tensorflow_TB.lib.datasets.influence_feeder_val import MyFeederVal
 
 FLAGS = flags.FLAGS
 
@@ -51,13 +51,13 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 # Get CIFAR-10 data
 cifar10_input.maybe_download_and_extract()
 
-feeder = MyFeeder(as_one_hot=True)
+feeder = MyFeederVal(as_one_hot=True, rand_gen=rand_gen)
 
 # get the data
-X_train, y_train = feeder.train_indices(range(50000))
-X_test, y_test   = feeder.test_indices(range(10000))
+X_train, y_train = feeder.train_indices(range(49000))
+X_val, y_val     = feeder.test_indices(range(1000))
 y_train_sparse   = y_train.argmax(axis=-1).astype(np.int32)
-y_test_sparse    = y_test.argmax(axis=-1).astype(np.int32)
+y_val_sparse     = y_val.argmax(axis=-1).astype(np.int32)
 
 dataset_size  = X_train.shape[0]
 dataset_train = tf.data.Dataset.range(dataset_size)
@@ -73,8 +73,8 @@ dataset_train = dataset_train.batch(FLAGS.batch_size)
 dataset_train = dataset_train.prefetch(16)
 
 # Use Image Parameters
-img_rows, img_cols, nchannels = X_test.shape[1:4]
-nb_classes = y_test.shape[1]
+img_rows, img_cols, nchannels = X_val.shape[1:4]
+nb_classes = y_val.shape[1]
 
 # Define input TF placeholder
 x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
@@ -116,7 +116,7 @@ def do_eval(preds, x_set, y_set, report_key, is_adv=None):
     return acc
 
 def evaluate():
-    return do_eval(logits, X_test, y_test, 'clean_train_clean_eval', False)
+    return do_eval(logits, X_val, y_val, 'clean_train_clean_eval', False)
 
 train(sess, full_loss, None, None,
       dataset_train=dataset_train, dataset_size=dataset_size,
@@ -127,6 +127,7 @@ train(sess, full_loss, None, None,
 save_path = os.path.join("model_save_dir", "model_checkpoint_{}.ckpt".format(FLAGS.checkpoint_name))
 saver = tf.train.Saver()
 saver.save(sess, save_path, global_step=tf.train.get_global_step())
+np.save(os.path.join("model_save_dir", "val_indices_{}.npy".format(FLAGS.checkpoint_name)))
 
 # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
 fgsm = FastGradientMethod(model, sess=sess)
@@ -134,6 +135,6 @@ adv_x = fgsm.generate(x, **fgsm_params)
 logits_adv = model.get_logits(adv_x)
 
 # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
-do_eval(logits_adv, X_test, y_test, 'clean_train_adv_eval', True)
+do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
 
 print('done')

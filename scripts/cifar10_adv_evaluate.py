@@ -10,16 +10,13 @@ import os
 
 import darkon
 from cleverhans.attacks import FastGradientMethod
-# from cleverhans.compat import flags
 from tensorflow.python.platform import flags
 import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
-from cleverhans.dataset import CIFAR10
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
 from cleverhans.utils import AccuracyReport, set_log_level
 from cleverhans.utils_tf import model_eval
 from tensorflow_TB.utils.misc import one_hot
-from math import ceil
 from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder import MyFeeder
