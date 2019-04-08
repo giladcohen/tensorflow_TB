@@ -23,7 +23,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('nb_epochs', 200, 'Number of epochs to train model')
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
-flags.DEFINE_float('weight_decay', 0.0002, 'weight decay')
+flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('optimizer', 'mom', 'optimizer')
 flags.DEFINE_float('learning_rate', 0.1, 'Learning rate for training')
 flags.DEFINE_float('lr_factor', 0.9, 'A factor to decay a learning rate')
