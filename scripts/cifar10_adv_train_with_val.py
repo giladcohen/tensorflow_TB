@@ -124,10 +124,14 @@ train(sess, full_loss, None, None,
       var_list=model.get_params(),
       optimizer=FLAGS.optimizer)
 
-save_path = os.path.join("model_save_dir", "model_checkpoint_{}.ckpt".format(FLAGS.checkpoint_name))
+model_dir = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+
+save_path = os.path.join(model_dir, "model_checkpoint.ckpt")
 saver = tf.train.Saver()
 saver.save(sess, save_path, global_step=tf.train.get_global_step())
-np.save(os.path.join("model_save_dir", "val_indices_{}.npy".format(FLAGS.checkpoint_name)))
+np.save(os.path.join(model_dir, "val_indices.npy"))
 
 # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
 fgsm = FastGradientMethod(model, sess=sess)
