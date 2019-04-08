@@ -52,6 +52,10 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 cifar10_input.maybe_download_and_extract()
 
 feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, test_val_set=True)
+model_dir = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
 X_train, y_train = feeder.train_indices(range(49000))
@@ -79,11 +83,6 @@ nb_classes = y_val.shape[1]
 # Define input TF placeholder
 x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
-
-model_dir = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
-np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # Train an CIFAR-10 model
 train_params = {

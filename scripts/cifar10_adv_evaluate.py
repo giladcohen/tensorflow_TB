@@ -9,7 +9,7 @@ import tensorflow as tf
 import os
 
 import darkon
-from cleverhans.attacks import FastGradientMethod
+from cleverhans.attacks import FastGradientMethod, DeepFool
 from tensorflow.python.platform import flags
 import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
@@ -26,9 +26,10 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', '', 'checkpoint name')
+flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_310319', 'workspace dir')
+flags.DEFINE_string('workspace', 'influence_workspace_validation_080419', 'workspace dir')
+flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
 
 # cifar-10 classes
 _classes = (
@@ -66,16 +67,17 @@ cifar10_input.maybe_download_and_extract()
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 workspace_dir = os.path.join(model_dir, FLAGS.workspace)
 val_indices   = np.load(os.path.join(model_dir, 'val_indices.npy'))  # get the original validation indices
-
-feeder = MyFeederValTest(as_one_hot=True, val_inds=val_indices, test_val_set=True)
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
 
 # get the data
-val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))  # get the original validation indices
-X_train, y_train = feeder.train_indices(range(50000))
-
-X_test, y_test   = feeder.test_indices(range(10000))
-y_train_sparse   = y_train.argmax(axis=-1).astype(np.int32)
-y_test_sparse    = y_test.argmax(axis=-1).astype(np.int32)
+X_complete, y_complete = feeder.indices(range(50000))
+X_train, y_train       = feeder.train_indices(range(49000))
+X_val, y_val           = feeder.val_indices(range(1000))
+X_test, y_test         = feeder.test_indices(range(10000))
+y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
+y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
+y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
+y_complete_sparse      = y_complete.argmax(axis=-1).astype(np.int32)
 
 # Use Image Parameters
 img_rows, img_cols, nchannels = X_test.shape[1:4]
@@ -86,10 +88,15 @@ x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 
 eval_params = {'batch_size': FLAGS.batch_size}
-fgsm_params = {
-    'eps': 0.3,
-    'clip_min': 0.,
-    'clip_max': 1.
+# fgsm_params = {
+#     'eps': 0.3,
+#     'clip_min': 0.,
+#     'clip_max': 1.
+# }
+
+deepfool_params = {
+    'clip_min': 0.0,
+    'clip_max': 1.0
 }
 
 model = DarkonReplica(scope='model1', nb_classes=10, n=5, input_shape=[32, 32, 3])
@@ -115,66 +122,71 @@ def do_eval(preds, x_set, y_set, report_key, is_adv=None):
     return acc
 
 # loading the checkpoint
-save_path = os.path.join("model_save_dir", "model_checkpoint_{}.ckpt-80000".format(FLAGS.checkpoint_name))
 saver = tf.train.Saver()
-saver.restore(sess, save_path)
+checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
+saver.restore(sess, checkpoint_path)
 
 # predict labels from trainset
 x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
 x_train_preds = x_train_preds.astype(np.int32)
 do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
-# predict labels from testset
-x_test_preds, x_test_features = np_evaluate(sess, [preds, embeddings], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
-x_test_preds = x_test_preds.astype(np.int32)
-do_eval(logits, X_test, y_test, 'clean_train_clean_eval_testset', False)
+# predict labels from validation set
+x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+x_val_preds = x_val_preds.astype(np.int32)
+do_eval(logits, X_val, y_val, 'clean_train_clean_eval_validationset', False)
 #np.mean(y_test.argmax(axis=-1) == x_test_preds)
 
-# Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
-fgsm = FastGradientMethod(model, sess=sess)
-adv_x = fgsm.generate(x, **fgsm_params)
+# Initialize the advarsarial attack object and graph
+deepfool       = DeepFool(model, sess=sess)
+adv_x          = deepfool.generate(x, **deepfool_params)
 preds_adv      = model.get_predicted_class(adv_x)
 logits_adv     = model.get_logits(adv_x)
 embeddings_adv = model.get_embeddings(adv_x)
 
 # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
-X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
-x_test_preds_adv = x_test_preds_adv.astype(np.int32)
-do_eval(logits_adv, X_test, y_test, 'clean_train_adv_eval', True)
+X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+x_val_preds_adv = x_val_preds_adv.astype(np.int32)
+do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
 
-# what are the indices of the test set which the network succeeded classifying correctly,
-# but the FGSM attack changed to a different class?
+# what are the indices of the cifar10 set which the network succeeded classifying correctly,
+# but the adversarial attack changed to a different class?
 net_succ_attack_succ = []
-for i in range(len(X_test)):
-    net_succ    = x_test_preds[i] == y_test_sparse[i]
-    attack_succ = x_test_preds[i] != x_test_preds_adv[i]
+net_succ_attack_succ_val_inds = []
+for i, val_ind in enumerate(feeder.val_inds):
+    net_succ    = x_val_preds[i] == y_val_sparse[i]
+    attack_succ = x_val_preds[i] != x_val_preds_adv[i]
     if net_succ and attack_succ:
         net_succ_attack_succ.append(i)
+        net_succ_attack_succ_val_inds.append(val_ind)
+net_succ_attack_succ          = np.asarray(net_succ_attack_succ         , dtype=np.int32)
+net_succ_attack_succ_val_inds = np.asarray(net_succ_attack_succ_val_inds, dtype=np.int32)
+np.save(os.path.join(model_dir, 'net_succ_attack_succ.npy')         , net_succ_attack_succ)
+np.save(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'), net_succ_attack_succ_val_inds)
 
 # Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
-test_indices = []
-for cls in range(len(_classes)):
-    cls_test_indices = []
-    got_so_far = 0
-    while got_so_far < 5:
-        cls_test_index = rand_gen.choice(np.where(y_test_sparse == cls)[0])
-        if cls_test_index in net_succ_attack_succ:
-            cls_test_indices.append(cls_test_index)
-            got_so_far += 1
-    test_indices.extend(cls_test_indices)
-
+# test_indices = []
+# for cls in range(len(_classes)):
+#     cls_test_indices = []
+#     got_so_far = 0
+#     while got_so_far < 5:
+#         cls_test_index = rand_gen.choice(np.where(y_test_sparse == cls)[0])
+#         if cls_test_index in net_succ_attack_succ:
+#             cls_test_indices.append(cls_test_index)
+#             got_so_far += 1
+#     test_indices.extend(cls_test_indices)
 # optional: divide test indices
 # test_indices = test_indices[b:e]
 
 # start the knn observation
-knn = NearestNeighbors(n_neighbors=50000, p=2, n_jobs=20)
+knn = NearestNeighbors(n_neighbors=49000, p=2, n_jobs=20)
 knn.fit(x_train_features)
-all_neighbor_indices = knn.kneighbors(x_test_features, return_distance=False)
+all_neighbor_indices = knn.kneighbors(x_val_features, return_distance=False)
 
 # now finding the influence
 feeder.reset()
 
 inspector = darkon.Influence(
-    workspace=FLAGS.workspace,
+    workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
     feeder=feeder,
     loss_op_train=full_loss.fprop(x=x, y=y),
     loss_op_test=loss.fprop(x=x, y=y),
@@ -182,14 +194,14 @@ inspector = darkon.Influence(
     y_placeholder=y)
 
 # setting up an adversarial feeder
-adv_feeder = MyFeeder(as_one_hot=True)
-adv_feeder.test_origin_data = X_test_adv
-adv_feeder.test_data = X_test_adv
-adv_feeder.test_label = one_hot(x_test_preds_adv, 10).astype(np.float32)
+adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
+adv_feeder.test_origin_data = X_val_adv
+adv_feeder.test_data        = X_val_adv
+adv_feeder.test_label       = one_hot(x_val_preds_adv, 10).astype(np.float32)
 adv_feeder.reset()
 
 inspector_adv = darkon.Influence(
-    workspace=FLAGS.workspace,
+    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
     feeder=adv_feeder,
     loss_op_train=full_loss.fprop(x=x, y=y),
     loss_op_test=loss.fprop(x=x, y=y),
@@ -207,12 +219,14 @@ approx_params = {
     'recursion_batch_size': 100
 }
 
-for i, test_index in enumerate(test_indices):
-    real_label = y_test_sparse[test_index]
-    adv_label  = x_test_preds_adv[test_index]
+for i, sub_val_index in enumerate(net_succ_attack_succ):
+    validation_index = feeder.val_inds[sub_val_index]
+    real_label = y_val_sparse[sub_val_index]
+    adv_label  = x_val_preds_adv[sub_val_index]
+    assert real_label != adv_label
 
-    logging.info("sample {}/{}: calculating scores for test index {}. real label: {}, adv label: {}"
-                 .format(i+1, len(test_indices), test_index, _classes[real_label], _classes[adv_label]))
+    logging.info("sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}"
+                 .format(i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label]))
 
     for case in ['real', 'adv']:
         if case == 'real':
@@ -223,18 +237,27 @@ for i, test_index in enumerate(test_indices):
             raise AssertionError('only real and adv are accepted.')
 
         # creating the relevant index folders
-        dir = os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case)
+        dir = os.path.join(FLAGS.workspace, 'val_index_{}'.format(validation_index), case)
         if not os.path.exists(dir):
             os.makedirs(dir)
 
+        if FLAGS.prepare:
+            insp._prepare(
+                sess=sess,
+                test_indices=[sub_val_index],
+                test_batch_size=testset_batch_size,
+                approx_params=approx_params,
+                force_refresh=False
+            )
+            continue
+
         scores = insp.upweighting_influence_batch(
             sess=sess,
-            test_indices=[test_index],
+            test_indices=[sub_val_index],
             test_batch_size=testset_batch_size,
             approx_params=approx_params,
             train_batch_size=train_batch_size,
-            train_iterations=train_iterations,
-            force_refresh=True)
+            train_iterations=train_iterations)
 
         sorted_indices = np.argsort(scores)
         harmful = sorted_indices[:50]
@@ -245,7 +268,7 @@ for i, test_index in enumerate(test_indices):
         print('\nHarmful:')
         for idx in harmful:
             print('[{}] {}'.format(idx, scores[idx]))
-            if idx in all_neighbor_indices[test_index, 0:50]:
+            if idx in all_neighbor_indices[sub_val_index, 0:50]:
                 cnt_harmful_in_knn += 1
         harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
         print(harmful_summary_str)
@@ -254,7 +277,7 @@ for i, test_index in enumerate(test_indices):
         print('\nHelpful:')
         for idx in helpful:
             print('[{}] {}'.format(idx, scores[idx]))
-            if idx in all_neighbor_indices[test_index, 0:50]:
+            if idx in all_neighbor_indices[sub_val_index, 0:50]:
                 cnt_helpful_in_knn += 1
         helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
         print(helpful_summary_str)
@@ -263,16 +286,16 @@ for i, test_index in enumerate(test_indices):
         target_idx = 0
         for j in range(5):
             for k in range(10):
-                idx = all_neighbor_indices[test_index, target_idx]
+                idx = all_neighbor_indices[sub_val_index, target_idx]
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
                 axes1[j][k].set_title('[{}]: {}'.format(idx, label_str))
                 target_idx += 1
-        plt.savefig(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'nearest_neighbors.png'), dpi=350)
+        plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
         plt.close()
 
-        total_rank = 0.0
+        helpful_ranks = -1 * np.ones(50)
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
         for j in range(5):
@@ -281,14 +304,15 @@ for i, test_index in enumerate(test_indices):
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
-                loc_in_knn = np.where(all_neighbor_indices[test_index] == idx)[0][0]
-                total_rank += loc_in_knn
+                loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
+                helpful_ranks[target_idx] = loc_in_knn
                 axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
                 target_idx += 1
-        label_rank = total_rank / 50
-        plt.savefig(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'helpful.png'), dpi=350)
+        np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
+        plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
         plt.close()
 
+        harmful_ranks = -1 * np.ones(50)
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
         for j in range(5):
@@ -297,24 +321,26 @@ for i, test_index in enumerate(test_indices):
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
-                loc_in_knn = np.where(all_neighbor_indices[test_index] == idx)[0][0]
+                loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
+                harmful_ranks[target_idx] = loc_in_knn
                 axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
                 target_idx += 1
-        plt.savefig(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'harmful.png'), dpi=350)
+        np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
+        plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
         plt.close()
 
         # save to disk
-        np.save(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'scores'), scores)
+        np.save(os.path.join(dir, 'scores.npy'), scores)
         if case == 'real':
-            image = X_test[test_index]
+            image = X_val[sub_val_index]
         else:
-            image = X_test_adv[test_index]
-        np.save(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'image'), image)
+            image = X_val_adv[sub_val_index]
+        np.save(os.path.join(dir, 'image.npy'), image)
 
         # getting two ranks - one rank for the real label and another rank for the adv label.
         # what is a "rank"?
         # A rank is the average nearest neighbor location of all the helpful training indices.
-        with open(os.path.join(FLAGS.workspace, 'test_index_{}'.format(test_index), case, 'summary.txt'), 'w+') as f:
+        with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
             f.write(harmful_summary_str)
             f.write(helpful_summary_str)
-            f.write('label ({} -> {}) {} rank: {}'.format(_classes[real_label], _classes[adv_label], case, label_rank))
+            f.write('label ({} -> {}) {} helpful/harmful_rank mean: {}/{}'.format(_classes[real_label], _classes[adv_label], case, helpful_ranks.mean()), harmful_ranks.mean())

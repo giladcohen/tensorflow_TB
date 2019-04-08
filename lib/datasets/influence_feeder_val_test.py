@@ -30,6 +30,13 @@ class MyFeederValTest(darkon.InfluenceFeeder):
                     train_inds.append(ind)
             train_inds = np.asarray(train_inds, dtype=np.int32)
 
+        # save entire train data just for corner usage
+        self.complete_data = data
+        if as_one_hot:
+            self.complete_label = one_hot(label.astype(np.int32), 10).astype(np.float32)
+        else:
+            self.complete_label = label
+
         # train data
         self.train_inds        = train_inds
         self.train_origin_data = data[train_inds]
@@ -48,9 +55,7 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         else:
             self.val_label = label[val_inds]
 
-        # test data
         if test_val_set:
-            # we treat the validation set as the test set
             self.test_origin_data = self.val_origin_data
             self.test_data        = self.val_data
             self.test_label       = self.val_label
@@ -66,6 +71,9 @@ class MyFeederValTest(darkon.InfluenceFeeder):
                 self.test_label = label
 
         self.train_batch_offset = 0
+
+    def indices(self, indices):
+        return self.complete_data[indices], self.complete_label[indices]
 
     def train_indices(self, indices):
         return self.train_data[indices], self.train_label[indices]
