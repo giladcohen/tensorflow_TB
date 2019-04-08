@@ -143,10 +143,20 @@ preds_adv      = model.get_predicted_class(adv_x)
 logits_adv     = model.get_logits(adv_x)
 embeddings_adv = model.get_embeddings(adv_x)
 
-# Evaluate the accuracy of the CIFAR-10 model on adversarial examples
-X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
-x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
+if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
+    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
+    X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+    x_val_preds_adv = x_val_preds_adv.astype(np.int32)
+    # do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
+
+    # since DeepFool is not reproducible, saving the results in as numpy
+    np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
+    np.save(os.path.join(model_dir, 'x_val_preds_adv.npy'), x_val_preds_adv)
+    np.save(os.path.join(model_dir, 'x_val_features_adv.npy'), x_val_features_adv)
+else:
+    X_val_adv          = np.load(os.path.join(model_dir, 'X_val_adv.npy'))
+    x_val_preds_adv    = np.load(os.path.join(model_dir, 'x_val_preds_adv.npy'))
+    x_val_features_adv = np.load(os.path.join(model_dir, 'x_val_features_adv.npy'))
 
 # what are the indices of the cifar10 set which the network succeeded classifying correctly,
 # but the adversarial attack changed to a different class?
@@ -160,8 +170,17 @@ for i, val_ind in enumerate(feeder.val_inds):
         net_succ_attack_succ_val_inds.append(val_ind)
 net_succ_attack_succ          = np.asarray(net_succ_attack_succ         , dtype=np.int32)
 net_succ_attack_succ_val_inds = np.asarray(net_succ_attack_succ_val_inds, dtype=np.int32)
-np.save(os.path.join(model_dir, 'net_succ_attack_succ.npy')         , net_succ_attack_succ)
-np.save(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'), net_succ_attack_succ_val_inds)
+
+# verify everything is ok
+if os.path.isfile(os.path.join(model_dir, 'net_succ_attack_succ.npy')):
+    # assert match
+    net_succ_attack_succ_old          = np.load(os.path.join(model_dir, 'net_succ_attack_succ.npy'))
+    net_succ_attack_succ_val_inds_old = np.load(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'))
+    assert (net_succ_attack_succ_old          == net_succ_attack_succ).all()
+    assert (net_succ_attack_succ_val_inds_old == net_succ_attack_succ_val_inds).all()
+else:
+    np.save(os.path.join(model_dir, 'net_succ_attack_succ.npy')         , net_succ_attack_succ)
+    np.save(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'), net_succ_attack_succ_val_inds)
 
 # Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
 # test_indices = []
@@ -220,7 +239,7 @@ approx_params = {
 }
 
 # go from last to beginning:
-net_succ_attack_succ = net_succ_attack_succ[::-1]
+# net_succ_attack_succ = net_succ_attack_succ[::-1]
 
 for i, sub_val_index in enumerate(net_succ_attack_succ):
     validation_index = feeder.val_inds[sub_val_index]
@@ -228,8 +247,10 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
     adv_label  = x_val_preds_adv[sub_val_index]
     assert real_label != adv_label
 
-    logging.info("sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}"
-                 .format(i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label]))
+    progress_str = 'sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}'\
+        .format(i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label])
+    logging.info(progress_str)
+    print(progress_str)
 
     for case in ['real', 'adv']:
         if case == 'real':
