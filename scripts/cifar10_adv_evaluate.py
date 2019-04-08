@@ -73,7 +73,7 @@ feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indice
 X_complete, y_complete = feeder.indices(range(50000))
 X_train, y_train       = feeder.train_indices(range(49000))
 X_val, y_val           = feeder.val_indices(range(1000))
-X_test, y_test         = feeder.test_indices(range(10000))
+X_test, y_test         = feeder.test_indices(range(1000))  # for the validation
 y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
