@@ -26,7 +26,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', '', 'checkpoint name')
+flags.DEFINE_string('checkpoint_name', 'batch_125_mom_lr_0.1_decay_p3_c2_f0.9_regu_0.0004_290319', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_310319', 'workspace dir')
 

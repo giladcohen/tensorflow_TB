@@ -130,6 +130,9 @@ def train(sess, loss, x_train, y_train,
     raise AssertionError('optimizer {} is not valid'.format(optimizer))
   print("set optimizer of {}. curr_lr={}".format(opt.get_name(), reduce_lr_on_plateau.get_curr_lr()))
 
+  # set saver
+  saver = tf.train.Saver()
+
   grads = []
   xs = []
   preprocessed_xs = []
@@ -277,6 +280,9 @@ def train(sess, loss, x_train, y_train,
 
       metric = evaluate()
       reduce_lr_on_plateau.on_epoch_end(epoch, metric)
+      if reduce_lr_on_plateau.was_improvement():
+        _logger.info('saveing new best model ckpt for epoch #{}'.format(epoch + 1))
+        saver.save(sess, args.best_model_path)
 
       if use_ema:
         # Swap the parameters back, so that we continue training

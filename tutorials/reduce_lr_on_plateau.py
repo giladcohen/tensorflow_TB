@@ -58,6 +58,7 @@ class ReduceLROnPlateau(object):
     self.curr_lr = init_lr
     self.mode = mode
     self.monitor_op = None
+    self.new_best = False
     self._reset()
 
   def _reset(self):
@@ -72,11 +73,14 @@ class ReduceLROnPlateau(object):
     self.cooldown_counter = 0
     self.wait = 0
     self.curr_lr = self.init_lr
+    self.new_best = False
 
   def on_train_begin(self):
     self._reset()
 
   def on_epoch_end(self, epoch, metric):
+    self.new_best = False
+
     if self.in_cooldown():
       self.cooldown_counter -= 1
       self.wait = 0
@@ -84,6 +88,7 @@ class ReduceLROnPlateau(object):
     if self.monitor_op(metric, self.best):
       self.best = metric
       self.wait = 0
+      self.new_best = True
     elif not self.in_cooldown():
       self.wait += 1
       if self.wait >= self.patience:
@@ -101,3 +106,6 @@ class ReduceLROnPlateau(object):
 
   def get_curr_lr(self):
     return self.curr_lr
+
+  def was_improvement(self):
+    return self.new_best

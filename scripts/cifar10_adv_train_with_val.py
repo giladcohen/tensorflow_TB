@@ -80,6 +80,10 @@ nb_classes = y_val.shape[1]
 x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 
+model_dir = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
+if not os.path.exists(model_dir):
+    os.makedirs(model_dir)
+
 # Train an CIFAR-10 model
 train_params = {
     'nb_epochs': FLAGS.nb_epochs,
@@ -87,7 +91,8 @@ train_params = {
     'learning_rate': FLAGS.learning_rate,
     'lr_factor': FLAGS.lr_factor,
     'lr_patience': FLAGS.lr_patience,
-    'lr_cooldown': FLAGS.lr_cooldown
+    'lr_cooldown': FLAGS.lr_cooldown,
+    'best_model_path': os.path.join(model_dir, 'best_model.ckpt')
 }
 eval_params = {'batch_size': FLAGS.batch_size}
 fgsm_params = {
@@ -118,15 +123,12 @@ def do_eval(preds, x_set, y_set, report_key, is_adv=None):
 def evaluate():
     return do_eval(logits, X_val, y_val, 'clean_train_clean_eval', False)
 
+
 train(sess, full_loss, None, None,
       dataset_train=dataset_train, dataset_size=dataset_size,
       evaluate=evaluate, args=train_params, rng=rand_gen,
       var_list=model.get_params(),
       optimizer=FLAGS.optimizer)
-
-model_dir = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
 
 save_path = os.path.join(model_dir, "model_checkpoint.ckpt")
 saver = tf.train.Saver()
