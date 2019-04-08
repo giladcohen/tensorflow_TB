@@ -17,7 +17,7 @@ from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
 from tensorflow_TB.cleverhans_alias.train_alias import train
 from cleverhans.utils import AccuracyReport, set_log_level
 from cleverhans.utils_tf import model_eval
-from tensorflow_TB.lib.datasets.influence_feeder_val import MyFeederVal
+from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 
 FLAGS = flags.FLAGS
 
@@ -51,7 +51,7 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 # Get CIFAR-10 data
 cifar10_input.maybe_download_and_extract()
 
-feeder = MyFeederVal(as_one_hot=True, rand_gen=rand_gen)
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, test_val_set=True)
 
 # get the data
 X_train, y_train = feeder.train_indices(range(49000))
@@ -83,6 +83,7 @@ y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 model_dir = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
+np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # Train an CIFAR-10 model
 train_params = {
@@ -133,7 +134,6 @@ train(sess, full_loss, None, None,
 save_path = os.path.join(model_dir, "model_checkpoint.ckpt")
 saver = tf.train.Saver()
 saver.save(sess, save_path, global_step=tf.train.get_global_step())
-np.save(os.path.join(model_dir, "val_indices.npy"))
 
 # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
 fgsm = FastGradientMethod(model, sess=sess)

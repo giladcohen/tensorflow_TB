@@ -19,7 +19,7 @@ from cleverhans.utils_tf import model_eval
 from tensorflow_TB.utils.misc import one_hot
 from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
-from tensorflow_TB.lib.datasets.influence_feeder import MyFeeder
+from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 from tensorflow_TB.utils.misc import np_evaluate
 
 FLAGS = flags.FLAGS
@@ -62,10 +62,17 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 # Get CIFAR-10 data
 cifar10_input.maybe_download_and_extract()
 
-feeder = MyFeeder(as_one_hot=True)
+# get records from training
+model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
+workspace_dir = os.path.join(model_dir, FLAGS.workspace)
+val_indices   = np.load(os.path.join(model_dir, 'val_indices.npy'))  # get the original validation indices
+
+feeder = MyFeederValTest(as_one_hot=True, val_inds=val_indices, test_val_set=True)
 
 # get the data
+val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))  # get the original validation indices
 X_train, y_train = feeder.train_indices(range(50000))
+
 X_test, y_test   = feeder.test_indices(range(10000))
 y_train_sparse   = y_train.argmax(axis=-1).astype(np.int32)
 y_test_sparse    = y_test.argmax(axis=-1).astype(np.int32)
