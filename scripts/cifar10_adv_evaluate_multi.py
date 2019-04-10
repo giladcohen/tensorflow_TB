@@ -8,6 +8,9 @@ import numpy as np
 import tensorflow as tf
 import os
 
+from threading import Thread
+from Queue import Queue
+
 import darkon
 from cleverhans.attacks import FastGradientMethod, DeepFool
 from tensorflow.python.platform import flags
@@ -30,6 +33,7 @@ flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation_080419', 'workspace dir')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_integer('num_threads', 19, 'Size of training batches')
 
 
 # cifar-10 classes
@@ -242,8 +246,20 @@ approx_params = {
 # go from last to beginning:
 # net_succ_attack_succ = net_succ_attack_succ[::-1]
 
+# set up a queue to hold all the jobs:
+# q = Queue(maxsize=0)
+# for i in range(len(net_succ_attack_succ)):
+#     q.put((i, net_succ_attack_succ[i], net_succ_attack_succ_val_inds[i]))
+#
+# for i in range(FLAGS.num_theads):
+#     logging.info('Starting thread ', i)
+#     worker = Thread(target=influence, args=(q, results))
+
 for i, sub_val_index in enumerate(net_succ_attack_succ):
+    if i > 0:
+        break
     validation_index = feeder.val_inds[sub_val_index]
+    assert validation_index == net_succ_attack_succ_val_inds[i]
     real_label = y_val_sparse[sub_val_index]
     adv_label  = x_val_preds_adv[sub_val_index]
     assert real_label != adv_label
