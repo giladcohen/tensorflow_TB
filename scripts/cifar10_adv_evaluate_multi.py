@@ -72,8 +72,8 @@ cifar10_input.maybe_download_and_extract()
 # get records from training
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 workspace_dir = os.path.join(model_dir, FLAGS.workspace)
-val_indices   = np.load(os.path.join(model_dir, 'val_indices.npy'))  # get the original validation indices
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
+# val_indices   = np.load(os.path.join(model_dir, 'val_indices.npy'))  # get the original validation indices
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=None, test_val_set=True)
 
 # get the data
 X_complete, y_complete = feeder.indices(range(50000))
