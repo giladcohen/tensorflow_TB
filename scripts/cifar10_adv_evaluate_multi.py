@@ -304,10 +304,7 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
 
         # save to disk
         np.save(os.path.join(dir, 'scores.npy'), scores)
-        if case == 'real':
-            image = X_val[sub_val_index]
-        else:
-            image = X_val_adv[sub_val_index]
+        image = feed.val_inds[sub_val_index]
         np.save(os.path.join(dir, 'image.npy'), image)
 
         sorted_indices = np.argsort(scores)
