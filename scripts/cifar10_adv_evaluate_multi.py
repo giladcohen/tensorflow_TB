@@ -218,7 +218,7 @@ inspector = darkon.Influence(
     y_placeholder=y)
 
 # setting up an adversarial feeder
-adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
+adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
 adv_feeder.test_origin_data = X_val_adv
 adv_feeder.test_data        = X_val_adv
 adv_feeder.test_label       = one_hot(x_val_preds_adv, 10).astype(np.float32)
