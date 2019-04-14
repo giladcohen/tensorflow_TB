@@ -155,7 +155,7 @@ if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
     # do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
     # do quicker eval:
     correct = np.mean(y_test.argmax(axis=-1) == x_val_preds_adv)
-    logging.info('adversarial attack dropped validation accuracy to {}'.format(correct))
+    print('adversarial attack dropped validation accuracy to {}'.format(correct))
 
     # since DeepFool is not reproducible, saving the results in as numpy
     np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
