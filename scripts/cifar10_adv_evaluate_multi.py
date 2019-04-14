@@ -33,7 +33,7 @@ flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
-flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_integer('num_threads', 19, 'Size of training batches')
 
 
@@ -72,8 +72,13 @@ cifar10_input.maybe_download_and_extract()
 # get records from training
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 workspace_dir = os.path.join(model_dir, FLAGS.workspace)
-# val_indices   = np.load(os.path.join(model_dir, 'val_indices.npy'))  # get the original validation indices
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=None, test_val_set=True)
+
+if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
+    print('re-using val indices from {}'.format(os.path.join(model_dir, 'val_indices.npy')))
+    val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
+else:
+    val_indices = None
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
 
 # get the data
 X_complete, y_complete = feeder.indices(range(50000))
@@ -258,9 +263,11 @@ approx_params = {
 #     logging.info('Starting thread ', i)
 #     worker = Thread(target=influence, args=(q, results))
 
+b, e = 0, 219
+net_succ_attack_succ = net_succ_attack_succ[b:e]
+net_succ_attack_succ_val_inds = net_succ_attack_succ_val_inds[b:e]
+
 for i, sub_val_index in enumerate(net_succ_attack_succ):
-    if i > 0:
-        break
     validation_index = feeder.val_inds[sub_val_index]
     assert validation_index == net_succ_attack_succ_val_inds[i]
     real_label = y_val_sparse[sub_val_index]
@@ -346,7 +353,7 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
         plt.close()
 
-        helpful_ranks = -1 * np.ones(50)
+        helpful_ranks = -1 * np.ones(50, dtype=np.int32)
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
         for j in range(5):
@@ -363,7 +370,7 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
         plt.close()
 
-        harmful_ranks = -1 * np.ones(50)
+        harmful_ranks = -1 * np.ones(50, np.int32)
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
         for j in range(5):
