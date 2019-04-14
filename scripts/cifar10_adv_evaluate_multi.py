@@ -393,4 +393,4 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
             f.write(harmful_summary_str)
             f.write(helpful_summary_str)
-            f.write('label ({} -> {}) {} helpful/harmful_rank mean: {}/{}'.format(_classes[real_label], _classes[adv_label], case, helpful_ranks.mean()), harmful_ranks.mean())
+            f.write('label ({} -> {}) {} helpful/harmful_rank mean: {}/{}'.format(_classes[real_label], _classes[adv_label], case, helpful_ranks.mean(), harmful_ranks.mean()))
