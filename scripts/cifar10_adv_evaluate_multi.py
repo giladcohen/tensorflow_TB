@@ -142,8 +142,8 @@ do_eval(logits, X_val, y_val, 'clean_train_clean_eval_validationset', False)
 #np.mean(y_test.argmax(axis=-1) == x_test_preds)
 
 # Initialize the advarsarial attack object and graph
-attack         = FastGradientMethod(model, sess=sess)
-adv_x          = attack.generate(x, **fgsm_params)
+attack         = DeepFool(model, sess=sess)
+adv_x          = attack.generate(x, **deepfool_params)
 preds_adv      = model.get_predicted_class(adv_x)
 logits_adv     = model.get_logits(adv_x)
 embeddings_adv = model.get_embeddings(adv_x)
@@ -152,7 +152,10 @@ if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
     # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
     X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
+    # do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
+    # do quicker eval:
+    correct = np.mean(y_test.argmax(axis=-1) == x_val_preds_adv)
+    logging.info('adversarial attack dropped validation accuracy to {}'.format(correct))
 
     # since DeepFool is not reproducible, saving the results in as numpy
     np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
