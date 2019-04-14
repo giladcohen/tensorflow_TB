@@ -34,7 +34,7 @@ flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_integer('num_threads', 19, 'Size of training batches')
+flags.DEFINE_integer('num_threads', 15, 'Size of training batches')
 
 
 # cifar-10 classes
@@ -261,7 +261,7 @@ def collect_influence(q):
         work = q.get()
         try:
             i = work[0]
-            sub_val_index = work[1]
+            sub_val_index = net_succ_attack_succ[i]
             validation_index = feeder.val_inds[sub_val_index]
             assert validation_index == net_succ_attack_succ_val_inds[i]
             real_label = y_val_sparse[sub_val_index]
@@ -400,8 +400,8 @@ def collect_influence(q):
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
 # for i in range(len(net_succ_attack_succ)):
-for i in range(70):
-    q.put((i, net_succ_attack_succ[i]))
+for i in range(80):
+    q.put((i,))
 
 for thread_id in range(FLAGS.num_threads):
     logging.info('Starting thread ', thread_id)
