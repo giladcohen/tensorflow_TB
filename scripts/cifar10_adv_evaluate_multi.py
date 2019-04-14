@@ -268,7 +268,7 @@ approx_params = {
 #     logging.info('Starting thread ', i)
 #     worker = Thread(target=influence, args=(q, results))
 
-b, e = 0, 219
+b, e = 0, 221
 net_succ_attack_succ = net_succ_attack_succ[b:e]
 net_succ_attack_succ_val_inds = net_succ_attack_succ_val_inds[b:e]
 
