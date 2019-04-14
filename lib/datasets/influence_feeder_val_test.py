@@ -19,8 +19,8 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             # here we split the data set to train and validation
             print('Feeder {} did not get val indices, therefore splitting trainset'.format(str(self)))
             indices = np.arange(data.shape[0])
-            _, _, _, _, train_inds, val_inds = \
-                train_test_split(data, label, indices, test_size=1000, random_state=rand_gen, shuffle=True, stratify=label)
+            train_inds, val_inds = \
+                train_test_split(indices, test_size=1000, random_state=rand_gen, shuffle=True, stratify=label)
         else:
             # val_inds were provided, so we need to infer all other indices
             train_inds = []
@@ -30,6 +30,8 @@ class MyFeederValTest(darkon.InfluenceFeeder):
                     train_inds.append(ind)
             train_inds = np.asarray(train_inds, dtype=np.int32)
 
+        train_inds.sort()
+        val_inds.sort()
         # save entire train data just for corner usage
         self.complete_data = data
         if as_one_hot:
