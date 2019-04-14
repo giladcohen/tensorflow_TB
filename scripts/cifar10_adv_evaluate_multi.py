@@ -144,7 +144,7 @@ saver.restore(sess, checkpoint_path)
 # predict labels from trainset
 x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
 x_train_preds = x_train_preds.astype(np.int32)
-do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
+#do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
 # predict labels from validation set
 x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
 x_val_preds = x_val_preds.astype(np.int32)
@@ -403,7 +403,7 @@ q = Queue(maxsize=0)
 for i in range(70):
     q.put((i, net_succ_attack_succ[i]))
 
-for thread_id in range(FLAGS.num_theads):
+for thread_id in range(FLAGS.num_threads):
     logging.info('Starting thread ', thread_id)
     worker = Thread(target=collect_influence, args=(q,))
     worker.setDaemon(True)
