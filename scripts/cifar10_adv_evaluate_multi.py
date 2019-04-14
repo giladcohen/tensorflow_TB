@@ -25,6 +25,7 @@ from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 from tensorflow_TB.utils.misc import np_evaluate
+import copy
 
 FLAGS = flags.FLAGS
 
@@ -275,11 +276,11 @@ def collect_influence(q):
 
             for case in ['real', 'adv']:
                 if case == 'real':
-                    insp = inspector
-                    feed = feeder
+                    insp = copy.deepcopy(inspector)
+                    feed = copy.deepcopy(feeder)
                 elif case == 'adv':
-                    insp = inspector_adv
-                    feed = adv_feeder
+                    insp = copy.deepcopy(inspector_adv)
+                    feed = copy.deepcopy(adv_feeder)
                 else:
                     raise AssertionError('only real and adv are accepted.')
 
