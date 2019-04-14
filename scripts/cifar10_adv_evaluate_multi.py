@@ -389,8 +389,8 @@ def collect_influence(q):
                 #     f.write(harmful_summary_str)
                 #     f.write(helpful_summary_str)
                 #     f.write('label ({} -> {}) {} helpful/harmful_rank mean: {}/{}'.format(_classes[real_label], _classes[adv_label], case, helpful_ranks.mean(), harmful_ranks.mean()))
-        except Exception:
-            logging.error('Error with influence collect function for i={}!'.format(i))
+        except Exception as e:
+            print('Error with influence collect function for i={}: {}'.format(i, e))
             exit(1)
             raise AssertionError('Error with influence collect function for i={}!'.format(i))
 
