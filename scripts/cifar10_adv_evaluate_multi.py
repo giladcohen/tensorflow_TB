@@ -152,7 +152,7 @@ if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
     # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
     X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    # do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
+    do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
 
     # since DeepFool is not reproducible, saving the results in as numpy
     np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
