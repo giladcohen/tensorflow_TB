@@ -73,12 +73,17 @@ cifar10_input.maybe_download_and_extract()
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 workspace_dir = os.path.join(model_dir, FLAGS.workspace)
 
+save_val_inds = False
 if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
     print('re-using val indices from {}'.format(os.path.join(model_dir, 'val_indices.npy')))
     val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
 else:
     val_indices = None
+    save_val_inds = True
 feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
+if save_val_inds:
+    print('saving new val indices to'.format(os.path.join(model_dir, 'val_indices.npy')))
+    np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
 X_complete, y_complete = feeder.indices(range(50000))
