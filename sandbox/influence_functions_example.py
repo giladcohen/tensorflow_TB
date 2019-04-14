@@ -1,12 +1,12 @@
 from darkon_examples.cifar10_resnet.cifar10_train import Train
 import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
-import darkon
+import darkon.darkon as darkon
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-check_point = '/Users/giladcohen/workspace/tensorflow_TB/darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
-
+#check_point = '/Users/giladcohen/workspace/tensorflow_TB/darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
+check_point = '/home/gilad/workspace/tensorflow_TB/darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
 # cifar-10 classes
 _classes = (
     'airplane',
