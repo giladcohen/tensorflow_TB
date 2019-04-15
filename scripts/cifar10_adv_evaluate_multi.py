@@ -220,32 +220,6 @@ knn = NearestNeighbors(n_neighbors=49000, p=2, n_jobs=20)
 knn.fit(x_train_features)
 all_neighbor_indices = knn.kneighbors(x_val_features, return_distance=False)
 
-# now finding the influence
-feeder.reset()
-
-inspector = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
-    feeder=feeder,
-    loss_op_train=full_loss.fprop(x=x, y=y),
-    loss_op_test=loss.fprop(x=x, y=y),
-    x_placeholder=x,
-    y_placeholder=y)
-
-# setting up an adversarial feeder
-adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
-adv_feeder.test_origin_data = X_val_adv
-adv_feeder.test_data        = X_val_adv
-adv_feeder.test_label       = one_hot(x_val_preds_adv, 10).astype(np.float32)
-adv_feeder.reset()
-
-inspector_adv = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
-    feeder=adv_feeder,
-    loss_op_train=full_loss.fprop(x=x, y=y),
-    loss_op_test=loss.fprop(x=x, y=y),
-    x_placeholder=x,
-    y_placeholder=y)
-
 testset_batch_size = 100
 train_batch_size = 100
 train_iterations = 490  # was 500 wo validation
@@ -275,15 +249,30 @@ def collect_influence(q):
             print(progress_str)
 
             for case in ['real', 'adv']:
+                feed = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
                 if case == 'real':
-                    insp = copy.deepcopy(inspector)
-                    feed = copy.deepcopy(feeder)
+                    insp = darkon.Influence(
+                        workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
+                        feeder=feed,
+                        loss_op_train=full_loss.fprop(x=x, y=y),
+                        loss_op_test=loss.fprop(x=x, y=y),
+                        x_placeholder=x,
+                        y_placeholder=y)
                 elif case == 'adv':
-                    insp = copy.deepcopy(inspector_adv)
-                    feed = copy.deepcopy(adv_feeder)
+                    feed.test_origin_data = X_val_adv
+                    feed.test_data = X_val_adv
+                    feed.test_label = one_hot(x_val_preds_adv, 10).astype(np.float32)
+                    insp = darkon.Influence(
+                        workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
+                        feeder=feed,
+                        loss_op_train=full_loss.fprop(x=x, y=y),
+                        loss_op_test=loss.fprop(x=x, y=y),
+                        x_placeholder=x,
+                        y_placeholder=y)
                 else:
                     raise AssertionError('only real and adv are accepted.')
 
+                feed.reset()
                 # creating the relevant index folders
                 dir = os.path.join(model_dir, 'val_index_{}'.format(validation_index), case)
                 if not os.path.exists(dir):
