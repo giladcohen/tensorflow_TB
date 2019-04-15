@@ -220,6 +220,32 @@ knn = NearestNeighbors(n_neighbors=49000, p=2, n_jobs=20)
 knn.fit(x_train_features)
 all_neighbor_indices = knn.kneighbors(x_val_features, return_distance=False)
 
+# now finding the influence
+feeder.reset()
+
+inspector = darkon.Influence(
+    workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
+    feeder=feeder,
+    loss_op_train=full_loss.fprop(x=x, y=y),
+    loss_op_test=loss.fprop(x=x, y=y),
+    x_placeholder=x,
+    y_placeholder=y)
+
+# setting up an adversarial feeder
+adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
+adv_feeder.test_origin_data = X_val_adv
+adv_feeder.test_data        = X_val_adv
+adv_feeder.test_label       = one_hot(x_val_preds_adv, 10).astype(np.float32)
+adv_feeder.reset()
+
+inspector_adv = darkon.Influence(
+    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
+    feeder=adv_feeder,
+    loss_op_train=full_loss.fprop(x=x, y=y),
+    loss_op_test=loss.fprop(x=x, y=y),
+    x_placeholder=x,
+    y_placeholder=y)
+
 testset_batch_size = 100
 train_batch_size = 100
 train_iterations = 490  # was 500 wo validation
@@ -234,154 +260,139 @@ approx_params = {
 def collect_influence(q):
     while not q.empty():
         work = q.get()
-        # try:
-        i = work[0]
-        sub_val_index = net_succ_attack_succ[i]
-        validation_index = feeder.val_inds[sub_val_index]
-        assert validation_index == net_succ_attack_succ_val_inds[i]
-        real_label = y_val_sparse[sub_val_index]
-        adv_label  = x_val_preds_adv[sub_val_index]
-        assert real_label != adv_label
+        try:
+            i = work[0]
+            sub_val_index = net_succ_attack_succ[i]
+            validation_index = feeder.val_inds[sub_val_index]
+            assert validation_index == net_succ_attack_succ_val_inds[i]
+            real_label = y_val_sparse[sub_val_index]
+            adv_label  = x_val_preds_adv[sub_val_index]
+            assert real_label != adv_label
 
-        progress_str = 'sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}'\
-            .format(i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label])
-        logging.info(progress_str)
-        print(progress_str)
+            progress_str = 'sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}'\
+                .format(i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label])
+            logging.info(progress_str)
+            print(progress_str)
 
-        for case in ['real', 'adv']:
-            feed = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
-            if case == 'real':
-                insp = darkon.Influence(
-                    workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
-                    feeder=feed,
-                    loss_op_train=full_loss.fprop(x=x, y=y),
-                    loss_op_test=loss.fprop(x=x, y=y),
-                    x_placeholder=x,
-                    y_placeholder=y)
-            elif case == 'adv':
-                feed.test_origin_data = X_val_adv
-                feed.test_data = X_val_adv
-                feed.test_label = one_hot(x_val_preds_adv, 10).astype(np.float32)
-                insp = darkon.Influence(
-                    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
-                    feeder=feed,
-                    loss_op_train=full_loss.fprop(x=x, y=y),
-                    loss_op_test=loss.fprop(x=x, y=y),
-                    x_placeholder=x,
-                    y_placeholder=y)
-            else:
-                raise AssertionError('only real and adv are accepted.')
+            for case in ['real', 'adv']:
+                if case == 'real':
+                    insp = copy.deepcopy(inspector)
+                    feed = copy.deepcopy(feeder)
+                elif case == 'adv':
+                    insp = copy.deepcopy(inspector_adv)
+                    feed = copy.deepcopy(adv_feeder)
+                else:
+                    raise AssertionError('only real and adv are accepted.')
 
-            feed.reset()
-            # creating the relevant index folders
-            dir = os.path.join(model_dir, 'val_index_{}'.format(validation_index), case)
-            if not os.path.exists(dir):
-                os.makedirs(dir)
+                # creating the relevant index folders
+                dir = os.path.join(model_dir, 'val_index_{}'.format(validation_index), case)
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
 
-            if FLAGS.prepare:
-                insp._prepare(
+                if FLAGS.prepare:
+                    insp._prepare(
+                        sess=sess,
+                        test_indices=[sub_val_index],
+                        test_batch_size=testset_batch_size,
+                        approx_params=approx_params,
+                        force_refresh=False
+                    )
+                    return
+
+                scores = insp.upweighting_influence_batch(
                     sess=sess,
                     test_indices=[sub_val_index],
                     test_batch_size=testset_batch_size,
                     approx_params=approx_params,
-                    force_refresh=False
-                )
-                return
+                    train_batch_size=train_batch_size,
+                    train_iterations=train_iterations)
 
-            scores = insp.upweighting_influence_batch(
-                sess=sess,
-                test_indices=[sub_val_index],
-                test_batch_size=testset_batch_size,
-                approx_params=approx_params,
-                train_batch_size=train_batch_size,
-                train_iterations=train_iterations)
+                # save to disk
+                np.save(os.path.join(dir, 'scores.npy'), scores)
+                image = feed.val_inds[sub_val_index]
+                np.save(os.path.join(dir, 'image.npy'), image)
 
-            # save to disk
-            np.save(os.path.join(dir, 'scores.npy'), scores)
-            image = feed.val_inds[sub_val_index]
-            np.save(os.path.join(dir, 'image.npy'), image)
+                # sorted_indices = np.argsort(scores)
+                # harmful = sorted_indices[:50]
+                # helpful = sorted_indices[-50:][::-1]
+                #
+                # # have some figures
+                # cnt_harmful_in_knn = 0
+                # print('\nHarmful:')
+                # for idx in harmful:
+                #     print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
+                #     if idx in all_neighbor_indices[sub_val_index, 0:50]:
+                #         cnt_harmful_in_knn += 1
+                # harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
+                # print(harmful_summary_str)
+                #
+                # cnt_helpful_in_knn = 0
+                # print('\nHelpful:')
+                # for idx in helpful:
+                #     print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
+                #     if idx in all_neighbor_indices[sub_val_index, 0:50]:
+                #         cnt_helpful_in_knn += 1
+                # helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
+                # print(helpful_summary_str)
+                #
+                # fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+                # target_idx = 0
+                # for j in range(5):
+                #     for k in range(10):
+                #         idx = all_neighbor_indices[sub_val_index, target_idx]
+                #         axes1[j][k].set_axis_off()
+                #         axes1[j][k].imshow(X_train[idx])
+                #         label_str = _classes[y_train_sparse[idx]]
+                #         axes1[j][k].set_title('[{}]: {}'.format(feed.train_inds[idx], label_str))
+                #         target_idx += 1
+                # plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
+                # plt.close()
+                #
+                # helpful_ranks = -1 * np.ones(50, dtype=np.int32)
+                # fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+                # target_idx = 0
+                # for j in range(5):
+                #     for k in range(10):
+                #         idx = helpful[target_idx]
+                #         axes1[j][k].set_axis_off()
+                #         axes1[j][k].imshow(X_train[idx])
+                #         label_str = _classes[y_train_sparse[idx]]
+                #         loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
+                #         helpful_ranks[target_idx] = loc_in_knn
+                #         axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
+                #         target_idx += 1
+                # np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
+                # plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
+                # plt.close()
+                #
+                # harmful_ranks = -1 * np.ones(50, np.int32)
+                # fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+                # target_idx = 0
+                # for j in range(5):
+                #     for k in range(10):
+                #         idx = harmful[target_idx]
+                #         axes1[j][k].set_axis_off()
+                #         axes1[j][k].imshow(X_train[idx])
+                #         label_str = _classes[y_train_sparse[idx]]
+                #         loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
+                #         harmful_ranks[target_idx] = loc_in_knn
+                #         axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
+                #         target_idx += 1
+                # np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
+                # plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
+                # plt.close()
 
-            # sorted_indices = np.argsort(scores)
-            # harmful = sorted_indices[:50]
-            # helpful = sorted_indices[-50:][::-1]
-            #
-            # # have some figures
-            # cnt_harmful_in_knn = 0
-            # print('\nHarmful:')
-            # for idx in harmful:
-            #     print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
-            #     if idx in all_neighbor_indices[sub_val_index, 0:50]:
-            #         cnt_harmful_in_knn += 1
-            # harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
-            # print(harmful_summary_str)
-            #
-            # cnt_helpful_in_knn = 0
-            # print('\nHelpful:')
-            # for idx in helpful:
-            #     print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
-            #     if idx in all_neighbor_indices[sub_val_index, 0:50]:
-            #         cnt_helpful_in_knn += 1
-            # helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
-            # print(helpful_summary_str)
-            #
-            # fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-            # target_idx = 0
-            # for j in range(5):
-            #     for k in range(10):
-            #         idx = all_neighbor_indices[sub_val_index, target_idx]
-            #         axes1[j][k].set_axis_off()
-            #         axes1[j][k].imshow(X_train[idx])
-            #         label_str = _classes[y_train_sparse[idx]]
-            #         axes1[j][k].set_title('[{}]: {}'.format(feed.train_inds[idx], label_str))
-            #         target_idx += 1
-            # plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
-            # plt.close()
-            #
-            # helpful_ranks = -1 * np.ones(50, dtype=np.int32)
-            # fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-            # target_idx = 0
-            # for j in range(5):
-            #     for k in range(10):
-            #         idx = helpful[target_idx]
-            #         axes1[j][k].set_axis_off()
-            #         axes1[j][k].imshow(X_train[idx])
-            #         label_str = _classes[y_train_sparse[idx]]
-            #         loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
-            #         helpful_ranks[target_idx] = loc_in_knn
-            #         axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
-            #         target_idx += 1
-            # np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
-            # plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
-            # plt.close()
-            #
-            # harmful_ranks = -1 * np.ones(50, np.int32)
-            # fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-            # target_idx = 0
-            # for j in range(5):
-            #     for k in range(10):
-            #         idx = harmful[target_idx]
-            #         axes1[j][k].set_axis_off()
-            #         axes1[j][k].imshow(X_train[idx])
-            #         label_str = _classes[y_train_sparse[idx]]
-            #         loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
-            #         harmful_ranks[target_idx] = loc_in_knn
-            #         axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
-            #         target_idx += 1
-            # np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
-            # plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
-            # plt.close()
-            #
-            # getting two ranks - one rank for the real label and another rank for the adv label.
-            # what is a "rank"?
-            # A rank is the average nearest neighbor location of all the helpful training indices.
-            # with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
-            #     f.write(harmful_summary_str)
-            #     f.write(helpful_summary_str)
-            #     f.write('label ({} -> {}) {} helpful/harmful_rank mean: {}/{}'.format(_classes[real_label], _classes[adv_label], case, helpful_ranks.mean(), harmful_ranks.mean()))
-        # except Exception as e:
-        #     print('Error with influence collect function for i={}: {}'.format(i, e))
-        #     exit(1)
-        #     raise AssertionError('Error with influence collect function for i={}!'.format(i))
+                # getting two ranks - one rank for the real label and another rank for the adv label.
+                # what is a "rank"?
+                # A rank is the average nearest neighbor location of all the helpful training indices.
+                # with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
+                #     f.write(harmful_summary_str)
+                #     f.write(helpful_summary_str)
+                #     f.write('label ({} -> {}) {} helpful/harmful_rank mean: {}/{}'.format(_classes[real_label], _classes[adv_label], case, helpful_ranks.mean(), harmful_ranks.mean()))
+        except Exception as e:
+            print('Error with influence collect function for i={}: {}'.format(i, e))
+            exit(1)
+            raise AssertionError('Error with influence collect function for i={}!'.format(i))
 
         # signal to the queue that task has been processed
         q.task_done()
