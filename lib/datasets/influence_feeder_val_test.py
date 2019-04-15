@@ -8,6 +8,7 @@ import darkon.darkon as darkon
 import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 from tensorflow_TB.utils.misc import one_hot
 from sklearn.model_selection import train_test_split
+from copy import copy, deepcopy
 
 class MyFeederValTest(darkon.InfluenceFeeder):
     def __init__(self, rand_gen, as_one_hot, val_inds=None, test_val_set=False):
@@ -99,3 +100,11 @@ class MyFeederValTest(darkon.InfluenceFeeder):
 
     def reset(self):
         self.train_batch_offset = 0
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
