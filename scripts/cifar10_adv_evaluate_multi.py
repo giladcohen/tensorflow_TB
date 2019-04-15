@@ -217,7 +217,7 @@ inspector_list     = []
 inspector_adv_list = []
 feeder.reset()
 adv_feeder.reset()
-for ii in range(len(FLAGS.num_threads)):
+for ii in range(FLAGS.num_threads):
     inspector_list.append(
         darkon.Influence(
             workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
