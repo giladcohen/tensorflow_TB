@@ -201,50 +201,41 @@ else:
     np.save(os.path.join(model_dir, 'net_succ_attack_succ.npy')         , net_succ_attack_succ)
     np.save(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'), net_succ_attack_succ_val_inds)
 
-# Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
-# test_indices = []
-# for cls in range(len(_classes)):
-#     cls_test_indices = []
-#     got_so_far = 0
-#     while got_so_far < 5:
-#         cls_test_index = rand_gen.choice(np.where(y_test_sparse == cls)[0])
-#         if cls_test_index in net_succ_attack_succ:
-#             cls_test_indices.append(cls_test_index)
-#             got_so_far += 1
-#     test_indices.extend(cls_test_indices)
-# optional: divide test indices
-# test_indices = test_indices[b:e]
-
 # start the knn observation
 knn = NearestNeighbors(n_neighbors=49000, p=2, n_jobs=20)
 knn.fit(x_train_features)
 all_neighbor_indices = knn.kneighbors(x_val_features, return_distance=False)
-
-# now finding the influence
-feeder.reset()
-
-inspector = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
-    feeder=feeder,
-    loss_op_train=full_loss.fprop(x=x, y=y),
-    loss_op_test=loss.fprop(x=x, y=y),
-    x_placeholder=x,
-    y_placeholder=y)
 
 # setting up an adversarial feeder
 adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
 adv_feeder.test_origin_data = X_val_adv
 adv_feeder.test_data        = X_val_adv
 adv_feeder.test_label       = one_hot(x_val_preds_adv, 10).astype(np.float32)
-adv_feeder.reset()
 
-inspector_adv = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
-    feeder=adv_feeder,
-    loss_op_train=full_loss.fprop(x=x, y=y),
-    loss_op_test=loss.fprop(x=x, y=y),
-    x_placeholder=x,
-    y_placeholder=y)
+# now finding the influence
+inspector_list     = []
+inspector_adv_list = []
+feeder.reset()
+adv_feeder.reset()
+for ii in range(len(FLAGS.num_threads)):
+    inspector_list.append(
+        darkon.Influence(
+            workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
+            feeder=copy.deepcopy(feeder),
+            loss_op_train=full_loss.fprop(x=x, y=y),
+            loss_op_test=loss.fprop(x=x, y=y),
+            x_placeholder=x,
+            y_placeholder=y)
+    )
+    inspector_adv_list.append(
+        darkon.Influence(
+            workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
+            feeder=copy.deepcopy(adv_feeder),
+            loss_op_train=full_loss.fprop(x=x, y=y),
+            loss_op_test=loss.fprop(x=x, y=y),
+            x_placeholder=x,
+            y_placeholder=y)
+    )
 
 testset_batch_size = 100
 train_batch_size = 100
@@ -257,7 +248,7 @@ approx_params = {
     'recursion_batch_size': 100
 }
 
-def collect_influence(q):
+def collect_influence(q, thread_id):
     while not q.empty():
         work = q.get()
         try:
@@ -269,18 +260,18 @@ def collect_influence(q):
             adv_label  = x_val_preds_adv[sub_val_index]
             assert real_label != adv_label
 
-            progress_str = 'sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}'\
-                .format(i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label])
+            progress_str = '(thread_id={}) sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}'\
+                .format(thread_id, i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label])
             logging.info(progress_str)
             print(progress_str)
 
             for case in ['real', 'adv']:
                 if case == 'real':
-                    insp = copy.deepcopy(inspector)
-                    feed = copy.deepcopy(feeder)
+                    feed = feeder
+                    insp = inspector_list[thread_id]
                 elif case == 'adv':
-                    insp = copy.deepcopy(inspector_adv)
-                    feed = copy.deepcopy(adv_feeder)
+                    feed = adv_feeder
+                    insp = inspector_adv_list[thread_id]
                 else:
                     raise AssertionError('only real and adv are accepted.')
 
@@ -398,7 +389,6 @@ def collect_influence(q):
         q.task_done()
     return True
 
-
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
 for i in range(len(net_succ_attack_succ)):
@@ -406,7 +396,7 @@ for i in range(len(net_succ_attack_succ)):
 
 for thread_id in range(FLAGS.num_threads):
     logging.info('Starting thread ', thread_id)
-    worker = Thread(target=collect_influence, args=(q,))
+    worker = Thread(target=collect_influence, args=(q, thread_id))
     worker.setDaemon(True)
     worker.start()
 
