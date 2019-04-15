@@ -106,5 +106,8 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
+            if k == 'train_batch_offset':
+                setattr(result, k, deepcopy(v, memo))
+            else:
+                setattr(result, k, v)
         return result
