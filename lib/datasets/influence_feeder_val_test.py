@@ -33,12 +33,12 @@ class MyFeederValTest(darkon.InfluenceFeeder):
 
         train_inds.sort()
         val_inds.sort()
-        # save entire train data just for corner usage
-        self.complete_data = data
-        if as_one_hot:
-            self.complete_label = one_hot(label.astype(np.int32), 10).astype(np.float32)
-        else:
-            self.complete_label = label
+        # # save entire train data just for corner usage
+        # self.complete_data = data
+        # if as_one_hot:
+        #     self.complete_label = one_hot(label.astype(np.int32), 10).astype(np.float32)
+        # else:
+        #     self.complete_label = label
 
         # train data
         self.train_inds        = train_inds
@@ -75,8 +75,8 @@ class MyFeederValTest(darkon.InfluenceFeeder):
 
         self.train_batch_offset = 0
 
-    def indices(self, indices):
-        return self.complete_data[indices], self.complete_label[indices]
+    # def indices(self, indices):
+    #     return self.complete_data[indices], self.complete_label[indices]
 
     def train_indices(self, indices):
         return self.train_data[indices], self.train_label[indices]

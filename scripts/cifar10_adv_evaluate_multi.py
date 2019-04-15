@@ -87,14 +87,12 @@ if save_val_inds:
     np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
-X_complete, y_complete = feeder.indices(range(50000))
 X_train, y_train       = feeder.train_indices(range(49000))
 X_val, y_val           = feeder.val_indices(range(1000))
 X_test, y_test         = feeder.test_indices(range(1000))  # for the validation testing
 y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
-y_complete_sparse      = y_complete.argmax(axis=-1).astype(np.int32)
 
 # Use Image Parameters
 img_rows, img_cols, nchannels = X_test.shape[1:4]
