@@ -59,13 +59,15 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             self.val_label = label[val_inds]
 
         if test_val_set:
-            self.test_origin_data = self.val_origin_data
-            self.test_data        = self.val_data
+            self.test_inds        = val_inds
+            self.test_origin_data = data[val_inds]
+            self.test_data        = data[val_inds]
             self.test_label       = self.val_label
         else:
             data, label = cifar10_input.read_validation_data_wo_whitening()
             data /= 255.
 
+            self.test_inds        = range(10000)
             self.test_origin_data = data
             self.test_data        = data
             if as_one_hot:
@@ -100,6 +102,15 @@ class MyFeederValTest(darkon.InfluenceFeeder):
 
     def reset(self):
         self.train_batch_offset = 0
+
+    def get_train_size(self):
+        return len(self.train_inds)
+
+    def get_val_size(self):
+        return len(self.val_inds)
+
+    def get_test_size(self):
+        return len(self.test_inds)
 
     def __deepcopy__(self, memo):
         cls = self.__class__

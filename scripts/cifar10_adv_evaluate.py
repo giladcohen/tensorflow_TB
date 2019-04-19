@@ -8,9 +8,6 @@ import numpy as np
 import tensorflow as tf
 import os
 
-from threading import Thread
-from Queue import Queue
-
 import darkon.darkon as darkon
 
 from cleverhans.attacks import FastGradientMethod, DeepFool
@@ -25,6 +22,7 @@ from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 from tensorflow_TB.utils.misc import np_evaluate
+import pickle
 
 FLAGS = flags.FLAGS
 
@@ -34,8 +32,6 @@ flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_integer('num_threads', 19, 'Size of training batches')
-
 
 # cifar-10 classes
 _classes = (
@@ -80,20 +76,18 @@ if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
 else:
     val_indices = None
     save_val_inds = True
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=False)
 if save_val_inds:
     print('saving new val indices to'.format(os.path.join(model_dir, 'val_indices.npy')))
     np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
-X_complete, y_complete = feeder.indices(range(50000))
-X_train, y_train       = feeder.train_indices(range(49000))
-X_val, y_val           = feeder.val_indices(range(1000))
-X_test, y_test         = feeder.test_indices(range(1000))  # for the validation testing
+X_train, y_train       = feeder.train_indices(range(feeder.get_train_size()))
+X_val, y_val           = feeder.val_indices(range(feeder.get_val_size()))
+X_test, y_test         = feeder.test_indices(range(feeder.get_test_size()))  # for the validation testing
 y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
-y_complete_sparse      = y_complete.argmax(axis=-1).astype(np.int32)
 
 # Use Image Parameters
 img_rows, img_cols, nchannels = X_test.shape[1:4]
@@ -142,14 +136,34 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # predict labels from trainset
-x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
-x_train_preds = x_train_preds.astype(np.int32)
-do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
+if not os.path.isfile(os.path.join(model_dir, 'x_train_preds.npy')):
+    x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
+    x_train_preds = x_train_preds.astype(np.int32)
+    np.save(os.path.join(model_dir, 'x_train_preds.npy'), x_train_preds)
+    np.save(os.path.join(model_dir, 'x_train_features.npy'), x_train_features)
+else:
+    x_train_preds    = np.load(os.path.join(model_dir, 'x_train_preds.npy'))
+    x_train_features = np.load(os.path.join(model_dir, 'x_train_features.npy'))
+
 # predict labels from validation set
-x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
-x_val_preds = x_val_preds.astype(np.int32)
-do_eval(logits, X_val, y_val, 'clean_train_clean_eval_validationset', False)
-#np.mean(y_test.argmax(axis=-1) == x_test_preds)
+if not os.path.isfile(os.path.join(model_dir, 'x_val_preds.npy')):
+    x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+    x_val_preds = x_val_preds.astype(np.int32)
+    np.save(os.path.join(model_dir, 'x_val_preds.npy'), x_val_preds)
+    np.save(os.path.join(model_dir, 'x_val_features.npy'), x_val_features)
+else:
+    x_val_preds    = np.load(os.path.join(model_dir, 'x_val_preds.npy'))
+    x_val_features = np.load(os.path.join(model_dir, 'x_val_features.npy'))
+
+# predict labels from test set
+if not os.path.isfile(os.path.join(model_dir, 'x_test_preds.npy')):
+    x_test_preds, x_test_features = np_evaluate(sess, [preds, embeddings], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    x_test_preds = x_test_preds.astype(np.int32)
+    np.save(os.path.join(model_dir, 'x_test_preds.npy'), x_test_preds)
+    np.save(os.path.join(model_dir, 'x_test_features.npy'), x_test_features)
+else:
+    x_test_preds    = np.load(os.path.join(model_dir, 'x_test_preds.npy'))
+    x_test_features = np.load(os.path.join(model_dir, 'x_test_features.npy'))
 
 # Initialize the advarsarial attack object and graph
 attack         = DeepFool(model, sess=sess)
@@ -162,11 +176,6 @@ if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
     # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
     X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    # do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
-    # do quicker eval:
-    correct = np.mean(y_test.argmax(axis=-1) == x_val_preds_adv)
-    print('adversarial attack dropped validation accuracy to {}'.format(correct))
-
     # since DeepFool is not reproducible, saving the results in as numpy
     np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
     np.save(os.path.join(model_dir, 'x_val_preds_adv.npy'), x_val_preds_adv)
@@ -176,29 +185,94 @@ else:
     x_val_preds_adv    = np.load(os.path.join(model_dir, 'x_val_preds_adv.npy'))
     x_val_features_adv = np.load(os.path.join(model_dir, 'x_val_features_adv.npy'))
 
+if not os.path.isfile(os.path.join(model_dir, 'X_test_adv.npy')):
+    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
+    X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    x_test_preds_adv = x_test_preds_adv.astype(np.int32)
+    # since DeepFool is not reproducible, saving the results in as numpy
+    np.save(os.path.join(model_dir, 'X_test_adv.npy'), X_test_adv)
+    np.save(os.path.join(model_dir, 'x_test_preds_adv.npy'), x_test_preds_adv)
+    np.save(os.path.join(model_dir, 'x_test_features_adv.npy'), x_test_features_adv)
+else:
+    X_test_adv          = np.load(os.path.join(model_dir, 'X_test_adv.npy'))
+    x_test_preds_adv    = np.load(os.path.join(model_dir, 'x_test_preds_adv.npy'))
+    x_test_features_adv = np.load(os.path.join(model_dir, 'x_test_features_adv.npy'))
+
+# accuracy computation
+# do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
+# do_eval(logits, X_val, y_val, 'clean_train_clean_eval_validationset', False)
+# do_eval(logits, X_test, y_test, 'clean_train_clean_eval_testset', False)
+# do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval_validationset', True)
+# do_eval(logits_adv, X_test, y_test, 'clean_train_adv_eval_testset', True)
+
+# quick computations
+train_acc    = np.mean(y_train_sparse == x_train_preds)
+val_acc      = np.mean(y_val_sparse   == x_val_preds)
+test_acc     = np.mean(y_test_sparse  == x_test_preds)
+val_adv_acc  = np.mean(y_val_sparse   == x_val_preds_adv)
+test_adv_acc = np.mean(y_test_sparse  == x_test_preds_adv)
+print('train set acc: {}\nvalidation set acc: {}\ntest set acc: {}'.format(train_acc, val_acc, test_acc))
+print('adversarial validation set acc: {}\nadversarial test set acc: {}'.format(val_adv_acc, test_adv_acc))
+
 # what are the indices of the cifar10 set which the network succeeded classifying correctly,
 # but the adversarial attack changed to a different class?
-net_succ_attack_succ = []
-net_succ_attack_succ_val_inds = []
-for i, val_ind in enumerate(feeder.val_inds):
+info = {}
+info['val'] = {}
+for i, set_ind in enumerate(feeder.val_inds):
+    info['val'][i] = {}
     net_succ    = x_val_preds[i] == y_val_sparse[i]
     attack_succ = x_val_preds[i] != x_val_preds_adv[i]
-    if net_succ and attack_succ:
-        net_succ_attack_succ.append(i)
-        net_succ_attack_succ_val_inds.append(val_ind)
-net_succ_attack_succ          = np.asarray(net_succ_attack_succ         , dtype=np.int32)
-net_succ_attack_succ_val_inds = np.asarray(net_succ_attack_succ_val_inds, dtype=np.int32)
+    info['val'][i]['global_index'] = set_ind
+    info['val'][i]['net_succ']     = net_succ
+    info['val'][i]['attack_succ']  = attack_succ
+info['test'] = {}
+for i, set_ind in enumerate(feeder.test_inds):
+    info['test'][i] = {}
+    net_succ    = x_test_preds[i] == y_test_sparse[i]
+    attack_succ = x_test_preds[i] != x_test_preds_adv[i]
+    info['test'][i]['global_index'] = set_ind
+    info['test'][i]['net_succ']     = net_succ
+    info['test'][i]['attack_succ']  = attack_succ
 
-# verify everything is ok
-if os.path.isfile(os.path.join(model_dir, 'net_succ_attack_succ.npy')):
-    # assert match
-    net_succ_attack_succ_old          = np.load(os.path.join(model_dir, 'net_succ_attack_succ.npy'))
-    net_succ_attack_succ_val_inds_old = np.load(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'))
-    assert (net_succ_attack_succ_old          == net_succ_attack_succ).all()
-    assert (net_succ_attack_succ_val_inds_old == net_succ_attack_succ_val_inds).all()
+info_file = os.path.join(model_dir, 'info.pkl')
+if not os.path.isfile(info_file):
+    print('saving info as pickle to {}'.format(info_file))
+    with open(info_file, 'wb') as handle:
+        pickle.dump(info, handle, protocol=pickle.HIGHEST_PROTOCOL)
 else:
-    np.save(os.path.join(model_dir, 'net_succ_attack_succ.npy')         , net_succ_attack_succ)
-    np.save(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'), net_succ_attack_succ_val_inds)
+    print('loading info as pickle from {}'.format(info_file))
+    with open(info_file, 'rb') as handle:
+        info_old = pickle.load(handle)
+    assert info == info_old
+
+
+
+
+
+
+
+
+# net_succ_attack_succ = []
+# net_succ_attack_succ_inds = []
+# for i, set_ind in enumerate(feeder.test_inds):
+#     net_succ    = x_test_preds[i] == y_test_sparse[i]
+#     attack_succ = x_test_preds[i] != x_test_preds_adv[i]
+#     if net_succ and attack_succ:
+#         net_succ_attack_succ.append(i)
+#         net_succ_attack_succ_inds.append(set_ind)
+# net_succ_attack_succ      = np.asarray(net_succ_attack_succ     , dtype=np.int32)
+# net_succ_attack_succ_inds = np.asarray(net_succ_attack_succ_inds, dtype=np.int32)
+#
+# # verify everything is ok
+# if os.path.isfile(os.path.join(model_dir, relevant_indices_str + '.npy')):
+#     # assert match
+#     net_succ_attack_succ_old      = np.load(os.path.join(model_dir, relevant_indices_str + '.npy'))
+#     net_succ_attack_succ_inds_old = np.load(os.path.join(model_dir, relevant_indices_str + '_inds.npy'))
+#     assert (net_succ_attack_succ_old      == net_succ_attack_succ).all()
+#     assert (net_succ_attack_succ_inds_old == net_succ_attack_succ_inds).all()
+# else:
+#     np.save(os.path.join(model_dir, relevant_indices_str + '.npy')     , net_succ_attack_succ)
+#     np.save(os.path.join(model_dir, relevant_indices_str + '_inds.npy'), net_succ_attack_succ_inds)
 
 # Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
 # test_indices = []
@@ -215,12 +289,19 @@ else:
 # test_indices = test_indices[b:e]
 
 # start the knn observation
-knn = NearestNeighbors(n_neighbors=49000, p=2, n_jobs=20)
+knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
 knn.fit(x_train_features)
-all_neighbor_indices = knn.kneighbors(x_val_features, return_distance=False)
+all_neighbor_dists, all_neighbor_indices = knn.kneighbors(x_test_features, return_distance=True)
+
+# setting adv feeder
+adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=False)
+adv_feeder.test_origin_data = X_test_adv
+adv_feeder.test_data        = X_test_adv
+adv_feeder.test_label       = one_hot(x_test_preds_adv, 10).astype(np.float32)
 
 # now finding the influence
 feeder.reset()
+adv_feeder.reset()
 
 inspector = darkon.Influence(
     workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
@@ -229,13 +310,6 @@ inspector = darkon.Influence(
     loss_op_test=loss.fprop(x=x, y=y),
     x_placeholder=x,
     y_placeholder=y)
-
-# setting up an adversarial feeder
-adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
-adv_feeder.test_origin_data = X_val_adv
-adv_feeder.test_data        = X_val_adv
-adv_feeder.test_label       = one_hot(x_val_preds_adv, 10).astype(np.float32)
-adv_feeder.reset()
 
 inspector_adv = darkon.Influence(
     workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
@@ -247,7 +321,7 @@ inspector_adv = darkon.Influence(
 
 testset_batch_size = 100
 train_batch_size = 100
-train_iterations = 490  # was 500 wo validation
+train_iterations = 490  # int(feeder.get_train_size()/train_batch_size)  # was 500 wo validation
 
 approx_params = {
     'scale': 200,
@@ -256,25 +330,18 @@ approx_params = {
     'recursion_batch_size': 100
 }
 
+print('done')
+exit(0)
 # go from last to beginning:
 # net_succ_attack_succ = net_succ_attack_succ[::-1]
 
-# set up a queue to hold all the jobs:
-# q = Queue(maxsize=0)
-# for i in range(len(net_succ_attack_succ)):
-#     q.put((i, net_succ_attack_succ[i], net_succ_attack_succ_val_inds[i]))
-#
-# for i in range(FLAGS.num_theads):
-#     logging.info('Starting thread ', i)
-#     worker = Thread(target=influence, args=(q, results))
-
-b, e = 0, 221
+b, e = 0, 250
 net_succ_attack_succ = net_succ_attack_succ[b:e]
-net_succ_attack_succ_val_inds = net_succ_attack_succ_val_inds[b:e]
+net_succ_attack_succ_inds = net_succ_attack_succ_inds[b:e]
 
 for i, sub_val_index in enumerate(net_succ_attack_succ):
     validation_index = feeder.val_inds[sub_val_index]
-    assert validation_index == net_succ_attack_succ_val_inds[i]
+    assert validation_index == net_succ_attack_succ_inds[i]
     real_label = y_val_sparse[sub_val_index]
     adv_label  = x_val_preds_adv[sub_val_index]
     assert real_label != adv_label
@@ -309,18 +376,25 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
             )
             continue
 
-        scores = insp.upweighting_influence_batch(
-            sess=sess,
-            test_indices=[sub_val_index],
-            test_batch_size=testset_batch_size,
-            approx_params=approx_params,
-            train_batch_size=train_batch_size,
-            train_iterations=train_iterations)
+        if os.path.isfile(os.path.join(dir, 'scores.npy')):
+            print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
+            scores = np.load(os.path.join(dir, 'scores.npy'))
+        else:
+            scores = insp.upweighting_influence_batch(
+                sess=sess,
+                test_indices=[sub_val_index],
+                test_batch_size=testset_batch_size,
+                approx_params=approx_params,
+                train_batch_size=train_batch_size,
+                train_iterations=train_iterations)
+            np.save(os.path.join(dir, 'scores.npy'), scores)
 
-        # save to disk
-        np.save(os.path.join(dir, 'scores.npy'), scores)
-        image = feed.val_inds[sub_val_index]
-        np.save(os.path.join(dir, 'image.npy'), image)
+        if not os.path.isfile(os.path.join(dir, 'image.npy')):
+            print('saving image {}'.format(os.path.join(dir, 'image.npy')))
+            np.save(os.path.join(dir, 'image.npy'), feed.val_inds[sub_val_index])
+        else:
+            # verifying everything is good
+            assert (np.load(os.path.join(dir, 'image.npy')) == feed.val_inds[sub_val_index]).all()
 
         sorted_indices = np.argsort(scores)
         harmful = sorted_indices[:50]
@@ -358,7 +432,34 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
         plt.close()
 
-        helpful_ranks = -1 * np.ones(50, dtype=np.int32)
+        # calculate 1000 knn_ranks
+        def find_ranks(sub_val_index, sorted_influence_indices):
+            ranks = -1 * np.ones(1000, dtype=np.int32)
+            dists = -1 * np.ones(1000, dtype=np.float32)
+            for target_idx in range(ranks.shape[0]):
+                idx = sorted_influence_indices[target_idx]
+                loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
+                knn_dist = all_neighbor_dists[sub_val_index, loc_in_knn]
+                ranks[target_idx] = loc_in_knn
+                dists[target_idx] = knn_dist
+            return ranks, dists
+
+        helpful_ranks, helpful_dists = find_ranks(sub_val_index, sorted_indices[-1000:][::-1])
+        harmful_ranks, harmful_dists = find_ranks(sub_val_index, sorted_indices[:1000])
+
+        if not os.path.isfile(os.path.join(dir, 'helpful_ranks.npy')):
+            print('saving knn ranks and dists to {}'.format(dir))
+            np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
+            np.save(os.path.join(dir, 'helpful_dists.npy'), helpful_dists)
+            np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
+            np.save(os.path.join(dir, 'harmful_dists.npy'), harmful_dists)
+        else:
+            # verifying everything is good
+            assert (np.load(os.path.join(dir, 'helpful_ranks.npy')) == helpful_ranks).all()
+            assert (np.load(os.path.join(dir, 'helpful_dists.npy')) == helpful_dists).all()
+            assert (np.load(os.path.join(dir, 'harmful_ranks.npy')) == harmful_ranks).all()
+            assert (np.load(os.path.join(dir, 'harmful_dists.npy')) == harmful_dists).all()
+
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
         for j in range(5):
@@ -368,14 +469,11 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
                 loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
-                helpful_ranks[target_idx] = loc_in_knn
                 axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
                 target_idx += 1
-        np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
         plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
         plt.close()
 
-        harmful_ranks = -1 * np.ones(50, np.int32)
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
         for j in range(5):
@@ -385,10 +483,8 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
                 loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
-                harmful_ranks[target_idx] = loc_in_knn
                 axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
                 target_idx += 1
-        np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
         plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
         plt.close()
 
@@ -398,4 +494,6 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
             f.write(harmful_summary_str)
             f.write(helpful_summary_str)
-            f.write('label ({} -> {}) {} helpful/harmful_rank mean: {}/{}'.format(_classes[real_label], _classes[adv_label], case, helpful_ranks.mean(), harmful_ranks.mean()))
+            f.write('label ({} -> {}) {} \nhelpful/harmful_rank mean: {}/{}\nhelpful/harmful_dist mean: {}/{}' \
+                    .format(_classes[real_label], _classes[adv_label], case,
+                            helpful_ranks.mean(), harmful_ranks.mean(), helpful_dists.mean(), harmful_dists.mean()))
