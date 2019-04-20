@@ -331,10 +331,20 @@ for i, sub_index in enumerate(sub_relevant_indices):
 
     _, real_label = feeder.test_indices(sub_index)
     real_label = np.argmax(real_label)
+
+    if test_val_set:
+        pred_label = x_val_preds[sub_index]
+    else:
+        pred_label = x_test_preds[sub_index]
+    pred_label = np.argmax(pred_label)
+
     _, adv_label  = adv_feeder.test_indices(sub_index)
     adv_label = np.argmax(adv_label)
+
     if info[FLAGS.set][sub_index]['attack_succ']:
-        assert real_label != adv_label
+        assert pred_label != adv_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
+    if info[FLAGS.set][sub_index]['net_succ']:
+        assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
 
     progress_str = 'sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
                    'real label: {}, adv label: {}. net_succ={}, attack_succ={}' \
@@ -441,18 +451,11 @@ for i, sub_index in enumerate(sub_relevant_indices):
         helpful_ranks, helpful_dists = find_ranks(sub_index, sorted_indices[-1000:][::-1])
         harmful_ranks, harmful_dists = find_ranks(sub_index, sorted_indices[:1000])
 
-        if not os.path.isfile(os.path.join(dir, 'helpful_ranks.npy')):
-            print('saving knn ranks and dists to {}'.format(dir))
-            np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
-            np.save(os.path.join(dir, 'helpful_dists.npy'), helpful_dists)
-            np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
-            np.save(os.path.join(dir, 'harmful_dists.npy'), harmful_dists)
-        else:
-            # verifying everything is good
-            assert (np.load(os.path.join(dir, 'helpful_ranks.npy')) == helpful_ranks).all()
-            assert (np.load(os.path.join(dir, 'helpful_dists.npy')) == helpful_dists).all()
-            assert (np.load(os.path.join(dir, 'harmful_ranks.npy')) == harmful_ranks).all()
-            assert (np.load(os.path.join(dir, 'harmful_dists.npy')) == harmful_dists).all()
+        print('saving knn ranks and dists to {}'.format(dir))
+        np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
+        np.save(os.path.join(dir, 'helpful_dists.npy'), helpful_dists)
+        np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
+        np.save(os.path.join(dir, 'harmful_dists.npy'), harmful_dists)
 
         fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
         target_idx = 0
