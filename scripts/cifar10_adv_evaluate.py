@@ -336,7 +336,6 @@ for i, sub_index in enumerate(sub_relevant_indices):
         pred_label = x_val_preds[sub_index]
     else:
         pred_label = x_test_preds[sub_index]
-    pred_label = np.argmax(pred_label)
 
     _, adv_label  = adv_feeder.test_indices(sub_index)
     adv_label = np.argmax(adv_label)
