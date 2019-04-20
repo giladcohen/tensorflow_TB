@@ -12,6 +12,9 @@ from copy import copy, deepcopy
 
 class MyFeederValTest(darkon.InfluenceFeeder):
     def __init__(self, rand_gen, as_one_hot, val_inds=None, test_val_set=False):
+
+        self.test_val_set = test_val_set
+
         # load train data
         data, label = cifar10_input.prepare_train_data(padding_size=0)
         data /= 255.
@@ -58,22 +61,16 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         else:
             self.val_label = label[val_inds]
 
-        if test_val_set:
-            self.test_inds        = val_inds
-            self.test_origin_data = data[val_inds]
-            self.test_data        = data[val_inds]
-            self.test_label       = self.val_label
-        else:
-            data, label = cifar10_input.read_validation_data_wo_whitening()
-            data /= 255.
+        data, label = cifar10_input.read_validation_data_wo_whitening()
+        data /= 255.
 
-            self.test_inds        = range(10000)
-            self.test_origin_data = data
-            self.test_data        = data
-            if as_one_hot:
-                self.test_label = one_hot(label.astype(np.int32), 10).astype(np.float32)
-            else:
-                self.test_label = label
+        self.test_inds        = range(10000)
+        self.test_origin_data = data
+        self.test_data        = data
+        if as_one_hot:
+            self.test_label = one_hot(label.astype(np.int32), 10).astype(np.float32)
+        else:
+            self.test_label = label
 
         self.train_batch_offset = 0
 
@@ -87,7 +84,10 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         return self.val_data[indices], self.val_label[indices]
 
     def test_indices(self, indices):
-        return self.test_data[indices], self.test_label[indices]
+        if self.test_val_set:
+            return self.val_indices(indices)
+        else:
+            return self.test_data[indices], self.test_label[indices]
 
     def train_batch(self, batch_size):
         # calculate offset
@@ -110,7 +110,10 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         return len(self.val_inds)
 
     def get_test_size(self):
-        return len(self.test_inds)
+        if self.test_val_set:
+            return self.get_val_size()
+        else:
+            return len(self.test_inds)
 
     def __deepcopy__(self, memo):
         cls = self.__class__

@@ -7,6 +7,7 @@ import logging
 import numpy as np
 import tensorflow as tf
 import os
+import imageio
 
 import darkon.darkon as darkon
 
@@ -32,6 +33,9 @@ flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
+
+test_val_set = FLAGS.set == 'val'
 
 # cifar-10 classes
 _classes = (
@@ -76,7 +80,7 @@ if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
 else:
     val_indices = None
     save_val_inds = True
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=False)
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=test_val_set)
 if save_val_inds:
     print('saving new val indices to'.format(os.path.join(model_dir, 'val_indices.npy')))
     np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
@@ -84,7 +88,7 @@ if save_val_inds:
 # get the data
 X_train, y_train       = feeder.train_indices(range(feeder.get_train_size()))
 X_val, y_val           = feeder.val_indices(range(feeder.get_val_size()))
-X_test, y_test         = feeder.test_indices(range(feeder.get_test_size()))  # for the validation testing
+X_test, y_test         = feeder.test_data, feeder.test_label  # getting the real test set
 y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
@@ -245,34 +249,9 @@ else:
         info_old = pickle.load(handle)
     assert info == info_old
 
-
-
-
-
-
-
-
-# net_succ_attack_succ = []
-# net_succ_attack_succ_inds = []
-# for i, set_ind in enumerate(feeder.test_inds):
-#     net_succ    = x_test_preds[i] == y_test_sparse[i]
-#     attack_succ = x_test_preds[i] != x_test_preds_adv[i]
-#     if net_succ and attack_succ:
-#         net_succ_attack_succ.append(i)
-#         net_succ_attack_succ_inds.append(set_ind)
-# net_succ_attack_succ      = np.asarray(net_succ_attack_succ     , dtype=np.int32)
-# net_succ_attack_succ_inds = np.asarray(net_succ_attack_succ_inds, dtype=np.int32)
-#
-# # verify everything is ok
-# if os.path.isfile(os.path.join(model_dir, relevant_indices_str + '.npy')):
-#     # assert match
-#     net_succ_attack_succ_old      = np.load(os.path.join(model_dir, relevant_indices_str + '.npy'))
-#     net_succ_attack_succ_inds_old = np.load(os.path.join(model_dir, relevant_indices_str + '_inds.npy'))
-#     assert (net_succ_attack_succ_old      == net_succ_attack_succ).all()
-#     assert (net_succ_attack_succ_inds_old == net_succ_attack_succ_inds).all()
-# else:
-#     np.save(os.path.join(model_dir, relevant_indices_str + '.npy')     , net_succ_attack_succ)
-#     np.save(os.path.join(model_dir, relevant_indices_str + '_inds.npy'), net_succ_attack_succ_inds)
+# sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
+sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
 # Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
 # test_indices = []
@@ -291,10 +270,19 @@ else:
 # start the knn observation
 knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
 knn.fit(x_train_features)
-all_neighbor_dists, all_neighbor_indices = knn.kneighbors(x_test_features, return_distance=True)
+if test_val_set:
+    print('predicting knn for all val set')
+    features = x_val_features
+else:
+    print('predicting knn for all test set')
+    features = x_test_features
+all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_distance=True)
 
 # setting adv feeder
-adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=False)
+adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=test_val_set)
+adv_feeder.val_origin_data  = X_val_adv
+adv_feeder.val_data         = X_val_adv
+adv_feeder.val_label        = one_hot(x_val_preds_adv, 10).astype(np.float32)
 adv_feeder.test_origin_data = X_test_adv
 adv_feeder.test_data        = X_test_adv
 adv_feeder.test_label       = one_hot(x_test_preds_adv, 10).astype(np.float32)
@@ -330,24 +318,28 @@ approx_params = {
     'recursion_batch_size': 100
 }
 
-print('done')
-exit(0)
-# go from last to beginning:
-# net_succ_attack_succ = net_succ_attack_succ[::-1]
-
 b, e = 0, 250
-net_succ_attack_succ = net_succ_attack_succ[b:e]
-net_succ_attack_succ_inds = net_succ_attack_succ_inds[b:e]
+sub_relevant_indices = sub_relevant_indices[b:e]
+relevant_indices     = relevant_indices[b:e]
 
-for i, sub_val_index in enumerate(net_succ_attack_succ):
-    validation_index = feeder.val_inds[sub_val_index]
-    assert validation_index == net_succ_attack_succ_inds[i]
-    real_label = y_val_sparse[sub_val_index]
-    adv_label  = x_val_preds_adv[sub_val_index]
-    assert real_label != adv_label
+for i, sub_index in enumerate(sub_relevant_indices):
+    if test_val_set:
+        global_index = feeder.val_inds[sub_index]
+    else:
+        global_index = feeder.test_inds[sub_index]
+    assert global_index == relevant_indices[i]
 
-    progress_str = 'sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}'\
-        .format(i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label])
+    _, real_label = feeder.test_indices(sub_index)
+    real_label = np.argmax(real_label)
+    _, adv_label  = adv_feeder.test_indices(sub_index)
+    adv_label = np.argmax(adv_label)
+    if info[FLAGS.set][sub_index]['attack_succ']:
+        assert real_label != adv_label
+
+    progress_str = 'sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
+                   'real label: {}, adv label: {}. net_succ={}, attack_succ={}' \
+        .format(i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
+                _classes[adv_label], info[FLAGS.set][sub_index]['net_succ'], info[FLAGS.set][sub_index]['attack_succ'])
     logging.info(progress_str)
     print(progress_str)
 
@@ -362,14 +354,14 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
             raise AssertionError('only real and adv are accepted.')
 
         # creating the relevant index folders
-        dir = os.path.join(model_dir, 'val_index_{}'.format(validation_index), case)
+        dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
         if not os.path.exists(dir):
             os.makedirs(dir)
 
         if FLAGS.prepare:
             insp._prepare(
                 sess=sess,
-                test_indices=[sub_val_index],
+                test_indices=[sub_index],
                 test_batch_size=testset_batch_size,
                 approx_params=approx_params,
                 force_refresh=False
@@ -382,19 +374,21 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         else:
             scores = insp.upweighting_influence_batch(
                 sess=sess,
-                test_indices=[sub_val_index],
+                test_indices=[sub_index],
                 test_batch_size=testset_batch_size,
                 approx_params=approx_params,
                 train_batch_size=train_batch_size,
                 train_iterations=train_iterations)
             np.save(os.path.join(dir, 'scores.npy'), scores)
 
-        if not os.path.isfile(os.path.join(dir, 'image.npy')):
-            print('saving image {}'.format(os.path.join(dir, 'image.npy')))
-            np.save(os.path.join(dir, 'image.npy'), feed.val_inds[sub_val_index])
+        if not os.path.isfile(os.path.join(dir, 'image.png')):
+            print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+            image, _ = feed.test_indices(sub_index)
+            imageio.imwrite(os.path.join(dir, 'image.png'), image)
+            np.save(os.path.join(dir, 'image.npy'), image)
         else:
             # verifying everything is good
-            assert (np.load(os.path.join(dir, 'image.npy')) == feed.val_inds[sub_val_index]).all()
+            assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
 
         sorted_indices = np.argsort(scores)
         harmful = sorted_indices[:50]
@@ -405,7 +399,7 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         print('\nHarmful:')
         for idx in harmful:
             print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
-            if idx in all_neighbor_indices[sub_val_index, 0:50]:
+            if idx in all_neighbor_indices[sub_index, 0:50]:
                 cnt_harmful_in_knn += 1
         harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
         print(harmful_summary_str)
@@ -414,7 +408,7 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         print('\nHelpful:')
         for idx in helpful:
             print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
-            if idx in all_neighbor_indices[sub_val_index, 0:50]:
+            if idx in all_neighbor_indices[sub_index, 0:50]:
                 cnt_helpful_in_knn += 1
         helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
         print(helpful_summary_str)
@@ -423,7 +417,7 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         target_idx = 0
         for j in range(5):
             for k in range(10):
-                idx = all_neighbor_indices[sub_val_index, target_idx]
+                idx = all_neighbor_indices[sub_index, target_idx]
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
@@ -433,19 +427,19 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
         plt.close()
 
         # calculate 1000 knn_ranks
-        def find_ranks(sub_val_index, sorted_influence_indices):
-            ranks = -1 * np.ones(1000, dtype=np.int32)
-            dists = -1 * np.ones(1000, dtype=np.float32)
+        def find_ranks(sub_index, sorted_influence_indices):
+            ranks = -1 * np.ones(len(sorted_influence_indices), dtype=np.int32)
+            dists = -1 * np.ones(len(sorted_influence_indices), dtype=np.float32)
             for target_idx in range(ranks.shape[0]):
                 idx = sorted_influence_indices[target_idx]
-                loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
-                knn_dist = all_neighbor_dists[sub_val_index, loc_in_knn]
+                loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+                knn_dist = all_neighbor_dists[sub_index, loc_in_knn]
                 ranks[target_idx] = loc_in_knn
                 dists[target_idx] = knn_dist
             return ranks, dists
 
-        helpful_ranks, helpful_dists = find_ranks(sub_val_index, sorted_indices[-1000:][::-1])
-        harmful_ranks, harmful_dists = find_ranks(sub_val_index, sorted_indices[:1000])
+        helpful_ranks, helpful_dists = find_ranks(sub_index, sorted_indices[-1000:][::-1])
+        harmful_ranks, harmful_dists = find_ranks(sub_index, sorted_indices[:1000])
 
         if not os.path.isfile(os.path.join(dir, 'helpful_ranks.npy')):
             print('saving knn ranks and dists to {}'.format(dir))
@@ -468,8 +462,8 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
-                loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
-                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
+                loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
                 target_idx += 1
         plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
         plt.close()
@@ -482,8 +476,8 @@ for i, sub_val_index in enumerate(net_succ_attack_succ):
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
-                loc_in_knn = np.where(all_neighbor_indices[sub_val_index] == idx)[0][0]
-                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(idx, label_str, loc_in_knn))
+                loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
                 target_idx += 1
         plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
         plt.close()
