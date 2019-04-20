@@ -249,10 +249,6 @@ else:
         info_old = pickle.load(handle)
     assert info == info_old
 
-# sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-sub_relevant_indices = [ind for ind in info[FLAGS.set]]
-relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
-
 # Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
 # test_indices = []
 # for cls in range(len(_classes)):
@@ -318,6 +314,10 @@ approx_params = {
     'recursion_batch_size': 100
 }
 
+# sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
+sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
+
 b, e = 0, 250
 sub_relevant_indices = sub_relevant_indices[b:e]
 relevant_indices     = relevant_indices[b:e]
@@ -362,11 +362,6 @@ for i, sub_index in enumerate(sub_relevant_indices):
         else:
             raise AssertionError('only real and adv are accepted.')
 
-        # creating the relevant index folders
-        dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
         if FLAGS.prepare:
             insp._prepare(
                 sess=sess,
@@ -376,6 +371,11 @@ for i, sub_index in enumerate(sub_relevant_indices):
                 force_refresh=False
             )
             continue
+
+        # creating the relevant index folders
+        dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
         if os.path.isfile(os.path.join(dir, 'scores.npy')):
             print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))

@@ -26,6 +26,8 @@ import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 from tensorflow_TB.utils.misc import np_evaluate
 import copy
+import pickle
+import imageio
 
 FLAGS = flags.FLAGS
 
@@ -34,9 +36,11 @@ flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
-flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_integer('num_threads', 20, 'Size of training batches')
+flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
+flags.DEFINE_integer('num_threads', 15, 'Size of training batches')
 
+test_val_set = FLAGS.set == 'val'
 
 # cifar-10 classes
 _classes = (
@@ -81,15 +85,15 @@ if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
 else:
     val_indices = None
     save_val_inds = True
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=True)
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=test_val_set)
 if save_val_inds:
     print('saving new val indices to'.format(os.path.join(model_dir, 'val_indices.npy')))
     np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
-X_train, y_train       = feeder.train_indices(range(49000))
-X_val, y_val           = feeder.val_indices(range(1000))
-X_test, y_test         = feeder.test_indices(range(1000))  # for the validation testing
+X_train, y_train       = feeder.train_indices(range(feeder.get_train_size()))
+X_val, y_val           = feeder.val_indices(range(feeder.get_val_size()))
+X_test, y_test         = feeder.test_data, feeder.test_label  # getting the real test set
 y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
@@ -141,14 +145,34 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # predict labels from trainset
-x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
-x_train_preds = x_train_preds.astype(np.int32)
-#do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
+if not os.path.isfile(os.path.join(model_dir, 'x_train_preds.npy')):
+    x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
+    x_train_preds = x_train_preds.astype(np.int32)
+    np.save(os.path.join(model_dir, 'x_train_preds.npy'), x_train_preds)
+    np.save(os.path.join(model_dir, 'x_train_features.npy'), x_train_features)
+else:
+    x_train_preds    = np.load(os.path.join(model_dir, 'x_train_preds.npy'))
+    x_train_features = np.load(os.path.join(model_dir, 'x_train_features.npy'))
+
 # predict labels from validation set
-x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
-x_val_preds = x_val_preds.astype(np.int32)
-do_eval(logits, X_val, y_val, 'clean_train_clean_eval_validationset', False)
-#np.mean(y_test.argmax(axis=-1) == x_test_preds)
+if not os.path.isfile(os.path.join(model_dir, 'x_val_preds.npy')):
+    x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+    x_val_preds = x_val_preds.astype(np.int32)
+    np.save(os.path.join(model_dir, 'x_val_preds.npy'), x_val_preds)
+    np.save(os.path.join(model_dir, 'x_val_features.npy'), x_val_features)
+else:
+    x_val_preds    = np.load(os.path.join(model_dir, 'x_val_preds.npy'))
+    x_val_features = np.load(os.path.join(model_dir, 'x_val_features.npy'))
+
+# predict labels from test set
+if not os.path.isfile(os.path.join(model_dir, 'x_test_preds.npy')):
+    x_test_preds, x_test_features = np_evaluate(sess, [preds, embeddings], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    x_test_preds = x_test_preds.astype(np.int32)
+    np.save(os.path.join(model_dir, 'x_test_preds.npy'), x_test_preds)
+    np.save(os.path.join(model_dir, 'x_test_features.npy'), x_test_features)
+else:
+    x_test_preds    = np.load(os.path.join(model_dir, 'x_test_preds.npy'))
+    x_test_features = np.load(os.path.join(model_dir, 'x_test_features.npy'))
 
 # Initialize the advarsarial attack object and graph
 attack         = DeepFool(model, sess=sess)
@@ -161,11 +185,6 @@ if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
     # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
     X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    # do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval', True)
-    # do quicker eval:
-    correct = np.mean(y_test.argmax(axis=-1) == x_val_preds_adv)
-    print('adversarial attack dropped validation accuracy to {}'.format(correct))
-
     # since DeepFool is not reproducible, saving the results in as numpy
     np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
     np.save(os.path.join(model_dir, 'x_val_preds_adv.npy'), x_val_preds_adv)
@@ -175,46 +194,96 @@ else:
     x_val_preds_adv    = np.load(os.path.join(model_dir, 'x_val_preds_adv.npy'))
     x_val_features_adv = np.load(os.path.join(model_dir, 'x_val_features_adv.npy'))
 
+if not os.path.isfile(os.path.join(model_dir, 'X_test_adv.npy')):
+    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
+    X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    x_test_preds_adv = x_test_preds_adv.astype(np.int32)
+    # since DeepFool is not reproducible, saving the results in as numpy
+    np.save(os.path.join(model_dir, 'X_test_adv.npy'), X_test_adv)
+    np.save(os.path.join(model_dir, 'x_test_preds_adv.npy'), x_test_preds_adv)
+    np.save(os.path.join(model_dir, 'x_test_features_adv.npy'), x_test_features_adv)
+else:
+    X_test_adv          = np.load(os.path.join(model_dir, 'X_test_adv.npy'))
+    x_test_preds_adv    = np.load(os.path.join(model_dir, 'x_test_preds_adv.npy'))
+    x_test_features_adv = np.load(os.path.join(model_dir, 'x_test_features_adv.npy'))
+
+# accuracy computation
+# do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
+# do_eval(logits, X_val, y_val, 'clean_train_clean_eval_validationset', False)
+# do_eval(logits, X_test, y_test, 'clean_train_clean_eval_testset', False)
+# do_eval(logits_adv, X_val, y_val, 'clean_train_adv_eval_validationset', True)
+# do_eval(logits_adv, X_test, y_test, 'clean_train_adv_eval_testset', True)
+
+# quick computations
+train_acc    = np.mean(y_train_sparse == x_train_preds)
+val_acc      = np.mean(y_val_sparse   == x_val_preds)
+test_acc     = np.mean(y_test_sparse  == x_test_preds)
+val_adv_acc  = np.mean(y_val_sparse   == x_val_preds_adv)
+test_adv_acc = np.mean(y_test_sparse  == x_test_preds_adv)
+print('train set acc: {}\nvalidation set acc: {}\ntest set acc: {}'.format(train_acc, val_acc, test_acc))
+print('adversarial validation set acc: {}\nadversarial test set acc: {}'.format(val_adv_acc, test_adv_acc))
+
 # what are the indices of the cifar10 set which the network succeeded classifying correctly,
 # but the adversarial attack changed to a different class?
-net_succ_attack_succ = []
-net_succ_attack_succ_val_inds = []
-for i, val_ind in enumerate(feeder.val_inds):
+info = {}
+info['val'] = {}
+for i, set_ind in enumerate(feeder.val_inds):
+    info['val'][i] = {}
     net_succ    = x_val_preds[i] == y_val_sparse[i]
     attack_succ = x_val_preds[i] != x_val_preds_adv[i]
-    if net_succ and attack_succ:
-        net_succ_attack_succ.append(i)
-        net_succ_attack_succ_val_inds.append(val_ind)
-net_succ_attack_succ          = np.asarray(net_succ_attack_succ         , dtype=np.int32)
-net_succ_attack_succ_val_inds = np.asarray(net_succ_attack_succ_val_inds, dtype=np.int32)
+    info['val'][i]['global_index'] = set_ind
+    info['val'][i]['net_succ']     = net_succ
+    info['val'][i]['attack_succ']  = attack_succ
+info['test'] = {}
+for i, set_ind in enumerate(feeder.test_inds):
+    info['test'][i] = {}
+    net_succ    = x_test_preds[i] == y_test_sparse[i]
+    attack_succ = x_test_preds[i] != x_test_preds_adv[i]
+    info['test'][i]['global_index'] = set_ind
+    info['test'][i]['net_succ']     = net_succ
+    info['test'][i]['attack_succ']  = attack_succ
 
-# verify everything is ok
-if os.path.isfile(os.path.join(model_dir, 'net_succ_attack_succ.npy')):
-    # assert match
-    net_succ_attack_succ_old          = np.load(os.path.join(model_dir, 'net_succ_attack_succ.npy'))
-    net_succ_attack_succ_val_inds_old = np.load(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'))
-    assert (net_succ_attack_succ_old          == net_succ_attack_succ).all()
-    assert (net_succ_attack_succ_val_inds_old == net_succ_attack_succ_val_inds).all()
+info_file = os.path.join(model_dir, 'info.pkl')
+if not os.path.isfile(info_file):
+    print('saving info as pickle to {}'.format(info_file))
+    with open(info_file, 'wb') as handle:
+        pickle.dump(info, handle, protocol=pickle.HIGHEST_PROTOCOL)
 else:
-    np.save(os.path.join(model_dir, 'net_succ_attack_succ.npy')         , net_succ_attack_succ)
-    np.save(os.path.join(model_dir, 'net_succ_attack_succ_val_inds.npy'), net_succ_attack_succ_val_inds)
+    print('loading info as pickle from {}'.format(info_file))
+    with open(info_file, 'rb') as handle:
+        info_old = pickle.load(handle)
+    assert info == info_old
+
+# sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
+sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
 # start the knn observation
-knn = NearestNeighbors(n_neighbors=49000, p=2, n_jobs=20)
+knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
 knn.fit(x_train_features)
-all_neighbor_indices = knn.kneighbors(x_val_features, return_distance=False)
+if test_val_set:
+    print('predicting knn for all val set')
+    features = x_val_features
+else:
+    print('predicting knn for all test set')
+    features = x_test_features
+all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_distance=True)
 
-# setting up an adversarial feeder
-adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=True)
-adv_feeder.test_origin_data = X_val_adv
-adv_feeder.test_data        = X_val_adv
-adv_feeder.test_label       = one_hot(x_val_preds_adv, 10).astype(np.float32)
+# setting adv feeder
+adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=test_val_set)
+adv_feeder.val_origin_data  = X_val_adv
+adv_feeder.val_data         = X_val_adv
+adv_feeder.val_label        = one_hot(x_val_preds_adv, 10).astype(np.float32)
+adv_feeder.test_origin_data = X_test_adv
+adv_feeder.test_data        = X_test_adv
+adv_feeder.test_label       = one_hot(x_test_preds_adv, 10).astype(np.float32)
 
 # now finding the influence
-inspector_list     = []
-inspector_adv_list = []
 feeder.reset()
 adv_feeder.reset()
+inspector_list = []
+inspector_adv_list = []
+
 for ii in range(FLAGS.num_threads):
     inspector_list.append(
         darkon.Influence(
@@ -246,20 +315,46 @@ approx_params = {
     'recursion_batch_size': 100
 }
 
+# sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
+sub_relevant_indices = [ind for ind in info[FLAGS.set] if (not info[FLAGS.set][ind]['net_succ']) or (not info[FLAGS.set][ind]['attack_succ'])]
+relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
+
+# b, e = 0, 250
+# sub_relevant_indices = sub_relevant_indices[b:e]
+# relevant_indices     = relevant_indices[b:e]
+
 def collect_influence(q, thread_id):
     while not q.empty():
         work = q.get()
         try:
             i = work[0]
-            sub_val_index = net_succ_attack_succ[i]
-            validation_index = feeder.val_inds[sub_val_index]
-            assert validation_index == net_succ_attack_succ_val_inds[i]
-            real_label = y_val_sparse[sub_val_index]
-            adv_label  = x_val_preds_adv[sub_val_index]
-            assert real_label != adv_label
+            sub_index = sub_relevant_indices[i]
+            if test_val_set:
+                global_index = feeder.val_inds[sub_index]
+            else:
+                global_index = feeder.test_inds[sub_index]
+            assert global_index == relevant_indices[i]
 
-            progress_str = '(thread_id={}) sample {}/{}: calculating scores for val index {} (sub={}). real label: {}, adv label: {}'\
-                .format(thread_id, i+1, len(net_succ_attack_succ), validation_index, sub_val_index, _classes[real_label], _classes[adv_label])
+            _, real_label = feeder.test_indices(sub_index)
+            real_label = np.argmax(real_label)
+
+            if test_val_set:
+                pred_label = x_val_preds[sub_index]
+            else:
+                pred_label = x_test_preds[sub_index]
+
+            _, adv_label = adv_feeder.test_indices(sub_index)
+            adv_label = np.argmax(adv_label)
+
+            if info[FLAGS.set][sub_index]['attack_succ']:
+                assert pred_label != adv_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
+            if info[FLAGS.set][sub_index]['net_succ']:
+                assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
+
+            progress_str = '(thread_id={}) sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
+                           'real label: {}, adv label: {}. net_succ={}, attack_succ={}' \
+                .format(thread_id, i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
+                        _classes[adv_label], info[FLAGS.set][sub_index]['net_succ'], info[FLAGS.set][sub_index]['attack_succ'])
             logging.info(progress_str)
             print(progress_str)
 
@@ -273,33 +368,42 @@ def collect_influence(q, thread_id):
                 else:
                     raise AssertionError('only real and adv are accepted.')
 
-                # creating the relevant index folders
-                dir = os.path.join(model_dir, 'val_index_{}'.format(validation_index), case)
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
-
                 if FLAGS.prepare:
                     insp._prepare(
                         sess=sess,
-                        test_indices=[sub_val_index],
+                        test_indices=[sub_index],
                         test_batch_size=testset_batch_size,
                         approx_params=approx_params,
                         force_refresh=False
                     )
                     return
 
-                scores = insp.upweighting_influence_batch(
-                    sess=sess,
-                    test_indices=[sub_val_index],
-                    test_batch_size=testset_batch_size,
-                    approx_params=approx_params,
-                    train_batch_size=train_batch_size,
-                    train_iterations=train_iterations)
+                # creating the relevant index folders
+                dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
 
-                # save to disk
-                np.save(os.path.join(dir, 'scores.npy'), scores)
-                image = feed.val_inds[sub_val_index]
-                np.save(os.path.join(dir, 'image.npy'), image)
+                if os.path.isfile(os.path.join(dir, 'scores.npy')):
+                    print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
+                    scores = np.load(os.path.join(dir, 'scores.npy'))
+                else:
+                    scores = insp.upweighting_influence_batch(
+                        sess=sess,
+                        test_indices=[sub_index],
+                        test_batch_size=testset_batch_size,
+                        approx_params=approx_params,
+                        train_batch_size=train_batch_size,
+                        train_iterations=train_iterations)
+                    np.save(os.path.join(dir, 'scores.npy'), scores)
+
+                if not os.path.isfile(os.path.join(dir, 'image.png')):
+                    print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+                    image, _ = feed.test_indices(sub_index)
+                    imageio.imwrite(os.path.join(dir, 'image.png'), image)
+                    np.save(os.path.join(dir, 'image.npy'), image)
+                else:
+                    # verifying everything is good
+                    assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
         except Exception as e:
             print('Error with influence collect function for i={}: {}'.format(i, e))
             exit(1)
@@ -311,14 +415,14 @@ def collect_influence(q, thread_id):
 
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
-for i in range(len(net_succ_attack_succ)):
+for i in range(len(sub_relevant_indices)):
     q.put((i,))
 
 for thread_id in range(FLAGS.num_threads):
-    logging.info('Starting thread ', thread_id)
+    print('Starting thread {}'.format(thread_id))
     worker = Thread(target=collect_influence, args=(q, thread_id))
     worker.setDaemon(True)
     worker.start()
 
 q.join()
-logging.info('All tasks completed.')
+print('All tasks completed.')
