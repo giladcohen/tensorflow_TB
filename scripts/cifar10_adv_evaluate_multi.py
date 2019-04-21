@@ -35,11 +35,11 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
+flags.DEFINE_string('workspace', 'influence_workspace_test_mini', 'workspace dir')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
-flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
-flags.DEFINE_integer('num_threads', 16, 'number of threads')
+flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
+flags.DEFINE_bool('use_train_mini', True, 'Whether or not to use 5000 training samples instead of 49000')
+flags.DEFINE_integer('num_threads', 20, 'number of threads')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -348,7 +348,7 @@ approx_params = {
 }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
+sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
 # b, e = 0, 250
@@ -382,11 +382,10 @@ def collect_influence(q, thread_id):
                 assert pred_label != adv_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
             if info[FLAGS.set][sub_index]['net_succ']:
                 assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
-            progress_str = 'sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
+            progress_str = 'thread_id: {}. sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
                            'real label: {}, adv label: {}, pred label: {}. net_succ={}, attack_succ={}' \
-                .format(i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
-                        _classes[adv_label], _classes[pred_label], info[FLAGS.set][sub_index]['net_succ'],
-                        info[FLAGS.set][sub_index]['attack_succ'])
+                .format(thread_id, i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
+                        _classes[adv_label], _classes[pred_label], info[FLAGS.set][sub_index]['net_succ'], info[FLAGS.set][sub_index]['attack_succ'])
             logging.info(progress_str)
             print(progress_str)
 
@@ -395,9 +394,7 @@ def collect_influence(q, thread_id):
                 cases.append('pred')
             if info[FLAGS.set][sub_index]['attack_succ']:  # if adv is different than prediction
                 cases.append('adv')
-            #for case in cases:
-            assert 'pred' in cases
-            for case in ['pred']:
+            for case in cases:
                 if case == 'real':
                     feed = feeder
                     insp = inspector_list[thread_id]
