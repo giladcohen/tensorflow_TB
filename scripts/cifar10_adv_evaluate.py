@@ -31,9 +31,9 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_test', 'workspace dir')
+flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
+flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -274,6 +274,15 @@ else:
     features = x_test_features
 all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_distance=True)
 
+# setting pred feeder
+pred_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=test_val_set)
+pred_feeder.val_origin_data  = X_val_adv
+pred_feeder.val_data         = X_val_adv
+pred_feeder.val_label        = one_hot(x_val_preds, 10).astype(np.float32)
+pred_feeder.test_origin_data = X_test_adv
+pred_feeder.test_data        = X_test_adv
+pred_feeder.test_label       = one_hot(x_test_preds, 10).astype(np.float32)
+
 # setting adv feeder
 adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=test_val_set)
 adv_feeder.val_origin_data  = X_val_adv
@@ -290,6 +299,14 @@ adv_feeder.reset()
 inspector = darkon.Influence(
     workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
     feeder=feeder,
+    loss_op_train=full_loss.fprop(x=x, y=y),
+    loss_op_test=loss.fprop(x=x, y=y),
+    x_placeholder=x,
+    y_placeholder=y)
+
+inspector_pred = darkon.Influence(
+    workspace=os.path.join(model_dir, FLAGS.workspace, 'pred'),
+    feeder=pred_feeder,
     loss_op_train=full_loss.fprop(x=x, y=y),
     loss_op_test=loss.fprop(x=x, y=y),
     x_placeholder=x,
@@ -315,10 +332,10 @@ approx_params = {
 }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-b, e = 0, 250
+b, e = 0, 16
 sub_relevant_indices = sub_relevant_indices[b:e]
 relevant_indices     = relevant_indices[b:e]
 
@@ -352,10 +369,14 @@ for i, sub_index in enumerate(sub_relevant_indices):
     logging.info(progress_str)
     print(progress_str)
 
-    for case in ['real', 'adv']:
+    # for case in ['real', 'pred', 'adv']:
+    for case in ['pred']:
         if case == 'real':
             insp = inspector
             feed = feeder
+        elif case == 'pred':
+            insp = inspector_pred
+            feed = pred_feeder
         elif case == 'adv':
             insp = inspector_adv
             feed = adv_feeder
@@ -490,6 +511,6 @@ for i, sub_index in enumerate(sub_relevant_indices):
         with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
             f.write(harmful_summary_str)
             f.write(helpful_summary_str)
-            f.write('label ({} -> {}) {} \nhelpful/harmful_rank mean: {}/{}\nhelpful/harmful_dist mean: {}/{}' \
-                    .format(_classes[real_label], _classes[adv_label], case,
+            f.write('label ({} -> {}). pred: {}. {} \nhelpful/harmful_rank mean: {}/{}\nhelpful/harmful_dist mean: {}/{}' \
+                    .format(_classes[real_label], _classes[adv_label], _classes[pred_label], case,
                             helpful_ranks.mean(), harmful_ranks.mean(), helpful_dists.mean(), harmful_dists.mean()))
