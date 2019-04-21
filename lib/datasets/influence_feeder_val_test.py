@@ -11,9 +11,10 @@ from sklearn.model_selection import train_test_split
 from copy import copy, deepcopy
 
 class MyFeederValTest(darkon.InfluenceFeeder):
-    def __init__(self, rand_gen, as_one_hot, val_inds=None, test_val_set=False):
+    def __init__(self, rand_gen, as_one_hot, val_inds=None, test_val_set=False, mini_train_inds=None):
 
         self.test_val_set = test_val_set
+        self.use_mini_train = mini_train_inds is not None
 
         # load train data
         data, label = cifar10_input.prepare_train_data(padding_size=0)
@@ -52,6 +53,15 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         else:
             self.train_label = label[train_inds]
 
+        if mini_train_inds is not None:
+            self.mini_train_inds        = mini_train_inds
+            self.mini_train_origin_data = data[mini_train_inds]
+            self.mini_train_data        = data[mini_train_inds]
+            if as_one_hot:
+                self.mini_train_label = one_hot(label[mini_train_inds].astype(np.int32), 10).astype(np.float32)
+            else:
+                self.mini_train_label = label[mini_train_inds]
+
         # validation data
         self.val_inds          = val_inds
         self.val_origin_data   = data[val_inds]
@@ -77,8 +87,25 @@ class MyFeederValTest(darkon.InfluenceFeeder):
     # def indices(self, indices):
     #     return self.complete_data[indices], self.complete_label[indices]
 
+    def get_global_index(self, set, idx):
+        if set == 'train':
+            if self.use_mini_train:
+                global_index =  self.mini_train_inds[idx]
+            else:
+                global_index = self.train_inds[idx]
+        elif set == 'val':
+            global_index = self.val_inds[idx]
+        elif set == 'test':
+            global_index = self.test_inds[idx]
+        else:
+            raise AssertionError('set {} is invalid'.format(set))
+        return global_index
+
     def train_indices(self, indices):
-        return self.train_data[indices], self.train_label[indices]
+        if self.use_mini_train:
+            return self.mini_train_data[indices], self.mini_train_label[indices]
+        else:
+            return self.train_data[indices], self.train_label[indices]
 
     def val_indices(self, indices):
         return self.val_data[indices], self.val_label[indices]
@@ -95,16 +122,25 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         end = start + batch_size
         self.train_batch_offset += batch_size
 
-        return self.train_data[start:end, ...], self.train_label[start:end, ...]
+        if self.use_mini_train:
+            return self.mini_train_data[start:end, ...], self.mini_train_label[start:end, ...]
+        else:
+            return self.train_data[start:end, ...], self.train_label[start:end, ...]
 
     def train_one(self, idx):
-        return self.train_data[idx, ...], self.train_label[idx, ...]
+        if self.use_mini_train:
+            return self.mini_train_data[idx, ...], self.mini_train_label[idx, ...]
+        else:
+            return self.train_data[idx, ...], self.train_label[idx, ...]
 
     def reset(self):
         self.train_batch_offset = 0
 
     def get_train_size(self):
-        return len(self.train_inds)
+        if self.use_mini_train:
+            return len(self.mini_train_inds)
+        else:
+            return len(self.train_inds)
 
     def get_val_size(self):
         return len(self.val_inds)
@@ -125,3 +161,34 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             else:
                 setattr(result, k, v)
         return result
+
+
+############################################## optional for test mini ###############################################
+# instead of using the entire training samples, use only 5000 (500 samples from each class).
+# if not os.path.isfile(os.path.join(model_dir, 'test_mini_indices.npy')):
+#     random_indices = []
+#     for cls in range(len(_classes)):
+#         cls_train_indices = []
+#         got_so_far = 0
+#         while got_so_far < 500:
+#             cls_train_index = rand_gen.choice(np.where(y_train_sparse == cls)[0])
+#             if (cls_train_index not in cls_train_indices) and (cls_train_index in feeder.train_inds):
+#                 cls_train_indices.append(cls_train_index)
+#                 got_so_far += 1
+#         print('len = {}'.format(len(cls_train_indices)))
+#         random_indices.extend(cls_train_indices)
+#     random_indices = np.asarray(random_indices, dtype=np.int32)
+#     random_indices.sort()
+#     np.save(os.path.join(model_dir, 'train_mini_indices.npy'), random_indices)
+# else:
+#     print('re-using test_mini_indices from file {}'.format(os.path.join(model_dir, 'train_mini_indices.npy')))
+#     random_indices = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
+#
+# # updating feeders
+# sub_train_indices = [i for i, ti in enumerate(feeder.train_inds) if ti in random_indices]
+# sub_train_indices = np.asarray(sub_train_indices, dtype=np.int32)
+# feeder.train_inds        = feeder.train_inds[sub_train_indices]  # same as feeder.train_inds = random_indices
+# feeder.train_origin_data = feeder.train_origin_data[sub_train_indices]
+# feeder.train_data        = feeder.train_data[sub_train_indices]
+# feeder.train_label       = feeder.train_label[sub_train_indices]
+############################################## optional for test mini ###############################################

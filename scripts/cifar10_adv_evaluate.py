@@ -31,9 +31,10 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
+flags.DEFINE_string('workspace', 'influence_workspace_test_mini', 'workspace dir')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
+flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
+flags.DEFINE_bool('use_train_mini', 'True', 'Whether or not to use 5000 training samples instead of 49000')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -73,6 +74,11 @@ cifar10_input.maybe_download_and_extract()
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 workspace_dir = os.path.join(model_dir, FLAGS.workspace)
 
+mini_train_inds = None
+if FLAGS.use_train_mini:
+    print('loading train mini indices from {}'.format(os.path.join(model_dir, 'train_mini_indices.npy')))
+    mini_train_inds = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
+
 save_val_inds = False
 if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
     print('re-using val indices from {}'.format(os.path.join(model_dir, 'val_indices.npy')))
@@ -80,7 +86,8 @@ if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
 else:
     val_indices = None
     save_val_inds = True
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices, test_val_set=test_val_set)
+feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices,
+                         test_val_set=test_val_set, mini_train_inds=mini_train_inds)
 if save_val_inds:
     print('saving new val indices to'.format(os.path.join(model_dir, 'val_indices.npy')))
     np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
@@ -140,14 +147,20 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # predict labels from trainset
-if not os.path.isfile(os.path.join(model_dir, 'x_train_preds.npy')):
+if FLAGS.use_train_mini:
+    train_preds_file    = os.path.join(model_dir, 'x_train_mini_preds.npy')
+    train_features_file = os.path.join(model_dir, 'x_train_mini_features.npy')
+else:
+    train_preds_file    = os.path.join(model_dir, 'x_train_preds.npy')
+    train_features_file = os.path.join(model_dir, 'x_train_features.npy')
+if not os.path.isfile(train_preds_file):
     x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
     x_train_preds = x_train_preds.astype(np.int32)
-    np.save(os.path.join(model_dir, 'x_train_preds.npy'), x_train_preds)
-    np.save(os.path.join(model_dir, 'x_train_features.npy'), x_train_features)
+    np.save(train_preds_file, x_train_preds)
+    np.save(train_features_file, x_train_features)
 else:
-    x_train_preds    = np.load(os.path.join(model_dir, 'x_train_preds.npy'))
-    x_train_features = np.load(os.path.join(model_dir, 'x_train_features.npy'))
+    x_train_preds    = np.load(train_preds_file)
+    x_train_features = np.load(train_features_file)
 
 # predict labels from validation set
 if not os.path.isfile(os.path.join(model_dir, 'x_val_preds.npy')):
@@ -249,20 +262,6 @@ else:
         info_old = pickle.load(handle)
     assert info == info_old
 
-# Due to lack of time, we can also sample 5 inputs of each class. Here we randomly select them...
-# test_indices = []
-# for cls in range(len(_classes)):
-#     cls_test_indices = []
-#     got_so_far = 0
-#     while got_so_far < 5:
-#         cls_test_index = rand_gen.choice(np.where(y_test_sparse == cls)[0])
-#         if cls_test_index in net_succ_attack_succ:
-#             cls_test_indices.append(cls_test_index)
-#             got_so_far += 1
-#     test_indices.extend(cls_test_indices)
-# optional: divide test indices
-# test_indices = test_indices[b:e]
-
 # start the knn observation
 knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
 knn.fit(x_train_features)
@@ -275,7 +274,8 @@ else:
 all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_distance=True)
 
 # setting pred feeder
-pred_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=test_val_set)
+pred_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True,
+                              val_inds=feeder.val_inds, test_val_set=test_val_set, mini_train_inds=mini_train_inds)
 pred_feeder.val_origin_data  = X_val_adv
 pred_feeder.val_data         = X_val_adv
 pred_feeder.val_label        = one_hot(x_val_preds, 10).astype(np.float32)
@@ -284,7 +284,8 @@ pred_feeder.test_data        = X_test_adv
 pred_feeder.test_label       = one_hot(x_test_preds, 10).astype(np.float32)
 
 # setting adv feeder
-adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=feeder.val_inds, test_val_set=test_val_set)
+adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True,
+                             val_inds=feeder.val_inds, test_val_set=test_val_set, mini_train_inds=mini_train_inds)
 adv_feeder.val_origin_data  = X_val_adv
 adv_feeder.val_data         = X_val_adv
 adv_feeder.val_label        = one_hot(x_val_preds_adv, 10).astype(np.float32)
@@ -294,6 +295,7 @@ adv_feeder.test_label       = one_hot(x_test_preds_adv, 10).astype(np.float32)
 
 # now finding the influence
 feeder.reset()
+pred_feeder.reset()
 adv_feeder.reset()
 
 inspector = darkon.Influence(
@@ -322,20 +324,21 @@ inspector_adv = darkon.Influence(
 
 testset_batch_size = 100
 train_batch_size = 100
-train_iterations = 490  # int(feeder.get_train_size()/train_batch_size)  # was 500 wo validation
+train_iterations = 50 if FLAGS.use_train_mini else 490  # was 500 wo validation
 
 approx_params = {
     'scale': 200,
     'num_repeats': 5,
-    'recursion_depth': 98,
+    'recursion_depth': 10 if FLAGS.use_train_mini else 98,  # 5000 for mini and 49000 for regular train
     'recursion_batch_size': 100
 }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
+# sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
+sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-b, e = 0, 16
+b, e = 0, 2500
 sub_relevant_indices = sub_relevant_indices[b:e]
 relevant_indices     = relevant_indices[b:e]
 
@@ -363,14 +366,18 @@ for i, sub_index in enumerate(sub_relevant_indices):
         assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
 
     progress_str = 'sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
-                   'real label: {}, adv label: {}. net_succ={}, attack_succ={}' \
+                   'real label: {}, adv label: {}, pred label: {}. net_succ={}, attack_succ={}' \
         .format(i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
-                _classes[adv_label], info[FLAGS.set][sub_index]['net_succ'], info[FLAGS.set][sub_index]['attack_succ'])
+                _classes[adv_label], _classes[pred_label], info[FLAGS.set][sub_index]['net_succ'], info[FLAGS.set][sub_index]['attack_succ'])
     logging.info(progress_str)
     print(progress_str)
 
-    # for case in ['real', 'pred', 'adv']:
-    for case in ['pred']:
+    cases = ['real']
+    if not info[FLAGS.set][sub_index]['net_succ']:  # if prediction is different than real
+        cases.append('pred')
+    if info[FLAGS.set][sub_index]['attack_succ']:  # if adv is different than prediction
+        cases.append('adv')
+    for case in cases:
         if case == 'real':
             insp = inspector
             feed = feeder
@@ -428,7 +435,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
         cnt_harmful_in_knn = 0
         print('\nHarmful:')
         for idx in harmful:
-            print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
+            print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
             if idx in all_neighbor_indices[sub_index, 0:50]:
                 cnt_harmful_in_knn += 1
         harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
@@ -437,7 +444,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
         cnt_helpful_in_knn = 0
         print('\nHelpful:')
         for idx in helpful:
-            print('[{}] {}'.format(feed.train_inds[idx], scores[idx]))
+            print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
             if idx in all_neighbor_indices[sub_index, 0:50]:
                 cnt_helpful_in_knn += 1
         helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
@@ -451,7 +458,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
                 axes1[j][k].set_axis_off()
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
-                axes1[j][k].set_title('[{}]: {}'.format(feed.train_inds[idx], label_str))
+                axes1[j][k].set_title('[{}]: {}'.format(feed.get_global_index('train', idx), label_str))
                 target_idx += 1
         plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
         plt.close()
@@ -486,7 +493,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
                 loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
-                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
+                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
                 target_idx += 1
         plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
         plt.close()
@@ -500,7 +507,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
                 axes1[j][k].imshow(X_train[idx])
                 label_str = _classes[y_train_sparse[idx]]
                 loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
-                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.train_inds[idx], label_str, loc_in_knn))
+                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
                 target_idx += 1
         plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
         plt.close()
