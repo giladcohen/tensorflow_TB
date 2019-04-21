@@ -342,6 +342,18 @@ b, e = 0, 2500
 sub_relevant_indices = sub_relevant_indices[b:e]
 relevant_indices     = relevant_indices[b:e]
 
+# calculate 1000 knn_ranks
+def find_ranks(sub_index, sorted_influence_indices):
+    ranks = -1 * np.ones(len(sorted_influence_indices), dtype=np.int32)
+    dists = -1 * np.ones(len(sorted_influence_indices), dtype=np.float32)
+    for target_idx in range(ranks.shape[0]):
+        idx = sorted_influence_indices[target_idx]
+        loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+        knn_dist = all_neighbor_dists[sub_index, loc_in_knn]
+        ranks[target_idx] = loc_in_knn
+        dists[target_idx] = knn_dist
+    return ranks, dists
+
 for i, sub_index in enumerate(sub_relevant_indices):
     if test_val_set:
         global_index = feeder.val_inds[sub_index]
@@ -398,126 +410,113 @@ for i, sub_index in enumerate(sub_relevant_indices):
                 approx_params=approx_params,
                 force_refresh=False
             )
-            continue
-
-        # creating the relevant index folders
-        dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-        if os.path.isfile(os.path.join(dir, 'scores.npy')):
-            print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
-            scores = np.load(os.path.join(dir, 'scores.npy'))
         else:
-            scores = insp.upweighting_influence_batch(
-                sess=sess,
-                test_indices=[sub_index],
-                test_batch_size=testset_batch_size,
-                approx_params=approx_params,
-                train_batch_size=train_batch_size,
-                train_iterations=train_iterations)
-            np.save(os.path.join(dir, 'scores.npy'), scores)
+            # creating the relevant index folders
+            dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+            if not os.path.exists(dir):
+                os.makedirs(dir)
 
-        if not os.path.isfile(os.path.join(dir, 'image.png')):
-            print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
-            image, _ = feed.test_indices(sub_index)
-            imageio.imwrite(os.path.join(dir, 'image.png'), image)
-            np.save(os.path.join(dir, 'image.npy'), image)
-        else:
-            # verifying everything is good
-            assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
+            if os.path.isfile(os.path.join(dir, 'scores.npy')):
+                print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
+                scores = np.load(os.path.join(dir, 'scores.npy'))
+            else:
+                scores = insp.upweighting_influence_batch(
+                    sess=sess,
+                    test_indices=[sub_index],
+                    test_batch_size=testset_batch_size,
+                    approx_params=approx_params,
+                    train_batch_size=train_batch_size,
+                    train_iterations=train_iterations)
+                np.save(os.path.join(dir, 'scores.npy'), scores)
 
-        sorted_indices = np.argsort(scores)
-        harmful = sorted_indices[:50]
-        helpful = sorted_indices[-50:][::-1]
+            if not os.path.isfile(os.path.join(dir, 'image.png')):
+                print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+                image, _ = feed.test_indices(sub_index)
+                imageio.imwrite(os.path.join(dir, 'image.png'), image)
+                np.save(os.path.join(dir, 'image.npy'), image)
+            else:
+                # verifying everything is good
+                assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
 
-        # have some figures
-        cnt_harmful_in_knn = 0
-        print('\nHarmful:')
-        for idx in harmful:
-            print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
-            if idx in all_neighbor_indices[sub_index, 0:50]:
-                cnt_harmful_in_knn += 1
-        harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
-        print(harmful_summary_str)
+            sorted_indices = np.argsort(scores)
+            harmful = sorted_indices[:50]
+            helpful = sorted_indices[-50:][::-1]
 
-        cnt_helpful_in_knn = 0
-        print('\nHelpful:')
-        for idx in helpful:
-            print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
-            if idx in all_neighbor_indices[sub_index, 0:50]:
-                cnt_helpful_in_knn += 1
-        helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
-        print(helpful_summary_str)
+            # have some figures
+            cnt_harmful_in_knn = 0
+            print('\nHarmful:')
+            for idx in harmful:
+                print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
+                if idx in all_neighbor_indices[sub_index, 0:50]:
+                    cnt_harmful_in_knn += 1
+            harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
+            print(harmful_summary_str)
 
-        fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-        target_idx = 0
-        for j in range(5):
-            for k in range(10):
-                idx = all_neighbor_indices[sub_index, target_idx]
-                axes1[j][k].set_axis_off()
-                axes1[j][k].imshow(X_train[idx])
-                label_str = _classes[y_train_sparse[idx]]
-                axes1[j][k].set_title('[{}]: {}'.format(feed.get_global_index('train', idx), label_str))
-                target_idx += 1
-        plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
-        plt.close()
+            cnt_helpful_in_knn = 0
+            print('\nHelpful:')
+            for idx in helpful:
+                print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
+                if idx in all_neighbor_indices[sub_index, 0:50]:
+                    cnt_helpful_in_knn += 1
+            helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
+            print(helpful_summary_str)
 
-        # calculate 1000 knn_ranks
-        def find_ranks(sub_index, sorted_influence_indices):
-            ranks = -1 * np.ones(len(sorted_influence_indices), dtype=np.int32)
-            dists = -1 * np.ones(len(sorted_influence_indices), dtype=np.float32)
-            for target_idx in range(ranks.shape[0]):
-                idx = sorted_influence_indices[target_idx]
-                loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
-                knn_dist = all_neighbor_dists[sub_index, loc_in_knn]
-                ranks[target_idx] = loc_in_knn
-                dists[target_idx] = knn_dist
-            return ranks, dists
+            fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+            target_idx = 0
+            for j in range(5):
+                for k in range(10):
+                    idx = all_neighbor_indices[sub_index, target_idx]
+                    axes1[j][k].set_axis_off()
+                    axes1[j][k].imshow(X_train[idx])
+                    label_str = _classes[y_train_sparse[idx]]
+                    axes1[j][k].set_title('[{}]: {}'.format(feed.get_global_index('train', idx), label_str))
+                    target_idx += 1
+            plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
+            plt.close()
 
-        helpful_ranks, helpful_dists = find_ranks(sub_index, sorted_indices[-1000:][::-1])
-        harmful_ranks, harmful_dists = find_ranks(sub_index, sorted_indices[:1000])
+            helpful_ranks, helpful_dists = find_ranks(sub_index, sorted_indices[-1000:][::-1])
+            harmful_ranks, harmful_dists = find_ranks(sub_index, sorted_indices[:1000])
 
-        print('saving knn ranks and dists to {}'.format(dir))
-        np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
-        np.save(os.path.join(dir, 'helpful_dists.npy'), helpful_dists)
-        np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
-        np.save(os.path.join(dir, 'harmful_dists.npy'), harmful_dists)
+            print('saving knn ranks and dists to {}'.format(dir))
+            np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
+            np.save(os.path.join(dir, 'helpful_dists.npy'), helpful_dists)
+            np.save(os.path.join(dir, 'harmful_ranks.npy'), harmful_ranks)
+            np.save(os.path.join(dir, 'harmful_dists.npy'), harmful_dists)
 
-        fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-        target_idx = 0
-        for j in range(5):
-            for k in range(10):
-                idx = helpful[target_idx]
-                axes1[j][k].set_axis_off()
-                axes1[j][k].imshow(X_train[idx])
-                label_str = _classes[y_train_sparse[idx]]
-                loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
-                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
-                target_idx += 1
-        plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
-        plt.close()
+            fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+            target_idx = 0
+            for j in range(5):
+                for k in range(10):
+                    idx = helpful[target_idx]
+                    axes1[j][k].set_axis_off()
+                    axes1[j][k].imshow(X_train[idx])
+                    label_str = _classes[y_train_sparse[idx]]
+                    loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+                    axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
+                    target_idx += 1
+            plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
+            plt.close()
 
-        fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
-        target_idx = 0
-        for j in range(5):
-            for k in range(10):
-                idx = harmful[target_idx]
-                axes1[j][k].set_axis_off()
-                axes1[j][k].imshow(X_train[idx])
-                label_str = _classes[y_train_sparse[idx]]
-                loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
-                axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
-                target_idx += 1
-        plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
-        plt.close()
+            fig, axes1 = plt.subplots(5, 10, figsize=(30, 10))
+            target_idx = 0
+            for j in range(5):
+                for k in range(10):
+                    idx = harmful[target_idx]
+                    axes1[j][k].set_axis_off()
+                    axes1[j][k].imshow(X_train[idx])
+                    label_str = _classes[y_train_sparse[idx]]
+                    loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+                    axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
+                    target_idx += 1
+            plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
+            plt.close()
 
-        # getting two ranks - one rank for the real label and another rank for the adv label.
-        # what is a "rank"?
-        # A rank is the average nearest neighbor location of all the helpful training indices.
-        with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
-            f.write(harmful_summary_str)
-            f.write(helpful_summary_str)
-            f.write('label ({} -> {}). pred: {}. {} \nhelpful/harmful_rank mean: {}/{}\nhelpful/harmful_dist mean: {}/{}' \
-                    .format(_classes[real_label], _classes[adv_label], _classes[pred_label], case,
-                            helpful_ranks.mean(), harmful_ranks.mean(), helpful_dists.mean(), harmful_dists.mean()))
+            # getting two ranks - one rank for the real label and another rank for the adv label.
+            # what is a "rank"?
+            # A rank is the average nearest neighbor location of all the helpful training indices.
+            with open(os.path.join(dir, 'summary.txt'), 'w+') as f:
+                f.write(harmful_summary_str)
+                f.write(helpful_summary_str)
+                f.write('label ({} -> {}). pred: {}. {} \nhelpful/harmful_rank mean: {}/{}\nhelpful/harmful_dist mean: {}/{}' \
+                        .format(_classes[real_label], _classes[adv_label], _classes[pred_label], case,
+                                helpful_ranks.mean(), harmful_ranks.mean(), helpful_dists.mean(), harmful_dists.mean()))

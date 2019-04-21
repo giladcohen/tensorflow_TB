@@ -39,7 +39,7 @@ flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace di
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
-flags.DEFINE_integer('num_threads', 15, 'number of threads')
+flags.DEFINE_integer('num_threads', 16, 'number of threads')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -395,7 +395,9 @@ def collect_influence(q, thread_id):
                 cases.append('pred')
             if info[FLAGS.set][sub_index]['attack_succ']:  # if adv is different than prediction
                 cases.append('adv')
-            for case in cases:
+            #for case in cases:
+            assert 'pred' in cases
+            for case in ['pred']:
                 if case == 'real':
                     feed = feeder
                     insp = inspector_list[thread_id]
@@ -416,34 +418,33 @@ def collect_influence(q, thread_id):
                         approx_params=approx_params,
                         force_refresh=False
                     )
-                    return
-
-                # creating the relevant index folders
-                dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
-
-                if os.path.isfile(os.path.join(dir, 'scores.npy')):
-                    print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
-                    scores = np.load(os.path.join(dir, 'scores.npy'))
                 else:
-                    scores = insp.upweighting_influence_batch(
-                        sess=sess,
-                        test_indices=[sub_index],
-                        test_batch_size=testset_batch_size,
-                        approx_params=approx_params,
-                        train_batch_size=train_batch_size,
-                        train_iterations=train_iterations)
-                    np.save(os.path.join(dir, 'scores.npy'), scores)
+                    # creating the relevant index folders
+                    dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+                    if not os.path.exists(dir):
+                        os.makedirs(dir)
 
-                if not os.path.isfile(os.path.join(dir, 'image.png')):
-                    print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
-                    image, _ = feed.test_indices(sub_index)
-                    imageio.imwrite(os.path.join(dir, 'image.png'), image)
-                    np.save(os.path.join(dir, 'image.npy'), image)
-                else:
-                    # verifying everything is good
-                    assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
+                    if os.path.isfile(os.path.join(dir, 'scores.npy')):
+                        print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
+                        scores = np.load(os.path.join(dir, 'scores.npy'))
+                    else:
+                        scores = insp.upweighting_influence_batch(
+                            sess=sess,
+                            test_indices=[sub_index],
+                            test_batch_size=testset_batch_size,
+                            approx_params=approx_params,
+                            train_batch_size=train_batch_size,
+                            train_iterations=train_iterations)
+                        np.save(os.path.join(dir, 'scores.npy'), scores)
+
+                    if not os.path.isfile(os.path.join(dir, 'image.png')):
+                        print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+                        image, _ = feed.test_indices(sub_index)
+                        imageio.imwrite(os.path.join(dir, 'image.png'), image)
+                        np.save(os.path.join(dir, 'image.npy'), image)
+                    else:
+                        # verifying everything is good
+                        assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
         except Exception as e:
             print('Error with influence collect function for i={}: {}'.format(i, e))
             exit(1)
