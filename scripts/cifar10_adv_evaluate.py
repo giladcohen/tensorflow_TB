@@ -338,9 +338,9 @@ approx_params = {
 sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-b, e = 0, 2500
-sub_relevant_indices = sub_relevant_indices[b:e]
-relevant_indices     = relevant_indices[b:e]
+# b, e = 0, 2500
+# sub_relevant_indices = sub_relevant_indices[b:e]
+# relevant_indices     = relevant_indices[b:e]
 
 # calculate 1000 knn_ranks
 def find_ranks(sub_index, sorted_influence_indices):
