@@ -351,7 +351,7 @@ approx_params = {
 sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-# b, e = 0, 250
+# b, e = 7056, 10000
 # sub_relevant_indices = sub_relevant_indices[b:e]
 # relevant_indices     = relevant_indices[b:e]
 
@@ -453,7 +453,8 @@ def collect_influence(q, thread_id):
 
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
-for i in range(len(sub_relevant_indices)):
+# for i in range(len(sub_relevant_indices)):
+for i in range(7056, 10000):
     q.put((i,))
 
 for thread_id in range(FLAGS.num_threads):
