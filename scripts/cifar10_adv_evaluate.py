@@ -29,30 +29,50 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
+flags.DEFINE_string('checkpoint_name', 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_test_mini', 'workspace dir')
-flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
-flags.DEFINE_bool('use_train_mini', True, 'Whether or not to use 5000 training samples instead of 49000')
+flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
+flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
+flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
 flags.DEFINE_string('dataset', 'cifar-100', 'datasset: cifar-10/100')
 
 
 test_val_set = FLAGS.set == 'val'
 
 # cifar-10 classes
-_classes = (
-    'airplane',
-    'car',
-    'bird',
-    'cat',
-    'deer',
-    'dog',
-    'frog',
-    'horse',
-    'ship',
-    'truck'
-)
+if FLAGS.dataset == 'cifar10':
+    _classes = (
+        'airplane',
+        'car',
+        'bird',
+        'cat',
+        'deer',
+        'dog',
+        'frog',
+        'horse',
+        'ship',
+        'truck'
+    )
+elif FLAGS.dataset == 'cifar100':
+    _classes = (
+        'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle',
+        'bicycle', 'bottle', 'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel',
+        'can', 'castle', 'caterpillar', 'cattle', 'chair', 'chimpanzee', 'clock',
+        'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
+        'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster',
+        'house', 'kangaroo', 'keyboard', 'lamp', 'lawn_mower', 'leopard', 'lion',
+        'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain', 'mouse',
+        'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear',
+        'pickup_truck', 'pine_tree', 'plain', 'plate', 'poppy', 'porcupine',
+        'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket', 'rose',
+        'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake',
+        'spider', 'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table',
+        'tank', 'telephone', 'television', 'tiger', 'tractor', 'train', 'trout',
+        'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
+    )
+else:
+    raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
 
 # Object used to keep track of (and return) key accuracies
 report = AccuracyReport()
@@ -109,7 +129,7 @@ deepfool_params = {
     'clip_max': 1.0
 }
 
-model = DarkonReplica(scope='model1', nb_classes=10, n=5, input_shape=[32, 32, 3])
+model = DarkonReplica(scope='model_cifar_100', nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
 preds      = model.get_predicted_class(x)
 logits     = model.get_logits(x)
 embeddings = model.get_embeddings(x)
@@ -264,24 +284,24 @@ else:
 all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_distance=True)
 
 # setting pred feeder
-pred_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True,
+pred_feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True,
                               val_inds=feeder.val_inds, test_val_set=test_val_set, mini_train_inds=mini_train_inds)
 pred_feeder.val_origin_data  = X_val_adv
 pred_feeder.val_data         = X_val_adv
-pred_feeder.val_label        = one_hot(x_val_preds, 10).astype(np.float32)
+pred_feeder.val_label        = one_hot(x_val_preds, feeder.num_classes).astype(np.float32)
 pred_feeder.test_origin_data = X_test_adv
 pred_feeder.test_data        = X_test_adv
-pred_feeder.test_label       = one_hot(x_test_preds, 10).astype(np.float32)
+pred_feeder.test_label       = one_hot(x_test_preds, feeder.num_classes).astype(np.float32)
 
 # setting adv feeder
-adv_feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True,
+adv_feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True,
                              val_inds=feeder.val_inds, test_val_set=test_val_set, mini_train_inds=mini_train_inds)
 adv_feeder.val_origin_data  = X_val_adv
 adv_feeder.val_data         = X_val_adv
-adv_feeder.val_label        = one_hot(x_val_preds_adv, 10).astype(np.float32)
+adv_feeder.val_label        = one_hot(x_val_preds_adv, feeder.num_classes).astype(np.float32)
 adv_feeder.test_origin_data = X_test_adv
 adv_feeder.test_data        = X_test_adv
-adv_feeder.test_label       = one_hot(x_test_preds_adv, 10).astype(np.float32)
+adv_feeder.test_label       = one_hot(x_test_preds_adv, feeder.num_classes).astype(np.float32)
 
 # now finding the influence
 feeder.reset()
@@ -328,7 +348,7 @@ approx_params = {
 sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-b, e = 0, 500
+b, e = 0, 250
 sub_relevant_indices = sub_relevant_indices[b:e]
 relevant_indices     = relevant_indices[b:e]
 
