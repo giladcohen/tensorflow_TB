@@ -29,8 +29,9 @@ flags.DEFINE_float('learning_rate', 0.1, 'Learning rate for training')
 flags.DEFINE_float('lr_factor', 0.9, 'A factor to decay a learning rate')
 flags.DEFINE_integer('lr_patience', 3, 'epochs with no metric improvements')
 flags.DEFINE_integer('lr_cooldown', 2, 'epochs in refractory period')
-flags.DEFINE_string('checkpoint_name', '', 'checkpoint name')
+flags.DEFINE_string('checkpoint_name', 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
+flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100')
 
 
 # Object used to keep track of (and return) key accuracies
@@ -48,20 +49,19 @@ set_log_level(logging.DEBUG)
 config_args = dict(allow_soft_placement=True)
 sess = tf.Session(config=tf.ConfigProto(**config_args))
 
-# Get CIFAR-10 data
-cifar10_input.maybe_download_and_extract()
-
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, test_val_set=True)
+feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True, test_val_set=True)
 model_dir = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
 np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
-X_train, y_train = feeder.train_indices(range(49000))
-X_val, y_val     = feeder.test_indices(range(1000))
-y_train_sparse   = y_train.argmax(axis=-1).astype(np.int32)
-y_val_sparse     = y_val.argmax(axis=-1).astype(np.int32)
+X_train, y_train       = feeder.train_indices(range(feeder.get_train_size()))
+X_val, y_val           = feeder.val_indices(range(feeder.get_val_size()))
+X_test, y_test         = feeder.test_data, feeder.test_label  # getting the real test set
+y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
+y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
+y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
 
 dataset_size  = X_train.shape[0]
 dataset_train = tf.data.Dataset.range(dataset_size)
@@ -84,7 +84,7 @@ nb_classes = y_val.shape[1]
 x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 
-# Train an CIFAR-10 model
+# Train a model
 train_params = {
     'nb_epochs': FLAGS.nb_epochs,
     'batch_size': FLAGS.batch_size,
@@ -101,7 +101,7 @@ fgsm_params = {
     'clip_max': 1.
 }
 
-model = DarkonReplica(scope='model1', nb_classes=10, n=5, input_shape=[32, 32, 3])
+model = DarkonReplica(scope='model_cifar_100', nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
 logits = model.get_logits(x)
 loss = CrossEntropy(model, smoothing=FLAGS.label_smoothing)
 regu_losses = WeightDecay(model)

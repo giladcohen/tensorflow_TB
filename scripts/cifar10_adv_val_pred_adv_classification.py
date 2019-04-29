@@ -130,10 +130,10 @@ sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
 # guessing a threshold rank/dist for the "adv"/"non-adversarial" decision
-max_indices        = np.array([10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000])
-rank_values        = np.arange(4000, 6001, 100)
-dist_values        = np.arange(3.7, 4.2, 0.01)
-rank_x_dist_values = np.arange(18000, 21001, 100)
+max_indices        = np.arange(600, 1001, 10)
+rank_values        = np.arange(4600, 5000, 10)
+dist_values        = np.arange(3.7, 3.7, 0.01)
+rank_x_dist_values = np.arange(18000, 18000, 100)
 
 def rt():
     return np.zeros(shape=(max_indices.shape[0], rank_values.shape[0]))
@@ -259,17 +259,17 @@ for key in metrics.keys():
 
 # plotting accuracy metric for all methods
 # rank_thd
-# X, Y = np.meshgrid(max_indices, rank_values)
-# Z = np.zeros((len(rank_values), len(max_indices)))
-# for i in range(len(rank_values)):
-#     for j in range(len(max_indices)):
-#         Z[i, j] = metrics['rank_thd']['accuracy'][j, i]
-# c = plt.pcolor(X, Y, Z, cmap='RdBu', edgecolors='face')
-# plt.xlabel('num of top helpful training samples')
-# plt.ylabel('rank threshold')
-# plt.title('adversarial image classification accuracy')
-# plt.colorbar(c)
-# plt.show()
+X, Y = np.meshgrid(max_indices, rank_values)
+Z = np.zeros((len(rank_values), len(max_indices)))
+for i in range(len(rank_values)):
+    for j in range(len(max_indices)):
+        Z[i, j] = metrics['rank_thd']['accuracy'][j, i]
+c = plt.pcolor(X, Y, Z, cmap='RdBu', edgecolors='face')
+plt.xlabel('num of top helpful training samples')
+plt.ylabel('rank threshold')
+plt.title('adversarial image classification accuracy')
+plt.colorbar(c)
+plt.show()
 
 # dist_thd
 # X, Y = np.meshgrid(max_indices, dist_values)
@@ -285,14 +285,14 @@ for key in metrics.keys():
 # plt.show()
 
 # rank_dist_thd
-X, Y = np.meshgrid(max_indices, rank_x_dist_values)
-Z = np.zeros((len(rank_x_dist_values), len(max_indices)))
-for i in range(len(rank_x_dist_values)):
-    for j in range(len(max_indices)):
-        Z[i, j] = metrics['rank_x_dist']['accuracy'][j, i]
-c = plt.pcolor(X, Y, Z, cmap='RdBu', edgecolors='face')
-plt.xlabel('num of top helpful training samples')
-plt.ylabel('rank x dist threshold')
-plt.title('adversarial image classification accuracy')
-plt.colorbar(c)
-plt.show()
+# X, Y = np.meshgrid(max_indices, rank_x_dist_values)
+# Z = np.zeros((len(rank_x_dist_values), len(max_indices)))
+# for i in range(len(rank_x_dist_values)):
+#     for j in range(len(max_indices)):
+#         Z[i, j] = metrics['rank_x_dist']['accuracy'][j, i]
+# c = plt.pcolor(X, Y, Z, cmap='RdBu', edgecolors='face')
+# plt.xlabel('num of top helpful training samples')
+# plt.ylabel('rank x dist threshold')
+# plt.title('adversarial image classification accuracy')
+# plt.colorbar(c)
+# plt.show()

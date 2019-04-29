@@ -9,16 +9,28 @@ import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 from tensorflow_TB.utils.misc import one_hot
 from sklearn.model_selection import train_test_split
 from copy import copy, deepcopy
+import tensorflow as tf
 
 class MyFeederValTest(darkon.InfluenceFeeder):
-    def __init__(self, rand_gen, as_one_hot, val_inds=None, test_val_set=False, mini_train_inds=None):
+    def __init__(self, dataset, rand_gen, as_one_hot, val_inds=None, test_val_set=False, mini_train_inds=None):
 
+        self.dataset = dataset
         self.test_val_set = test_val_set
         self.use_mini_train = mini_train_inds is not None
 
         # load train data
-        data, label = cifar10_input.prepare_train_data(padding_size=0)
+        if dataset == 'cifar10':
+            (data, label), (_, _) = tf.keras.datasets.cifar10.load_data()
+            data = data.astype(np.float32)
+            self.num_classes = 10
+        elif dataset == 'cifar100':
+            (data, label), (_, _) = tf.keras.datasets.cifar100.load_data()
+            data = data.astype(np.float32)
+            self.num_classes = 100
+        else:
+            raise AssertionError('dataset {} not supported'.format(dataset))
         data /= 255.
+        label = np.squeeze(label, axis=1)
 
         if val_inds is None:
             # here we split the data set to train and validation
@@ -49,7 +61,7 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         self.train_origin_data = data[train_inds]
         self.train_data        = data[train_inds]
         if as_one_hot:
-            self.train_label = one_hot(label[train_inds].astype(np.int32), 10).astype(np.float32)
+            self.train_label = one_hot(label[train_inds].astype(np.int32), self.num_classes).astype(np.float32)
         else:
             self.train_label = label[train_inds]
 
@@ -58,7 +70,7 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             self.mini_train_origin_data = data[mini_train_inds]
             self.mini_train_data        = data[mini_train_inds]
             if as_one_hot:
-                self.mini_train_label = one_hot(label[mini_train_inds].astype(np.int32), 10).astype(np.float32)
+                self.mini_train_label = one_hot(label[mini_train_inds].astype(np.int32), self.num_classes).astype(np.float32)
             else:
                 self.mini_train_label = label[mini_train_inds]
 
@@ -67,18 +79,26 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         self.val_origin_data   = data[val_inds]
         self.val_data          = data[val_inds]
         if as_one_hot:
-            self.val_label = one_hot(label[val_inds].astype(np.int32), 10).astype(np.float32)
+            self.val_label = one_hot(label[val_inds].astype(np.int32), self.num_classes).astype(np.float32)
         else:
             self.val_label = label[val_inds]
 
-        data, label = cifar10_input.read_validation_data_wo_whitening()
+        if dataset == 'cifar10':
+            (_, _), (data, label) = tf.keras.datasets.cifar10.load_data()
+            data = data.astype(np.float32)
+        elif dataset == 'cifar100':
+            (_, _), (data, label) = tf.keras.datasets.cifar100.load_data()
+            data = data.astype(np.float32)
+        else:
+            raise AssertionError('dataset {} not supported'.format(dataset))
         data /= 255.
+        label = np.squeeze(label, axis=1)
 
         self.test_inds        = range(10000)
         self.test_origin_data = data
         self.test_data        = data
         if as_one_hot:
-            self.test_label = one_hot(label.astype(np.int32), 10).astype(np.float32)
+            self.test_label = one_hot(label.astype(np.int32), self.num_classes).astype(np.float32)
         else:
             self.test_label = label
 

@@ -35,6 +35,8 @@ flags.DEFINE_string('workspace', 'influence_workspace_test_mini', 'workspace dir
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_bool('use_train_mini', True, 'Whether or not to use 5000 training samples instead of 49000')
+flags.DEFINE_string('dataset', 'cifar-100', 'datasset: cifar-10/100')
+
 
 test_val_set = FLAGS.set == 'val'
 
@@ -67,9 +69,6 @@ set_log_level(logging.DEBUG)
 config_args = dict(allow_soft_placement=True)
 sess = tf.Session(config=tf.ConfigProto(**config_args))
 
-# Get CIFAR-10 data
-cifar10_input.maybe_download_and_extract()
-
 # get records from training
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 workspace_dir = os.path.join(model_dir, FLAGS.workspace)
@@ -79,18 +78,9 @@ if FLAGS.use_train_mini:
     print('loading train mini indices from {}'.format(os.path.join(model_dir, 'train_mini_indices.npy')))
     mini_train_inds = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
 
-save_val_inds = False
-if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
-    print('re-using val indices from {}'.format(os.path.join(model_dir, 'val_indices.npy')))
-    val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
-else:
-    val_indices = None
-    save_val_inds = True
+val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
 feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices,
                          test_val_set=test_val_set, mini_train_inds=mini_train_inds)
-if save_val_inds:
-    print('saving new val indices to'.format(os.path.join(model_dir, 'val_indices.npy')))
-    np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
 X_train, y_train       = feeder.train_indices(range(feeder.get_train_size()))

@@ -84,18 +84,9 @@ if FLAGS.use_train_mini:
     print('loading train mini indices from {}'.format(os.path.join(model_dir, 'train_mini_indices.npy')))
     mini_train_inds = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
 
-save_val_inds = False
-if os.path.isfile(os.path.join(model_dir, 'val_indices.npy')):
-    print('re-using val indices from {}'.format(os.path.join(model_dir, 'val_indices.npy')))
-    val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
-else:
-    val_indices = None
-    save_val_inds = True
+val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
 feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices,
                          test_val_set=test_val_set, mini_train_inds=mini_train_inds)
-if save_val_inds:
-    print('saving new val indices to'.format(os.path.join(model_dir, 'val_indices.npy')))
-    np.save(os.path.join(model_dir, 'val_indices.npy'), feeder.val_inds)
 
 # get the data
 X_train, y_train       = feeder.train_indices(range(feeder.get_train_size()))
