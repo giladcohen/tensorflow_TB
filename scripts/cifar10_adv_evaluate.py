@@ -31,10 +31,10 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
+flags.DEFINE_string('workspace', 'influence_workspace_test_mini', 'workspace dir')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
-flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
+flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
+flags.DEFINE_bool('use_train_mini', True, 'Whether or not to use 5000 training samples instead of 49000')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -338,11 +338,11 @@ approx_params = {
 sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-# b, e = 0, 2500
-# sub_relevant_indices = sub_relevant_indices[b:e]
-# relevant_indices     = relevant_indices[b:e]
+b, e = 0, 500
+sub_relevant_indices = sub_relevant_indices[b:e]
+relevant_indices     = relevant_indices[b:e]
 
-# calculate 1000 knn_ranks
+# calculate knn_ranks
 def find_ranks(sub_index, sorted_influence_indices):
     ranks = -1 * np.ones(len(sorted_influence_indices), dtype=np.int32)
     dists = -1 * np.ones(len(sorted_influence_indices), dtype=np.float32)
