@@ -99,7 +99,7 @@ if FLAGS.use_train_mini:
     mini_train_inds = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
 
 val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices,
+feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices,
                          test_val_set=test_val_set, mini_train_inds=mini_train_inds)
 
 # get the data
