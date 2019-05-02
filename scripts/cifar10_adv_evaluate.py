@@ -286,11 +286,11 @@ all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_dista
 # setting pred feeder
 pred_feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True,
                               val_inds=feeder.val_inds, test_val_set=test_val_set, mini_train_inds=mini_train_inds)
-pred_feeder.val_origin_data  = X_val_adv
-pred_feeder.val_data         = X_val_adv
+pred_feeder.val_origin_data  = X_val
+pred_feeder.val_data         = X_val
 pred_feeder.val_label        = one_hot(x_val_preds, feeder.num_classes).astype(np.float32)
-pred_feeder.test_origin_data = X_test_adv
-pred_feeder.test_data        = X_test_adv
+pred_feeder.test_origin_data = X_test
+pred_feeder.test_data        = X_test
 pred_feeder.test_label       = one_hot(x_test_preds, feeder.num_classes).astype(np.float32)
 
 # setting adv feeder
