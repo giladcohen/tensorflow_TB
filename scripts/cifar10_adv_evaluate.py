@@ -29,13 +29,13 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01', 'checkpoint name')
-flags.DEFINE_float('label_smoothing', 0.01, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_test_mini', 'workspace dir')
+flags.DEFINE_string('checkpoint_name', 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
+flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
+flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
-flags.DEFINE_bool('use_train_mini', True, 'Whether or not to use 5000 training samples instead of 49000')
-flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100')
+flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
+flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
+flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100')
 
 
 test_val_set = FLAGS.set == 'val'
@@ -129,7 +129,7 @@ deepfool_params = {
     'clip_max': 1.0
 }
 
-model = DarkonReplica(scope='model_cifar_100', nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
+model = DarkonReplica(scope='model1', nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
 preds      = model.get_predicted_class(x)
 logits     = model.get_logits(x)
 embeddings = model.get_embeddings(x)
@@ -344,13 +344,13 @@ approx_params = {
 }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-# sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
-sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
+# sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-b, e = 0, 2500
-sub_relevant_indices = sub_relevant_indices[b:e]
-relevant_indices     = relevant_indices[b:e]
+# b, e = 0, 2500
+# sub_relevant_indices = sub_relevant_indices[b:e]
+# relevant_indices     = relevant_indices[b:e]
 
 # calculate knn_ranks
 def find_ranks(sub_index, sorted_influence_indices):
@@ -412,13 +412,15 @@ for i, sub_index in enumerate(sub_relevant_indices):
         else:
             raise AssertionError('only real and adv are accepted.')
 
+        if case != 'pred':
+            continue
         if FLAGS.prepare:
             insp._prepare(
                 sess=sess,
                 test_indices=[sub_index],
                 test_batch_size=testset_batch_size,
                 approx_params=approx_params,
-                force_refresh=False
+                force_refresh=True
             )
         else:
             # creating the relevant index folders
