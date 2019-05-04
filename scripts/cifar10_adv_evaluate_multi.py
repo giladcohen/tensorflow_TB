@@ -463,7 +463,7 @@ def collect_influence(q, thread_id):
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
 # for i in range(len(sub_relevant_indices)):
-for i in range(1000):
+for i in range(317, 1000):
     q.put((i,))
 
 for thread_id in range(FLAGS.num_threads):
