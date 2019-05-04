@@ -33,14 +33,14 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01', 'checkpoint name')
-flags.DEFINE_float('label_smoothing', 0.01, 'label smoothing')
+flags.DEFINE_string('checkpoint_name', 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
+flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
-flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100')
-flags.DEFINE_integer('num_threads', 20, 'number of threads')
+flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100')
+flags.DEFINE_integer('num_threads', 7, 'number of threads')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -357,7 +357,8 @@ approx_params = {
 }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+# sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
 # b, e = 7056, 10000
@@ -403,6 +404,7 @@ def collect_influence(q, thread_id):
                 cases.append('pred')
             if info[FLAGS.set][sub_index]['attack_succ']:  # if adv is different than prediction
                 cases.append('adv')
+
             for case in cases:
                 if case == 'real':
                     feed = feeder
@@ -415,7 +417,6 @@ def collect_influence(q, thread_id):
                     insp = inspector_adv_list[thread_id]
                 else:
                     raise AssertionError('only real and adv are accepted.')
-
                 if FLAGS.prepare:
                     insp._prepare(
                         sess=sess,
@@ -425,32 +426,33 @@ def collect_influence(q, thread_id):
                         force_refresh=False
                     )
                 else:
-                    # creating the relevant index folders
-                    dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
-                    if not os.path.exists(dir):
-                        os.makedirs(dir)
+                    if case == 'pred':
+                        # creating the relevant index folders
+                        dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+                        if not os.path.exists(dir):
+                            os.makedirs(dir)
 
-                    if os.path.isfile(os.path.join(dir, 'scores.npy')):
-                        print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
-                        scores = np.load(os.path.join(dir, 'scores.npy'))
-                    else:
-                        scores = insp.upweighting_influence_batch(
-                            sess=sess,
-                            test_indices=[sub_index],
-                            test_batch_size=testset_batch_size,
-                            approx_params=approx_params,
-                            train_batch_size=train_batch_size,
-                            train_iterations=train_iterations)
-                        np.save(os.path.join(dir, 'scores.npy'), scores)
+                        if os.path.isfile(os.path.join(dir, 'scores.npy')):
+                            print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
+                            scores = np.load(os.path.join(dir, 'scores.npy'))
+                        else:
+                            scores = insp.upweighting_influence_batch(
+                                sess=sess,
+                                test_indices=[sub_index],
+                                test_batch_size=testset_batch_size,
+                                approx_params=approx_params,
+                                train_batch_size=train_batch_size,
+                                train_iterations=train_iterations)
+                            np.save(os.path.join(dir, 'scores.npy'), scores)
 
-                    if not os.path.isfile(os.path.join(dir, 'image.png')):
-                        print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
-                        image, _ = feed.test_indices(sub_index)
-                        imageio.imwrite(os.path.join(dir, 'image.png'), image)
-                        np.save(os.path.join(dir, 'image.npy'), image)
-                    else:
-                        # verifying everything is good
-                        assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
+                        if not os.path.isfile(os.path.join(dir, 'image.png')):
+                            print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+                            image, _ = feed.test_indices(sub_index)
+                            imageio.imwrite(os.path.join(dir, 'image.png'), image)
+                            np.save(os.path.join(dir, 'image.npy'), image)
+                        else:
+                            # verifying everything is good
+                            assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
         except Exception as e:
             print('Error with influence collect function for i={}: {}'.format(i, e))
             exit(1)
@@ -463,7 +465,7 @@ def collect_influence(q, thread_id):
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
 # for i in range(len(sub_relevant_indices)):
-for i in range(317, 1000):
+for i in range(len(sub_relevant_indices)):
     q.put((i,))
 
 for thread_id in range(FLAGS.num_threads):
