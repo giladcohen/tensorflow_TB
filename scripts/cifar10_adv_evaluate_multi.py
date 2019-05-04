@@ -133,7 +133,7 @@ deepfool_params = {
     'clip_max': 1.0
 }
 
-model = DarkonReplica(scope='model_cifar_100', nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
+model = DarkonReplica(scope='model1', nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
 preds      = model.get_predicted_class(x)
 logits     = model.get_logits(x)
 embeddings = model.get_embeddings(x)
