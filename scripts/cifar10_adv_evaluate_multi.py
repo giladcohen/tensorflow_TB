@@ -40,7 +40,7 @@ flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase,
 flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_bool('use_train_mini', True, 'Whether or not to use 5000 training samples instead of 49000')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100')
-flags.DEFINE_integer('num_threads', 7, 'number of threads')
+flags.DEFINE_integer('num_threads', 10, 'number of threads')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -465,7 +465,7 @@ def collect_influence(q, thread_id):
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
 # for i in range(len(sub_relevant_indices)):
-for i in range(len(sub_relevant_indices)):
+for i in range(203, len(sub_relevant_indices)):
     q.put((i,))
 
 for thread_id in range(FLAGS.num_threads):
