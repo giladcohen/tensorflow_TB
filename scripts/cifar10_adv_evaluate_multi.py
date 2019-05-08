@@ -433,7 +433,7 @@ def collect_influence(q, thread_id):
 
                     if os.path.isfile(os.path.join(dir, 'scores.npy')):
                         print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
-                        scores = np.load(os.path.join(dir, 'scores.npy'))
+                        # scores = np.load(os.path.join(dir, 'scores.npy'))
                     else:
                         scores = insp.upweighting_influence_batch(
                             sess=sess,
