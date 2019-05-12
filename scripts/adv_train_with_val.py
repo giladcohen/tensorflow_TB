@@ -11,7 +11,6 @@ import os
 from cleverhans.attacks import FastGradientMethod
 from cleverhans.augmentation import random_horizontal_flip, random_shift
 from tensorflow.python.platform import flags
-import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
 from tensorflow_TB.cleverhans_alias.train_alias import train
@@ -29,10 +28,49 @@ flags.DEFINE_float('learning_rate', 0.1, 'Learning rate for training')
 flags.DEFINE_float('lr_factor', 0.9, 'A factor to decay a learning rate')
 flags.DEFINE_integer('lr_patience', 3, 'epochs with no metric improvements')
 flags.DEFINE_integer('lr_cooldown', 2, 'epochs in refractory period')
-flags.DEFINE_string('checkpoint_name', 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
+flags.DEFINE_string('checkpoint_name', 'svhn/log_120519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1007', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100')
+flags.DEFINE_string('dataset', 'svhn', 'dataset: cifar10/100 or svhn')
 
+if FLAGS.dataset == 'cifar10':
+    _classes = (
+        'airplane',
+        'car',
+        'bird',
+        'cat',
+        'deer',
+        'dog',
+        'frog',
+        'horse',
+        'ship',
+        'truck'
+    )
+    ARCH_NAME = 'model1'
+elif FLAGS.dataset == 'cifar100':
+    _classes = (
+        'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle',
+        'bicycle', 'bottle', 'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel',
+        'can', 'castle', 'caterpillar', 'cattle', 'chair', 'chimpanzee', 'clock',
+        'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
+        'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster',
+        'house', 'kangaroo', 'keyboard', 'lamp', 'lawn_mower', 'leopard', 'lion',
+        'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain', 'mouse',
+        'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear',
+        'pickup_truck', 'pine_tree', 'plain', 'plate', 'poppy', 'porcupine',
+        'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket', 'rose',
+        'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake',
+        'spider', 'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table',
+        'tank', 'telephone', 'television', 'tiger', 'tractor', 'train', 'trout',
+        'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
+    )
+    ARCH_NAME = 'model_cifar_100'
+elif FLAGS.dataset == 'svhn':
+    _classes = (
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    )
+    ARCH_NAME = 'model_svhn'
+else:
+    raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
 
 # Object used to keep track of (and return) key accuracies
 report = AccuracyReport()
@@ -101,7 +139,7 @@ fgsm_params = {
     'clip_max': 1.
 }
 
-model = DarkonReplica(scope='model_cifar_100', nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
+model = DarkonReplica(scope=ARCH_NAME, nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
 logits = model.get_logits(x)
 loss = CrossEntropy(model, smoothing=FLAGS.label_smoothing)
 regu_losses = WeightDecay(model)

@@ -5,11 +5,14 @@ from __future__ import unicode_literals
 
 import numpy as np
 import darkon.darkon as darkon
-import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 from tensorflow_TB.utils.misc import one_hot
 from sklearn.model_selection import train_test_split
 from copy import copy, deepcopy
 import tensorflow as tf
+import scipy.io
+import os
+
+SVHN_PATH = '/data/dataset/SVHN/format2'
 
 class MyFeederValTest(darkon.InfluenceFeeder):
     def __init__(self, dataset, rand_gen, as_one_hot, val_inds=None, test_val_set=False, mini_train_inds=None):
@@ -23,10 +26,21 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             (data, label), (_, _) = tf.keras.datasets.cifar10.load_data()
             data = data.astype(np.float32)
             self.num_classes = 10
+            self.num_val_set = 1000
         elif dataset == 'cifar100':
             (data, label), (_, _) = tf.keras.datasets.cifar100.load_data()
             data = data.astype(np.float32)
             self.num_classes = 100
+            self.num_val_set = 1000
+        elif dataset == 'svhn':
+            data_dict = scipy.io.loadmat(os.path.join(SVHN_PATH, 'train_32x32.mat'))
+            data, label = data_dict['X'], data_dict['y']
+            data = np.moveaxis(data, -1, 0)
+            data = data.astype(np.float32)
+            np.place(label, label == 10, 0)
+            self.num_classes = 10
+            self.num_val_set = 1007
+            del data_dict
         else:
             raise AssertionError('dataset {} not supported'.format(dataset))
         data /= 255.
@@ -37,7 +51,7 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             print('Feeder {} did not get val indices, therefore splitting trainset'.format(str(self)))
             indices = np.arange(data.shape[0])
             train_inds, val_inds = \
-                train_test_split(indices, test_size=1000, random_state=rand_gen, shuffle=True, stratify=label)
+                train_test_split(indices, test_size=self.num_val_set, random_state=rand_gen, shuffle=True, stratify=label)
         else:
             # val_inds were provided, so we need to infer all other indices
             train_inds = []
@@ -89,12 +103,19 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         elif dataset == 'cifar100':
             (_, _), (data, label) = tf.keras.datasets.cifar100.load_data()
             data = data.astype(np.float32)
+        elif dataset == 'svhn':
+            data_dict = scipy.io.loadmat(os.path.join(SVHN_PATH, 'test_32x32.mat'))
+            data, label = data_dict['X'], data_dict['y']
+            data = np.moveaxis(data, -1, 0)
+            data = data.astype(np.float32)
+            np.place(label, label == 10, 0)
+            del data_dict
         else:
             raise AssertionError('dataset {} not supported'.format(dataset))
         data /= 255.
         label = np.squeeze(label, axis=1)
 
-        self.test_inds        = range(10000)
+        self.test_inds        = range(label.shape[0])
         self.test_origin_data = data
         self.test_data        = data
         if as_one_hot:
