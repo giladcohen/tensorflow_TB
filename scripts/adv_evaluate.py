@@ -33,7 +33,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
+flags.DEFINE_string('checkpoint_name', 'svhn/log_120519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1007', 'checkpoint name')
 flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
@@ -343,15 +343,24 @@ inspector_adv = darkon.Influence(
     y_placeholder=y)
 
 testset_batch_size = 100
-train_batch_size = 100
-train_iterations = 50 if FLAGS.use_train_mini else 490  # was 500 wo validation
-
-approx_params = {
-    'scale': 200,
-    'num_repeats': 5,
-    'recursion_depth': 10 if FLAGS.use_train_mini else 98,  # 5000 for mini and 49000 for regular train
-    'recursion_batch_size': 100
-}
+if FLAGS.dataset in ['cifar10', 'cifar100']:
+    train_batch_size = 100
+    train_iterations = 50 if FLAGS.use_train_mini else 490  # 5k(50x100) or 49k(490x100)
+    approx_params = {
+        'scale': 200,
+        'num_repeats': 5,
+        'recursion_depth': 10 if FLAGS.use_train_mini else 98,  # 5k(500x10) or 49k(500x98)
+        'recursion_batch_size': 100
+    }
+else:  #SVHN
+    train_batch_size = 125  # svhn has 72250 train samples, and it is not a multiply of 100
+    train_iterations = 40 if FLAGS.use_train_mini else 578  # 5k(40x125) or 72250(578x125)
+    approx_params = {
+        'scale': 200,
+        'num_repeats': 5,
+        'recursion_depth': 10 if FLAGS.use_train_mini else 98,
+        'recursion_batch_size': 125
+    }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
 # sub_relevant_indices = [ind for ind in info[FLAGS.set]]

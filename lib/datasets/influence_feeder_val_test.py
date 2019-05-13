@@ -39,7 +39,7 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             data = data.astype(np.float32)
             np.place(label, label == 10, 0)
             self.num_classes = 10
-            self.num_val_set = 1007
+            self.num_val_set = 1257
             del data_dict
         else:
             raise AssertionError('dataset {} not supported'.format(dataset))
