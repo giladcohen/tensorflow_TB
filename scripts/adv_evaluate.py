@@ -17,7 +17,6 @@ import darkon.darkon as darkon
 
 from cleverhans.attacks import FastGradientMethod, DeepFool
 from tensorflow.python.platform import flags
-import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
 from cleverhans.utils import AccuracyReport, set_log_level
