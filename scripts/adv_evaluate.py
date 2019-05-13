@@ -353,13 +353,13 @@ if FLAGS.dataset in ['cifar10', 'cifar100']:
         'recursion_batch_size': 100
     }
 else:  #SVHN
-    train_batch_size = 125  # svhn has 72250 train samples, and it is not a multiply of 100
-    train_iterations = 40 if FLAGS.use_train_mini else 578  # 5k(40x125) or 72250(578x125)
+    train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
+    train_iterations = 25 if FLAGS.use_train_mini else 360  # 5k(25x200) or 72k(360x200)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 10 if FLAGS.use_train_mini else 98,
-        'recursion_batch_size': 125
+        'recursion_depth': 5 if FLAGS.use_train_mini else 72,  # 5k(5x5x200) or 72k(72x5x200)
+        'recursion_batch_size': 200
     }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
@@ -367,9 +367,9 @@ else:  #SVHN
 sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-# b, e = 0, 2500
-# sub_relevant_indices = sub_relevant_indices[b:e]
-# relevant_indices     = relevant_indices[b:e]
+b, e = 0, 312
+sub_relevant_indices = sub_relevant_indices[b:e]
+relevant_indices     = relevant_indices[b:e]
 
 # calculate knn_ranks
 def find_ranks(sub_index, sorted_influence_indices):
@@ -431,8 +431,6 @@ for i, sub_index in enumerate(sub_relevant_indices):
         else:
             raise AssertionError('only real and adv are accepted.')
 
-        if case != 'pred':
-            continue
         if FLAGS.prepare:
             insp._prepare(
                 sess=sess,
