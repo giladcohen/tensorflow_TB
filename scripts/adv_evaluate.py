@@ -365,8 +365,8 @@ else:  #SVHN
     train_iterations = 50 if FLAGS.use_train_mini else 720  # 5k(50x100) or 72k(720x100)
     approx_params = {
         'scale': 200,
-        'num_repeats': 5,
-        'recursion_depth': 10 if FLAGS.use_train_mini else 144,  # 5k(5x10x100) or 72k(5x144x100)
+        'num_repeats': 10,
+        'recursion_depth': 5 if FLAGS.use_train_mini else 72,  # 5k(5x10x100) or 72k(5x144x100)
         'recursion_batch_size': 100
     }
 
