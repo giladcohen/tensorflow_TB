@@ -351,15 +351,25 @@ if FLAGS.dataset in ['cifar10', 'cifar100']:
         'recursion_depth': 10 if FLAGS.use_train_mini else 98,  # 5k(500x10) or 49k(500x98)
         'recursion_batch_size': 100
     }
+# else:  #SVHN
+#     train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
+#     train_iterations = 25 if FLAGS.use_train_mini else 360  # 5k(25x200) or 72k(360x200)
+#     approx_params = {
+#         'scale': 200,
+#         'num_repeats': 5,
+#         'recursion_depth': 5 if FLAGS.use_train_mini else 72,  # 5k(5x5x200) or 72k(72x5x200)
+#         'recursion_batch_size': 200
+#     }
 else:  #SVHN
-    train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
-    train_iterations = 25 if FLAGS.use_train_mini else 360  # 5k(25x200) or 72k(360x200)
+    train_batch_size = 100  # svhn has 72250 train samples, and it is not a multiply of 100
+    train_iterations = 50 if FLAGS.use_train_mini else 720  # 5k(50x100) or 72k(720x100)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 5 if FLAGS.use_train_mini else 72,  # 5k(5x5x200) or 72k(72x5x200)
-        'recursion_batch_size': 200
+        'recursion_depth': 10 if FLAGS.use_train_mini else 144,  # 5k(5x10x100) or 72k(5x144x100)
+        'recursion_batch_size': 100
     }
+
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
 sub_relevant_indices = [ind for ind in info[FLAGS.set]]
