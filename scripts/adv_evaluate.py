@@ -362,8 +362,8 @@ else:  #SVHN
     }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-# sub_relevant_indices = [ind for ind in info[FLAGS.set]]
-sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
+sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+# sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
 b, e = 0, 312
