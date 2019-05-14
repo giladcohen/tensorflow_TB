@@ -366,7 +366,7 @@ sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-b, e = 0, 312
+b, e = 0, 6500
 sub_relevant_indices = sub_relevant_indices[b:e]
 relevant_indices     = relevant_indices[b:e]
 
