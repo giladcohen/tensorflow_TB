@@ -32,14 +32,14 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01', 'checkpoint name')
-flags.DEFINE_float('label_smoothing', 0.01, 'label smoothing')
+flags.DEFINE_string('checkpoint_name', 'svhn/log_120519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1257', 'checkpoint name')
+flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
 flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
-flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100 or svhn')
-flags.DEFINE_integer('num_threads', 10, 'number of threads')
+flags.DEFINE_string('dataset', 'svhn', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_integer('num_threads', 20, 'number of threads')
 
 test_val_set = FLAGS.set == 'val'
 
