@@ -318,11 +318,16 @@ knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
 knn.fit(x_train_features)
 if test_val_set:
     print('predicting knn for all val set')
-    features = x_val_features
+    features     = x_val_features
+    features_adv = x_val_features_adv
 else:
     print('predicting knn for all test set')
-    features = x_test_features
-all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_distance=True)
+    features     = x_test_features
+    features_adv = x_test_features_adv
+print('predicting knn dist/indices for normal image for all val set')
+all_neighbor_dists    , all_neighbor_indices     = knn.kneighbors(features, return_distance=True)
+print('predicting knn dist/indices for normal image for all val set')
+all_neighbor_dists_adv, all_neighbor_indices_adv = knn.kneighbors(features_adv, return_distance=True)
 
 # setting pred feeder
 pred_feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True,
@@ -403,13 +408,21 @@ sub_relevant_indices = sub_relevant_indices[b:e]
 relevant_indices     = relevant_indices[b:e]
 
 # calculate knn_ranks
-def find_ranks(sub_index, sorted_influence_indices):
+def find_ranks(sub_index, sorted_influence_indices, adversarial=False):
+    print('Finding ranks for sub_index={} (adversarial={})'.format(sub_index, adversarial))
+    if adversarial:
+        ni = all_neighbor_indices_adv
+        nd = all_neighbor_dists_adv
+    else:
+        ni = all_neighbor_indices
+        nd = all_neighbor_dists
+
     ranks = -1 * np.ones(len(sorted_influence_indices), dtype=np.int32)
     dists = -1 * np.ones(len(sorted_influence_indices), dtype=np.float32)
     for target_idx in range(ranks.shape[0]):
         idx = sorted_influence_indices[target_idx]
-        loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
-        knn_dist = all_neighbor_dists[sub_index, loc_in_knn]
+        loc_in_knn = np.where(ni[sub_index] == idx)[0][0]
+        knn_dist = nd[sub_index, loc_in_knn]
         ranks[target_idx] = loc_in_knn
         dists[target_idx] = knn_dist
     return ranks, dists
@@ -453,12 +466,18 @@ for i, sub_index in enumerate(sub_relevant_indices):
         if case == 'real':
             insp = inspector
             feed = feeder
+            ni   = all_neighbor_indices
+            nd   = all_neighbor_dists
         elif case == 'pred':
             insp = inspector_pred
             feed = pred_feeder
+            ni   = all_neighbor_indices
+            nd   = all_neighbor_dists
         elif case == 'adv':
             insp = inspector_adv
             feed = adv_feeder
+            ni   = all_neighbor_indices_adv
+            nd   = all_neighbor_dists_adv
         else:
             raise AssertionError('only real and adv are accepted.')
 
@@ -475,7 +494,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
             )
         else:
             # creating the relevant index folders
-            dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+            dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case, FLAGS.attack)
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
@@ -510,7 +529,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
             print('\nHarmful:')
             for idx in harmful:
                 print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
-                if idx in all_neighbor_indices[sub_index, 0:50]:
+                if idx in ni[sub_index, 0:50]:
                     cnt_harmful_in_knn += 1
             harmful_summary_str = '{}: {} out of {} harmful images are in the {}-NN\n'.format(case, cnt_harmful_in_knn, len(harmful), 50)
             print(harmful_summary_str)
@@ -519,7 +538,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
             print('\nHelpful:')
             for idx in helpful:
                 print('[{}] {}'.format(feed.get_global_index('train', idx), scores[idx]))
-                if idx in all_neighbor_indices[sub_index, 0:50]:
+                if idx in ni[sub_index, 0:50]:
                     cnt_helpful_in_knn += 1
             helpful_summary_str = '{}: {} out of {} helpful images are in the {}-NN\n'.format(case, cnt_helpful_in_knn, len(helpful), 50)
             print(helpful_summary_str)
@@ -528,7 +547,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
             target_idx = 0
             for j in range(5):
                 for k in range(10):
-                    idx = all_neighbor_indices[sub_index, target_idx]
+                    idx = ni[sub_index, target_idx]
                     axes1[j][k].set_axis_off()
                     axes1[j][k].imshow(X_train[idx])
                     label_str = _classes[y_train_sparse[idx]]
@@ -537,8 +556,8 @@ for i, sub_index in enumerate(sub_relevant_indices):
             plt.savefig(os.path.join(dir, 'nearest_neighbors.png'), dpi=350)
             plt.close()
 
-            helpful_ranks, helpful_dists = find_ranks(sub_index, sorted_indices[-1000:][::-1])
-            harmful_ranks, harmful_dists = find_ranks(sub_index, sorted_indices[:1000])
+            helpful_ranks, helpful_dists = find_ranks(sub_index, sorted_indices[-1000:][::-1], case == 'adv')
+            harmful_ranks, harmful_dists = find_ranks(sub_index, sorted_indices[:1000],        case == 'adv')
 
             print('saving knn ranks and dists to {}'.format(dir))
             np.save(os.path.join(dir, 'helpful_ranks.npy'), helpful_ranks)
@@ -554,7 +573,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
                     axes1[j][k].set_axis_off()
                     axes1[j][k].imshow(X_train[idx])
                     label_str = _classes[y_train_sparse[idx]]
-                    loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+                    loc_in_knn = np.where(ni[sub_index] == idx)[0][0]
                     axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
                     target_idx += 1
             plt.savefig(os.path.join(dir, 'helpful.png'), dpi=350)
@@ -568,7 +587,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
                     axes1[j][k].set_axis_off()
                     axes1[j][k].imshow(X_train[idx])
                     label_str = _classes[y_train_sparse[idx]]
-                    loc_in_knn = np.where(all_neighbor_indices[sub_index] == idx)[0][0]
+                    loc_in_knn = np.where(ni[sub_index] == idx)[0][0]
                     axes1[j][k].set_title('[{}]: {} #nn:{}'.format(feed.get_global_index('train', idx), label_str, loc_in_knn))
                     target_idx += 1
             plt.savefig(os.path.join(dir, 'harmful.png'), dpi=350)
