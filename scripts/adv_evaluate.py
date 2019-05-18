@@ -15,7 +15,7 @@ import imageio
 
 import darkon.darkon as darkon
 
-from cleverhans.attacks import FastGradientMethod, DeepFool
+from cleverhans.attacks import FastGradientMethod, DeepFool, SaliencyMapMethod, CarliniWagnerL2
 from tensorflow.python.platform import flags
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
@@ -39,7 +39,7 @@ flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase,
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
 flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100 or svhn')
-
+flags.DEFINE_string('attack', 'jsma', 'adversarial attack: deepfool, jsma, cw')
 
 test_val_set = FLAGS.set == 'val'
 
@@ -101,6 +101,7 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 # get records from training
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 workspace_dir = os.path.join(model_dir, FLAGS.workspace)
+attack_dir    = os.path.join(model_dir, FLAGS.attack)
 
 mini_train_inds = None
 if FLAGS.use_train_mini:
@@ -128,15 +129,6 @@ x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 
 eval_params = {'batch_size': FLAGS.batch_size}
-fgsm_params = {
-    'eps': 0.3,
-    'clip_min': 0.,
-    'clip_max': 1.
-}
-deepfool_params = {
-    'clip_min': 0.0,
-    'clip_max': 1.0
-}
 
 model = DarkonReplica(scope=ARCH_NAME, nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
 preds      = model.get_predicted_class(x)
@@ -202,37 +194,68 @@ else:
     x_test_features = np.load(os.path.join(model_dir, 'x_test_features.npy'))
 
 # Initialize the advarsarial attack object and graph
-attack         = DeepFool(model, sess=sess)
-adv_x          = attack.generate(x, **deepfool_params)
+deepfool_params = {
+    'clip_min': 0.0,
+    'clip_max': 1.0
+}
+jsma_params = {
+    'clip_min': 0.0,
+    'clip_max': 1.0,
+    'theta': 1.0,
+    'gamma': 0.1,
+    'y_target': None
+}
+cw_params = {
+    'clip_min': 0.0,
+    'clip_max': 1.0,
+    'batch_size': 125,
+    'y': None,
+    'y_target': None
+}
+
+if FLAGS.attack == 'deepfool':
+    attack_params = deepfool_params
+    attack_class  = DeepFool
+elif FLAGS.attack == 'jsma':
+    attack_params = jsma_params
+    attack_class  = SaliencyMapMethod
+elif FLAGS.attack == 'cw':
+    attack_params = cw_params
+    attack_class  = CarliniWagnerL2
+else:
+    raise AssertionError('Attack {} is not supported'.format(FLAGS.attack))
+
+attack         = attack_class(model, sess=sess)
+adv_x          = attack.generate(x, **attack_params)
 preds_adv      = model.get_predicted_class(adv_x)
 logits_adv     = model.get_logits(adv_x)
 embeddings_adv = model.get_embeddings(adv_x)
 
-if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
-    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
+if not os.path.isfile(os.path.join(attack_dir, 'X_val_adv.npy')):
+    # Evaluate the accuracy of the dataset model on adversarial examples
     X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    # since DeepFool is not reproducible, saving the results in as numpy
-    np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
-    np.save(os.path.join(model_dir, 'x_val_preds_adv.npy'), x_val_preds_adv)
-    np.save(os.path.join(model_dir, 'x_val_features_adv.npy'), x_val_features_adv)
+    # since some attacks are not reproducible, saving the results in as numpy
+    np.save(os.path.join(attack_dir, 'X_val_adv.npy'), X_val_adv)
+    np.save(os.path.join(attack_dir, 'x_val_preds_adv.npy'), x_val_preds_adv)
+    np.save(os.path.join(attack_dir, 'x_val_features_adv.npy'), x_val_features_adv)
 else:
-    X_val_adv          = np.load(os.path.join(model_dir, 'X_val_adv.npy'))
-    x_val_preds_adv    = np.load(os.path.join(model_dir, 'x_val_preds_adv.npy'))
-    x_val_features_adv = np.load(os.path.join(model_dir, 'x_val_features_adv.npy'))
+    X_val_adv          = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
+    x_val_preds_adv    = np.load(os.path.join(attack_dir, 'x_val_preds_adv.npy'))
+    x_val_features_adv = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
 
-if not os.path.isfile(os.path.join(model_dir, 'X_test_adv.npy')):
-    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
+if not os.path.isfile(os.path.join(attack_dir, 'X_test_adv.npy')):
+    # Evaluate the accuracy of the dataset model on adversarial examples
     X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
     x_test_preds_adv = x_test_preds_adv.astype(np.int32)
-    # since DeepFool is not reproducible, saving the results in as numpy
-    np.save(os.path.join(model_dir, 'X_test_adv.npy'), X_test_adv)
-    np.save(os.path.join(model_dir, 'x_test_preds_adv.npy'), x_test_preds_adv)
-    np.save(os.path.join(model_dir, 'x_test_features_adv.npy'), x_test_features_adv)
+    # since some attacks are not reproducible, saving the results in as numpy
+    np.save(os.path.join(attack_dir, 'X_test_adv.npy'), X_test_adv)
+    np.save(os.path.join(attack_dir, 'x_test_preds_adv.npy'), x_test_preds_adv)
+    np.save(os.path.join(attack_dir, 'x_test_features_adv.npy'), x_test_features_adv)
 else:
-    X_test_adv          = np.load(os.path.join(model_dir, 'X_test_adv.npy'))
-    x_test_preds_adv    = np.load(os.path.join(model_dir, 'x_test_preds_adv.npy'))
-    x_test_features_adv = np.load(os.path.join(model_dir, 'x_test_features_adv.npy'))
+    X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
+    x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
+    x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
 
 # accuracy computation
 # do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
@@ -248,7 +271,7 @@ test_acc     = np.mean(y_test_sparse  == x_test_preds)
 val_adv_acc  = np.mean(y_val_sparse   == x_val_preds_adv)
 test_adv_acc = np.mean(y_test_sparse  == x_test_preds_adv)
 print('train set acc: {}\nvalidation set acc: {}\ntest set acc: {}'.format(train_acc, val_acc, test_acc))
-print('adversarial validation set acc: {}\nadversarial test set acc: {}'.format(val_adv_acc, test_adv_acc))
+print('adversarial ({}) validation set acc: {}\nadversarial ({}) test set acc: {}'.format(FLAGS.attack, val_adv_acc, FLAGS.attack, test_adv_acc))
 
 # what are the indices of the cifar10 set which the network succeeded classifying correctly,
 # but the adversarial attack changed to a different class?
@@ -270,7 +293,7 @@ for i, set_ind in enumerate(feeder.test_inds):
     info['test'][i]['net_succ']     = net_succ
     info['test'][i]['attack_succ']  = attack_succ
 
-info_file = os.path.join(model_dir, 'info.pkl')
+info_file = os.path.join(attack_dir, 'info.pkl')
 if not os.path.isfile(info_file):
     print('saving info as pickle to {}'.format(info_file))
     with open(info_file, 'wb') as handle:
@@ -334,7 +357,7 @@ inspector_pred = darkon.Influence(
     y_placeholder=y)
 
 inspector_adv = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
+    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv', FLAGS.attack),
     feeder=adv_feeder,
     loss_op_train=full_loss.fprop(x=x, y=y),
     loss_op_test=loss.fprop(x=x, y=y),

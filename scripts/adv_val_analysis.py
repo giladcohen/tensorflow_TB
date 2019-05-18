@@ -15,28 +15,54 @@ import pickle
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('checkpoint_name', 'log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
+flags.DEFINE_string('checkpoint_name', 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000', 'checkpoint name')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
+flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
+
 
 test_val_set = FLAGS.set == 'val'
 
-# cifar-10 classes
-_classes = (
-    'airplane',
-    'car',
-    'bird',
-    'cat',
-    'deer',
-    'dog',
-    'frog',
-    'horse',
-    'ship',
-    'truck'
-)
+if FLAGS.dataset == 'cifar10':
+    _classes = (
+        'airplane',
+        'car',
+        'bird',
+        'cat',
+        'deer',
+        'dog',
+        'frog',
+        'horse',
+        'ship',
+        'truck'
+    )
+    ARCH_NAME = 'model1'
+elif FLAGS.dataset == 'cifar100':
+    _classes = (
+        'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle',
+        'bicycle', 'bottle', 'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel',
+        'can', 'castle', 'caterpillar', 'cattle', 'chair', 'chimpanzee', 'clock',
+        'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
+        'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster',
+        'house', 'kangaroo', 'keyboard', 'lamp', 'lawn_mower', 'leopard', 'lion',
+        'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain', 'mouse',
+        'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear',
+        'pickup_truck', 'pine_tree', 'plain', 'plate', 'poppy', 'porcupine',
+        'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket', 'rose',
+        'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake',
+        'spider', 'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table',
+        'tank', 'telephone', 'television', 'tiger', 'tractor', 'train', 'trout',
+        'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
+    )
+    ARCH_NAME = 'model_cifar_100'
+elif FLAGS.dataset == 'svhn':
+    _classes = (
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    )
+    ARCH_NAME = 'model_svhn'
+else:
+    raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
 
-# Get CIFAR-10 data
-cifar10_input.maybe_download_and_extract()
 
 superseed = 15101985
 rand_gen = np.random.RandomState(superseed)
@@ -44,11 +70,14 @@ rand_gen = np.random.RandomState(superseed)
 # get records from training
 model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
 
-mini_train_inds = None  # np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
-val_indices     = np.load(os.path.join(model_dir, 'val_indices.npy'))
+mini_train_inds = None
+if FLAGS.use_train_mini:
+    print('loading train mini indices from {}'.format(os.path.join(model_dir, 'train_mini_indices.npy')))
+    mini_train_inds = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
 
-feeder = MyFeederValTest(rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices,
-                         test_val_set=False, mini_train_inds=mini_train_inds)
+val_indices = np.load(os.path.join(model_dir, 'val_indices.npy'))
+feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True, val_inds=val_indices,
+                         test_val_set=test_val_set, mini_train_inds=mini_train_inds)
 
 # get the data
 X_train, y_train       = feeder.train_indices(range(feeder.get_train_size()))
@@ -256,7 +285,7 @@ def plot_hists(max_index, f):
     plt.close()
 
 
-for max_index in [1, 250, 500, 750, 1000]:
+for max_index in [800]:
     for f in ['+rank', '-rank', '+dist', '-dist']:
         plot_hists(max_index=max_index, f=f)
 
