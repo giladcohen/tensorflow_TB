@@ -32,16 +32,19 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01', 'checkpoint name')
-flags.DEFINE_float('label_smoothing', 0.01, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_validation', 'workspace dir')
-flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
-flags.DEFINE_bool('use_train_mini', False, 'Whether or not to use 5000 training samples instead of 49000')
-flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'jsma', 'adversarial attack: deepfool, jsma, cw')
 
-test_val_set = FLAGS.set == 'val'
+if FLAGS.set == 'val':
+    test_val_set = True
+    WORKSPACE = 'influence_workspace_validation'
+    USE_TRAIN_MINI = False
+else:
+    test_val_set = False
+    WORKSPACE = 'influence_workspace_test_mini'
+    USE_TRAIN_MINI = True
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -57,6 +60,8 @@ if FLAGS.dataset == 'cifar10':
         'truck'
     )
     ARCH_NAME = 'model1'
+    CHECKPOINT_NAME = 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000'
+    LABEL_SMOOTHING = 0.1
 elif FLAGS.dataset == 'cifar100':
     _classes = (
         'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle',
@@ -75,11 +80,15 @@ elif FLAGS.dataset == 'cifar100':
         'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
     )
     ARCH_NAME = 'model_cifar_100'
+    CHECKPOINT_NAME = 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01'
+    LABEL_SMOOTHING = 0.01
 elif FLAGS.dataset == 'svhn':
     _classes = (
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     )
     ARCH_NAME = 'model_svhn'
+    CHECKPOINT_NAME = 'svhn/log_120519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1257'
+    LABEL_SMOOTHING = 0.1
 else:
     raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
 
@@ -99,12 +108,12 @@ config_args = dict(allow_soft_placement=True)
 sess = tf.Session(config=tf.ConfigProto(**config_args))
 
 # get records from training
-model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
-workspace_dir = os.path.join(model_dir, FLAGS.workspace)
+model_dir     = os.path.join('/data/gilad/logs/influence', CHECKPOINT_NAME)
+workspace_dir = os.path.join(model_dir, WORKSPACE)
 attack_dir    = os.path.join(model_dir, FLAGS.attack)
 
 mini_train_inds = None
-if FLAGS.use_train_mini:
+if USE_TRAIN_MINI:
     print('loading train mini indices from {}'.format(os.path.join(model_dir, 'train_mini_indices.npy')))
     mini_train_inds = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
 
@@ -135,7 +144,7 @@ preds      = model.get_predicted_class(x)
 logits     = model.get_logits(x)
 embeddings = model.get_embeddings(x)
 
-loss = CrossEntropy(model, smoothing=FLAGS.label_smoothing)
+loss = CrossEntropy(model, smoothing=LABEL_SMOOTHING)
 regu_losses = WeightDecay(model)
 full_loss = WeightedSum(model, [(1.0, loss), (FLAGS.weight_decay, regu_losses)])
 
@@ -158,7 +167,7 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # predict labels from trainset
-if FLAGS.use_train_mini:
+if USE_TRAIN_MINI:
     train_preds_file    = os.path.join(model_dir, 'x_train_mini_preds.npy')
     train_features_file = os.path.join(model_dir, 'x_train_mini_features.npy')
 else:
@@ -341,7 +350,7 @@ pred_feeder.reset()
 adv_feeder.reset()
 
 inspector = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
+    workspace=os.path.join(workspace_dir, 'real'),
     feeder=feeder,
     loss_op_train=full_loss.fprop(x=x, y=y),
     loss_op_test=loss.fprop(x=x, y=y),
@@ -349,7 +358,7 @@ inspector = darkon.Influence(
     y_placeholder=y)
 
 inspector_pred = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'pred'),
+    workspace=os.path.join(workspace_dir, 'pred'),
     feeder=pred_feeder,
     loss_op_train=full_loss.fprop(x=x, y=y),
     loss_op_test=loss.fprop(x=x, y=y),
@@ -357,7 +366,7 @@ inspector_pred = darkon.Influence(
     y_placeholder=y)
 
 inspector_adv = darkon.Influence(
-    workspace=os.path.join(model_dir, FLAGS.workspace, 'adv', FLAGS.attack),
+    workspace=os.path.join(workspace_dir, 'adv', FLAGS.attack),
     feeder=adv_feeder,
     loss_op_train=full_loss.fprop(x=x, y=y),
     loss_op_test=loss.fprop(x=x, y=y),
@@ -367,20 +376,20 @@ inspector_adv = darkon.Influence(
 testset_batch_size = 100
 if FLAGS.dataset in ['cifar10', 'cifar100']:
     train_batch_size = 100
-    train_iterations = 50 if FLAGS.use_train_mini else 490  # 5k(50x100) or 49k(490x100)
+    train_iterations = 50 if USE_TRAIN_MINI else 490  # 5k(50x100) or 49k(490x100)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 10 if FLAGS.use_train_mini else 98,  # 5k(500x10) or 49k(500x98)
+        'recursion_depth': 10 if USE_TRAIN_MINI else 98,  # 5k(500x10) or 49k(500x98)
         'recursion_batch_size': 100
     }
 else:  #SVHN
     train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
-    train_iterations = 25 if FLAGS.use_train_mini else 360  # 5k(25x200) or 72k(360x200)
+    train_iterations = 25 if USE_TRAIN_MINI else 360  # 5k(25x200) or 72k(360x200)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 5 if FLAGS.use_train_mini else 72,  # 5k(5x5x200) or 72k(72x5x200)
+        'recursion_depth': 5 if USE_TRAIN_MINI else 72,  # 5k(5x5x200) or 72k(72x5x200)
         'recursion_batch_size': 200
     }
 
@@ -452,6 +461,9 @@ for i, sub_index in enumerate(sub_relevant_indices):
             feed = adv_feeder
         else:
             raise AssertionError('only real and adv are accepted.')
+
+        if case != 'adv':
+            continue
 
         if FLAGS.prepare:
             insp._prepare(
