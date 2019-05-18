@@ -380,13 +380,13 @@ inspector_adv = darkon.Influence(
 
 testset_batch_size = 100
 if FLAGS.dataset in ['cifar10', 'cifar100']:
-    train_batch_size = 100
-    train_iterations = 50 if USE_TRAIN_MINI else 490  # 5k(50x100) or 49k(490x100)
+    train_batch_size = 200
+    train_iterations = 25 if USE_TRAIN_MINI else 245  # 5k(25x200) or 49k(245x200)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 10 if USE_TRAIN_MINI else 98,  # 5k(500x10) or 49k(500x98)
-        'recursion_batch_size': 100
+        'recursion_depth': 5 if USE_TRAIN_MINI else 49,  # 5k(5x5x200) or 49k(5x49x200)
+        'recursion_batch_size': 200
     }
 else:  #SVHN
     train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
