@@ -217,9 +217,7 @@ jsma_params = {
 cw_params = {
     'clip_min': 0.0,
     'clip_max': 1.0,
-    'batch_size': 125,
-    'y': None,
-    'y_target': None
+    'batch_size': 125
 }
 
 if FLAGS.attack == 'deepfool':
