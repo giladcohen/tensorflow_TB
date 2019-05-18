@@ -35,7 +35,7 @@ flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('attack', 'jsma', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
 
 if FLAGS.set == 'val':
     test_val_set = True
