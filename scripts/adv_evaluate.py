@@ -539,7 +539,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
                 test_indices=[sub_index],
                 test_batch_size=testset_batch_size,
                 approx_params=approx_params,
-                force_refresh=True
+                force_refresh=False
             )
         else:
             # creating the relevant index folders
