@@ -508,11 +508,9 @@ for i, sub_index in enumerate(sub_relevant_indices):
     logging.info(progress_str)
     print(progress_str)
 
-    cases = ['real']
+    cases = ['real', 'adv']
     if not info[FLAGS.set][sub_index]['net_succ']:  # if prediction is different than real
         cases.append('pred')
-    if info[FLAGS.set][sub_index]['attack_succ']:  # if adv is different than prediction
-        cases.append('adv')
     for case in cases:
         if case == 'real':
             insp = inspector
