@@ -251,8 +251,9 @@ cw_params = {
     'clip_min': 0.0,
     'clip_max': 1.0,
     'batch_size': 125,
-    'confidence': 0.5,
-    'learning_rate': 0.01
+    'confidence': 0.8,
+    'learning_rate': 0.01,
+    'initial_const': 0.1
 }
 if FLAGS.targeted:
     jsma_params.update({'y_target': y_adv})
