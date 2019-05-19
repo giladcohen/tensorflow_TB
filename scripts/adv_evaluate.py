@@ -36,8 +36,8 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
-flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
+flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
@@ -374,9 +374,9 @@ else:
     print('predicting knn for all test set')
     features     = x_test_features
     features_adv = x_test_features_adv
-print('predicting knn dist/indices for normal image for all val set')
+print('predicting knn dist/indices for normal image')
 all_neighbor_dists    , all_neighbor_indices     = knn.kneighbors(features, return_distance=True)
-print('predicting knn dist/indices for normal image for all val set')
+print('predicting knn dist/indices for adv image')
 all_neighbor_dists_adv, all_neighbor_indices_adv = knn.kneighbors(features_adv, return_distance=True)
 
 # setting pred feeder
