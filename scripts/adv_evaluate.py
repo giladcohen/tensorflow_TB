@@ -41,8 +41,8 @@ flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_integer('begin', -1, 'beginning index')
-flags.DEFINE_integer('end', -1, 'ending index')
+flags.DEFINE_integer('b', -1, 'beginning index')
+flags.DEFINE_integer('e', -1, 'ending index')
 
 if FLAGS.set == 'val':
     test_val_set = True
@@ -453,8 +453,8 @@ else:  #SVHN
 sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-if FLAGS.begin != -1:
-    b, e = FLAGS.begin, FLAGS.end
+if FLAGS.b != -1:
+    b, e = FLAGS.b, FLAGS.e
     sub_relevant_indices = sub_relevant_indices[b:e]
     relevant_indices     = relevant_indices[b:e]
 
