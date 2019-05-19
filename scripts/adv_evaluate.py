@@ -36,11 +36,11 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('dataset', 'cifar100', 'datasset: cifar10/100 or svhn')
-flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
+flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 
@@ -449,8 +449,8 @@ else:  #SVHN
     }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
-# sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['attack_succ']]
-sub_relevant_indices = [ind for ind in info[FLAGS.set]]
+sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['attack_succ']]
+# sub_relevant_indices = [ind for ind in info[FLAGS.set]]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
 if FLAGS.b != -1:
