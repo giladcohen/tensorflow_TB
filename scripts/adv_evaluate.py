@@ -19,7 +19,7 @@ import darkon.darkon as darkon
 
 from cleverhans.attacks import FastGradientMethod, DeepFool, SaliencyMapMethod, CarliniWagnerL2
 from tensorflow.python.platform import flags
-# from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
+from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
 from cleverhans.utils import AccuracyReport, set_log_level
 from cleverhans.utils_tf import model_eval
@@ -31,7 +31,6 @@ from tensorflow_TB.utils.misc import np_evaluate
 import pickle
 from cleverhans.utils import random_targets
 from cleverhans.evaluation import batch_eval
-from tensorflow_TB.cleverhans_alias.loss_alias import CrossEntropy, WeightDecay, WeightedSum
 
 FLAGS = flags.FLAGS
 
