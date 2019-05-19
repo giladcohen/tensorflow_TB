@@ -27,6 +27,8 @@ import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 from tensorflow_TB.utils.misc import np_evaluate
 import pickle
+from cleverhans.utils import random_targets
+from cleverhans.evaluation import batch_eval
 
 FLAGS = flags.FLAGS
 
@@ -36,6 +38,8 @@ flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+
 
 if FLAGS.set == 'val':
     test_val_set = True
@@ -111,6 +115,8 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 model_dir     = os.path.join('/data/gilad/logs/influence', CHECKPOINT_NAME)
 workspace_dir = os.path.join(model_dir, WORKSPACE)
 attack_dir    = os.path.join(model_dir, FLAGS.attack)
+if FLAGS.targeted:
+    attack_dir = attack_dir + '_targeted'
 
 mini_train_inds = None
 if USE_TRAIN_MINI:
@@ -129,13 +135,27 @@ y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
 
+if FLAGS.targeted:
+    # get also the adversarial labels of the val and test sets
+    if not os.path.isfile(os.path.join(attack_dir, 'y_val_targets.npy')):
+        y_val_targets  = random_targets(y_val_sparse , feeder.num_classes)
+        y_test_targets = random_targets(y_test_sparse, feeder.num_classes)
+        assert (y_val_targets.argmax(axis=1)  != y_val_sparse).all()
+        assert (y_test_targets.argmax(axis=1) != y_test_sparse).all()
+        np.save(os.path.join(attack_dir, 'y_val_targets.npy') , y_val_targets)
+        np.save(os.path.join(attack_dir, 'y_test_targets.npy'), y_test_targets)
+    else:
+        y_val_targets  = np.load(os.path.join(attack_dir, 'y_val_targets.npy'))
+        y_test_targets = np.load(os.path.join(attack_dir, 'y_test_targets.npy'))
+
 # Use Image Parameters
 img_rows, img_cols, nchannels = X_test.shape[1:4]
 nb_classes = y_test.shape[1]
 
 # Define input TF placeholder
-x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
-y = tf.placeholder(tf.float32, shape=(None, nb_classes))
+x     = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
+y     = tf.placeholder(tf.float32, shape=(None, nb_classes))
+y_adv = tf.placeholder(tf.float32, shape=(None, nb_classes))
 
 eval_params = {'batch_size': FLAGS.batch_size}
 
@@ -184,9 +204,13 @@ else:
 
 # predict labels from validation set
 if not os.path.isfile(os.path.join(model_dir, 'x_val_preds.npy')):
-    x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+    tf_inputs    = [x, y]
+    tf_outputs   = [preds, embeddings]
+    numpy_inputs = [X_val, y_val]
+
+    x_val_preds, x_val_features = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_val_preds = x_val_preds.astype(np.int32)
-    np.save(os.path.join(model_dir, 'x_val_preds.npy'), x_val_preds)
+    np.save(os.path.join(model_dir, 'x_val_preds.npy')   , x_val_preds)
     np.save(os.path.join(model_dir, 'x_val_features.npy'), x_val_features)
 else:
     x_val_preds    = np.load(os.path.join(model_dir, 'x_val_preds.npy'))
@@ -194,9 +218,13 @@ else:
 
 # predict labels from test set
 if not os.path.isfile(os.path.join(model_dir, 'x_test_preds.npy')):
-    x_test_preds, x_test_features = np_evaluate(sess, [preds, embeddings], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    tf_inputs    = [x, y]
+    tf_outputs   = [preds, embeddings]
+    numpy_inputs = [X_test, y_test]
+
+    x_test_preds, x_test_features = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_test_preds = x_test_preds.astype(np.int32)
-    np.save(os.path.join(model_dir, 'x_test_preds.npy'), x_test_preds)
+    np.save(os.path.join(model_dir, 'x_test_preds.npy')   , x_test_preds)
     np.save(os.path.join(model_dir, 'x_test_features.npy'), x_test_features)
 else:
     x_test_preds    = np.load(os.path.join(model_dir, 'x_test_preds.npy'))
@@ -212,13 +240,15 @@ jsma_params = {
     'clip_max': 1.0,
     'theta': 1.0,
     'gamma': 0.1,
-    'y_target': None
 }
 cw_params = {
     'clip_min': 0.0,
     'clip_max': 1.0,
     'batch_size': 125
 }
+if FLAGS.targeted:
+    jsma_params.update({'y_target': y_adv})
+    cw_params.update({'y_target': y_adv})
 
 if FLAGS.attack == 'deepfool':
     attack_params = deepfool_params
@@ -239,12 +269,18 @@ logits_adv     = model.get_logits(adv_x)
 embeddings_adv = model.get_embeddings(adv_x)
 
 if not os.path.isfile(os.path.join(attack_dir, 'X_val_adv.npy')):
-    # Evaluate the accuracy of the dataset model on adversarial examples
-    X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+    tf_inputs    = [x, y]
+    tf_outputs   = [adv_x, preds_adv, embeddings_adv]
+    numpy_inputs = [X_val, y_val]
+    if FLAGS.targeted:
+        tf_inputs.append(y_adv)
+        numpy_inputs.append(y_val_targets)
+
+    X_val_adv, x_val_preds_adv, x_val_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
     # since some attacks are not reproducible, saving the results in as numpy
-    np.save(os.path.join(attack_dir, 'X_val_adv.npy'), X_val_adv)
-    np.save(os.path.join(attack_dir, 'x_val_preds_adv.npy'), x_val_preds_adv)
+    np.save(os.path.join(attack_dir, 'X_val_adv.npy')         , X_val_adv)
+    np.save(os.path.join(attack_dir, 'x_val_preds_adv.npy')   , x_val_preds_adv)
     np.save(os.path.join(attack_dir, 'x_val_features_adv.npy'), x_val_features_adv)
 else:
     X_val_adv          = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
@@ -252,12 +288,18 @@ else:
     x_val_features_adv = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
 
 if not os.path.isfile(os.path.join(attack_dir, 'X_test_adv.npy')):
-    # Evaluate the accuracy of the dataset model on adversarial examples
-    X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    tf_inputs    = [x, y]
+    tf_outputs   = [adv_x, preds_adv, embeddings_adv]
+    numpy_inputs = [X_test, y_test]
+    if FLAGS.targeted:
+        tf_inputs.append(y_adv)
+        numpy_inputs.append(y_test_targets)
+
+    X_test_adv, x_test_preds_adv, x_test_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_test_preds_adv = x_test_preds_adv.astype(np.int32)
     # since some attacks are not reproducible, saving the results in as numpy
-    np.save(os.path.join(attack_dir, 'X_test_adv.npy'), X_test_adv)
-    np.save(os.path.join(attack_dir, 'x_test_preds_adv.npy'), x_test_preds_adv)
+    np.save(os.path.join(attack_dir, 'X_test_adv.npy')         , X_test_adv)
+    np.save(os.path.join(attack_dir, 'x_test_preds_adv.npy')   , x_test_preds_adv)
     np.save(os.path.join(attack_dir, 'x_test_features_adv.npy'), x_test_features_adv)
 else:
     X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))

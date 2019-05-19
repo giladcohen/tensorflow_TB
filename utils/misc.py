@@ -101,7 +101,7 @@ def get_plain_session(sess):
         session = session._sess
     return session
 
-def np_evaluate(sess, fetches, x_set, y_set, x, y, batch_size, feed_dict=None, log=None):
+def np_evaluate(sess, fetches, x_set, y_set, x, y, batch_size, feed_dict=None, log=None, y_adv=None, y_adv_set=None):
     """
     Collecting tensorfow operators in a numpy API
     :param sess: tf.Session
@@ -109,10 +109,12 @@ def np_evaluate(sess, fetches, x_set, y_set, x, y, batch_size, feed_dict=None, l
     :param x_set: dataset in np.ndarray
     :param y_set: dataset labels in np.ndarray
     :param x: input placeholder (tf.placeholder) with size of [? , x_set.shape[1:]]
-    :param y: label placeholder (tf.placeholder). Can be sparse or one hot
+    :param y: label placeholder (tf.placeholder). one hot
     :param batch_size: batch size to process
     :param feed_dict: default feed_dict (dictionary) to apply in sess.run calls
     :param log: logger
+    :param y_adv: adversarial placeholder (tf.placeholder)
+    :param y_adv_set: adversarial data in np.array
     :return: fetches as np.ndarray.
     """
 
@@ -135,6 +137,9 @@ def np_evaluate(sess, fetches, x_set, y_set, x, y, batch_size, feed_dict=None, l
         images = x_set[b:e]
         labels = y_set[b:e]
         tmp_feed_dict = {x: images, y: labels}
+        if y_adv is not None:
+            adv_labels = y_adv_set[b:e]
+            tmp_feed_dict.update({y_adv: adv_labels})
         tmp_feed_dict.update(feed_dict)
         fetches_out = sess.run(fetches=fetches, feed_dict=tmp_feed_dict)
         for i in xrange(len(fetches)):
