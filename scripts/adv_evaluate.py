@@ -160,9 +160,8 @@ img_rows, img_cols, nchannels = X_test.shape[1:4]
 nb_classes = y_test.shape[1]
 
 # Define input TF placeholder
-x     = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
-y     = tf.placeholder(tf.float32, shape=(None, nb_classes))
-y_adv = tf.placeholder(tf.float32, shape=(None, nb_classes))
+x     = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels), name='x')
+y     = tf.placeholder(tf.float32, shape=(None, nb_classes), name='y')
 
 eval_params = {'batch_size': FLAGS.batch_size}
 
@@ -237,48 +236,52 @@ else:
     x_test_preds    = np.load(os.path.join(model_dir, 'x_test_preds.npy'))
     x_test_features = np.load(os.path.join(model_dir, 'x_test_features.npy'))
 
-# Initialize the advarsarial attack object and graph
-deepfool_params = {
-    'clip_min': 0.0,
-    'clip_max': 1.0
-}
-jsma_params = {
-    'clip_min': 0.0,
-    'clip_max': 1.0,
-    'theta': 1.0,
-    'gamma': 0.1,
-}
-cw_params = {
-    'clip_min': 0.0,
-    'clip_max': 1.0,
-    'batch_size': 125,
-    'confidence': 0.8,
-    'learning_rate': 0.01,
-    'initial_const': 0.1
-}
-if FLAGS.targeted:
-    jsma_params.update({'y_target': y_adv})
-    cw_params.update({'y_target': y_adv})
+# initialize adversarial examples if necessary
+if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
+    y_adv = tf.placeholder(tf.float32, shape=(None, nb_classes), name='y_adv')
 
-if FLAGS.attack == 'deepfool':
-    attack_params = deepfool_params
-    attack_class  = DeepFool
-elif FLAGS.attack == 'jsma':
-    attack_params = jsma_params
-    attack_class  = SaliencyMapMethod
-elif FLAGS.attack == 'cw':
-    attack_params = cw_params
-    attack_class  = CarliniWagnerL2
-else:
-    raise AssertionError('Attack {} is not supported'.format(FLAGS.attack))
+    # Initialize the advarsarial attack object and graph
+    deepfool_params = {
+        'clip_min': 0.0,
+        'clip_max': 1.0
+    }
+    jsma_params = {
+        'clip_min': 0.0,
+        'clip_max': 1.0,
+        'theta': 1.0,
+        'gamma': 0.1,
+    }
+    cw_params = {
+        'clip_min': 0.0,
+        'clip_max': 1.0,
+        'batch_size': 125,
+        'confidence': 0.8,
+        'learning_rate': 0.01,
+        'initial_const': 0.1
+    }
+    if FLAGS.targeted:
+        jsma_params.update({'y_target': y_adv})
+        cw_params.update({'y_target': y_adv})
 
-attack         = attack_class(model, sess=sess)
-adv_x          = attack.generate(x, **attack_params)
-preds_adv      = model.get_predicted_class(adv_x)
-logits_adv     = model.get_logits(adv_x)
-embeddings_adv = model.get_embeddings(adv_x)
+    if FLAGS.attack == 'deepfool':
+        attack_params = deepfool_params
+        attack_class  = DeepFool
+    elif FLAGS.attack == 'jsma':
+        attack_params = jsma_params
+        attack_class  = SaliencyMapMethod
+    elif FLAGS.attack == 'cw':
+        attack_params = cw_params
+        attack_class  = CarliniWagnerL2
+    else:
+        raise AssertionError('Attack {} is not supported'.format(FLAGS.attack))
 
-if not os.path.isfile(os.path.join(attack_dir, 'X_val_adv.npy')):
+    attack         = attack_class(model, sess=sess)
+    adv_x          = attack.generate(x, **attack_params)
+    preds_adv      = model.get_predicted_class(adv_x)
+    logits_adv     = model.get_logits(adv_x)
+    embeddings_adv = model.get_embeddings(adv_x)
+
+    # val attack
     tf_inputs    = [x, y]
     tf_outputs   = [adv_x, preds_adv, embeddings_adv]
     numpy_inputs = [X_val, y_val]
@@ -288,16 +291,11 @@ if not os.path.isfile(os.path.join(attack_dir, 'X_val_adv.npy')):
 
     X_val_adv, x_val_preds_adv, x_val_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    # since some attacks are not reproducible, saving the results in as numpy
     np.save(os.path.join(attack_dir, 'X_val_adv.npy')         , X_val_adv)
     np.save(os.path.join(attack_dir, 'x_val_preds_adv.npy')   , x_val_preds_adv)
     np.save(os.path.join(attack_dir, 'x_val_features_adv.npy'), x_val_features_adv)
-else:
-    X_val_adv          = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
-    x_val_preds_adv    = np.load(os.path.join(attack_dir, 'x_val_preds_adv.npy'))
-    x_val_features_adv = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
 
-if not os.path.isfile(os.path.join(attack_dir, 'X_test_adv.npy')):
+    # test attack
     tf_inputs    = [x, y]
     tf_outputs   = [adv_x, preds_adv, embeddings_adv]
     numpy_inputs = [X_test, y_test]
@@ -307,11 +305,13 @@ if not os.path.isfile(os.path.join(attack_dir, 'X_test_adv.npy')):
 
     X_test_adv, x_test_preds_adv, x_test_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_test_preds_adv = x_test_preds_adv.astype(np.int32)
-    # since some attacks are not reproducible, saving the results in as numpy
     np.save(os.path.join(attack_dir, 'X_test_adv.npy')         , X_test_adv)
     np.save(os.path.join(attack_dir, 'x_test_preds_adv.npy')   , x_test_preds_adv)
     np.save(os.path.join(attack_dir, 'x_test_features_adv.npy'), x_test_features_adv)
 else:
+    X_val_adv           = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
+    x_val_preds_adv     = np.load(os.path.join(attack_dir, 'x_val_preds_adv.npy'))
+    x_val_features_adv  = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
     X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
     x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
     x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
