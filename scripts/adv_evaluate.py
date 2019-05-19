@@ -4,8 +4,10 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import matplotlib
+import platform
 # Force matplotlib to not use any Xwindows backend.
-matplotlib.use('Agg')
+if platform.system() == 'Linux':
+    matplotlib.use('Agg')
 
 import logging
 import numpy as np
@@ -117,6 +119,10 @@ workspace_dir = os.path.join(model_dir, WORKSPACE)
 attack_dir    = os.path.join(model_dir, FLAGS.attack)
 if FLAGS.targeted:
     attack_dir = attack_dir + '_targeted'
+
+# make sure the attack dir is constructed
+if not os.path.exists(attack_dir):
+    os.makedirs(attack_dir)
 
 mini_train_inds = None
 if USE_TRAIN_MINI:
