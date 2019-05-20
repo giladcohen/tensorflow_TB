@@ -3,17 +3,21 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import matplotlib
+import platform
+# Force matplotlib to not use any Xwindows backend.
+if platform.system() == 'Linux':
+    matplotlib.use('Agg')
+
 import logging
 import numpy as np
 import tensorflow as tf
 import os
-
-from threading import Thread
-from Queue import Queue
+import imageio
 
 import darkon.darkon as darkon
 
-from cleverhans.attacks import FastGradientMethod, DeepFool
+from cleverhans.attacks import FastGradientMethod, DeepFool, SaliencyMapMethod, CarliniWagnerL2
 from tensorflow.python.platform import flags
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
@@ -24,24 +28,36 @@ from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 from tensorflow_TB.utils.misc import np_evaluate
-import copy
 import pickle
+from cleverhans.utils import random_targets
+from cleverhans.evaluation import batch_eval
+
+import copy
 import imageio
+from threading import Thread
+from Queue import Queue
 
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('checkpoint_name', 'svhn/log_120519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1257', 'checkpoint name')
-flags.DEFINE_float('label_smoothing', 0.1, 'label smoothing')
-flags.DEFINE_string('workspace', 'influence_workspace_test_mini', 'workspace dir')
-flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
-flags.DEFINE_bool('use_train_mini', True, 'Whether or not to use 5000 training samples instead of 49000')
-flags.DEFINE_string('dataset', 'svhn', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_integer('b', -1, 'beginning index')
+flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_integer('num_threads', 20, 'number of threads')
 
-test_val_set = FLAGS.set == 'val'
+if FLAGS.set == 'val':
+    test_val_set = True
+    WORKSPACE = 'influence_workspace_validation'
+    USE_TRAIN_MINI = False
+else:
+    test_val_set = False
+    WORKSPACE = 'influence_workspace_test_mini'
+    USE_TRAIN_MINI = True
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -57,6 +73,8 @@ if FLAGS.dataset == 'cifar10':
         'truck'
     )
     ARCH_NAME = 'model1'
+    CHECKPOINT_NAME = 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000'
+    LABEL_SMOOTHING = 0.1
 elif FLAGS.dataset == 'cifar100':
     _classes = (
         'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle',
@@ -75,11 +93,15 @@ elif FLAGS.dataset == 'cifar100':
         'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
     )
     ARCH_NAME = 'model_cifar_100'
+    CHECKPOINT_NAME = 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01'
+    LABEL_SMOOTHING = 0.01
 elif FLAGS.dataset == 'svhn':
     _classes = (
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     )
     ARCH_NAME = 'model_svhn'
+    CHECKPOINT_NAME = 'svhn/log_120519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1257'
+    LABEL_SMOOTHING = 0.1
 else:
     raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
 
@@ -99,11 +121,18 @@ config_args = dict(allow_soft_placement=True)
 sess = tf.Session(config=tf.ConfigProto(**config_args))
 
 # get records from training
-model_dir     = os.path.join('/data/gilad/logs/influence', FLAGS.checkpoint_name)
-workspace_dir = os.path.join(model_dir, FLAGS.workspace)
+model_dir     = os.path.join('/data/gilad/logs/influence', CHECKPOINT_NAME)
+workspace_dir = os.path.join(model_dir, WORKSPACE)
+attack_dir    = os.path.join(model_dir, FLAGS.attack)
+if FLAGS.targeted:
+    attack_dir = attack_dir + '_targeted'
+
+# make sure the attack dir is constructed
+if not os.path.exists(attack_dir):
+    os.makedirs(attack_dir)
 
 mini_train_inds = None
-if FLAGS.use_train_mini:
+if USE_TRAIN_MINI:
     print('loading train mini indices from {}'.format(os.path.join(model_dir, 'train_mini_indices.npy')))
     mini_train_inds = np.load(os.path.join(model_dir, 'train_mini_indices.npy'))
 
@@ -119,31 +148,35 @@ y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
 
+if FLAGS.targeted:
+    # get also the adversarial labels of the val and test sets
+    if not os.path.isfile(os.path.join(attack_dir, 'y_val_targets.npy')):
+        y_val_targets  = random_targets(y_val_sparse , feeder.num_classes)
+        y_test_targets = random_targets(y_test_sparse, feeder.num_classes)
+        assert (y_val_targets.argmax(axis=1)  != y_val_sparse).all()
+        assert (y_test_targets.argmax(axis=1) != y_test_sparse).all()
+        np.save(os.path.join(attack_dir, 'y_val_targets.npy') , y_val_targets)
+        np.save(os.path.join(attack_dir, 'y_test_targets.npy'), y_test_targets)
+    else:
+        y_val_targets  = np.load(os.path.join(attack_dir, 'y_val_targets.npy'))
+        y_test_targets = np.load(os.path.join(attack_dir, 'y_test_targets.npy'))
+
 # Use Image Parameters
 img_rows, img_cols, nchannels = X_test.shape[1:4]
 nb_classes = y_test.shape[1]
 
 # Define input TF placeholder
-x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels))
-y = tf.placeholder(tf.float32, shape=(None, nb_classes))
+x     = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols, nchannels), name='x')
+y     = tf.placeholder(tf.float32, shape=(None, nb_classes), name='y')
 
 eval_params = {'batch_size': FLAGS.batch_size}
-fgsm_params = {
-    'eps': 0.3,
-    'clip_min': 0.,
-    'clip_max': 1.
-}
-deepfool_params = {
-    'clip_min': 0.0,
-    'clip_max': 1.0
-}
 
 model = DarkonReplica(scope=ARCH_NAME, nb_classes=feeder.num_classes, n=5, input_shape=[32, 32, 3])
 preds      = model.get_predicted_class(x)
 logits     = model.get_logits(x)
 embeddings = model.get_embeddings(x)
 
-loss = CrossEntropy(model, smoothing=FLAGS.label_smoothing)
+loss = CrossEntropy(model, smoothing=LABEL_SMOOTHING)
 regu_losses = WeightDecay(model)
 full_loss = WeightedSum(model, [(1.0, loss), (FLAGS.weight_decay, regu_losses)])
 
@@ -166,7 +199,7 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # predict labels from trainset
-if FLAGS.use_train_mini:
+if USE_TRAIN_MINI:
     train_preds_file    = os.path.join(model_dir, 'x_train_mini_preds.npy')
     train_features_file = os.path.join(model_dir, 'x_train_mini_features.npy')
 else:
@@ -183,9 +216,13 @@ else:
 
 # predict labels from validation set
 if not os.path.isfile(os.path.join(model_dir, 'x_val_preds.npy')):
-    x_val_preds, x_val_features = np_evaluate(sess, [preds, embeddings], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+    tf_inputs    = [x, y]
+    tf_outputs   = [preds, embeddings]
+    numpy_inputs = [X_val, y_val]
+
+    x_val_preds, x_val_features = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_val_preds = x_val_preds.astype(np.int32)
-    np.save(os.path.join(model_dir, 'x_val_preds.npy'), x_val_preds)
+    np.save(os.path.join(model_dir, 'x_val_preds.npy')   , x_val_preds)
     np.save(os.path.join(model_dir, 'x_val_features.npy'), x_val_features)
 else:
     x_val_preds    = np.load(os.path.join(model_dir, 'x_val_preds.npy'))
@@ -193,46 +230,97 @@ else:
 
 # predict labels from test set
 if not os.path.isfile(os.path.join(model_dir, 'x_test_preds.npy')):
-    x_test_preds, x_test_features = np_evaluate(sess, [preds, embeddings], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    tf_inputs    = [x, y]
+    tf_outputs   = [preds, embeddings]
+    numpy_inputs = [X_test, y_test]
+
+    x_test_preds, x_test_features = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_test_preds = x_test_preds.astype(np.int32)
-    np.save(os.path.join(model_dir, 'x_test_preds.npy'), x_test_preds)
+    np.save(os.path.join(model_dir, 'x_test_preds.npy')   , x_test_preds)
     np.save(os.path.join(model_dir, 'x_test_features.npy'), x_test_features)
 else:
     x_test_preds    = np.load(os.path.join(model_dir, 'x_test_preds.npy'))
     x_test_features = np.load(os.path.join(model_dir, 'x_test_features.npy'))
 
-# Initialize the advarsarial attack object and graph
-attack         = DeepFool(model, sess=sess)
-adv_x          = attack.generate(x, **deepfool_params)
-preds_adv      = model.get_predicted_class(adv_x)
-logits_adv     = model.get_logits(adv_x)
-embeddings_adv = model.get_embeddings(adv_x)
+# initialize adversarial examples if necessary
+if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
+    y_adv = tf.placeholder(tf.float32, shape=(None, nb_classes), name='y_adv')
 
-if not os.path.isfile(os.path.join(model_dir, 'X_val_adv.npy')):
-    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
-    X_val_adv, x_val_preds_adv, x_val_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_val, y_val, x, y, FLAGS.batch_size, log=logging)
+    # Initialize the advarsarial attack object and graph
+    deepfool_params = {
+        'clip_min': 0.0,
+        'clip_max': 1.0
+    }
+    jsma_params = {
+        'clip_min': 0.0,
+        'clip_max': 1.0,
+        'theta': 1.0,
+        'gamma': 0.1,
+    }
+    cw_params = {
+        'clip_min': 0.0,
+        'clip_max': 1.0,
+        'batch_size': 125,
+        'confidence': 0.8,
+        'learning_rate': 0.01,
+        'initial_const': 0.1
+    }
+    if FLAGS.targeted:
+        jsma_params.update({'y_target': y_adv})
+        cw_params.update({'y_target': y_adv})
+
+    if FLAGS.attack == 'deepfool':
+        attack_params = deepfool_params
+        attack_class  = DeepFool
+    elif FLAGS.attack == 'jsma':
+        attack_params = jsma_params
+        attack_class  = SaliencyMapMethod
+    elif FLAGS.attack == 'cw':
+        attack_params = cw_params
+        attack_class  = CarliniWagnerL2
+    else:
+        raise AssertionError('Attack {} is not supported'.format(FLAGS.attack))
+
+    attack         = attack_class(model, sess=sess)
+    adv_x          = attack.generate(x, **attack_params)
+    preds_adv      = model.get_predicted_class(adv_x)
+    logits_adv     = model.get_logits(adv_x)
+    embeddings_adv = model.get_embeddings(adv_x)
+
+    # val attack
+    tf_inputs    = [x, y]
+    tf_outputs   = [adv_x, preds_adv, embeddings_adv]
+    numpy_inputs = [X_val, y_val]
+    if FLAGS.targeted:
+        tf_inputs.append(y_adv)
+        numpy_inputs.append(y_val_targets)
+
+    X_val_adv, x_val_preds_adv, x_val_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    # since DeepFool is not reproducible, saving the results in as numpy
-    np.save(os.path.join(model_dir, 'X_val_adv.npy'), X_val_adv)
-    np.save(os.path.join(model_dir, 'x_val_preds_adv.npy'), x_val_preds_adv)
-    np.save(os.path.join(model_dir, 'x_val_features_adv.npy'), x_val_features_adv)
-else:
-    X_val_adv          = np.load(os.path.join(model_dir, 'X_val_adv.npy'))
-    x_val_preds_adv    = np.load(os.path.join(model_dir, 'x_val_preds_adv.npy'))
-    x_val_features_adv = np.load(os.path.join(model_dir, 'x_val_features_adv.npy'))
+    np.save(os.path.join(attack_dir, 'X_val_adv.npy')         , X_val_adv)
+    np.save(os.path.join(attack_dir, 'x_val_preds_adv.npy')   , x_val_preds_adv)
+    np.save(os.path.join(attack_dir, 'x_val_features_adv.npy'), x_val_features_adv)
 
-if not os.path.isfile(os.path.join(model_dir, 'X_test_adv.npy')):
-    # Evaluate the accuracy of the CIFAR-10 model on adversarial examples
-    X_test_adv, x_test_preds_adv, x_test_features_adv = np_evaluate(sess, [adv_x, preds_adv, embeddings_adv], X_test, y_test, x, y, FLAGS.batch_size, log=logging)
+    # test attack
+    tf_inputs    = [x, y]
+    tf_outputs   = [adv_x, preds_adv, embeddings_adv]
+    numpy_inputs = [X_test, y_test]
+    if FLAGS.targeted:
+        tf_inputs.append(y_adv)
+        numpy_inputs.append(y_test_targets)
+
+    X_test_adv, x_test_preds_adv, x_test_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_test_preds_adv = x_test_preds_adv.astype(np.int32)
-    # since DeepFool is not reproducible, saving the results in as numpy
-    np.save(os.path.join(model_dir, 'X_test_adv.npy'), X_test_adv)
-    np.save(os.path.join(model_dir, 'x_test_preds_adv.npy'), x_test_preds_adv)
-    np.save(os.path.join(model_dir, 'x_test_features_adv.npy'), x_test_features_adv)
+    np.save(os.path.join(attack_dir, 'X_test_adv.npy')         , X_test_adv)
+    np.save(os.path.join(attack_dir, 'x_test_preds_adv.npy')   , x_test_preds_adv)
+    np.save(os.path.join(attack_dir, 'x_test_features_adv.npy'), x_test_features_adv)
 else:
-    X_test_adv          = np.load(os.path.join(model_dir, 'X_test_adv.npy'))
-    x_test_preds_adv    = np.load(os.path.join(model_dir, 'x_test_preds_adv.npy'))
-    x_test_features_adv = np.load(os.path.join(model_dir, 'x_test_features_adv.npy'))
+    X_val_adv           = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
+    x_val_preds_adv     = np.load(os.path.join(attack_dir, 'x_val_preds_adv.npy'))
+    x_val_features_adv  = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
+    X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
+    x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
+    x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
 
 # accuracy computation
 # do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
@@ -248,7 +336,7 @@ test_acc     = np.mean(y_test_sparse  == x_test_preds)
 val_adv_acc  = np.mean(y_val_sparse   == x_val_preds_adv)
 test_adv_acc = np.mean(y_test_sparse  == x_test_preds_adv)
 print('train set acc: {}\nvalidation set acc: {}\ntest set acc: {}'.format(train_acc, val_acc, test_acc))
-print('adversarial validation set acc: {}\nadversarial test set acc: {}'.format(val_adv_acc, test_adv_acc))
+print('adversarial ({}) validation set acc: {}\nadversarial ({}) test set acc: {}'.format(FLAGS.attack, val_adv_acc, FLAGS.attack, test_adv_acc))
 
 # what are the indices of the cifar10 set which the network succeeded classifying correctly,
 # but the adversarial attack changed to a different class?
@@ -270,7 +358,7 @@ for i, set_ind in enumerate(feeder.test_inds):
     info['test'][i]['net_succ']     = net_succ
     info['test'][i]['attack_succ']  = attack_succ
 
-info_file = os.path.join(model_dir, 'info.pkl')
+info_file = os.path.join(attack_dir, 'info.pkl')
 if not os.path.isfile(info_file):
     print('saving info as pickle to {}'.format(info_file))
     with open(info_file, 'wb') as handle:
@@ -282,15 +370,20 @@ else:
     assert info == info_old
 
 # start the knn observation
-knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
-knn.fit(x_train_features)
-if test_val_set:
-    print('predicting knn for all val set')
-    features = x_val_features
-else:
-    print('predicting knn for all test set')
-    features = x_test_features
-all_neighbor_dists, all_neighbor_indices = knn.kneighbors(features, return_distance=True)
+# knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
+# knn.fit(x_train_features)
+# if test_val_set:
+#     print('predicting knn for all val set')
+#     features     = x_val_features
+#     features_adv = x_val_features_adv
+# else:
+#     print('predicting knn for all test set')
+#     features     = x_test_features
+#     features_adv = x_test_features_adv
+# print('predicting knn dist/indices for normal image')
+# all_neighbor_dists    , all_neighbor_indices     = knn.kneighbors(features, return_distance=True)
+# print('predicting knn dist/indices for adv image')
+# all_neighbor_dists_adv, all_neighbor_indices_adv = knn.kneighbors(features_adv, return_distance=True)
 
 # setting pred feeder
 pred_feeder = MyFeederValTest(dataset=FLAGS.dataset, rand_gen=rand_gen, as_one_hot=True,
@@ -324,7 +417,7 @@ inspector_adv_list = []
 for ii in range(FLAGS.num_threads):
     inspector_list.append(
         darkon.Influence(
-            workspace=os.path.join(model_dir, FLAGS.workspace, 'real'),
+            workspace=os.path.join(workspace_dir, 'real'),
             feeder=copy.deepcopy(feeder),
             loss_op_train=full_loss.fprop(x=x, y=y),
             loss_op_test=loss.fprop(x=x, y=y),
@@ -333,7 +426,7 @@ for ii in range(FLAGS.num_threads):
     )
     inspector_pred_list.append(
         darkon.Influence(
-            workspace=os.path.join(model_dir, FLAGS.workspace, 'pred'),
+            workspace=os.path.join(workspace_dir, 'pred'),
             feeder=copy.deepcopy(pred_feeder),
             loss_op_train=full_loss.fprop(x=x, y=y),
             loss_op_test=loss.fprop(x=x, y=y),
@@ -342,7 +435,7 @@ for ii in range(FLAGS.num_threads):
     )
     inspector_adv_list.append(
         darkon.Influence(
-            workspace=os.path.join(model_dir, FLAGS.workspace, 'adv'),
+            workspace=os.path.join(workspace_dir, 'adv', FLAGS.attack),
             feeder=copy.deepcopy(adv_feeder),
             loss_op_train=full_loss.fprop(x=x, y=y),
             loss_op_test=loss.fprop(x=x, y=y),
@@ -352,32 +445,33 @@ for ii in range(FLAGS.num_threads):
 
 testset_batch_size = 100
 if FLAGS.dataset in ['cifar10', 'cifar100']:
-    train_batch_size = 100
-    train_iterations = 50 if FLAGS.use_train_mini else 490  # 5k(50x100) or 49k(490x100)
+    train_batch_size = 200
+    train_iterations = 25 if USE_TRAIN_MINI else 245  # 5k(25x200) or 49k(245x200)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 10 if FLAGS.use_train_mini else 98,  # 5k(500x10) or 49k(500x98)
-        'recursion_batch_size': 100
+        'recursion_depth': 5 if USE_TRAIN_MINI else 49,  # 5k(5x5x200) or 49k(5x49x200)
+        'recursion_batch_size': 200
     }
 else:  #SVHN
     train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
-    train_iterations = 25 if FLAGS.use_train_mini else 360  # 5k(25x200) or 72k(360x200)
+    train_iterations = 25 if USE_TRAIN_MINI else 360  # 5k(25x200) or 72k(360x200)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 5 if FLAGS.use_train_mini else 72,  # 5k(5x5x200) or 72k(72x5x200)
+        'recursion_depth': 5 if USE_TRAIN_MINI else 72,  # 5k(5x5x200) or 72k(72x5x200)
         'recursion_batch_size': 200
     }
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
+# sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['attack_succ']]
 sub_relevant_indices = [ind for ind in info[FLAGS.set]]
-# sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['net_succ']]
 relevant_indices     = [info[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-# b, e = 7056, 10000
-# sub_relevant_indices = sub_relevant_indices[b:e]
-# relevant_indices     = relevant_indices[b:e]
+if FLAGS.b != -1:
+    b, e = FLAGS.b, FLAGS.e
+    sub_relevant_indices = sub_relevant_indices[b:e]
+    relevant_indices     = relevant_indices[b:e]
 
 def collect_influence(q, thread_id):
     while not q.empty():
@@ -413,40 +507,48 @@ def collect_influence(q, thread_id):
             logging.info(progress_str)
             print(progress_str)
 
-            cases = ['real']
+            cases = ['real', 'adv']
             if not info[FLAGS.set][sub_index]['net_succ']:  # if prediction is different than real
                 cases.append('pred')
-            if info[FLAGS.set][sub_index]['attack_succ']:  # if adv is different than prediction
-                cases.append('adv')
 
             for case in cases:
                 if case == 'real':
-                    feed = feeder
                     insp = inspector_list[thread_id]
+                    feed = feeder
+                    # ni = all_neighbor_indices
+                    # nd = all_neighbor_dists
                 elif case == 'pred':
-                    feed = pred_feeder
                     insp = inspector_pred_list[thread_id]
+                    feed = pred_feeder
+                    # ni = all_neighbor_indices
+                    # nd = all_neighbor_dists
                 elif case == 'adv':
-                    feed = adv_feeder
                     insp = inspector_adv_list[thread_id]
+                    feed = adv_feeder
+                    # ni = all_neighbor_indices_adv
+                    # nd = all_neighbor_dists_adv
                 else:
                     raise AssertionError('only real and adv are accepted.')
+
+                if case != 'adv':
+                    continue
+
                 if FLAGS.prepare:
                     insp._prepare(
                         sess=sess,
                         test_indices=[sub_index],
                         test_batch_size=testset_batch_size,
                         approx_params=approx_params,
-                        force_refresh=False
+                        force_refresh=True
                     )
                 else:
                     # creating the relevant index folders
-                    dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+                    dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case, FLAGS.attack)
                     if not os.path.exists(dir):
                         os.makedirs(dir)
 
                     if os.path.isfile(os.path.join(dir, 'scores.npy')):
-                        print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
+                        print('scores already exists in {}'.format(os.path.join(dir, 'scores.npy')))
                         # scores = np.load(os.path.join(dir, 'scores.npy'))
                     else:
                         scores = insp.upweighting_influence_batch(
