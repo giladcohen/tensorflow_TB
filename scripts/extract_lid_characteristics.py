@@ -38,7 +38,7 @@ STDEVS = {
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
-flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 
@@ -206,23 +206,25 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # get noisy images
-def get_noisy_samples(X_test, X_test_adv, dataset, attack):
+def get_noisy_samples(X_test, X_test_adv, std=STDEVS[FLAGS.dataset][FLAGS.attack]):
     """ Add Gaussian noise to the samples """
-    X_test_noisy = np.clip(X_test + rand_gen.normal(loc=0.0, scale=STDEVS[dataset][attack], size=X_test.shape), 0, 1)
+    X_test_noisy = np.clip(X_test + rand_gen.normal(loc=0.0, scale=std, size=X_test.shape), 0, 1)
     return X_test_noisy
 
 noisy_file = os.path.join(attack_dir, 'X_test_noisy.npy')
-X_test_noisy = get_noisy_samples(X_test, X_test_adv, FLAGS.dataset, FLAGS.attack)
 
 # DEBUG: testing different scale so that L2 perturbation is the same
-for s_type, subset in zip(['noisy'], [X_test_noisy]):
-    acc = model_eval(sess, x, y, logits, subset, y_test, args=eval_params)
-    print("Model accuracy on the %s test set: %0.2f%%" % (s_type, 100 * acc))
-    # Compute and display average perturbation sizes
-    if not s_type == 'normal':
-        diff    = subset.reshape((len(X_test), -1)) - X_test.reshape((len(X_test), -1))
-        l2_diff = np.linalg.norm(diff, axis=1).mean()
-        print("Average L-2 perturbation size of the %s test set: %0.2f" % (s_type, l2_diff))
+for std in np.arange(0.001, 0.03, 0.0005):
+    X_test_noisy = get_noisy_samples(X_test, X_test_adv, std)
+
+    for s_type, subset in zip(['noisy'], [X_test_noisy]):
+        acc = model_eval(sess, x, y, logits, subset, y_test, args=eval_params)
+        print("Noise %0.5f: Model accuracy on the %s test set: %0.2f%%" % (std, s_type, 100 * acc))
+        # Compute and display average perturbation sizes
+        if not s_type == 'normal':
+            diff    = subset.reshape((len(X_test), -1)) - X_test.reshape((len(X_test), -1))
+            l2_diff = np.linalg.norm(diff, axis=1).mean()
+            print("Noise %0.5f: Average L-2 perturbation size of the %s test set: %0.2f" % (std, s_type, l2_diff))
 
 # for s_type, subset in zip(['normal', 'noisy', 'adversarial'], [X_test, X_test_noisy, X_test_adv]):
 #     acc = model_eval(sess, x, y, logits, subset, y_test, args=eval_params)
