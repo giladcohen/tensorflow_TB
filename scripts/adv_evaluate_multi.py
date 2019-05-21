@@ -48,6 +48,7 @@ flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
+flags.DEFINE_bool('backward', False, 'ending index')
 flags.DEFINE_integer('num_threads', 20, 'number of threads')
 
 if FLAGS.set == 'val':
@@ -472,6 +473,10 @@ if FLAGS.b != -1:
     b, e = FLAGS.b, FLAGS.e
     sub_relevant_indices = sub_relevant_indices[b:e]
     relevant_indices     = relevant_indices[b:e]
+
+if FLAGS.backward:
+    sub_relevant_indices = sub_relevant_indices[::-1]
+    relevant_indices     = relevant_indices[::-1]
 
 def collect_influence(q, thread_id):
     while not q.empty():
