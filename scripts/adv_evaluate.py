@@ -38,11 +38,12 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
-flags.DEFINE_bool('prepare', True, 'whether or not we are in the prepare phase, when hvp is calculated')
+flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
+flags.DEFINE_bool('backward', False, 'ending index')
 
 if FLAGS.set == 'val':
     test_val_set = True
@@ -457,6 +458,10 @@ if FLAGS.b != -1:
     b, e = FLAGS.b, FLAGS.e
     sub_relevant_indices = sub_relevant_indices[b:e]
     relevant_indices     = relevant_indices[b:e]
+
+if FLAGS.backward:
+    sub_relevant_indices = sub_relevant_indices[::-1]
+    relevant_indices     = relevant_indices[::-1]
 
 # calculate knn_ranks
 def find_ranks(sub_index, sorted_influence_indices, adversarial=False):
