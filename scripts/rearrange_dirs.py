@@ -32,11 +32,11 @@ for i in range(7, 10000):
         run_cmd('mkdir -p ' + deepfool_dir, i)
         # go to dir
         os.chdir(adv_dir)
-        run_cmd('mv `find . -type f | grep -v "/cw/"` deepfool', i)
+        run_cmd('mv `find . -type f | grep -v "/cw/"`' + ' deepfool/', i)
     else:  # path exist
         # check if empty
         if len(os.listdir(deepfool_dir)) == 0:  # indeed empty
             os.chdir(adv_dir)
-            run_cmd('mv `find . -type f | grep -v "/cw/"` deepfool', i)
+            run_cmd('mv `find . -type f | grep -v "/cw/"`' + ' deepfool/', i)
 
 
