@@ -498,7 +498,7 @@ for i, sub_index in enumerate(sub_relevant_indices):
     else:
         pred_label = x_test_preds[sub_index]
 
-    _, adv_label  = adv_feeder.test_indices(sub_index)
+    _, adv_label = adv_feeder.test_indices(sub_index)
     adv_label = np.argmax(adv_label)
 
     if info[FLAGS.set][sub_index]['attack_succ']:
