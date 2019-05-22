@@ -44,12 +44,12 @@ flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_bool('backward', False, 'ending index')
-flags.DEFINE_integer('num_threads', 20, 'number of threads')
+flags.DEFINE_integer('num_threads', 1, 'number of threads')
 
 if FLAGS.set == 'val':
     test_val_set = True
