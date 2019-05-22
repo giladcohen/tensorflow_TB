@@ -25,7 +25,7 @@ def run_cmd(cmd):
 #     run_cmd(cmd)
 
 home_dir = '/data/gilad/logs/influence/cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01/test'
-for i in range(len(10000)):
+for i in range(10000):
     adv_dir = os.path.join(home_dir, 'test_index_{}'.format(i), 'adv')
     deepfool_dir = os.path.join(adv_dir, 'deepfool')
     if not os.path.exists(deepfool_dir):  # path not exist
