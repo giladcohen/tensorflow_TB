@@ -45,11 +45,13 @@ STDEVS = {
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
+flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'mahalanobis', 'type of defence')
+flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
 flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
+flags.DEFINE_integer('max_indices', 800, 'maximum number of helpful indices to use in NNIF detection')
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -245,7 +247,6 @@ for s_type, subset in zip(['normal', 'noisy', 'adversarial'], [X_test, X_test_no
 # which the original version was correctly classified by the model
 inds_correct = np.where(x_test_preds == y_test_sparse)[0]
 print("Number of correctly predict images: %s" % (len(inds_correct)))
-
 X_test              = X_test[inds_correct]
 X_test_noisy        = X_test_noisy[inds_correct]
 X_test_adv          = X_test_adv[inds_correct]
@@ -256,6 +257,7 @@ x_test_features_adv = x_test_features_adv[inds_correct]
 
 y_test              = y_test[inds_correct]
 y_test_sparse       = y_test_sparse[inds_correct]
+
 print("X_test: ", X_test.shape)
 print("X_test_noisy: ", X_test_noisy.shape)
 print("X_test_adv: ", X_test_adv.shape)
@@ -334,7 +336,7 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
 
     return lids, lids_noisy, lids_adv
 
-def get_lid(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, batch_size=100):
+def get_lid(X_test, X_test_noisy, X_test_adv, k, batch_size=100):
     print('Extract local intrinsic dimensionality: k = %s' % FLAGS.k_nearest)
     lids_normal, lids_noisy, lids_adv = get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k, batch_size)
     print("lids_normal:", lids_normal.shape)
@@ -456,10 +458,51 @@ def get_mahanabolis_tensors(sample_mean, precision, num_classes, layer_index=0):
 
     return gaussian_score, grads
 
+def get_nnif(X_test, max_indices):
+    """Returns the knn rank of every testing sample"""
+
+    ranks       = -1 * np.ones((len(X_test), 4))
+    ranks_adv   = -1 * np.ones((len(X_test), 4))
+
+    for i in tqdm(range(len(inds_correct))):
+        global_index = inds_correct[i]
+        real_label = y_test_sparse[i]
+        pred_label = x_test_preds[i]
+        adv_label  = x_test_preds_adv[i]
+        assert pred_label == real_label, 'failed for i={}, global_index={}'.format(i, global_index)
+        index_dir = os.path.join(model_dir, FLAGS.set, '{}_index_{}'.format(FLAGS.set, global_index))
+
+        # collect real
+        ranks[i, 0] = np.load(os.path.join(index_dir, 'real', 'helpful_ranks.npy'))[:max_indices].mean()
+        ranks[i, 1] = np.load(os.path.join(index_dir, 'real', 'helpful_dists.npy'))[:max_indices].mean()
+        ranks[i, 2] = np.load(os.path.join(index_dir, 'real', 'harmful_ranks.npy'))[:max_indices].mean()
+        ranks[i, 3] = np.load(os.path.join(index_dir, 'real', 'harmful_dists.npy'))[:max_indices].mean()
+
+        # collect adv
+        ranks_adv[i, 0] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'helpful_ranks.npy'))[:max_indices].mean()
+        ranks_adv[i, 1] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'helpful_dists.npy'))[:max_indices].mean()
+        ranks_adv[i, 2] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'harmful_ranks.npy'))[:max_indices].mean()
+        ranks_adv[i, 3] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'harmful_dists.npy'))[:max_indices].mean()
+
+    print("ranks_normal:", ranks.shape)
+    print("ranks_adv:", ranks.shape)
+    assert (ranks     != -1).all()
+    assert (ranks_adv != -1).all()
+
+    artifacts, labels = merge_and_generate_labels(ranks_adv, ranks)
+    return artifacts, labels
+
 if FLAGS.characteristics == 'lid':
     characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, FLAGS.k_nearest, 100)
     print("LID: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
     file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}.npy'.format(FLAGS.k_nearest, 100))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
+
+if FLAGS.characteristics == 'nnif':
+    characteristics, labels = get_nnif(X_test, FLAGS.max_indices)
+    print("NNIF: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'max_indices_{}.npy'.format(FLAGS.max_indices))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 
@@ -480,33 +523,3 @@ if FLAGS.characteristics == 'mahalanobis':
     file_name = os.path.join(characteristics_dir, 'magnitude_{}.npy'.format(FLAGS.magnitude))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
-
-
-    # out_features = batch_eval(sess, [x], [embeddings], [test_data[start:end]], batch_size)[0]
-# out_features = np.asarray(out_features, dtype=np.float32).reshape((n_feed, out_features.shape[1], -1))
-# out_features = np.mean(out_features, axis=2)
-#
-# gaussian_score = 0
-# for i in range(num_classes):
-#     batch_sample_mean = sample_mean[layer_index][i]
-#     zero_f = out_features - batch_sample_mean
-#     term_gau = -0.5 * np.matmul(np.matmul(zero_f, precision[layer_index]), zero_f.T).diagonal()  #(100x64)x(64x64)x(64x100)
-#     if i == 0:
-#         gaussian_score = np.reshape(term_gau, (-1, 1))
-#     else:
-#         gaussian_score = np.concatenate((gaussian_score, np.reshape(term_gau, (-1, 1))), 1)
-#
-# # Input_processing
-# # move gaussian score and many other to be pytorch tensors
-# gaussian_score_tensor = torch.tensor(gaussian_score)
-# sample_mean_tensor    = torch.tensor(sample_mean[layer_index])  # shape: (10x64)
-# precision_tensor      = torch.tensor(precision[layer_index])  # shape: (64x64)
-# out_features_tensor   = torch.tensor(out_features)  # shape: (100,64)
-#
-# # sample_pred = gaussian_score.argmax(axis=1)  # from (100x10) to (100,), taking the max
-# sample_pred = gaussian_score_tensor.max(1)[1]  # shape:(100,)
-# batch_sample_mean = sample_mean_tensor.index_select(0, sample_pred)  # shape:(100x64)
-# zero_f = out_features_tensor.double() - Variable(batch_sample_mean)
-# pure_gau = -0.5*torch.mm(torch.mm(zero_f, Variable(precision_tensor)), zero_f.t()).diag()
-# loss = torch.mean(-pure_gau)
-# loss.backward()
