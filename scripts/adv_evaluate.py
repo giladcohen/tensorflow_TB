@@ -548,7 +548,9 @@ for i, sub_index in enumerate(sub_relevant_indices):
             )
         else:
             # creating the relevant index folders
-            dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case, FLAGS.attack)
+            dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+            if case == 'adv':
+                dir = os.path.join(dir, FLAGS.attack)
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
