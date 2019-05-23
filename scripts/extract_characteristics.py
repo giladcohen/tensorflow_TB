@@ -51,6 +51,7 @@ flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is t
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
 flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
+flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
 flags.DEFINE_integer('max_indices', 800, 'maximum number of helpful indices to use in NNIF detection')
 
 if FLAGS.dataset == 'cifar10':
@@ -513,13 +514,13 @@ if FLAGS.characteristics == 'mahalanobis':
     sample_mean, precision = sample_estimator(feeder.num_classes, X_train, y_train_sparse, x_train_preds, x_train_features)
     gaussian_score, grads  = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes)
 
-    M_in    = get_Mahalanobis_score_adv(X_test      , gaussian_score, grads, FLAGS.magnitude, FLAGS.chan_scale, set='normal')
-    M_out   = get_Mahalanobis_score_adv(X_test_adv  , gaussian_score, grads, FLAGS.magnitude, FLAGS.chan_scale, set='adv')
-    M_noisy = get_Mahalanobis_score_adv(X_test_noisy, gaussian_score, grads, FLAGS.magnitude, FLAGS.chan_scale, set='noisy')
+    M_in    = get_Mahalanobis_score_adv(X_test      , gaussian_score, grads, FLAGS.magnitude, FLAGS.rgb_scale, set='normal')
+    M_out   = get_Mahalanobis_score_adv(X_test_adv  , gaussian_score, grads, FLAGS.magnitude, FLAGS.rgb_scale, set='adv')
+    M_noisy = get_Mahalanobis_score_adv(X_test_noisy, gaussian_score, grads, FLAGS.magnitude, FLAGS.rgb_scale, set='noisy')
 
     Mahalanobis_neg = np.concatenate((M_in, M_noisy))
     Mahalanobis_pos = M_out
     characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
-    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}.npy'.format(FLAGS.magnitude, FLAGS.chan_scale))
+    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)

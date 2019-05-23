@@ -24,6 +24,7 @@ flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is t
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
 flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
+flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
 flags.DEFINE_integer('max_indices', 100, 'maximum number of helpful indices to use in NNIF detection')
 
 
@@ -45,7 +46,7 @@ characteristics_dir = os.path.join(attack_dir, FLAGS.characteristics)
 if FLAGS.characteristics == 'lid':
     characteristics_file = os.path.join(characteristics_dir, 'k_{}_batch_{}.npy'.format(FLAGS.k_nearest, 100))
 elif FLAGS.characteristics == 'mahalanobis':
-    characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}.npy'.format(FLAGS.magnitude))
+    characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
 elif FLAGS.characteristics == 'nnif':
     characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}.npy'.format(FLAGS.max_indices))
 else:
