@@ -14,6 +14,7 @@ import numpy as np
 import tensorflow as tf
 import os
 import imageio
+from tqdm import tqdm
 
 import darkon.darkon as darkon
 
@@ -39,11 +40,12 @@ flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_bool('backward', False, 'ending index')
+
 
 if FLAGS.set == 'val':
     test_val_set = True
@@ -483,7 +485,9 @@ def find_ranks(sub_index, sorted_influence_indices, adversarial=False):
         dists[target_idx] = knn_dist
     return ranks, dists
 
-for i, sub_index in enumerate(sub_relevant_indices):
+
+for i in tqdm(range(len(sub_relevant_indices))):
+    sub_index = sub_relevant_indices[i]
     if test_val_set:
         global_index = feeder.val_inds[sub_index]
     else:
@@ -535,9 +539,6 @@ for i, sub_index in enumerate(sub_relevant_indices):
         else:
             raise AssertionError('only real and adv are accepted.')
 
-        if case != 'adv':
-            continue
-
         if FLAGS.prepare:
             insp._prepare(
                 sess=sess,
@@ -553,6 +554,10 @@ for i, sub_index in enumerate(sub_relevant_indices):
                 dir = os.path.join(dir, FLAGS.attack)
             if not os.path.exists(dir):
                 os.makedirs(dir)
+
+            if os.path.exists(os.path.join(dir, 'summary.txt')):
+                print('calcaulation for global index {} was already done. leaving it'.format(global_index))
+                continue
 
             if os.path.isfile(os.path.join(dir, 'scores.npy')):
                 print('loading scores from {}'.format(os.path.join(dir, 'scores.npy')))
