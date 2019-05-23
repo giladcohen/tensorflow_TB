@@ -45,6 +45,7 @@ flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is t
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_bool('backward', False, 'ending index')
+flags.DEFINE_bool('overwrite_C', False, 'whether or not to overwrite the C calculation')
 
 
 if FLAGS.set == 'val':
@@ -539,6 +540,9 @@ for i in tqdm(range(len(sub_relevant_indices))):
         else:
             raise AssertionError('only real and adv are accepted.')
 
+        if case != 'adv':
+            continue
+
         if FLAGS.prepare:
             insp._prepare(
                 sess=sess,
@@ -555,8 +559,8 @@ for i in tqdm(range(len(sub_relevant_indices))):
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
-            if os.path.exists(os.path.join(dir, 'summary.txt')):
-                print('calcaulation for global index {} was already done. leaving it'.format(global_index))
+            if not FLAGS.overwrite_C and os.path.exists(os.path.join(dir, 'summary.txt')):
+                print('calcaulation for global index {} was already done. Leaving it'.format(global_index))
                 continue
 
             if os.path.isfile(os.path.join(dir, 'scores.npy')):
@@ -572,14 +576,10 @@ for i in tqdm(range(len(sub_relevant_indices))):
                     train_iterations=train_iterations)
                 np.save(os.path.join(dir, 'scores.npy'), scores)
 
-            if not os.path.isfile(os.path.join(dir, 'image.png')):
-                print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
-                image, _ = feed.test_indices(sub_index)
-                imageio.imwrite(os.path.join(dir, 'image.png'), image)
-                np.save(os.path.join(dir, 'image.npy'), image)
-            else:
-                # verifying everything is good
-                assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
+            print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+            image, _ = feed.test_indices(sub_index)
+            imageio.imwrite(os.path.join(dir, 'image.png'), image)
+            np.save(os.path.join(dir, 'image.npy'), image)
 
             sorted_indices = np.argsort(scores)
             harmful = sorted_indices[:50]
