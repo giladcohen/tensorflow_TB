@@ -24,7 +24,7 @@ flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is t
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
 flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
-flags.DEFINE_integer('max_indices', 800, 'maximum number of helpful indices to use in NNIF detection')
+flags.DEFINE_integer('max_indices', 100, 'maximum number of helpful indices to use in NNIF detection')
 
 
 if FLAGS.dataset == 'cifar10':
@@ -86,4 +86,4 @@ _, _, auc_score = compute_roc(Y_test, y_pred, plot=True)
 precision = precision_score(Y_test, y_label_pred)
 recall    = recall_score(Y_test, y_label_pred)
 acc       = accuracy_score(Y_test, y_label_pred)
-print('Detector ROC-AUC score: %0.4f, accuracy: %.4f, precision: %.4f, recall: %.4f' % (auc_score, acc, precision, recall))
+print('Detector ROC-AUC score: {}, accuracy: {}, precision: {}, recall: {}' % (auc_score, acc, precision, recall))
