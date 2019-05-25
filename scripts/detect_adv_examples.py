@@ -21,7 +21,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
+flags.DEFINE_string('characteristics', 'mahalanobis', 'type of defence')
 flags.DEFINE_integer('k_nearest', 25, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
 flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
