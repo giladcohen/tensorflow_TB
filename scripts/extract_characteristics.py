@@ -445,14 +445,14 @@ def sample_estimator(num_classes, X, Y, x_preds, x_features):
 def get_Mahalanobis_score_adv(test_data, gaussian_score, grads, magnitude, scale, set):
     batch_size = 100
     grad_file = os.path.join(characteristics_dir, 'gradients_{}.npy'.format(set))
-    if os.path.exists(grad_file):
-        print('loading gradients from {}'.format(grad_file))
-        gradients = np.load(grad_file)
-    else:
-        print('Calculating Mahanalobis gradients...')
-        gradients = batch_eval(sess, [x], grads, [test_data], batch_size)[0]
-        print('Saving gradients to {}'.format(grad_file))
-        np.save(grad_file, gradients)
+    # if os.path.exists(grad_file):
+    #     print('loading gradients from {}'.format(grad_file))
+    #     gradients = np.load(grad_file)
+    # else:
+    print('Calculating Mahanalobis gradients...')
+    gradients = batch_eval(sess, [x], grads, [test_data], batch_size)[0]
+    print('Saving gradients to {}'.format(grad_file))
+    np.save(grad_file, gradients)
 
     gradients = gradients.clip(min=0)
     gradients = (gradients - 0.5) * 2
@@ -629,16 +629,31 @@ if FLAGS.characteristics == 'mahalanobis':
     sample_mean, precision = sample_estimator(feeder.num_classes, X_train, y_train_sparse, x_train_preds, x_train_features)
     gaussian_score, grads  = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes)
 
-    M_in    = get_Mahalanobis_score_adv(X_test      , gaussian_score, grads, FLAGS.magnitude, FLAGS.rgb_scale, set='normal')
-    M_out   = get_Mahalanobis_score_adv(X_test_adv  , gaussian_score, grads, FLAGS.magnitude, FLAGS.rgb_scale, set='adv')
-    M_noisy = get_Mahalanobis_score_adv(X_test_noisy, gaussian_score, grads, FLAGS.magnitude, FLAGS.rgb_scale, set='noisy')
+    magnitude = FLAGS.magnitude
+    for magnitude in [0.001, 0.0005, 0.002]:
+        # val
+        M_in    = get_Mahalanobis_score_adv(X_val      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_normal')
+        M_out   = get_Mahalanobis_score_adv(X_val_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_adv')
+        M_noisy = get_Mahalanobis_score_adv(X_val_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_noisy')
 
-    Mahalanobis_neg = np.concatenate((M_in, M_noisy))
-    Mahalanobis_pos = M_out
-    characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
-    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+        Mahalanobis_neg = np.concatenate((M_in, M_noisy))
+        Mahalanobis_pos = M_out
+        characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
+        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train.npy'.format(magnitude, FLAGS.rgb_scale))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
+
+        # test
+        M_in    = get_Mahalanobis_score_adv(X_test      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_normal')
+        M_out   = get_Mahalanobis_score_adv(X_test_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_adv')
+        M_noisy = get_Mahalanobis_score_adv(X_test_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_noisy')
+
+        Mahalanobis_neg = np.concatenate((M_in, M_noisy))
+        Mahalanobis_pos = M_out
+        characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
+        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test.npy'.format(magnitude, FLAGS.rgb_scale))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
 
 if FLAGS.characteristics == 'dknn':
     # divide the validation set for calibration and alphas
