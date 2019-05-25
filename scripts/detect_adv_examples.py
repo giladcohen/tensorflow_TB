@@ -26,6 +26,8 @@ flags.DEFINE_integer('k_nearest', 25, 'number of nearest neighbors to use for LI
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
 flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
 flags.DEFINE_integer('max_indices', 800, 'maximum number of helpful indices to use in NNIF detection')
+flags.DEFINE_string('ablation', '1111', 'for ablation test')
+
 
 if FLAGS.dataset == 'cifar10':
     CHECKPOINT_NAME = 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000'
@@ -49,8 +51,8 @@ elif FLAGS.characteristics == 'mahalanobis':
     train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
     test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
 elif FLAGS.characteristics == 'nnif':
-    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train.npy'.format(FLAGS.max_indices))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(FLAGS.max_indices))
+    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation))
 elif FLAGS.characteristics == 'dknn':
     train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train.npy'.format(FLAGS.k_nearest))
     test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test.npy'.format(FLAGS.k_nearest))
@@ -84,7 +86,7 @@ print("Train data size: ", X_train.shape)
 print("Test data size: ", X_test.shape)
 
 ## Build detector
-print("LR Detector on [dataset: %s, test_attack: %s, characteristics: %s]:" % (FLAGS.dataset, FLAGS.attack, FLAGS.characteristics))
+print("LR Detector on [dataset: %s, test_attack: %s, characteristics: %s, ablation: %s]:" % (FLAGS.dataset, FLAGS.attack, FLAGS.characteristics, FLAGS.ablation))
 lr = train_lr(X_train, Y_train)
 
 ## Evaluate detector
