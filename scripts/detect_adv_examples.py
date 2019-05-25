@@ -46,7 +46,8 @@ if FLAGS.characteristics == 'lid':
     train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_batch_{}_train.npy'.format(FLAGS.k_nearest, 100))
     test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_batch_{}_test.npy'.format(FLAGS.k_nearest, 100))
 elif FLAGS.characteristics == 'mahalanobis':
-    characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
+    train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
 elif FLAGS.characteristics == 'nnif':
     train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train.npy'.format(FLAGS.max_indices))
     test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(FLAGS.max_indices))
