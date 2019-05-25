@@ -46,13 +46,15 @@ STDEVS = {
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
 flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
 flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
-flags.DEFINE_integer('max_indices', 100, 'maximum number of helpful indices to use in NNIF detection')
+flags.DEFINE_integer('max_indices', 200, 'maximum number of helpful indices to use in NNIF detection')
+flags.DEFINE_string('ablation', '1111', 'for ablation test')
+
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -604,22 +606,30 @@ if FLAGS.characteristics == 'lid':
 if FLAGS.characteristics == 'nnif':
 
     max_indices = FLAGS.max_indices
-    for max_indices in [100, 50, 150, 200, 250]:
-        # val
-        characteristics, labels = get_nnif(X_val, 'val', max_indices)
-        print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-        file_name = os.path.join(characteristics_dir, 'max_indices_{}_train.npy'.format(max_indices))
-        data = np.concatenate((characteristics, labels), axis=1)
-        np.save(file_name, data)
+    # for ablation:
+    sel_column = []
+    for i in [0, 1, 2, 3]:
+        if FLAGS.ablation[i] == '1':
+            sel_column.append(i)
 
-        # test
-        characteristics, labels = get_nnif(X_test, 'test', max_indices)
-        characteristics[:, 0] *= 10
-        characteristics[:, 2] *= 10
-        print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-        file_name = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(max_indices))
-        data = np.concatenate((characteristics, labels), axis=1)
-        np.save(file_name, data)
+    # val
+    characteristics, labels = get_nnif(X_val, 'val', max_indices)
+    characteristics = characteristics[:, sel_column]
+    print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
+
+    # test
+    characteristics, labels = get_nnif(X_test, 'test', max_indices)
+    characteristics[:, 0] *= 10
+    characteristics[:, 2] *= 10
+    characteristics = characteristics[:, sel_column]
+
+    print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
 
 if FLAGS.characteristics == 'mahalanobis':
     print('get sample mean and covariance')
