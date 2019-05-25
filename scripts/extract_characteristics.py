@@ -193,8 +193,6 @@ with open(info_file, 'rb') as handle:
 assert info == info_old
 
 # get model and placeholders
-superseed = 15101985
-rand_gen = np.random.RandomState(superseed)
 tf.set_random_seed(superseed)
 config_args = dict(allow_soft_placement=True)
 sess = tf.Session(config=tf.ConfigProto(**config_args))
