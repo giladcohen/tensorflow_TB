@@ -46,8 +46,8 @@ STDEVS = {
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
 flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
