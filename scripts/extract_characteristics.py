@@ -467,7 +467,7 @@ def get_Mahalanobis_score_adv(test_data, gaussian_score, grads, magnitude, scale
     gradients_scaled[:, :, :, 1] = gradients[:, :, :, 1] / GREEN_SCALE
     gradients_scaled[:, :, :, 2] = gradients[:, :, :, 2] / BLUE_SCALE
 
-    tempInputs = X_test - magnitude * gradients
+    tempInputs = test_data - magnitude * gradients
     print('Calculating noise gaussian scores...')
     noise_gaussian_score = batch_eval(sess, [x], [gaussian_score], [tempInputs], batch_size)[0]
 
