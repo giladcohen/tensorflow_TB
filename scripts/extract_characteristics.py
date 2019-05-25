@@ -24,7 +24,7 @@ from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
 from cleverhans.utils import AccuracyReport, set_log_level
 from cleverhans.utils_tf import model_eval
 from tensorflow_TB.utils.misc import one_hot
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
 from tensorflow_TB.utils.misc import np_evaluate
@@ -39,7 +39,8 @@ from lid_adversarial_subspace_detection.util import mle_batch
 # tf.enable_eager_execution()
 
 STDEVS = {
-    'cifar10': {'deepfool': 0.00796, 'cw': 0.007}
+    'val' : {'cifar10': {'deepfool': 0.008607, 'cw': 0.007}},
+    'test': {'cifar10': {'deepfool': 0.00796, 'cw': 0.007}}
 }
 
 FLAGS = flags.FLAGS
@@ -212,12 +213,20 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # get noisy images
-def get_noisy_samples(X_test, X_test_adv, std=STDEVS[FLAGS.dataset][FLAGS.attack]):
+def get_noisy_samples(X, std=STDEVS[FLAGS.set][FLAGS.dataset][FLAGS.attack]):
     """ Add Gaussian noise to the samples """
-    X_test_noisy = np.clip(X_test + rand_gen.normal(loc=0.0, scale=std, size=X_test.shape), 0, 1)
-    return X_test_noisy
+    X_noisy = np.clip(X + rand_gen.normal(loc=0.0, scale=std, size=X.shape), 0, 1)
+    return X_noisy
 
 # DEBUG: testing different scale so that L2 perturbation is the same
+# diff_adv    = X_val_adv.reshape((len(X_val), -1)) - X_val.reshape((len(X_val), -1))
+# l2_diff_adv = np.linalg.norm(diff_adv, axis=1).mean()
+# for std in np.arange(0.0082, 0.0089, 0.00001):
+#     X_val_noisy = get_noisy_samples(X_val, std)
+#     diff = X_val_noisy.reshape((len(X_val), -1)) - X_val.reshape((len(X_val), -1))
+#     l2_diff = np.linalg.norm(diff, axis=1).mean()
+#     print('for std={}: diff of L2 perturbations is {}'.format(std, l2_diff - l2_diff_adv))
+
 # diff_adv    = X_test_adv.reshape((len(X_test), -1)) - X_test.reshape((len(X_test), -1))
 # l2_diff_adv = np.linalg.norm(diff_adv, axis=1).mean()
 # for std in np.arange(0.0079, 0.008, 0.00001):
@@ -226,42 +235,79 @@ def get_noisy_samples(X_test, X_test_adv, std=STDEVS[FLAGS.dataset][FLAGS.attack
 #     l2_diff = np.linalg.norm(diff, axis=1).mean()
 #     print('for std={}: diff of L2 perturbations is {}'.format(std, l2_diff - l2_diff_adv))
 
+noisy_file = os.path.join(attack_dir, 'X_val_noisy.npy')
+if os.path.isfile(noisy_file):
+    print('Loading {} val noisy samples from {}'.format(FLAGS.dataset, noisy_file))
+    X_val_noisy = np.load(noisy_file)
+else:
+    print('Crafting {} val noisy samples.'.format(FLAGS.dataset))
+    X_val_noisy = get_noisy_samples(X_val)
+    np.save(noisy_file, X_val_noisy)
+
 noisy_file = os.path.join(attack_dir, 'X_test_noisy.npy')
 if os.path.isfile(noisy_file):
     print('Loading {} noisy samples from {}'.format(FLAGS.dataset, noisy_file))
     X_test_noisy = np.load(noisy_file)
 else:
     print('Crafting {} noisy samples.'.format(FLAGS.dataset))
-    X_test_noisy = get_noisy_samples(X_test, X_test_adv)
+    X_test_noisy = get_noisy_samples(X_test)
     np.save(noisy_file, X_test_noisy)
 
+# print stats for val
+for s_type, subset in zip(['normal', 'noisy', 'adversarial'], [X_val, X_val_noisy, X_val_adv]):
+    # acc = model_eval(sess, x, y, logits, subset, y_val, args=eval_params)
+    # print("Model accuracy on the %s val set: %0.2f%%" % (s_type, 100 * acc))
+    # Compute and display average perturbation sizes
+    if not s_type == 'normal':
+        # print for test:
+        diff    = subset.reshape((len(subset), -1)) - X_val.reshape((len(subset), -1))
+        l2_diff = np.linalg.norm(diff, axis=1).mean()
+        print("Average L-2 perturbation size of the %s val set: %0.4f" % (s_type, l2_diff))
+
+# print stats for test
 for s_type, subset in zip(['normal', 'noisy', 'adversarial'], [X_test, X_test_noisy, X_test_adv]):
     # acc = model_eval(sess, x, y, logits, subset, y_test, args=eval_params)
     # print("Model accuracy on the %s test set: %0.2f%%" % (s_type, 100 * acc))
     # Compute and display average perturbation sizes
     if not s_type == 'normal':
-        diff    = subset.reshape((len(X_test), -1)) - X_test.reshape((len(X_test), -1))
+        # print for test:
+        diff    = subset.reshape((len(subset), -1)) - X_test.reshape((len(subset), -1))
         l2_diff = np.linalg.norm(diff, axis=1).mean()
-        print("Average L-2 perturbation size of the %s test set: %0.2f" % (s_type, l2_diff))
+        print("Average L-2 perturbation size of the %s test set: %0.4f" % (s_type, l2_diff))
 
 # Refine the normal, noisy and adversarial sets to only include samples for
 # which the original version was correctly classified by the model
-inds_correct = np.where(x_test_preds == y_test_sparse)[0]
-print("Number of correctly predict images: %s" % (len(inds_correct)))
-X_test              = X_test[inds_correct]
-X_test_noisy        = X_test_noisy[inds_correct]
-X_test_adv          = X_test_adv[inds_correct]
-x_test_preds        = x_test_preds[inds_correct]
-x_test_features     = x_test_features[inds_correct]
-x_test_preds_adv    = x_test_preds_adv[inds_correct]
-x_test_features_adv = x_test_features_adv[inds_correct]
+val_inds_correct  = np.where(x_val_preds == y_val_sparse)[0]
+print("Number of correctly val predict images: %s" % (len(val_inds_correct)))
+X_val              = X_val[val_inds_correct]
+X_val_noisy        = X_val_noisy[val_inds_correct]
+X_val_adv          = X_val_adv[val_inds_correct]
+x_val_preds        = x_val_preds[val_inds_correct]
+x_val_features     = x_val_features[val_inds_correct]
+x_val_preds_adv    = x_val_preds_adv[val_inds_correct]
+x_val_features_adv = x_val_features_adv[val_inds_correct]
+y_val              = y_val[val_inds_correct]
+y_val_sparse       = y_val_sparse[val_inds_correct]
 
-y_test              = y_test[inds_correct]
-y_test_sparse       = y_test_sparse[inds_correct]
+test_inds_correct = np.where(x_test_preds == y_test_sparse)[0]
+print("Number of correctly test predict images: %s" % (len(test_inds_correct)))
+X_test              = X_test[test_inds_correct]
+X_test_noisy        = X_test_noisy[test_inds_correct]
+X_test_adv          = X_test_adv[test_inds_correct]
+x_test_preds        = x_test_preds[test_inds_correct]
+x_test_features     = x_test_features[test_inds_correct]
+x_test_preds_adv    = x_test_preds_adv[test_inds_correct]
+x_test_features_adv = x_test_features_adv[test_inds_correct]
+y_test              = y_test[test_inds_correct]
+y_test_sparse       = y_test_sparse[test_inds_correct]
 
-print("X_test: ", X_test.shape)
+print("X_val: "       , X_val.shape)
+print("X_val_noisy: " , X_val_noisy.shape)
+print("X_val_adv: "   , X_val_adv.shape)
+
+print("X_test: "      , X_test.shape)
 print("X_test_noisy: ", X_test_noisy.shape)
-print("X_test_adv: ", X_test_adv.shape)
+print("X_test_adv: "  , X_test_adv.shape)
 
 def merge_and_generate_labels(X_pos, X_neg):
     """
@@ -338,7 +384,7 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
     return lids, lids_noisy, lids_adv
 
 def get_lid(X_test, X_test_noisy, X_test_adv, k, batch_size=100):
-    print('Extract local intrinsic dimensionality: k = %s' % FLAGS.k_nearest)
+    print('Extract local intrinsic dimensionality: k = %s' % k)
     lids_normal, lids_noisy, lids_adv = get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k, batch_size)
     print("lids_normal:", lids_normal.shape)
     print("lids_noisy:", lids_noisy.shape)
@@ -459,19 +505,29 @@ def get_mahanabolis_tensors(sample_mean, precision, num_classes, layer_index=0):
 
     return gaussian_score, grads
 
-def get_nnif(X_test, max_indices):
+def get_nnif(X, subset, max_indices):
     """Returns the knn rank of every testing sample"""
+    if subset == 'val':
+        inds_correct = val_inds_correct
+        y_sparse     = y_val_sparse
+        x_preds      = x_val_preds
+        x_preds_adv  = x_val_preds_adv
+    else:
+        inds_correct = test_inds_correct
+        y_sparse     = y_test_sparse
+        x_preds      = x_test_preds
+        x_preds_adv  = x_test_preds_adv
 
-    ranks       = -1 * np.ones((len(X_test), 4))
-    ranks_adv   = -1 * np.ones((len(X_test), 4))
+    ranks       = -1 * np.ones((len(X), 4))
+    ranks_adv   = -1 * np.ones((len(X), 4))
 
     for i in tqdm(range(len(inds_correct))):
         global_index = inds_correct[i]
-        real_label = y_test_sparse[i]
-        pred_label = x_test_preds[i]
-        adv_label  = x_test_preds_adv[i]
+        real_label = y_sparse[i]
+        pred_label = x_preds[i]
+        adv_label  = x_preds_adv[i]
         assert pred_label == real_label, 'failed for i={}, global_index={}'.format(i, global_index)
-        index_dir = os.path.join(model_dir, FLAGS.set, '{}_index_{}'.format(FLAGS.set, global_index))
+        index_dir = os.path.join(model_dir, subset, '{}_index_{}'.format(subset, global_index))
 
         # collect real
         ranks[i, 0] = np.load(os.path.join(index_dir, 'real', 'helpful_ranks.npy'))[:max_indices].mean()
@@ -485,25 +541,78 @@ def get_nnif(X_test, max_indices):
         ranks_adv[i, 2] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'harmful_ranks.npy'))[:max_indices].mean()
         ranks_adv[i, 3] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'harmful_dists.npy'))[:max_indices].mean()
 
-    print("ranks_normal:", ranks.shape)
-    print("ranks_adv:", ranks.shape)
+    print("{} ranks_normal: ".format(subset), ranks.shape)
+    print("{} ranks_adv: ".format(subset), ranks_adv.shape)
     assert (ranks     != -1).all()
     assert (ranks_adv != -1).all()
 
     artifacts, labels = merge_and_generate_labels(ranks_adv, ranks)
     return artifacts, labels
 
+def get_nonconformity(x_cal_features, y_cal, k):
+    knn = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+    knn.fit(x_train_features, y_train_sparse)
+
+    knn_predict_prob = knn.predict_proba(x_cal_features)
+    knn_pred_cnt     = np.asarray(knn_predict_prob * k, dtype=np.int32)
+
+    # how many wrong predictions do we have for the true label?
+    nonconformity = np.zeros(x_cal_features.shape[0])
+    for i in range(len(nonconformity)):
+        nonconformity[i] = k - knn_pred_cnt[i, y_cal[i]]
+
+    return nonconformity
+
+def get_dknn_nonconformity(features, nonconformity_calib, k):
+    knn = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+    knn.fit(x_train_features, y_train_sparse)
+
+    knn_predict_prob = knn.predict_proba(features)
+    knn_pred_cnt     = np.asarray(knn_predict_prob * k, dtype=np.int32)
+
+    # how many wrong predictions do we have for each label?
+    nonconformity = k - knn_pred_cnt
+
+    # get pj for every class
+    empirical_p = np.zeros_like(nonconformity, dtype=np.float32)
+    for i in range(len(nonconformity)):  # for every sample
+        for j in range(feeder.num_classes):  # for every class
+            num_of_greater_calib_values = np.sum(nonconformity_calib >= nonconformity[i, j])
+            empirical_p[i, j] = num_of_greater_calib_values / len(nonconformity_calib)
+
+    return empirical_p
+
+
 if FLAGS.characteristics == 'lid':
-    characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, FLAGS.k_nearest, 100)
-    print("LID: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}.npy'.format(FLAGS.k_nearest, 100))
+
+    k = FLAGS.k_nearest
+
+    for k in [10, 15, 20, 25, 30, 35, 40]:
+        # for val set
+        characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
+        print("LID train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
+        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_train.npy'.format(k, 100))
+        data = np.concatenate((characteristics, label), axis=1)
+        np.save(file_name, data)
+
+        # for test set
+        characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, k, 100)
+        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_test.npy'.format(k, 100))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
+
+if FLAGS.characteristics == 'nnif':
+    # val
+    characteristics, labels = get_nnif(X_val, 'val', FLAGS.max_indices)
+    print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'max_indices_{}_train.npy'.format(FLAGS.max_indices))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 
-if FLAGS.characteristics == 'nnif':
-    characteristics, labels = get_nnif(X_test, FLAGS.max_indices)
-    print("NNIF: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'max_indices_{}.npy'.format(FLAGS.max_indices))
+    # test
+    characteristics, labels = get_nnif(X_test, 'test', FLAGS.max_indices)
+    print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(FLAGS.max_indices))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 
@@ -522,5 +631,45 @@ if FLAGS.characteristics == 'mahalanobis':
     Mahalanobis_pos = M_out
     characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
     file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
+
+if FLAGS.characteristics == 'dknn':
+    # divide the validation set for calibration and alphas
+    calibration_size = int(X_val.shape[0]/2)
+
+    X_cal          = X_val[:calibration_size]
+    x_cal_features = x_val_features[:calibration_size]
+    y_cal          = y_val_sparse[:calibration_size]
+    nonconformity_calib = get_nonconformity(x_cal_features, y_cal, FLAGS.k_nearest)
+
+    X_val2              = X_val[calibration_size:]
+    x_val2_features     = x_val_features[calibration_size:]
+    x_val2_features_adv = x_val_features_adv[calibration_size:]
+    y_val2              = y_val_sparse[calibration_size:]
+
+    k = FLAGS.k_nearest
+    val_normal_characteristics  = get_dknn_nonconformity(x_val2_features    , nonconformity_calib, k)
+    val_adv_characteristics     = get_dknn_nonconformity(x_val2_features_adv, nonconformity_calib, k)
+    test_normal_characteristics = get_dknn_nonconformity(x_test_features    , nonconformity_calib, k)
+    test_adv_characteristics    = get_dknn_nonconformity(x_test_features_adv, nonconformity_calib, k)
+
+    # set training set
+    dknn_neg = val_normal_characteristics
+    dknn_pos = val_adv_characteristics
+    characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
+
+    print("DKNN train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'k_{}_train.npy'.format(k))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
+
+    # set testing set
+    dknn_neg = test_normal_characteristics
+    dknn_pos = test_adv_characteristics
+    characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
+
+    print("DKNN test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'k_{}_test.npy'.format(k))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
