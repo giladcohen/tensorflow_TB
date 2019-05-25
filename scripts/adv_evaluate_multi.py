@@ -567,14 +567,10 @@ def collect_influence(q, thread_id):
                             train_iterations=train_iterations)
                         np.save(os.path.join(dir, 'scores.npy'), scores)
 
-                    if not os.path.isfile(os.path.join(dir, 'image.png')):
-                        print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
-                        image, _ = feed.test_indices(sub_index)
-                        imageio.imwrite(os.path.join(dir, 'image.png'), image)
-                        np.save(os.path.join(dir, 'image.npy'), image)
-                    else:
-                        # verifying everything is good
-                        assert (np.load(os.path.join(dir, 'image.npy')) == feed.test_indices(sub_index)[0]).all()
+                    print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+                    image, _ = feed.test_indices(sub_index)
+                    imageio.imwrite(os.path.join(dir, 'image.png'), image)
+                    np.save(os.path.join(dir, 'image.npy'), image)
         except Exception as e:
             print('Error with influence collect function for i={}: {}'.format(i, e))
             exit(1)
