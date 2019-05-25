@@ -517,6 +517,7 @@ def get_nnif(X, subset, max_indices):
         y_sparse     = y_test_sparse
         x_preds      = x_test_preds
         x_preds_adv  = x_test_preds_adv
+    inds_correct = feeder.get_global_index(subset, inds_correct)
 
     ranks       = -1 * np.ones((len(X), 4))
     ranks_adv   = -1 * np.ones((len(X), 4))
