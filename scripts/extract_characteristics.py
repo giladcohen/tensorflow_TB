@@ -39,20 +39,20 @@ from lid_adversarial_subspace_detection.util import mle_batch
 # tf.enable_eager_execution()
 
 STDEVS = {
-    'val' : {'cifar10': {'deepfool': 0.00861, 'cw': 0.007}},
-    'test': {'cifar10': {'deepfool': 0.00796, 'cw': 0.007}}
+    'val' : {'cifar10': {'deepfool': 0.00861, 'cw': 0.003081}},
+    'test': {'cifar10': {'deepfool': 0.00796, 'cw': 0.003057}}
 }
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'mahalanobis', 'type of defence')
+flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
 flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
 flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
-flags.DEFINE_integer('max_indices', 800, 'maximum number of helpful indices to use in NNIF detection')
+flags.DEFINE_integer('max_indices', 100, 'maximum number of helpful indices to use in NNIF detection')
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -226,11 +226,11 @@ def get_noisy_samples(X, std):
 #     diff = X_val_noisy.reshape((len(X_val), -1)) - X_val.reshape((len(X_val), -1))
 #     l2_diff = np.linalg.norm(diff, axis=1).mean()
 #     print('for std={}: diff of L2 perturbations is {}'.format(std, l2_diff - l2_diff_adv))
-
+#
 # diff_adv    = X_test_adv.reshape((len(X_test), -1)) - X_test.reshape((len(X_test), -1))
 # l2_diff_adv = np.linalg.norm(diff_adv, axis=1).mean()
-# for std in np.arange(0.0079, 0.008, 0.00001):
-#     X_test_noisy = get_noisy_samples(X_test, X_test_adv, std)
+# for std in np.arange(0.003, 0.004, 0.0001):
+#     X_test_noisy = get_noisy_samples(X_test, std)
 #     diff = X_test_noisy.reshape((len(X_test), -1)) - X_test.reshape((len(X_test), -1))
 #     l2_diff = np.linalg.norm(diff, axis=1).mean()
 #     print('for std={}: diff of L2 perturbations is {}'.format(std, l2_diff - l2_diff_adv))
@@ -583,7 +583,6 @@ def get_dknn_nonconformity(features, nonconformity_calib, k):
 
     return empirical_p
 
-
 if FLAGS.characteristics == 'lid':
 
     k = FLAGS.k_nearest
@@ -605,7 +604,7 @@ if FLAGS.characteristics == 'lid':
 if FLAGS.characteristics == 'nnif':
 
     max_indices = FLAGS.max_indices
-    for max_indices in [700, 750, 800, 850, 900]:
+    for max_indices in [100, 50, 150, 200, 250]:
         # val
         characteristics, labels = get_nnif(X_val, 'val', max_indices)
         print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
