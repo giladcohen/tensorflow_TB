@@ -39,14 +39,13 @@ from lid_adversarial_subspace_detection.util import mle_batch
 # tf.enable_eager_execution()
 
 STDEVS = {
-    'val' : {'cifar10': {'deepfool': 0.008607, 'cw': 0.007}},
+    'val' : {'cifar10': {'deepfool': 0.00861, 'cw': 0.007}},
     'test': {'cifar10': {'deepfool': 0.00796, 'cw': 0.007}}
 }
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
@@ -213,8 +212,9 @@ checkpoint_path = os.path.join(model_dir, 'best_model.ckpt')
 saver.restore(sess, checkpoint_path)
 
 # get noisy images
-def get_noisy_samples(X, std=STDEVS[FLAGS.set][FLAGS.dataset][FLAGS.attack]):
+def get_noisy_samples(X, std):
     """ Add Gaussian noise to the samples """
+    # std = STDEVS[subset][FLAGS.dataset][FLAGS.attack]
     X_noisy = np.clip(X + rand_gen.normal(loc=0.0, scale=std, size=X.shape), 0, 1)
     return X_noisy
 
@@ -241,7 +241,7 @@ if os.path.isfile(noisy_file):
     X_val_noisy = np.load(noisy_file)
 else:
     print('Crafting {} val noisy samples.'.format(FLAGS.dataset))
-    X_val_noisy = get_noisy_samples(X_val)
+    X_val_noisy = get_noisy_samples(X_val, std=STDEVS['val'][FLAGS.dataset][FLAGS.attack])
     np.save(noisy_file, X_val_noisy)
 
 noisy_file = os.path.join(attack_dir, 'X_test_noisy.npy')
@@ -249,8 +249,8 @@ if os.path.isfile(noisy_file):
     print('Loading {} noisy samples from {}'.format(FLAGS.dataset, noisy_file))
     X_test_noisy = np.load(noisy_file)
 else:
-    print('Crafting {} noisy samples.'.format(FLAGS.dataset))
-    X_test_noisy = get_noisy_samples(X_test)
+    print('Crafting {} test noisy samples.'.format(FLAGS.dataset))
+    X_test_noisy = get_noisy_samples(X_test, std=STDEVS['test'][FLAGS.dataset][FLAGS.attack])
     np.save(noisy_file, X_test_noisy)
 
 # print stats for val
@@ -383,9 +383,9 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
 
     return lids, lids_noisy, lids_adv
 
-def get_lid(X_test, X_test_noisy, X_test_adv, k, batch_size=100):
+def get_lid(X, X_noisy, X_adv, k, batch_size=100):
     print('Extract local intrinsic dimensionality: k = %s' % k)
-    lids_normal, lids_noisy, lids_adv = get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k, batch_size)
+    lids_normal, lids_noisy, lids_adv = get_lids_random_batch(X, X_noisy, X_adv, k, batch_size)
     print("lids_normal:", lids_normal.shape)
     print("lids_noisy:", lids_noisy.shape)
     print("lids_adv:", lids_adv.shape)
@@ -588,7 +588,7 @@ if FLAGS.characteristics == 'lid':
 
     k = FLAGS.k_nearest
 
-    for k in [10, 15, 20, 25, 30, 35, 40]:
+    for k in [10, 12, 15, 17, 20, 25]:
         # for val set
         characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
         print("LID train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
@@ -603,21 +603,24 @@ if FLAGS.characteristics == 'lid':
         np.save(file_name, data)
 
 if FLAGS.characteristics == 'nnif':
-    # val
-    characteristics, labels = get_nnif(X_val, 'val', FLAGS.max_indices)
-    print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'max_indices_{}_train.npy'.format(FLAGS.max_indices))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
 
-    # test
-    characteristics, labels = get_nnif(X_test, 'test', FLAGS.max_indices)
-    characteristics[:, 0] *= 10
-    characteristics[:, 2] *= 10
-    print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(FLAGS.max_indices))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+    max_indices = FLAGS.max_indices
+    for max_indices in [700, 750, 800, 850, 900]:
+        # val
+        characteristics, labels = get_nnif(X_val, 'val', max_indices)
+        print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = os.path.join(characteristics_dir, 'max_indices_{}_train.npy'.format(max_indices))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
+
+        # test
+        characteristics, labels = get_nnif(X_test, 'test', max_indices)
+        characteristics[:, 0] *= 10
+        characteristics[:, 2] *= 10
+        print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(max_indices))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
 
 if FLAGS.characteristics == 'mahalanobis':
     print('get sample mean and covariance')

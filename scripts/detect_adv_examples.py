@@ -21,11 +21,11 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'lid', 'type of defence')
-flags.DEFINE_integer('k_nearest', 30, 'number of nearest neighbors to use for LID detection')
+flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
+flags.DEFINE_integer('k_nearest', 25, 'number of nearest neighbors to use for LID detection')
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
 flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
-flags.DEFINE_integer('max_indices', 100, 'maximum number of helpful indices to use in NNIF detection')
+flags.DEFINE_integer('max_indices', 800, 'maximum number of helpful indices to use in NNIF detection')
 
 if FLAGS.dataset == 'cifar10':
     CHECKPOINT_NAME = 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000'
@@ -48,7 +48,8 @@ if FLAGS.characteristics == 'lid':
 elif FLAGS.characteristics == 'mahalanobis':
     characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
 elif FLAGS.characteristics == 'nnif':
-    characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}.npy'.format(FLAGS.max_indices))
+    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train.npy'.format(FLAGS.max_indices))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(FLAGS.max_indices))
 elif FLAGS.characteristics == 'dknn':
     train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train.npy'.format(FLAGS.k_nearest))
     test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test.npy'.format(FLAGS.k_nearest))
