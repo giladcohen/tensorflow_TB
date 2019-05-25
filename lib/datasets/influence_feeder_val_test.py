@@ -115,7 +115,7 @@ class MyFeederValTest(darkon.InfluenceFeeder):
         data /= 255.
         label = np.squeeze(label, axis=1)
 
-        self.test_inds        = range(label.shape[0])
+        self.test_inds        = np.arange(label.shape[0])
         self.test_origin_data = data
         self.test_data        = data
         if as_one_hot:
