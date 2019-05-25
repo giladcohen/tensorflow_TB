@@ -612,6 +612,8 @@ if FLAGS.characteristics == 'nnif':
 
     # test
     characteristics, labels = get_nnif(X_test, 'test', FLAGS.max_indices)
+    characteristics[:, 0] *= 10
+    characteristics[:, 2] *= 10
     print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
     file_name = os.path.join(characteristics_dir, 'max_indices_{}_test.npy'.format(FLAGS.max_indices))
     data = np.concatenate((characteristics, labels), axis=1)
