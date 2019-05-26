@@ -49,6 +49,7 @@ flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is t
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_bool('backward', False, 'ending index')
+flags.DEFINE_bool('overwrite_A', False, 'whether or not to overwrite the A calculation')
 flags.DEFINE_integer('num_threads', 1, 'number of threads')
 
 if FLAGS.set == 'val':
@@ -544,7 +545,7 @@ def collect_influence(q, thread_id):
                         test_indices=[sub_index],
                         test_batch_size=testset_batch_size,
                         approx_params=approx_params,
-                        force_refresh=True
+                        force_refresh=overwrite_A
                     )
                 else:
                     # creating the relevant index folders
