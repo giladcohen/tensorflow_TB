@@ -540,13 +540,23 @@ def collect_influence(q, thread_id):
                     continue
 
                 if FLAGS.prepare:
-                    insp._prepare(
-                        sess=sess,
-                        test_indices=[sub_index],
-                        test_batch_size=testset_batch_size,
-                        approx_params=approx_params,
-                        force_refresh=overwrite_A
-                    )
+                    try:
+                        insp._prepare(
+                            sess=sess,
+                            test_indices=[sub_index],
+                            test_batch_size=testset_batch_size,
+                            approx_params=approx_params,
+                            force_refresh=overwrite_A
+                        )
+                    except Exception as e:
+                        print('Error with influence _prepare for sub_index={} (global_idex={}): {}. Forcing...'.format(sub_index, global_index, e))
+                        insp._prepare(
+                            sess=sess,
+                            test_indices=[sub_index],
+                            test_batch_size=testset_batch_size,
+                            approx_params=approx_params,
+                            force_refresh=True
+                        )
                 else:
                     # creating the relevant index folders
                     dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
