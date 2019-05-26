@@ -45,6 +45,7 @@ flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is ta
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_bool('backward', False, 'ending index')
+flags.DEFINE_bool('overwrite_A', False, 'whether or not to overwrite the A calculation')
 flags.DEFINE_bool('overwrite_C', False, 'whether or not to overwrite the C calculation')
 
 
@@ -549,7 +550,7 @@ for i in tqdm(range(len(sub_relevant_indices))):
                 test_indices=[sub_index],
                 test_batch_size=testset_batch_size,
                 approx_params=approx_params,
-                force_refresh=True
+                force_refresh=FLAGS.overwrite_A
             )
         else:
             # creating the relevant index folders
