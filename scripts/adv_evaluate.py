@@ -541,8 +541,8 @@ for i in tqdm(range(len(sub_relevant_indices))):
         else:
             raise AssertionError('only real and adv are accepted.')
 
-        if case != 'adv':
-            continue
+        # if case != 'adv':
+        #     continue
 
         if FLAGS.prepare:
             try:
