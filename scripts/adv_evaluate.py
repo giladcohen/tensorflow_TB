@@ -444,12 +444,12 @@ if FLAGS.dataset in ['cifar10', 'cifar100']:
         'recursion_batch_size': 200
     }
 else:  #SVHN
-    train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
-    train_iterations = 25 if USE_TRAIN_MINI else 360  # 5k(25x200) or 72k(360x200)
+    train_batch_size = 100
+    train_iterations = 70 if USE_TRAIN_MINI else 720  # 7k(70x100) or 72k(720x100)
     approx_params = {
         'scale': 200,
         'num_repeats': 5,
-        'recursion_depth': 5 if USE_TRAIN_MINI else 72,  # 5k(5x5x200) or 72k(72x5x200)
+        'recursion_depth': 7 if USE_TRAIN_MINI else 72,  # 7k(5x7x200) or 72k(5x72x200)
         'recursion_batch_size': 200
     }
 
