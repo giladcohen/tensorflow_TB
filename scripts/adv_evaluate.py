@@ -259,7 +259,7 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     cw_params = {
         'clip_min': 0.0,
         'clip_max': 1.0,
-        'batch_size': 1,
+        'batch_size': 125,
         'confidence': 0.8,
         'learning_rate': 0.01,
         'initial_const': 0.1
