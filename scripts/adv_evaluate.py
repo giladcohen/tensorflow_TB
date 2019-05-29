@@ -42,6 +42,7 @@ flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'jsma', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_string('cases', 'all', 'can be rither real, pred, or adv')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_bool('backward', False, 'ending index')
@@ -57,6 +58,12 @@ else:
     test_val_set = False
     WORKSPACE = 'influence_workspace_test_mini'
     USE_TRAIN_MINI = True
+
+assert FLAGS.cases in ['all', 'real', 'pred', 'adv']
+if FLAGS.cases == 'all':
+    ALLOWED_CASES = ['real', 'pred', 'adv']
+else:
+    ALLOWED_CASES = [FLAGS.cases]
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -541,8 +548,8 @@ for i in tqdm(range(len(sub_relevant_indices))):
         else:
             raise AssertionError('only real and adv are accepted.')
 
-        # if case != 'adv':
-        #     continue
+        if case not in ALLOWED_CASES:
+            continue
 
         if FLAGS.prepare:
             try:
