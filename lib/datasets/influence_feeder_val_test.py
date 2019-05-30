@@ -12,7 +12,7 @@ import tensorflow as tf
 import scipy.io
 import os
 
-SVHN_PATH = '/data/dataset/SVHN/format2'
+SVHN_PATH = '/data/dataset/SVHN_MINI'
 
 class MyFeederValTest(darkon.InfluenceFeeder):
     def __init__(self, dataset, rand_gen, as_one_hot, val_inds=None, test_val_set=False, mini_train_inds=None):
@@ -33,14 +33,11 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             self.num_classes = 100
             self.num_val_set = 1000
         elif dataset == 'svhn':
-            data_dict = scipy.io.loadmat(os.path.join(SVHN_PATH, 'train_32x32.mat'))
-            data, label = data_dict['X'], data_dict['y']
-            data = np.moveaxis(data, -1, 0)
+            data  = np.load(os.path.join(SVHN_PATH, 'X_train.npy'))
+            label = np.load(os.path.join(SVHN_PATH, 'y_train.npy'))
             data = data.astype(np.float32)
-            np.place(label, label == 10, 0)
             self.num_classes = 10
-            self.num_val_set = 1257
-            del data_dict
+            self.num_val_set = 1000
         else:
             raise AssertionError('dataset {} not supported'.format(dataset))
         data /= 255.
@@ -104,12 +101,9 @@ class MyFeederValTest(darkon.InfluenceFeeder):
             (_, _), (data, label) = tf.keras.datasets.cifar100.load_data()
             data = data.astype(np.float32)
         elif dataset == 'svhn':
-            data_dict = scipy.io.loadmat(os.path.join(SVHN_PATH, 'test_32x32.mat'))
-            data, label = data_dict['X'], data_dict['y']
-            data = np.moveaxis(data, -1, 0)
+            data  = np.load(os.path.join(SVHN_PATH, 'X_test.npy'))
+            label = np.load(os.path.join(SVHN_PATH, 'y_test.npy'))
             data = data.astype(np.float32)
-            np.place(label, label == 10, 0)
-            del data_dict
         else:
             raise AssertionError('dataset {} not supported'.format(dataset))
         data /= 255.
