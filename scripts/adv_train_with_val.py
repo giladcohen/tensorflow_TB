@@ -172,6 +172,9 @@ save_path = os.path.join(model_dir, "model_checkpoint.ckpt")
 saver = tf.train.Saver()
 saver.save(sess, save_path, global_step=tf.train.get_global_step())
 
+# print best score
+evaluate()
+
 # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
 fgsm = FastGradientMethod(model, sess=sess)
 adv_x = fgsm.generate(x, **fgsm_params)
