@@ -543,7 +543,7 @@ def collect_influence(q, thread_id):
                             test_indices=[sub_index],
                             test_batch_size=testset_batch_size,
                             approx_params=approx_params,
-                            force_refresh=overwrite_A
+                            force_refresh=FLAGS.overwrite_A
                         )
                     except Exception as e:
                         print('Error with influence _prepare for sub_index={} (global_idex={}): {}. Forcing...'.format(sub_index, global_index, e))
