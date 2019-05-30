@@ -37,15 +37,16 @@ new_test_inds.sort()
 X_test = data[new_test_inds]
 y_test = label[new_test_inds]
 
-np.save(os.path.join(SVHN_MINI_PATH, 'X_train.py'), X_train)
-np.save(os.path.join(SVHN_MINI_PATH, 'X_test.py') , X_test)
-np.save(os.path.join(SVHN_MINI_PATH, 'y_train.py'), y_train)
-np.save(os.path.join(SVHN_MINI_PATH, 'y_test.py') , y_test)
+np.save(os.path.join(SVHN_MINI_PATH, 'X_train.npy'), X_train)
+np.save(os.path.join(SVHN_MINI_PATH, 'X_test.npy') , X_test)
+np.save(os.path.join(SVHN_MINI_PATH, 'y_train.npy'), y_train)
+np.save(os.path.join(SVHN_MINI_PATH, 'y_test.npy') , y_test)
 
 
 
 # DEBUG
 # for i in range(10):
 #     print('i={}: {}   {}'.format(i, np.sum(y_train[train_inds] == i)/len(train_inds), np.sum(y_train[val_inds] == i)/len(val_inds)))
-# for i in range(10):
 #     print('i={}: {}   {}'.format(i, np.sum(y_val_sparse == i)/len(y_val_sparse), np.sum(y_train_sparse == i)/len(y_train_sparse)))
+#     print('i={}: {}   {}'.format(i, np.sum(y_train == i)/len(y_train), np.sum(y_train[val_indices] == i)/len(val_indices)))
+
