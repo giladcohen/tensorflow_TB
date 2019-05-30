@@ -453,24 +453,14 @@ for ii in range(FLAGS.num_threads):
     )
 
 testset_batch_size = 100
-if FLAGS.dataset in ['cifar10', 'cifar100']:
-    train_batch_size = 200
-    train_iterations = 25 if USE_TRAIN_MINI else 245  # 5k(25x200) or 49k(245x200)
-    approx_params = {
-        'scale': 200,
-        'num_repeats': 5,
-        'recursion_depth': 5 if USE_TRAIN_MINI else 49,  # 5k(5x5x200) or 49k(5x49x200)
-        'recursion_batch_size': 200
-    }
-else:  #SVHN
-    train_batch_size = 200  # svhn has 72250 train samples, and it is not a multiply of 100
-    train_iterations = 25 if USE_TRAIN_MINI else 360  # 5k(25x200) or 72k(360x200)
-    approx_params = {
-        'scale': 200,
-        'num_repeats': 5,
-        'recursion_depth': 5 if USE_TRAIN_MINI else 72,  # 5k(5x5x200) or 72k(72x5x200)
-        'recursion_batch_size': 200
-    }
+train_batch_size = 200
+train_iterations = 25 if USE_TRAIN_MINI else 245  # 5k(25x200) or 49k(245x200)
+approx_params = {
+    'scale': 200,
+    'num_repeats': 5,
+    'recursion_depth': 5 if USE_TRAIN_MINI else 49,  # 5k(5x5x200) or 49k(5x49x200)
+    'recursion_batch_size': 200
+}
 
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if info[FLAGS.set][ind]['net_succ'] and info[FLAGS.set][ind]['attack_succ']]
 # sub_relevant_indices = [ind for ind in info[FLAGS.set] if not info[FLAGS.set][ind]['attack_succ']]
