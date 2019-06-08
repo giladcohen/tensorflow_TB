@@ -274,11 +274,17 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
         'learning_rate': 0.01,
         'initial_const': 0.1
     }
+    fgsm_param = {
+        'clip_min': 0.0,
+        'clip_max': 1.0,
+        'eps': 0.05 if FLAGS.dataset in ['cifar10', 'cifar100'] else 0.13
+    }
     if FLAGS.targeted:
         jsma_params.update({'y_target': y_adv})
         cw_params.update({'y_target': y_adv})
+        fgsm_param.update({'y_target': y_adv})
 
-    if FLAGS.attack == 'deepfool':
+    if FLAGS.attack   == 'deepfool':
         attack_params = deepfool_params
         attack_class  = DeepFool
     elif FLAGS.attack == 'jsma':
@@ -287,6 +293,9 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     elif FLAGS.attack == 'cw':
         attack_params = cw_params
         attack_class  = CarliniWagnerL2
+    elif FLAGS.attack == 'fgsm':
+        attack_params = fgsm_param
+        attack_class  = FastGradientMethod
     else:
         raise AssertionError('Attack {} is not supported'.format(FLAGS.attack))
 
