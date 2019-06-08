@@ -274,7 +274,7 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     fgsm_param = {
         'clip_min': 0.0,
         'clip_max': 1.0,
-        'eps': 0.05 if FLAGS.dataset in ['cifar10', 'cifar100'] else 0.13
+        'eps': 0.3
     }
     if FLAGS.targeted:
         jsma_params.update({'y_target': y_adv})
