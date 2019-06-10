@@ -154,11 +154,12 @@ cifar10_val_inds = [  107,   127,   135,   150,   189,   255,   272,   292,   37
        49997]
 
 # cifar10_val_inds  = np.load('/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/val_indices.npy')
-cifar100_val_inds = np.load('/data/gilad/logs/influence/cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01/val_indices.npy')
+# cifar100_val_inds = np.load('/data/gilad/logs/influence/cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01/val_indices.npy')
+svhn_mini_inds      = np.load('/data/gilad/logs/influence/svhn_mini/log_300519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_exp1/val_indices.npy')
 test_inds = np.arange(10000)
 
-home_dir = '/data/gilad/logs/influence/cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01/val'
-for i in cifar100_val_inds:
+home_dir = '/data/gilad/logs/influence/svhn_mini/log_300519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_exp1/val'
+for i in svhn_mini_inds:
     adv_dir = os.path.join(home_dir, 'val_index_{}'.format(i), 'adv')
     fgsm_dir = os.path.join(adv_dir, 'fgsm')
     if os.path.exists(fgsm_dir):
