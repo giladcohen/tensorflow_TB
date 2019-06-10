@@ -1,6 +1,7 @@
 import subprocess
 import time
 import os
+import numpy as np
 
 def run_cmd(cmd):
     # print ('start running command {} for i={}'.format(cmd, i))
@@ -151,10 +152,11 @@ cifar10_val_inds = [  107,   127,   135,   150,   189,   255,   272,   292,   37
        49169, 49203, 49221, 49277, 49399, 49423, 49482, 49527, 49571,
        49575, 49676, 49772, 49776, 49781, 49863, 49930, 49963, 49967,
        49997]
+test_inds = np.arange(10000)
 
-home_dir = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/val'
-for i in cifar10_val_inds:
-    adv_dir = os.path.join(home_dir, 'val_index_{}'.format(i), 'adv')
+home_dir = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/test'
+for i in test_inds:
+    adv_dir = os.path.join(home_dir, 'test_index_{}'.format(i), 'adv')
     fgsm_dir = os.path.join(adv_dir, 'fgsm')
     if os.path.exists(fgsm_dir):
         os.chdir(adv_dir)
