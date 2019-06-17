@@ -218,6 +218,23 @@ def get_noisy_samples(X, std):
     X_noisy = np.clip(X + rand_gen.normal(loc=0.0, scale=std, size=X.shape), 0, 1)
     return X_noisy
 
+# get noisy images with the same label
+# def get_noisy_samples_keep_label(X, Y, std):
+#     """ Add Gaussian noise to the samples without changing the label"""
+#     X_noisy = np.empty_like(X)
+#     for i in range(X.shape[0]):
+#         success = False
+#         while not success:
+#             X_noisy_i = np.clip(X[i] + rand_gen.normal(loc=0.0, scale=std, size=X.shape[1:]), 0, 1)
+#             X_noisy_i = np.expand_dims(X_noisy_i, axis=0)
+#             X_noisy_i_pred = sess.run(preds, feed_dict={x: X_noisy_i})[0]
+#             if X_noisy_i_pred == Y[i]:
+#                 success = True
+#                 X_noisy[i] = X_noisy_i
+#             else:
+#                 print('for index i={} the prediction was {} but the gt is {}'.format(i, X_noisy_i_pred, Y[i]))
+#     return X_noisy
+
 # DEBUG: testing different scale so that L2 perturbation is the same
 # diff_adv    = X_val_adv.reshape((len(X_val), -1)) - X_val.reshape((len(X_val), -1))
 # l2_diff_adv = np.linalg.norm(diff_adv, axis=1).mean()
