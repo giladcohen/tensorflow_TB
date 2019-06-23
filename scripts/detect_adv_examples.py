@@ -21,12 +21,19 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
-flags.DEFINE_integer('k_nearest', 25, 'number of nearest neighbors to use for LID detection')
+flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis/dknn/nnif')
+
+# FOR LID
+flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
+
+# FOR MAHANABOLIS
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
 flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
+
+# FOR NNIF
 flags.DEFINE_integer('max_indices', 200, 'maximum number of helpful indices to use in NNIF detection')
 flags.DEFINE_string('ablation', '1111', 'for ablation test')
+
 
 
 if FLAGS.dataset == 'cifar10':

@@ -48,7 +48,7 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'nnif', 'type of defence')
+flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
 # FOR LID
@@ -614,19 +614,19 @@ if FLAGS.characteristics == 'lid':
 
     k = FLAGS.k_nearest
 
-    for k in [10, 12, 15, 17, 20, 25]:
-        # for val set
-        characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
-        print("LID train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
-        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
-        data = np.concatenate((characteristics, label), axis=1)
-        np.save(file_name, data)
+    # for k in [10, 12, 15, 17, 20, 25]:
+    # for val set
+    characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
+    print("LID train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
+    file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
+    data = np.concatenate((characteristics, label), axis=1)
+    np.save(file_name, data)
 
-        # for test set
-        characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, k, 100)
-        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
-        data = np.concatenate((characteristics, labels), axis=1)
-        np.save(file_name, data)
+    # for test set
+    characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, k, 100)
+    file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
 
 if FLAGS.characteristics == 'nnif':
 
@@ -664,36 +664,36 @@ if FLAGS.characteristics == 'mahalanobis':
     gaussian_score, grads  = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes)
 
     magnitude = FLAGS.magnitude
-    for magnitude in [0.001, 0.0005, 0.002]:
-        # val
-        M_in    = get_Mahalanobis_score_adv(X_val      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_normal')
-        M_out   = get_Mahalanobis_score_adv(X_val_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_adv')
-        M_noisy = get_Mahalanobis_score_adv(X_val_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_noisy')
+    # for magnitude in [0.001, 0.0005, 0.002]:
+    # val
+    M_in    = get_Mahalanobis_score_adv(X_val      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_normal')
+    M_out   = get_Mahalanobis_score_adv(X_val_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_adv')
+    M_noisy = get_Mahalanobis_score_adv(X_val_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_noisy')
 
-        if FLAGS.with_noise:
-            Mahalanobis_neg = np.concatenate((M_in, M_noisy))
-        else:
-            Mahalanobis_neg = M_in
-        Mahalanobis_pos = M_out
-        characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
-        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
-        data = np.concatenate((characteristics, labels), axis=1)
-        np.save(file_name, data)
+    if FLAGS.with_noise:
+        Mahalanobis_neg = np.concatenate((M_in, M_noisy))
+    else:
+        Mahalanobis_neg = M_in
+    Mahalanobis_pos = M_out
+    characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
+    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
 
-        # test
-        M_in    = get_Mahalanobis_score_adv(X_test      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_normal')
-        M_out   = get_Mahalanobis_score_adv(X_test_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_adv')
-        M_noisy = get_Mahalanobis_score_adv(X_test_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_noisy')
+    # test
+    M_in    = get_Mahalanobis_score_adv(X_test      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_normal')
+    M_out   = get_Mahalanobis_score_adv(X_test_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_adv')
+    M_noisy = get_Mahalanobis_score_adv(X_test_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_noisy')
 
-        if FLAGS.with_noise:
-            Mahalanobis_neg = np.concatenate((M_in, M_noisy))
-        else:
-            Mahalanobis_neg = M_in
-        Mahalanobis_pos = M_out
-        characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
-        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noisy))
-        data = np.concatenate((characteristics, labels), axis=1)
-        np.save(file_name, data)
+    if FLAGS.with_noise:
+        Mahalanobis_neg = np.concatenate((M_in, M_noisy))
+    else:
+        Mahalanobis_neg = M_in
+    Mahalanobis_pos = M_out
+    characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
+    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noisy))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
 
 if FLAGS.characteristics == 'dknn':
     assert FLAGS.with_noise is False
