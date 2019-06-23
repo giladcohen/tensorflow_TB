@@ -48,11 +48,11 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis/dknn/nnif')
+flags.DEFINE_string('characteristics', 'lid', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
 # FOR LID
-flags.DEFINE_integer('k_nearest', 100, 'number of nearest neighbors to use for LID detection')
+flags.DEFINE_integer('k_nearest', 17, 'number of nearest neighbors to use for LID detection')
 
 # FOR MAHANABOLIS
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
