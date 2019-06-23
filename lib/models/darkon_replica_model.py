@@ -85,30 +85,32 @@ def conv_bn_relu_layer(input_layer, filter_shape, stride):
     output = tf.nn.relu(bn_layer)
     return output
 
-def bn_relu_conv_layer(input_layer, filter_shape, stride):
-    '''
-    A helper function to batch normalize, relu and conv the input layer sequentially
-    :param input_layer: 4D tensor
-    :param filter_shape: list. [filter_height, filter_width, filter_depth, filter_number]
-    :param stride: stride size for conv
-    :return: 4D tensor. Y = conv(Relu(batch_normalize(X)))
-    '''
+# def bn_relu_conv_layer(input_layer, filter_shape, stride):
+#     '''
+#     A helper function to batch normalize, relu and conv the input layer sequentially
+#     :param input_layer: 4D tensor
+#     :param filter_shape: list. [filter_height, filter_width, filter_depth, filter_number]
+#     :param stride: stride size for conv
+#     :return: 4D tensor. Y = conv(Relu(batch_normalize(X)))
+#     '''
+#
+#     in_channel = input_layer.get_shape().as_list()[-1]
+#
+#     bn_layer = batch_normalization_layer(input_layer, in_channel)
+#     relu_layer = tf.nn.relu(bn_layer)
+#
+#     filter = create_variables(name='conv', shape=filter_shape)
+#     conv_layer = tf.nn.conv2d(relu_layer, filter, strides=[1, stride, stride, 1], padding='SAME')
+#     return conv_layer
 
-    in_channel = input_layer.get_shape().as_list()[-1]
-
-    bn_layer = batch_normalization_layer(input_layer, in_channel)
-    relu_layer = tf.nn.relu(bn_layer)
-
-    filter = create_variables(name='conv', shape=filter_shape)
-    conv_layer = tf.nn.conv2d(relu_layer, filter, strides=[1, stride, stride, 1], padding='SAME')
-    return conv_layer
-
-def residual_block(input_layer, output_channel, first_block=False):
+def residual_block(input_layer, output_channel, first_block=False, net=None, layer_cnt=None):
     '''
     Defines a residual block in ResNet
     :param input_layer: 4D tensor
     :param output_channel: int. return_tensor.get_shape().as_list()[-1] = output_channel
     :param first_block: if this is the first residual block of the whole network
+    :param net: dictionary of net layers
+    :param layer_cnt: layer number to collect. Collecting layer_cnt and layet_cnt+1 after relus
     :return: 4D tensor.
     '''
     input_channel = input_layer.get_shape().as_list()[-1]
@@ -129,18 +131,27 @@ def residual_block(input_layer, output_channel, first_block=False):
             filter = create_variables(name='conv', shape=[3, 3, input_channel, output_channel])
             conv1 = tf.nn.conv2d(input_layer, filter=filter, strides=[1, 1, 1, 1], padding='SAME')
         else:
-            conv1 = bn_relu_conv_layer(input_layer, [3, 3, input_channel, output_channel], stride)
+            in_channel = input_layer.get_shape().as_list()[-1]
+            bn_layer = batch_normalization_layer(input_layer, in_channel)
+            relu_layer = tf.nn.relu(bn_layer)
+            net['layer{}'.format(layer_cnt)] = relu_layer
+            layer_cnt += 1
+            filter = create_variables(name='conv', shape=[3, 3, input_channel, output_channel])
+            conv1 = tf.nn.conv2d(relu_layer, filter, strides=[1, stride, stride, 1], padding='SAME')
 
     with tf.variable_scope('conv2_in_block'):
-        conv2 = bn_relu_conv_layer(conv1, [3, 3, output_channel, output_channel], 1)
+        in_channel = conv1.get_shape().as_list()[-1]
+        bn_layer = batch_normalization_layer(conv1, in_channel)
+        relu_layer = tf.nn.relu(bn_layer)
+        net['layer{}'.format(layer_cnt)] = relu_layer
+        filter = create_variables(name='conv', shape=[3, 3, output_channel, output_channel])
+        conv2 = tf.nn.conv2d(relu_layer, filter, strides=[1, 1, 1, 1], padding='SAME')
 
     # When the channels of input layer and conv2 does not match, we add zero pads to increase the
     #  depth of input layers
     if increase_dim is True:
-        pooled_input = tf.nn.avg_pool(input_layer, ksize=[1, 2, 2, 1],
-                                      strides=[1, 2, 2, 1], padding='VALID')
-        padded_input = tf.pad(pooled_input, [[0, 0], [0, 0], [0, 0], [input_channel // 2,
-                                                                     input_channel // 2]])
+        pooled_input = tf.nn.avg_pool(input_layer, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+        padded_input = tf.pad(pooled_input, [[0, 0], [0, 0], [0, 0], [input_channel // 2, input_channel // 2]])
     else:
         padded_input = input_layer
 
@@ -156,6 +167,7 @@ class DarkonReplica(Model):
         del kwargs
         Model.__init__(self, scope, nb_classes, locals())
         self.n = n
+        self.net = {}
 
         # Do a dummy run of fprop to create the variables from the start
         self.fprop(tf.placeholder(tf.float32, [32] + input_shape))
@@ -164,41 +176,54 @@ class DarkonReplica(Model):
 
     def fprop(self, x, **kwargs):
         del kwargs
+        layer_cnt = 0
 
         with tf.variable_scope(self.scope, reuse=tf.AUTO_REUSE):
             with tf.variable_scope('conv0', reuse=tf.AUTO_REUSE):
                 x = conv_bn_relu_layer(x, [3, 3, 3, 16], 1)
+                self.net['layer0'] = x
+                layer_cnt += 1
                 activation_summary(x)
 
             for i in range(self.n):
                 with tf.variable_scope('conv1_%d' %i, reuse=tf.AUTO_REUSE):
                     if i == 0:
-                        x = residual_block(x, 16, first_block=True)
+                        x = residual_block(x, 16, first_block=True, net=self.net, layer_cnt=layer_cnt)
+                        layer_cnt = layer_cnt + 1
                     else:
-                        x = residual_block(x, 16)
+                        x = residual_block(x, 16, net=self.net, layer_cnt=layer_cnt)
+                        layer_cnt = layer_cnt + 2
                     activation_summary(x)
 
             for i in range(self.n):
                 with tf.variable_scope('conv2_%d' %i, reuse=tf.AUTO_REUSE):
-                    x = residual_block(x, 32)
+                    x = residual_block(x, 32, net=self.net, layer_cnt=layer_cnt)
+                    layer_cnt = layer_cnt + 2
                     activation_summary(x)
 
             for i in range(self.n):
                 with tf.variable_scope('conv3_%d' %i, reuse=tf.AUTO_REUSE):
-                    x = residual_block(x, 64)
+                    x = residual_block(x, 64, net=self.net, layer_cnt=layer_cnt)
+                    layer_cnt = layer_cnt + 2
                 assert x.get_shape().as_list()[1:] == [8, 8, 64]
 
             with tf.variable_scope('fc', reuse=tf.AUTO_REUSE):
                 in_channel = x.get_shape().as_list()[-1]
                 bn_layer = batch_normalization_layer(x, in_channel)
                 relu_layer = tf.nn.relu(bn_layer)
+                self.net['layer{}'.format(layer_cnt)] = relu_layer  # 30
+                layer_cnt += 1
                 global_pool = tf.reduce_mean(relu_layer, [1, 2])
 
                 # Embedding layer
                 embedding_vector = global_pool
+                self.net['layer{}'.format(layer_cnt)] = embedding_vector  # 31
+                layer_cnt += 1
 
                 assert global_pool.get_shape().as_list()[-1:] == [64]
                 logits = output_layer(global_pool, self.nb_classes)
+                self.net['layer{}'.format(layer_cnt)] = logits  # 32
+                layer_cnt += 1
 
             return {self.O_EMBEDDINGS: embedding_vector,
                     self.O_LOGITS: logits,
