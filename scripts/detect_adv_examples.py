@@ -53,17 +53,17 @@ if FLAGS.targeted:
 characteristics_dir = os.path.join(attack_dir, FLAGS.characteristics)
 
 if FLAGS.characteristics == 'lid':
-    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest, 100))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(FLAGS.k_nearest, 100))
+    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
 elif FLAGS.characteristics == 'mahalanobis':
-    train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale))
+    train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
 elif FLAGS.characteristics == 'nnif':
-    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation))
+    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation, FLAGS.with_noise))
 elif FLAGS.characteristics == 'dknn':
-    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy{}.npy'.format(FLAGS.k_nearest))
+    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
 else:
     raise AssertionError('{} is not supported'.format(FLAGS.characteristics))
 
