@@ -63,7 +63,7 @@ elif FLAGS.characteristics == 'nnif':
     test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation, FLAGS.with_noise))
 elif FLAGS.characteristics == 'dknn':
     train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
 else:
     raise AssertionError('{} is not supported'.format(FLAGS.characteristics))
 
