@@ -46,8 +46,8 @@ STDEVS = {
 FLAGS = flags.FLAGS
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', 'lid', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
@@ -692,7 +692,7 @@ if FLAGS.characteristics == 'mahalanobis':
         Mahalanobis_neg = M_in
     Mahalanobis_pos = M_out
     characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
-    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noisy))
+    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 
