@@ -365,7 +365,8 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
     :return: lids: LID of normal images of shape (num_examples, lid_dim)
             lids_adv: LID of advs images of shape (num_examples, lid_dim)
     """
-    lid_dim = 1  # just taking the embedding space
+    lid_dim = len(model.net)
+    print("Number of layers to estimate: ", lid_dim)
 
     def estimate(i_batch):
         start = i_batch * batch_size
@@ -375,19 +376,19 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
         lid_batch_adv   = np.zeros(shape=(n_feed, lid_dim))
         lid_batch_noisy = np.zeros(shape=(n_feed, lid_dim))
 
-        # applying only on the embedding space
-        X_act       = batch_eval(sess, [x], [embeddings], [X_test[start:end]], batch_size)[0]
-        X_act       = np.asarray(X_act, dtype=np.float32).reshape((n_feed, -1))
-        X_adv_act   = batch_eval(sess, [x], [embeddings], [X_test_adv[start:end]], batch_size)[0]
-        X_adv_act   = np.asarray(X_adv_act, dtype=np.float32).reshape((n_feed, -1))
-        X_noisy_act = batch_eval(sess, [x], [embeddings], [X_test_noisy[start:end]], batch_size)[0]
-        X_noisy_act = np.asarray(X_noisy_act, dtype=np.float32).reshape((n_feed, -1))
+        for i, key in enumerate(model.net):
+            X_act       = batch_eval(sess, [x], [model.net[key]], [X_test[start:end]], batch_size)[0]
+            X_act       = np.asarray(X_act, dtype=np.float32).reshape((n_feed, -1))
+            X_adv_act   = batch_eval(sess, [x], [model.net[key]], [X_test_adv[start:end]], batch_size)[0]
+            X_adv_act   = np.asarray(X_adv_act, dtype=np.float32).reshape((n_feed, -1))
+            X_noisy_act = batch_eval(sess, [x], [model.net[key]], [X_test_noisy[start:end]], batch_size)[0]
+            X_noisy_act = np.asarray(X_noisy_act, dtype=np.float32).reshape((n_feed, -1))
 
-        # random clean samples
-        # Maximum likelihood estimation of local intrinsic dimensionality (LID)
-        lid_batch[:, 0]       = mle_batch(X_act, X_act      , k=k)
-        lid_batch_adv[:, 0]   = mle_batch(X_act, X_adv_act  , k=k)
-        lid_batch_noisy[:, 0] = mle_batch(X_act, X_noisy_act, k=k)
+            # random clean samples
+            # Maximum likelihood estimation of local intrinsic dimensionality (LID)
+            lid_batch[:, i]       = mle_batch(X_act, X_act      , k=k)
+            lid_batch_adv[:, i]   = mle_batch(X_act, X_adv_act  , k=k)
+            lid_batch_noisy[:, i] = mle_batch(X_act, X_noisy_act, k=k)
 
         return lid_batch, lid_batch_noisy, lid_batch_adv
 
