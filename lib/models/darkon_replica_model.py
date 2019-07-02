@@ -6,6 +6,7 @@ import tensorflow as tf
 
 from cleverhans import initializers
 from cleverhans.model import Model
+from collections import OrderedDict
 
 BN_EPSILON = 0.001
 
@@ -167,7 +168,7 @@ class DarkonReplica(Model):
         del kwargs
         Model.__init__(self, scope, nb_classes, locals())
         self.n = n
-        self.net = {}
+        self.net = OrderedDict()
 
         # Do a dummy run of fprop to create the variables from the start
         self.fprop(tf.placeholder(tf.float32, [32] + input_shape))
