@@ -48,7 +48,7 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'lid', 'type of defence: lid/mahalanobis/dknn/nnif')
+flags.DEFINE_string('characteristics', 'mahalanobis', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
 # FOR LID
@@ -425,7 +425,18 @@ def get_lid(X, X_noisy, X_adv, k, batch_size=100):
     return artifacts, labels
 
 def sample_estimator(num_classes, X, Y, x_preds, x_features):
-    num_output = 1  # can be different in the future
+
+    num_output = len(model.net)
+    feature_list = np.zeros(num_output)
+    for i, key in enumerate(model.net):
+        feature_list[i] = model.net[key].shape()
+    assert (feature_list > 0).all()
+
+
+
+
+
+
     num_sample_per_class = np.zeros(num_classes)
     list_features = []
     num_feature = 64
