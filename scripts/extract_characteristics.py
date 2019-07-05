@@ -43,8 +43,16 @@ STDEVS = {
     'test': {'cifar10': {'deepfool': 0.00796, 'cw': 0.003057}}
 }
 
+num_of_spatial_activations = {
+    'layer0': 32 * 32, 'layer1': 32 * 32, 'layer2': 32 * 32, 'layer3': 32 * 32, 'layer4': 32 * 32, 'layer5': 32 * 32,
+    'layer6': 32 * 32, 'layer7': 32 * 32, 'layer8': 32 * 32, 'layer9': 32 * 32, 'layer10': 32 * 32, 'layer11': 16 * 16,
+    'layer12': 16 * 16, 'layer13': 16 * 16, 'layer14': 16 * 16, 'layer15': 16 * 16, 'layer16': 16 * 16, 'layer17': 16 * 16,
+    'layer18': 16 * 16, 'layer19': 16 * 16, 'layer20': 16 * 16, 'layer21': 8 * 8, 'layer22': 8 * 8, 'layer23': 8 * 8,
+    'layer24': 8 * 8, 'layer25': 8 * 8, 'layer26': 8 * 8, 'layer27': 8 * 8, 'layer28': 8 * 8, 'layer29': 8 * 8, 'layer30': 8 * 8
+}
+
 FLAGS = flags.FLAGS
-flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
+flags.DEFINE_integer('batch_size', 5, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
@@ -325,6 +333,33 @@ x_test_features_adv = x_test_features_adv[test_inds_correct]
 y_test              = y_test[test_inds_correct]
 y_test_sparse       = y_test_sparse[test_inds_correct]
 
+# for debug:
+X_train              = X_train[0:50]
+x_train_preds        = x_train_preds[0:50]
+x_train_features     = x_train_features[0:50]
+y_train              = y_train[0:50]
+y_train_sparse       = y_train_sparse[0:50]
+
+X_val               = X_val[0:50]
+X_val_noisy         = X_val_noisy[0:50]
+X_val_adv           = X_val_adv[0:50]
+x_val_preds         = x_val_preds[0:50]
+x_val_features      = x_val_features[0:50]
+x_val_preds_adv     = x_val_preds_adv[0:50]
+x_val_features_adv  = x_val_features_adv[0:50]
+y_val               = y_val[0:50]
+y_val_sparse        = y_val_sparse[0:50]
+
+X_test              = X_test[0:50]
+X_test_noisy        = X_test_noisy[0:50]
+X_test_adv          = X_test_adv[0:50]
+x_test_preds        = x_test_preds[0:50]
+x_test_features     = x_test_features[0:50]
+x_test_preds_adv    = x_test_preds_adv[0:50]
+x_test_features_adv = x_test_features_adv[0:50]
+y_test              = y_test[0:50]
+y_test_sparse       = y_test_sparse[0:50]
+
 print("X_val: "       , X_val.shape)
 print("X_val_noisy: " , X_val_noisy.shape)
 print("X_val_adv: "   , X_val_adv.shape)
@@ -376,19 +411,20 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
         lid_batch_adv   = np.zeros(shape=(n_feed, lid_dim))
         lid_batch_noisy = np.zeros(shape=(n_feed, lid_dim))
 
+        X_act       = batch_eval(sess, [x], model.net.values(), [X_test[start:end]]      , batch_size)
+        X_adv_act   = batch_eval(sess, [x], model.net.values(), [X_test_adv[start:end]]  , batch_size)
+        X_noisy_act = batch_eval(sess, [x], model.net.values(), [X_test_noisy[start:end]], batch_size)
+
         for i, key in enumerate(model.net):
-            X_act       = batch_eval(sess, [x], [model.net[key]], [X_test[start:end]], batch_size)[0]
-            X_act       = np.asarray(X_act, dtype=np.float32).reshape((n_feed, -1))
-            X_adv_act   = batch_eval(sess, [x], [model.net[key]], [X_test_adv[start:end]], batch_size)[0]
-            X_adv_act   = np.asarray(X_adv_act, dtype=np.float32).reshape((n_feed, -1))
-            X_noisy_act = batch_eval(sess, [x], [model.net[key]], [X_test_noisy[start:end]], batch_size)[0]
-            X_noisy_act = np.asarray(X_noisy_act, dtype=np.float32).reshape((n_feed, -1))
+            X_act[i]       = np.asarray(X_act[i]      , dtype=np.float32).reshape((n_feed, -1))
+            X_adv_act[i]   = np.asarray(X_adv_act[i]  , dtype=np.float32).reshape((n_feed, -1))
+            X_noisy_act[i] = np.asarray(X_noisy_act[i], dtype=np.float32).reshape((n_feed, -1))
 
             # random clean samples
             # Maximum likelihood estimation of local intrinsic dimensionality (LID)
-            lid_batch[:, i]       = mle_batch(X_act, X_act      , k=k)
-            lid_batch_adv[:, i]   = mle_batch(X_act, X_adv_act  , k=k)
-            lid_batch_noisy[:, i] = mle_batch(X_act, X_noisy_act, k=k)
+            lid_batch[:, i]       = mle_batch(X_act[i], X_act[i]      , k=k)
+            lid_batch_adv[:, i]   = mle_batch(X_act[i], X_adv_act[i]  , k=k)
+            lid_batch_noisy[:, i] = mle_batch(X_act[i], X_noisy_act[i], k=k)
 
         return lid_batch, lid_batch_noisy, lid_batch_adv
 
@@ -424,74 +460,111 @@ def get_lid(X, X_noisy, X_adv, k, batch_size=100):
 
     return artifacts, labels
 
-def sample_estimator(num_classes, X, Y, x_preds, x_features):
+def get_mahalanobis(X, X_noisy, X_adv, magnitude, sample_mean, precision, set):
+    for layer in range(len(model.net)):
+        print('Calculating Mahalanobis characteristics for set {}, layer{}'.format(set, layer))
+        with tf.name_scope('{}_gaussian_layer{}'.format(set, layer)):
+            gaussian_score, grads = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes, layer)
 
-    num_output = len(model.net)
-    feature_list = np.zeros(num_output)
+            # val
+            M_in = get_Mahalanobis_score_adv(X, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
+            M_out = get_Mahalanobis_score_adv(X_adv, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
+            M_noisy = get_Mahalanobis_score_adv(X_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
+
+            M_in = np.asarray(M_in, dtype=np.float32)
+            M_out = np.asarray(M_out, dtype=np.float32)
+            M_noisy = np.asarray(M_noisy, dtype=np.float32)
+
+            if layer == 0:
+                Mahalanobis_in    = M_in.reshape((M_in.shape[0], -1))
+                Mahalanobis_out   = M_out.reshape((M_out.shape[0], -1))
+                Mahalanobis_noisy = M_noisy.reshape((M_noisy.shape[0], -1))
+            else:
+                Mahalanobis_in    = np.concatenate((Mahalanobis_in, M_in.reshape((M_in.shape[0], -1))), axis=1)
+                Mahalanobis_out   = np.concatenate((Mahalanobis_out, M_out.reshape((M_out.shape[0], -1))), axis=1)
+                Mahalanobis_noisy = np.concatenate((Mahalanobis_noisy, M_noisy.reshape((M_noisy.shape[0], -1))), axis=1)
+
+    if FLAGS.with_noise:
+        Mahalanobis_neg = np.concatenate((Mahalanobis_in, Mahalanobis_noisy))
+    else:
+        Mahalanobis_neg = Mahalanobis_in
+    Mahalanobis_pos = Mahalanobis_out
+    characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
+
+    return characteristics, labels
+
+def sample_estimator(num_classes, X, Y):
+    num_output           = len(model.net)
+    feature_list         = np.zeros(num_output, dtype=np.int32)   # indicates the number of features in every layer
+    num_sample_per_class = np.zeros(num_classes)  # how many samples are per class
     for i, key in enumerate(model.net):
-        feature_list[i] = model.net[key].shape()
+        feature_list[i] = model.net[key].shape[-1].value
     assert (feature_list > 0).all()
 
-
-
-
-
-
-    num_sample_per_class = np.zeros(num_classes)
-    list_features = []
-    num_feature = 64
-
-    accuracy = np.mean(x_preds == Y)
-
+    list_features = []  # list_features[<layer>][<label>] is a list that holds the features in a specific layer of a specific label
+                        # is it basically list_features[<num_of_layer>][<num_of_label>] = List
     for i in range(num_output):
         temp_list = []
         for j in range(num_classes):
-            temp_list.append(0)
+            temp_list.append([])
         list_features.append(temp_list)
 
-    out_count = 0
-    for label in Y:
-        for out_id in range(num_output):  # maybe do in the future
-            list_features[out_id][label] = x_features[Y == label]
-        num_sample_per_class[label] = list_features[out_count][label].shape[0]
+    out_features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
+    for i in range(num_output):
+        if len(out_features[i].shape) == 4:
+            out_features[i] = np.asarray(out_features[i], dtype=np.float32).reshape((X.shape[0], -1, out_features[i].shape[-1]))
+            out_features[i] = np.mean(out_features[i], axis=1)
+        elif len(out_features[i].shape) == 2:
+            pass  # leave as is
+        else:
+            raise AssertionError('Expecting size of 2 or 4 but got {} for i={}'.format(len(out_features[i].shape), i))
+
+    for i in range(X.shape[0]):
+        label = Y[i]
+        for layer in range(num_output):
+            list_features_temp = out_features[layer][i].reshape(1, -1)
+            list_features[layer][label].extend(list_features_temp)
+        num_sample_per_class[label] += 1
+
+    # stacking everything
+    for layer in range(num_output):
+        for label in range(num_classes):
+            list_features[layer][label] = np.stack(list_features[layer][label])
 
     sample_class_mean = []
-    for k in range(num_output):  # maybe do in the future
+    for layer in range(num_output):
+        num_feature = feature_list[layer]
         temp_list = np.zeros((num_classes, num_feature))
         for i in range(num_classes):
-            temp_list[i] = np.mean(list_features[out_count][i], 0)
+            temp_list[i] = np.mean(list_features[layer][i], axis=0)
         sample_class_mean.append(temp_list)
 
     precision = []
     group_lasso = sklearn.covariance.EmpiricalCovariance(assume_centered=False)
-    for k in range(num_output):
+    for layer in range(num_output):
         D = 0
         for i in range(num_classes):
             if i == 0:
-                D = list_features[k][i] - sample_class_mean[k][i]
+                D = list_features[layer][i] - sample_class_mean[layer][i]
             else:
-                D = np.concatenate((D, list_features[k][i] - sample_class_mean[k][i]), 0)
+                D = np.concatenate((D, list_features[layer][i] - sample_class_mean[layer][i]), 0)
 
         # find inverse
         group_lasso.fit(D)
         temp_precision = group_lasso.precision_
         precision.append(temp_precision)
 
-    print('\n Training Accuracy: {}%)\n'.format(accuracy * 100.0))
-
     return sample_class_mean, precision
 
-def get_Mahalanobis_score_adv(test_data, gaussian_score, grads, magnitude, scale, set):
-    batch_size = 100
+def get_Mahalanobis_score_adv(test_data, gaussian_score, grads, magnitude, scale):
     grad_file = os.path.join(characteristics_dir, 'gradients_{}.npy'.format(set))
     # if os.path.exists(grad_file):
     #     print('loading gradients from {}'.format(grad_file))
     #     gradients = np.load(grad_file)
     # else:
-    print('Calculating Mahanalobis gradients...')
-    gradients = batch_eval(sess, [x], grads, [test_data], batch_size)[0]
-    print('Saving gradients to {}'.format(grad_file))
-    np.save(grad_file, gradients)
+    gradients = batch_eval(sess, [x], grads, [test_data], FLAGS.batch_size)[0]
+    # print('Saving gradients to {}'.format(grad_file))
+    # np.save(grad_file, gradients)
 
     gradients = gradients.clip(min=0)
     gradients = (gradients - 0.5) * 2
@@ -506,23 +579,36 @@ def get_Mahalanobis_score_adv(test_data, gaussian_score, grads, magnitude, scale
     gradients_scaled[:, :, :, 1] = gradients[:, :, :, 1] / GREEN_SCALE
     gradients_scaled[:, :, :, 2] = gradients[:, :, :, 2] / BLUE_SCALE
 
-    tempInputs = test_data - magnitude * gradients
-    print('Calculating noise gaussian scores...')
-    noise_gaussian_score = batch_eval(sess, [x], [gaussian_score], [tempInputs], batch_size)[0]
+    tempInputs = test_data - magnitude * gradients_scaled
+    noise_gaussian_score = batch_eval(sess, [x], [gaussian_score], [tempInputs], FLAGS.batch_size)[0]
 
     Mahalanobis = np.max(noise_gaussian_score, axis=1)
 
     return Mahalanobis
 
 def get_mahanabolis_tensors(sample_mean, precision, num_classes, layer_index=0):
-    # here I try to calculte the input gradients for -pure_tau. Meaning d(-pure_tau)/dx.
+    # here we calculate the input gradients for -pure_tau. Meaning d(-pure_tau)/dx.
     # First, how do we calculate pure_tau? This is a computation on a batch.
-    precision_mat = tf.convert_to_tensor(precision[layer_index], dtype=tf.float32)
-    sample_mean_tensor = tf.convert_to_tensor(sample_mean[layer_index], dtype=tf.float32)
-    with tf.name_scope('Mahanabolis_grad_calc'):
+
+    layer = 'layer{}'.format(layer_index)
+
+    with tf.name_scope('Mahanabolis_grad_calc_'.format(layer)):
+        precision_mat      = tf.convert_to_tensor(precision[layer_index]    , dtype=tf.float32)
+        sample_mean_tensor = tf.convert_to_tensor(sample_mean[layer_index]  , dtype=tf.float32)
+
+        out_features       = model.net[layer]
+        if len(out_features.shape) == 4:
+            num_spatial = num_of_spatial_activations[layer]
+            out_features = tf.reshape(out_features, [-1, num_spatial, out_features.shape[-1].value])
+            out_features = tf.reduce_mean(out_features, axis=1)
+        elif len(out_features.shape) == 2:
+            pass  # leave as is
+        else:
+            raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(out_features.shape), layer))
+
         for i in range(num_classes):
             batch_sample_mean = sample_mean_tensor[i]
-            zero_f = embeddings - batch_sample_mean
+            zero_f = out_features - batch_sample_mean
             zero_f_T = tf.transpose(zero_f)
             term_gau = -0.5 * tf.matmul(tf.matmul(zero_f, precision_mat), zero_f_T)
             term_gau = tf.diag_part(term_gau)
@@ -535,7 +621,7 @@ def get_mahanabolis_tensors(sample_mean, precision, num_classes, layer_index=0):
         # Input_processing
         sample_pred = tf.argmax(gaussian_score, axis=1)
         batch_sample_mean = tf.gather(sample_mean_tensor, axis=0, indices=sample_pred)
-        zero_f = embeddings - tf.identity(batch_sample_mean)
+        zero_f = out_features - tf.identity(batch_sample_mean)
         zero_f_T = tf.transpose(zero_f)
         pure_gau = -0.5 * tf.matmul(tf.matmul(zero_f, tf.identity(precision_mat)), zero_f_T)  # 100x100
         pure_gau = tf.diag_part(pure_gau)  # 100
@@ -589,7 +675,40 @@ def get_nnif(X, subset, max_indices):
     artifacts, labels = merge_and_generate_labels(ranks_adv, ranks)
     return artifacts, labels
 
-def get_nonconformity(x_cal_features, y_cal, k):
+def get_calibration(X_cal, y_cal, k, num_classes):
+    knn = {}
+    num_output = len(model.net)
+
+    out_features = batch_eval(sess, [x], model.net.values(), [X_train], FLAGS.batch_size)
+    for layer_index in range(num_output):
+        layer = 'layer{}'.format(layer_index)
+        if len(out_features[layer_index].shape) == 4:
+            out_features[layer_index] = np.asarray(out_features[layer_index], dtype=np.float32).reshape((X.shape[0], -1, out_features[layer_index].shape[-1]))
+            out_features[layer_index] = np.mean(out_features[layer_index], axis=1)
+        elif len(out_features[layer_index].shape) == 2:
+            pass  # leave as is
+        else:
+            raise AssertionError(
+                'Expecting size of 2 or 4 but got {} for {}'.format(len(out_features[layer_index].shape), layer))
+
+        knn[layer] = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+        knn[layer].fit(out_features[layer_index], y_train_sparse)
+
+
+    # nonconformity_mat = np.zeros((X_cal.shape[0], num_classes))
+    calbiration_vec = np.zeros(X_cal.shape[0])
+    for layer_index in range(num_output):
+
+
+
+
+
+
+
+
+
+
+
     knn = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
     knn.fit(x_train_features, y_train_sparse)
 
@@ -603,8 +722,34 @@ def get_nonconformity(x_cal_features, y_cal, k):
 
     return nonconformity
 
-def get_dknn_nonconformity(features, nonconformity_calib, k):
-    knn = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+def get_dknn_nonconformity(X, nonconformity_calib, k):
+    knn = {}
+
+
+    # Fitting the k-NN models using X_train
+    out_features = batch_eval(sess, [x], model.net.values(), [X_train], FLAGS.batch_size)
+    for layer_index in range(len(model.net)):
+        layer = 'layer{}'.format(layer_index)
+        if len(out_features[layer_index].shape) == 4:
+            out_features[layer_index] = np.asarray(out_features[layer_index], dtype=np.float32).reshape((X.shape[0], -1, out_features[layer_index].shape[-1]))
+            out_features[layer_index] = np.mean(out_features[layer_index], axis=1)
+        elif len(out_features[layer_index].shape) == 2:
+            pass  # leave as is
+        else:
+            raise AssertionError(
+                'Expecting size of 2 or 4 but got {} for {}'.format(len(out_features[layer_index].shape), layer))
+
+        knn[layer] = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+        knn[layer].fit(out_features[layer_index])
+
+    # Computing the calibration_mat
+
+
+
+
+
+
+
     knn.fit(x_train_features, y_train_sparse)
 
     knn_predict_prob = knn.predict_proba(features)
@@ -669,41 +814,24 @@ if FLAGS.characteristics == 'nnif':
     np.save(file_name, data)
 
 if FLAGS.characteristics == 'mahalanobis':
-    print('get sample mean and covariance')
-    # sample_mean[0].shape=(10,64)
-    # precision[0].shape=(64,64)
-    sample_mean, precision = sample_estimator(feeder.num_classes, X_train, y_train_sparse, x_train_preds, x_train_features)
-    gaussian_score, grads  = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes)
 
-    magnitude = FLAGS.magnitude
+    print('get sample mean and covariance of the training set...')
+    sample_mean, precision = sample_estimator(feeder.num_classes, X_train, y_train_sparse)
+    print('Done calculating: sample_mean, precision.')
+
     # for magnitude in [0.001, 0.0005, 0.002]:
-    # val
-    M_in    = get_Mahalanobis_score_adv(X_val      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_normal')
-    M_out   = get_Mahalanobis_score_adv(X_val_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_adv')
-    M_noisy = get_Mahalanobis_score_adv(X_val_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='val_noisy')
+    magnitude = FLAGS.magnitude
 
-    if FLAGS.with_noise:
-        Mahalanobis_neg = np.concatenate((M_in, M_noisy))
-    else:
-        Mahalanobis_neg = M_in
-    Mahalanobis_pos = M_out
-    characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
-    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
-    data = np.concatenate((characteristics, labels), axis=1)
+    # for val set
+    characteristics, label = get_mahalanobis(X_val, X_val_noisy, X_val_adv, magnitude, sample_mean, precision, 'train')
+    print("Mahalanobis train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
+    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'train', FLAGS.with_noise))
+    data = np.concatenate((characteristics, label), axis=1)
     np.save(file_name, data)
 
-    # test
-    M_in    = get_Mahalanobis_score_adv(X_test      , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_normal')
-    M_out   = get_Mahalanobis_score_adv(X_test_adv  , gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_adv')
-    M_noisy = get_Mahalanobis_score_adv(X_test_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale, set='test_noisy')
-
-    if FLAGS.with_noise:
-        Mahalanobis_neg = np.concatenate((M_in, M_noisy))
-    else:
-        Mahalanobis_neg = M_in
-    Mahalanobis_pos = M_out
-    characteristics, labels = merge_and_generate_labels(Mahalanobis_pos, Mahalanobis_neg)
-    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
+    # for test set
+    characteristics, labels = get_mahalanobis(X_test, X_test_noisy, X_test_adv, magnitude, sample_mean, precision, 'test')
+    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'test', FLAGS.with_noise))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 
@@ -714,20 +842,16 @@ if FLAGS.characteristics == 'dknn':
     calibration_size = int(X_val.shape[0]/2)
 
     X_cal          = X_val[:calibration_size]
-    x_cal_features = x_val_features[:calibration_size]
     y_cal          = y_val_sparse[:calibration_size]
-    nonconformity_calib = get_nonconformity(x_cal_features, y_cal, FLAGS.k_nearest)
+    nonconformity_calib = get_calibration(X_cal, y_cal, FLAGS.k_nearest, feeder.num_classes)
 
     X_val2              = X_val[calibration_size:]
-    x_val2_features     = x_val_features[calibration_size:]
-    x_val2_features_adv = x_val_features_adv[calibration_size:]
-    y_val2              = y_val_sparse[calibration_size:]
+    X_val2_adv          = X_val_adv[calibration_size:]
 
     k = FLAGS.k_nearest
-    val_normal_characteristics  = get_dknn_nonconformity(x_val2_features    , nonconformity_calib, k)
-    val_adv_characteristics     = get_dknn_nonconformity(x_val2_features_adv, nonconformity_calib, k)
-    test_normal_characteristics = get_dknn_nonconformity(x_test_features    , nonconformity_calib, k)
-    test_adv_characteristics    = get_dknn_nonconformity(x_test_features_adv, nonconformity_calib, k)
+
+    val_normal_characteristics  = get_dknn_nonconformity(X_val2    , nonconformity_calib, k)
+    val_adv_characteristics     = get_dknn_nonconformity(X_val2_adv, nonconformity_calib, k)
 
     # set training set
     dknn_neg = val_normal_characteristics
@@ -740,6 +864,9 @@ if FLAGS.characteristics == 'dknn':
     np.save(file_name, data)
 
     # set testing set
+    test_normal_characteristics = get_dknn_nonconformity(X_test    , nonconformity_calib, k)
+    test_adv_characteristics    = get_dknn_nonconformity(X_test_adv, nonconformity_calib, k)
+
     dknn_neg = test_normal_characteristics
     dknn_pos = test_adv_characteristics
     characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
