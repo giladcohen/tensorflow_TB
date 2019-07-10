@@ -25,7 +25,7 @@ flags.DEFINE_string('characteristics', 'lid', 'type of defence: lid/mahalanobis/
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
 # FOR LID
-flags.DEFINE_integer('k_nearest', 17, 'number of nearest neighbors to use for LID detection')
+flags.DEFINE_integer('k_nearest', 17, 'number of nearest neighbors to use for LID/DkNN detection')
 
 # FOR MAHANABOLIS
 flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
@@ -59,8 +59,8 @@ elif FLAGS.characteristics == 'mahalanobis':
     train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
     test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
 elif FLAGS.characteristics == 'nnif':
-    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation, FLAGS.with_noise))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation, FLAGS.with_noise))
+    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}_noisy_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation, FLAGS.with_noise))
 elif FLAGS.characteristics == 'dknn':
     train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
     test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
