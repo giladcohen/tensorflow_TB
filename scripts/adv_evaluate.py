@@ -49,6 +49,8 @@ flags.DEFINE_bool('backward', False, 'going from the last to to first')
 flags.DEFINE_bool('overwrite_A', False, 'whether or not to overwrite the A calculation')
 flags.DEFINE_bool('overwrite_C', False, 'whether or not to overwrite the C calculation')
 
+flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
+flags.DEFINE_string('port', 'null', 'to bypass pycharm bug')
 
 if FLAGS.set == 'val':
     test_val_set = True
