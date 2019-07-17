@@ -44,7 +44,7 @@ if FLAGS.dataset == 'cifar10':
 elif FLAGS.dataset == 'cifar100':
     CHECKPOINT_NAME = 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01'
 elif FLAGS.dataset == 'svhn':
-    CHECKPOINT_NAME = 'svhn/log_120519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1257'
+    CHECKPOINT_NAME = 'svhn_mini/log_300519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_exp1'
 else:
     raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
 
