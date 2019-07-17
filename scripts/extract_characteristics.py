@@ -904,7 +904,7 @@ if FLAGS.characteristics == 'dknn':
         y_cal          = y_val_sparse[:calibration_size]
 
         print("Calculating the calibration matrix...")
-        calbiration_vec = get_calibration(x_cal_features, y_cal, FLAGS.k_nearest)
+        calbiration_vec = get_calibration(x_cal_features, y_cal, k)
         print("Done calculating the calibration matrix.")
 
         X_val2              = X_val[calibration_size:]
