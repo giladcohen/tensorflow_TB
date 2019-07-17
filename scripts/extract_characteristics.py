@@ -687,91 +687,129 @@ def get_nnif(X, subset, max_indices):
     artifacts, labels = merge_and_generate_labels(ranks_adv, ranks)
     return artifacts, labels
 
-def get_calibration(X_cal, y_cal, X_train, y_train_sparse, k, num_classes):
-    """
-    :param X_cal: Calibration set
-    :param y_cal: Calibration labels
-    :param X_train: Training set
-    :param y_train_sparse: training labels
-    :param k: Num of nearest neighbors of DkNN defense
-    :param num_classes: Number of classes in dataset
-    :return: Both the calibration vector (calbiration_vec) and the knn dictionary (knn[<layer>(str)])
-    """
-    knn = {}
-    num_output = len(model.net)
-    knn_pred_cnt = np.zeros((X_cal.shape[0], num_output, num_classes))
+# def get_calibration(X_cal, y_cal, X_train, y_train_sparse, k, num_classes):  # used for all layers. not relevant
+#     """
+#     :param X_cal: Calibration set
+#     :param y_cal: Calibration labels
+#     :param X_train: Training set
+#     :param y_train_sparse: training labels
+#     :param k: Num of nearest neighbors of DkNN defense
+#     :param num_classes: Number of classes in dataset
+#     :return: Both the calibration vector (calbiration_vec) and the knn dictionary (knn[<layer>(str)])
+#     """
+#     knn = {}
+#     num_output = len(model.net)
+#     knn_pred_cnt = np.zeros((X_cal.shape[0], num_output, num_classes))
+#
+#     # train_features = batch_eval(sess, [x], model.net.values(), [X_train], FLAGS.batch_size)
+#     # cal_features   = batch_eval(sess, [x], model.net.values(), [X_cal]  , FLAGS.batch_size)
+#
+#     train_features = batch_eval(sess, [x], model.net.values(), [X_train], FLAGS.batch_size)
+#     cal_features   = batch_eval(sess, [x], model.net.values(), [X_cal]  , FLAGS.batch_size)
+#
+#     for layer_index in range(num_output):
+#         layer = 'layer{}'.format(layer_index)
+#         if len(train_features[layer_index].shape) == 4:
+#             train_features[layer_index] = np.asarray(train_features[layer_index], dtype=np.float32).reshape((X_train.shape[0], -1, train_features[layer_index].shape[-1]))
+#             cal_features[layer_index]   = np.asarray(cal_features[layer_index]  , dtype=np.float32).reshape((X_cal.shape[0]  , -1, cal_features[layer_index].shape[-1]))
+#             train_features[layer_index] = np.mean(train_features[layer_index], axis=1)
+#             cal_features[layer_index]   = np.mean(cal_features[layer_index]  , axis=1)
+#         elif len(train_features[layer_index].shape) == 2:
+#             pass  # leave as is
+#         else:
+#             raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(train_features[layer_index].shape), layer))
+#
+#         knn[layer] = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+#         knn[layer].fit(train_features[layer_index], y_train_sparse)
+#         knn_predict_prob = knn[layer].predict_proba(cal_features[layer_index])
+#         knn_pred_cnt[:, layer_index] = np.asarray(knn_predict_prob * k, dtype=np.int32)
+#
+#     # building the calibration vector
+#     calbiration_vec = np.zeros(X_cal.shape[0])
+#     for i in range(X_cal.shape[0]):
+#         label = y_cal[i]
+#         for layer_index in range(num_output):
+#             # how many wrong predictions do we have for the true label?
+#             calbiration_vec[i] += k - knn_pred_cnt[i, layer_index, label]
+#
+#     return calbiration_vec, knn
 
-    train_features = batch_eval(sess, [x], model.net.values(), [X_train], FLAGS.batch_size)
-    cal_features   = batch_eval(sess, [x], model.net.values(), [X_cal]  , FLAGS.batch_size)
+def get_calibration(x_cal_features, y_cal, k):
+    knn = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+    knn.fit(x_train_features, y_train_sparse)
 
-    for layer_index in range(num_output):
-        layer = 'layer{}'.format(layer_index)
-        if len(train_features[layer_index].shape) == 4:
-            train_features[layer_index] = np.asarray(train_features[layer_index], dtype=np.float32).reshape((X_train.shape[0], -1, train_features[layer_index].shape[-1]))
-            cal_features[layer_index]   = np.asarray(cal_features[layer_index]  , dtype=np.float32).reshape((X_cal.shape[0]  , -1, cal_features[layer_index].shape[-1]))
-            train_features[layer_index] = np.mean(train_features[layer_index], axis=1)
-            cal_features[layer_index]   = np.mean(cal_features[layer_index]  , axis=1)
-        elif len(train_features[layer_index].shape) == 2:
-            pass  # leave as is
-        else:
-            raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(train_features[layer_index].shape), layer))
+    knn_predict_prob = knn.predict_proba(x_cal_features)
+    knn_pred_cnt = np.asarray(knn_predict_prob * k, dtype=np.int32)
 
-        knn[layer] = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
-        knn[layer].fit(train_features[layer_index], y_train_sparse)
-        knn_predict_prob = knn[layer].predict_proba(cal_features[layer_index])
-        knn_pred_cnt[:, layer_index] = np.asarray(knn_predict_prob * k, dtype=np.int32)
-
-    # building the calibration vector
-    calbiration_vec = np.zeros(X_cal.shape[0])
-    for i in range(X_cal.shape[0]):
+    # how many wrong predictions do we have for the true label?
+    calbiration_vec = np.zeros(x_cal_features.shape[0])
+    for i in range(x_cal_features.shape[0]):
         label = y_cal[i]
-        for layer_index in range(num_output):
-            # how many wrong predictions do we have for the true label?
-            calbiration_vec[i] += k - knn_pred_cnt[i, layer_index, label]
+        calbiration_vec[i] = k - knn_pred_cnt[i, label]
 
-    return calbiration_vec, knn
+    return calbiration_vec
 
-def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes, set):
-    """
-    :param X: data
-    :param y: labels
-    :param calbiration_vec: calibration vector
-    :param knn: knn dict. knn[<layer>(str)]
-    :param num_classes: number of classes
-    :return: empirical p-value characteristics
-    """
-    k = knn['layer0'].n_neighbors
-    num_output = len(model.net)
-    knn_pred_cnt = np.zeros((X.shape[0], num_output, num_classes))
-    empirical_p  = np.zeros((X.shape[0], num_classes))
+# def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes, set):  # used for all layers. not relevant
+#     """
+#     :param X: data
+#     :param y: labels
+#     :param calbiration_vec: calibration vector
+#     :param knn: knn dict. knn[<layer>(str)]
+#     :param num_classes: number of classes
+#     :return: empirical p-value characteristics
+#     """
+#     k = knn['layer0'].n_neighbors
+#     num_output = len(model.net)
+#     knn_pred_cnt = np.zeros((X.shape[0], num_output, num_classes))
+#     empirical_p  = np.zeros((X.shape[0], num_classes))
+#
+#     out_features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
+#
+#     # reshaping
+#     for layer_index in range(num_output):
+#         layer = 'layer{}'.format(layer_index)
+#         print('Calculating DkNN characteristics for set {}, layer{}'.format(set, layer))
+#         if len(out_features[layer_index].shape) == 4:
+#             out_features[layer_index] = np.asarray(out_features[layer_index], dtype=np.float32).reshape((X.shape[0], -1, out_features[layer_index].shape[-1]))
+#             out_features[layer_index] = np.mean(out_features[layer_index], axis=1)
+#         elif len(out_features[layer_index].shape) == 2:
+#             pass  # leave as is
+#         else:
+#             raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(out_features[layer_index].shape), layer))
+#
+#         knn_predict_prob = knn[layer].predict_proba(out_features[layer_index])
+#         knn_pred_cnt[:, layer_index] = np.asarray(knn_predict_prob * k, dtype=np.int32)
+#
+#     print('now iterating over all the {} set'.format(set))
+#     for i in range(X.shape[0]):  # for every sample
+#         for j in range(num_classes):  # for every class
+#             nonconformity = 0
+#             for layer_index in range(num_output):
+#                 nonconformity += k - knn_pred_cnt[i, layer_index, j]
+#             num_of_greater_calib_values = np.sum(calbiration_vec >= nonconformity)
+#             empirical_p[i, j] = num_of_greater_calib_values / len(calbiration_vec)
+#
+#     return empirical_p
 
-    out_features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
+def get_dknn_nonconformity(features, calbiration_vec, k):
+    knn = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
+    knn.fit(x_train_features, y_train_sparse)
 
-    # reshaping
-    for layer_index in range(num_output):
-        layer = 'layer{}'.format(layer_index)
-        print('Calculating DkNN characteristics for set {}, layer{}'.format(set, layer))
-        if len(out_features[layer_index].shape) == 4:
-            out_features[layer_index] = np.asarray(out_features[layer_index], dtype=np.float32).reshape((X.shape[0], -1, out_features[layer_index].shape[-1]))
-            out_features[layer_index] = np.mean(out_features[layer_index], axis=1)
-        elif len(out_features[layer_index].shape) == 2:
-            pass  # leave as is
-        else:
-            raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(out_features[layer_index].shape), layer))
+    knn_predict_prob = knn.predict_proba(features)
+    knn_pred_cnt = np.asarray(knn_predict_prob * k, dtype=np.int32)
 
-        knn_predict_prob = knn[layer].predict_proba(out_features[layer_index])
-        knn_pred_cnt[:, layer_index] = np.asarray(knn_predict_prob * k, dtype=np.int32)
+    # how many wrong predictions do we have for each label?
+    nonconformity = k - knn_pred_cnt
 
-    print('now iterating over all the {} set'.format(set))
-    for i in range(X.shape[0]):  # for every sample
-        for j in range(num_classes):  # for every class
-            nonconformity = 0
-            for layer_index in range(num_output):
-                nonconformity += k - knn_pred_cnt[i, layer_index, j]
-            num_of_greater_calib_values = np.sum(calbiration_vec >= nonconformity)
+    # get pj for every class
+    empirical_p = np.zeros_like(nonconformity, dtype=np.float32)
+    for i in range(len(nonconformity)):  # for every sample
+        for j in range(feeder.num_classes):  # for every class
+            num_of_greater_calib_values = np.sum(calbiration_vec >= nonconformity[i, j])
             empirical_p[i, j] = num_of_greater_calib_values / len(calbiration_vec)
 
     return empirical_p
+
 
 if FLAGS.characteristics == 'lid':
 
@@ -852,21 +890,25 @@ if FLAGS.characteristics == 'dknn':
     calibration_size = int(X_val.shape[0]/3)
 
     X_cal          = X_val[:calibration_size]
+    x_cal_features = x_val_features[:calibration_size]
     y_cal          = y_val_sparse[:calibration_size]
 
     print("Calculating the calibration matrix...")
-    calbiration_vec, knn = get_calibration(X_cal, y_cal, X_train, y_train_sparse, k, feeder.num_classes)
+    calbiration_vec = get_calibration(x_cal_features, y_cal, FLAGS.k_nearest)
     print("Done calculating the calibration matrix.")
 
-    X_val2         = X_val[calibration_size:]
-    # y_val2         = y_val_sparse[calibration_size:]
-    X_val2_adv     = X_val_adv[calibration_size:]
-    # y_val2_adv     = x_val_preds_adv[calibration_size:]
+    X_val2              = X_val[calibration_size:]
+    y_val2              = y_val_sparse[calibration_size:]
+    x_val2_features     = x_val_features[calibration_size:]
 
-    val_normal_characteristics  = get_dknn_nonconformity(X_val2    , calbiration_vec, knn, feeder.num_classes, set='train')
-    val_adv_characteristics     = get_dknn_nonconformity(X_val2_adv, calbiration_vec, knn, feeder.num_classes, set='train')
+    X_val2_adv          = X_val_adv[calibration_size:]
+    y_val2_adv          = x_val_preds_adv[calibration_size:]
+    x_val2_features_adv = x_val_features_adv[calibration_size:]
 
     # set training set
+    val_normal_characteristics = get_dknn_nonconformity(x_val2_features    , calbiration_vec, k)
+    val_adv_characteristics    = get_dknn_nonconformity(x_val2_features_adv, calbiration_vec, k)
+
     dknn_neg = val_normal_characteristics
     dknn_pos = val_adv_characteristics
     characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
@@ -877,8 +919,8 @@ if FLAGS.characteristics == 'dknn':
     np.save(file_name, data)
 
     # set testing set
-    test_normal_characteristics = get_dknn_nonconformity(X_test    , calbiration_vec, knn, feeder.num_classes, set='test')
-    test_adv_characteristics    = get_dknn_nonconformity(X_test_adv, calbiration_vec, knn, feeder.num_classes, set='test')
+    test_normal_characteristics = get_dknn_nonconformity(x_test_features    , calbiration_vec, k)
+    test_adv_characteristics    = get_dknn_nonconformity(x_test_features_adv, calbiration_vec, k)
 
     dknn_neg = test_normal_characteristics
     dknn_pos = test_adv_characteristics
