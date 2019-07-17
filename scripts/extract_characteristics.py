@@ -763,7 +763,7 @@ if FLAGS.characteristics == 'lid':
 
     k = FLAGS.k_nearest
 
-    for k in tqdm(np.arange(12, 31, 2)):
+    for k in tqdm(np.arange(10, 31, 2)):
         print('Extracting LID characteristics for k={}'.format(k))
         # for val set
         characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
