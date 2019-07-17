@@ -334,31 +334,31 @@ y_test              = y_test[test_inds_correct]
 y_test_sparse       = y_test_sparse[test_inds_correct]
 
 # for debug:
-X_train              = X_train[0:500]
-x_train_preds        = x_train_preds[0:500]
-x_train_features     = x_train_features[0:500]
-y_train              = y_train[0:500]
-y_train_sparse       = y_train_sparse[0:500]
-
-X_val               = X_val[0:50]
-X_val_noisy         = X_val_noisy[0:50]
-X_val_adv           = X_val_adv[0:50]
-x_val_preds         = x_val_preds[0:50]
-x_val_features      = x_val_features[0:50]
-x_val_preds_adv     = x_val_preds_adv[0:50]
-x_val_features_adv  = x_val_features_adv[0:50]
-y_val               = y_val[0:50]
-y_val_sparse        = y_val_sparse[0:50]
-
-X_test              = X_test[0:50]
-X_test_noisy        = X_test_noisy[0:50]
-X_test_adv          = X_test_adv[0:50]
-x_test_preds        = x_test_preds[0:50]
-x_test_features     = x_test_features[0:50]
-x_test_preds_adv    = x_test_preds_adv[0:50]
-x_test_features_adv = x_test_features_adv[0:50]
-y_test              = y_test[0:50]
-y_test_sparse       = y_test_sparse[0:50]
+# X_train              = X_train[0:500]
+# x_train_preds        = x_train_preds[0:500]
+# x_train_features     = x_train_features[0:500]
+# y_train              = y_train[0:500]
+# y_train_sparse       = y_train_sparse[0:500]
+#
+# X_val               = X_val[0:50]
+# X_val_noisy         = X_val_noisy[0:50]
+# X_val_adv           = X_val_adv[0:50]
+# x_val_preds         = x_val_preds[0:50]
+# x_val_features      = x_val_features[0:50]
+# x_val_preds_adv     = x_val_preds_adv[0:50]
+# x_val_features_adv  = x_val_features_adv[0:50]
+# y_val               = y_val[0:50]
+# y_val_sparse        = y_val_sparse[0:50]
+#
+# X_test              = X_test[0:50]
+# X_test_noisy        = X_test_noisy[0:50]
+# X_test_adv          = X_test_adv[0:50]
+# x_test_preds        = x_test_preds[0:50]
+# x_test_features     = x_test_features[0:50]
+# x_test_preds_adv    = x_test_preds_adv[0:50]
+# x_test_features_adv = x_test_features_adv[0:50]
+# y_test              = y_test[0:50]
+# y_test_sparse       = y_test_sparse[0:50]
 
 print("X_val: "       , X_val.shape)
 print("X_val_noisy: " , X_val_noisy.shape)
@@ -717,8 +717,6 @@ def get_calibration(X_cal, y_cal, X_train, y_train_sparse, k, num_classes):
             # how many wrong predictions do we have for the true label?
             calbiration_vec[i] += k - knn_pred_cnt[i, layer_index, label]
 
-    for layer_index in range(num_output):
-        print ("DEBUG: layer:{}, \n{}".format(layer_index, knn_pred_cnt[1, layer_index]))
     return calbiration_vec, knn
 
 def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes):
