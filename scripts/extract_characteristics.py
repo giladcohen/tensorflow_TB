@@ -476,12 +476,16 @@ def get_mahalanobis(X, X_noisy, X_adv, magnitude, sample_mean, precision, set):
 
             # val
             M_in = get_Mahalanobis_score_adv(X, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
-            M_out = get_Mahalanobis_score_adv(X_adv, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
-            M_noisy = get_Mahalanobis_score_adv(X_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
-
             M_in = np.asarray(M_in, dtype=np.float32)
+
+            M_out = get_Mahalanobis_score_adv(X_adv, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
             M_out = np.asarray(M_out, dtype=np.float32)
-            M_noisy = np.asarray(M_noisy, dtype=np.float32)
+
+            if FLAGS.with_noise:
+                M_noisy = get_Mahalanobis_score_adv(X_noisy, gaussian_score, grads, magnitude, FLAGS.rgb_scale)
+                M_noisy = np.asarray(M_noisy, dtype=np.float32)
+            else:  # just a placeholder with zeros
+                M_noisy = np.zeros_like(M_in)
 
             if layer == 0:
                 Mahalanobis_in    = M_in.reshape((M_in.shape[0], -1))
@@ -727,7 +731,7 @@ def get_calibration(X_cal, y_cal, X_train, y_train_sparse, k, num_classes):
 
     return calbiration_vec, knn
 
-def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes):
+def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes, set):
     """
     :param X: data
     :param y: labels
@@ -746,6 +750,7 @@ def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes):
     # reshaping
     for layer_index in range(num_output):
         layer = 'layer{}'.format(layer_index)
+        print('Calculating DkNN characteristics for set {}, layer{}'.format(set, layer))
         if len(out_features[layer_index].shape) == 4:
             out_features[layer_index] = np.asarray(out_features[layer_index], dtype=np.float32).reshape((X.shape[0], -1, out_features[layer_index].shape[-1]))
             out_features[layer_index] = np.mean(out_features[layer_index], axis=1)
@@ -757,6 +762,7 @@ def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes):
         knn_predict_prob = knn[layer].predict_proba(out_features[layer_index])
         knn_pred_cnt[:, layer_index] = np.asarray(knn_predict_prob * k, dtype=np.int32)
 
+    print('now iterating over all the {} set'.format(set))
     for i in range(X.shape[0]):  # for every sample
         for j in range(num_classes):  # for every class
             nonconformity = 0
@@ -847,15 +853,18 @@ if FLAGS.characteristics == 'dknn':
 
     X_cal          = X_val[:calibration_size]
     y_cal          = y_val_sparse[:calibration_size]
+
+    print("Calculating the calibration matrix...")
     calbiration_vec, knn = get_calibration(X_cal, y_cal, X_train, y_train_sparse, k, feeder.num_classes)
+    print("Done calculating the calibration matrix.")
 
     X_val2         = X_val[calibration_size:]
     # y_val2         = y_val_sparse[calibration_size:]
     X_val2_adv     = X_val_adv[calibration_size:]
     # y_val2_adv     = x_val_preds_adv[calibration_size:]
 
-    val_normal_characteristics  = get_dknn_nonconformity(X_val2    , calbiration_vec, knn, feeder.num_classes)
-    val_adv_characteristics     = get_dknn_nonconformity(X_val2_adv, calbiration_vec, knn, feeder.num_classes)
+    val_normal_characteristics  = get_dknn_nonconformity(X_val2    , calbiration_vec, knn, feeder.num_classes, set='train')
+    val_adv_characteristics     = get_dknn_nonconformity(X_val2_adv, calbiration_vec, knn, feeder.num_classes, set='train')
 
     # set training set
     dknn_neg = val_normal_characteristics
@@ -868,8 +877,8 @@ if FLAGS.characteristics == 'dknn':
     np.save(file_name, data)
 
     # set testing set
-    test_normal_characteristics = get_dknn_nonconformity(X_test    , calbiration_vec, knn, feeder.num_classes)
-    test_adv_characteristics    = get_dknn_nonconformity(X_test_adv, calbiration_vec, knn, feeder.num_classes)
+    test_normal_characteristics = get_dknn_nonconformity(X_test    , calbiration_vec, knn, feeder.num_classes, set='test')
+    test_adv_characteristics    = get_dknn_nonconformity(X_test_adv, calbiration_vec, knn, feeder.num_classes, set='test')
 
     dknn_neg = test_normal_characteristics
     dknn_pos = test_adv_characteristics
