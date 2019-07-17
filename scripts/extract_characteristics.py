@@ -37,10 +37,16 @@ import sklearn.covariance
 from lid_adversarial_subspace_detection.util import mle_batch
 
 # tf.enable_eager_execution()
-
+# TODO(gilad): change placeholders (0.001) with correct values with random is ready.
 STDEVS = {
-    'val' : {'cifar10': {'deepfool': 0.00861, 'cw': 0.003081}},
-    'test': {'cifar10': {'deepfool': 0.00796, 'cw': 0.003057}}
+    'val' : {'cifar10' :  {'deepfool': 0.00861, 'cw': 0.003081, 'jsma': 0.001, 'fgsm': 0.001},
+             'cifar100':  {'deepfool': 0.001, 'cw': 0.001, 'jsma': 0.001, 'fgsm': 0.001},
+             'svhn_mini': {'deepfool': 0.001, 'cw': 0.001, 'jsma': 0.001, 'fgsm': 0.001}
+            },
+    'test': {'cifar10':   {'deepfool': 0.00796, 'cw': 0.003057, 'jsma': 0.001, 'fgsm': 0.001},
+             'cifar100':  {'deepfool': 0.001, 'cw': 0.001, 'jsma': 0.001, 'fgsm': 0.001},
+             'svhn_mini': {'deepfool': 0.001, 'cw': 0.001, 'jsma': 0.001, 'fgsm': 0.001}
+             }
 }
 
 num_of_spatial_activations = {
