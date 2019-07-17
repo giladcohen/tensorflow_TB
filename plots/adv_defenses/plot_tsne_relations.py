@@ -154,7 +154,6 @@ knn.fit(x_train_features, y_train_sparse)
 print('Done fitting the knn model.')
 
 # Fitting the PCA
-
 print('fitting the PCA model...')
 if not os.path.exists(os.path.join(plot_dir, 'pca', 'NN_{}'.format(FLAGS.k_nearest))):
     os.makedirs(os.path.join(plot_dir, 'pca', 'NN_{}'.format(FLAGS.k_nearest)))
@@ -192,7 +191,13 @@ else:
     tsne_x_val_embedded     = np.load(os.path.join(plot_dir, 'tsne', 'tsne_x_val_embedded.npy'))
     tsne_x_val_adv_embedded = np.load(os.path.join(plot_dir, 'tsne', 'tsne_x_val_adv_embedded.npy'))
 
-for vis_idx in range(len(X_val)):
+# for key, val in val_idx_map.items():    # for name, age in dictionary.iteritems():  (for Python 2.x)
+#     global_index = feeder.get_global_index('val', val)
+#     if global_index == 31732:
+#         print(key)
+
+# for vis_idx in range(len(X_val)):
+    vis_idx = 596
     plt.close('all')
     vis_img     = X_val[vis_idx]
     vis_img_adv = X_val_adv[vis_idx]
@@ -228,19 +233,23 @@ for vis_idx in range(len(X_val)):
 
     # plotting the PCA:
     plt.figure(1)
-    plt.scatter(neighbors_pca_embeddings[:, 0]    , neighbors_pca_embeddings[:, 1]    , s=5, marker='o', c='blue', alpha=0.5)
-    plt.scatter(neighbors_pca_embeddings_adv[:, 0], neighbors_pca_embeddings_adv[:, 1], s=5, marker='o', c='red' , alpha=0.5)
+    plt.scatter(neighbors_pca_embeddings[:, 0]    , neighbors_pca_embeddings[:, 1]    , s=10, marker='o', c='blue', alpha=0.5, label='normal $k$-NN')
+    plt.scatter(neighbors_pca_embeddings_adv[:, 0], neighbors_pca_embeddings_adv[:, 1], s=10, marker='o', c='red' , alpha=0.5, label='adv $k$-NN')
     # TODO(gilad): plot overlapping neighbors in a merged color
 
-    plt.scatter(top_helpful_pca_embeddings[:, 0]    , top_helpful_pca_embeddings[:, 1]    , s=5, marker='s', c='blue')
-    plt.scatter(top_helpful_pca_embeddings_adv[:, 0], top_helpful_pca_embeddings_adv[:, 1], s=5, marker='^', c='red')
+    plt.scatter(top_helpful_pca_embeddings[:, 0]    , top_helpful_pca_embeddings[:, 1]    , s=10, marker='s', c='blue', label='normal most helpful')
+    plt.scatter(top_helpful_pca_embeddings_adv[:, 0], top_helpful_pca_embeddings_adv[:, 1], s=10, marker='^', c='red' , label='adv most helpful')
 
     vis_embeddings     = np.expand_dims(pca_x_val_embedded[vis_idx], axis=0)
     vis_embeddings_adv = np.expand_dims(pca_x_val_adv_embedded[vis_idx], axis=0)
-    plt.scatter(vis_embeddings[:, 0]    , vis_embeddings[:, 1]    , s=100, marker='*', c='black')
-    plt.scatter(vis_embeddings_adv[:, 0], vis_embeddings_adv[:, 1], s=100, marker='*', c='gold')
-
-    plt.savefig(os.path.join(plot_dir, 'pca', 'NN_{}'.format(FLAGS.k_nearest), 'val_index_{}.png'.format(global_val_index)), dpi=300)
+    plt.scatter(vis_embeddings[:, 0]    , vis_embeddings[:, 1]    , s=200, marker='*', c='black', label='normal')
+    plt.scatter(vis_embeddings_adv[:, 0], vis_embeddings_adv[:, 1], s=200, marker='*', c='gold',  label='adv')
+    # plt.savefig(os.path.join(plot_dir, 'pca', 'NN_{}'.format(FLAGS.k_nearest), 'val_index_{}.png'.format(global_val_index)), dpi=300)
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = [4, 5, 0, 1, 2, 3]
+    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+    plt.tight_layout()
+    plt.savefig('teaser.png', dpi=300)
 
     # plotting the TSNE:
     plt.figure(2)
@@ -256,4 +265,4 @@ for vis_idx in range(len(X_val)):
     plt.scatter(vis_embeddings[:, 0]    , vis_embeddings[:, 1]    , s=100, marker='*', c='black')
     plt.scatter(vis_embeddings_adv[:, 0], vis_embeddings_adv[:, 1], s=100, marker='*', c='gold')
 
-    plt.savefig(os.path.join(plot_dir, 'tsne', 'NN_{}'.format(FLAGS.k_nearest), 'val_index_{}.png'.format(global_val_index)), dpi=300)
+    # plt.savefig(os.path.join(plot_dir, 'tsne', 'NN_{}'.format(FLAGS.k_nearest), 'val_index_{}.png'.format(global_val_index)), dpi=300)
