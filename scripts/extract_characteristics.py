@@ -888,7 +888,14 @@ if FLAGS.characteristics == 'dknn':
 
     k = FLAGS.k_nearest
 
-    for k in tqdm(np.arange(4000, 6100, 200)):
+    if FLAGS.dataset == 'cifar10':
+        k_vec = np.arange(4000, 5100, 100)
+    elif FLAGS.dataset == 'cifar100':
+        k_vec = np.arange(400, 510, 10)
+    elif FLAGS.dataset == 'svhn':
+        k_vec = np.arange(1000, 5100, 200)
+
+    for k in tqdm(k_vec):
         # divide the validation set for calibration and alphas
         calibration_size = int(X_val.shape[0]/3)
 
