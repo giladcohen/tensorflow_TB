@@ -20,7 +20,7 @@ from tensorflow.python.platform import flags
 FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', 'lid', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
