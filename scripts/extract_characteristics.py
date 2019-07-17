@@ -764,19 +764,19 @@ if FLAGS.characteristics == 'lid':
 
     k = FLAGS.k_nearest
 
-    # for k in [10, 12, 15, 17, 20, 25]:
-    # for val set
-    characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
-    print("LID train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
-    file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
-    data = np.concatenate((characteristics, label), axis=1)
-    np.save(file_name, data)
+    for k in np.arange(10, 31, 2):
+        # for val set
+        characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
+        print("LID train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
+        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
+        data = np.concatenate((characteristics, label), axis=1)
+        np.save(file_name, data)
 
-    # for test set
-    characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, k, 100)
-    file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+        # for test set
+        characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, k, 100)
+        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
 
 if FLAGS.characteristics == 'nnif':
 
