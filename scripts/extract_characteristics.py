@@ -729,7 +729,6 @@ def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes):
     :return: empirical p-value characteristics
     """
     k = knn['layer0'].n_neighbors
-    assert k == FLAGS.k_nearest
     num_output = len(model.net)
     knn_pred_cnt = np.zeros((X.shape[0], num_output, num_classes))
     empirical_p  = np.zeros((X.shape[0], num_classes))
