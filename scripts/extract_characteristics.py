@@ -896,6 +896,7 @@ if FLAGS.characteristics == 'dknn':
         k_vec = np.arange(1000, 5100, 200)
 
     for k in tqdm(k_vec):
+        print('Extracting DkNN characteristics for k={}'.format(k))
         # divide the validation set for calibration and alphas
         calibration_size = int(X_val.shape[0]/3)
 
