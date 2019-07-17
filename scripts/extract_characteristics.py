@@ -886,47 +886,49 @@ if FLAGS.characteristics == 'dknn':
     assert FLAGS.with_noise is False
 
     k = FLAGS.k_nearest
-    # divide the validation set for calibration and alphas
-    calibration_size = int(X_val.shape[0]/3)
 
-    X_cal          = X_val[:calibration_size]
-    x_cal_features = x_val_features[:calibration_size]
-    y_cal          = y_val_sparse[:calibration_size]
+    for k in tqdm(np.arange(4000, 6100, 200)):
+        # divide the validation set for calibration and alphas
+        calibration_size = int(X_val.shape[0]/3)
 
-    print("Calculating the calibration matrix...")
-    calbiration_vec = get_calibration(x_cal_features, y_cal, FLAGS.k_nearest)
-    print("Done calculating the calibration matrix.")
+        X_cal          = X_val[:calibration_size]
+        x_cal_features = x_val_features[:calibration_size]
+        y_cal          = y_val_sparse[:calibration_size]
 
-    X_val2              = X_val[calibration_size:]
-    y_val2              = y_val_sparse[calibration_size:]
-    x_val2_features     = x_val_features[calibration_size:]
+        print("Calculating the calibration matrix...")
+        calbiration_vec = get_calibration(x_cal_features, y_cal, FLAGS.k_nearest)
+        print("Done calculating the calibration matrix.")
 
-    X_val2_adv          = X_val_adv[calibration_size:]
-    y_val2_adv          = x_val_preds_adv[calibration_size:]
-    x_val2_features_adv = x_val_features_adv[calibration_size:]
+        X_val2              = X_val[calibration_size:]
+        y_val2              = y_val_sparse[calibration_size:]
+        x_val2_features     = x_val_features[calibration_size:]
 
-    # set training set
-    val_normal_characteristics = get_dknn_nonconformity(x_val2_features    , calbiration_vec, k)
-    val_adv_characteristics    = get_dknn_nonconformity(x_val2_features_adv, calbiration_vec, k)
+        X_val2_adv          = X_val_adv[calibration_size:]
+        y_val2_adv          = x_val_preds_adv[calibration_size:]
+        x_val2_features_adv = x_val_features_adv[calibration_size:]
 
-    dknn_neg = val_normal_characteristics
-    dknn_pos = val_adv_characteristics
-    characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
+        # set training set
+        val_normal_characteristics = get_dknn_nonconformity(x_val2_features    , calbiration_vec, k)
+        val_adv_characteristics    = get_dknn_nonconformity(x_val2_features_adv, calbiration_vec, k)
 
-    print("DKNN train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(k, FLAGS.with_noise))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+        dknn_neg = val_normal_characteristics
+        dknn_pos = val_adv_characteristics
+        characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
 
-    # set testing set
-    test_normal_characteristics = get_dknn_nonconformity(x_test_features    , calbiration_vec, k)
-    test_adv_characteristics    = get_dknn_nonconformity(x_test_features_adv, calbiration_vec, k)
+        print("DKNN train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(k, FLAGS.with_noise))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
 
-    dknn_neg = test_normal_characteristics
-    dknn_pos = test_adv_characteristics
-    characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
+        # set testing set
+        test_normal_characteristics = get_dknn_nonconformity(x_test_features    , calbiration_vec, k)
+        test_adv_characteristics    = get_dknn_nonconformity(x_test_features_adv, calbiration_vec, k)
 
-    print("DKNN test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}.npy'.format(k, FLAGS.with_noise))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+        dknn_neg = test_normal_characteristics
+        dknn_pos = test_adv_characteristics
+        characteristics, labels = merge_and_generate_labels(dknn_pos, dknn_neg)
+
+        print("DKNN test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}.npy'.format(k, FLAGS.with_noise))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
