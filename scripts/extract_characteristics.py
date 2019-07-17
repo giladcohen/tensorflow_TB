@@ -866,21 +866,22 @@ if FLAGS.characteristics == 'mahalanobis':
 
     magnitude = FLAGS.magnitude
 
-    # for magnitude in tqdm(np.array([0.00001, 0.00002, 0.00005, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01])):
-    print('Extracting Mahalanobis characteristics for magnitude={}'.format(magnitude))
+    for magnitude in tqdm(np.array([0.00001, 0.00002, 0.00005, 0.00008, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01])):
+    # for magnitude in tqdm(np.array([0.00005, 0.00008, 0.0001, 0.0002])):
+        print('Extracting Mahalanobis characteristics for magnitude={}'.format(magnitude))
 
-    # for val set
-    characteristics, label = get_mahalanobis(X_val, X_val_noisy, X_val_adv, magnitude, sample_mean, precision, 'train')
-    print("Mahalanobis train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
-    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'train', FLAGS.with_noise))
-    data = np.concatenate((characteristics, label), axis=1)
-    np.save(file_name, data)
+        # for val set
+        characteristics, label = get_mahalanobis(X_val, X_val_noisy, X_val_adv, magnitude, sample_mean, precision, 'train')
+        print("Mahalanobis train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
+        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'train', FLAGS.with_noise))
+        data = np.concatenate((characteristics, label), axis=1)
+        np.save(file_name, data)
 
-    # for test set
-    characteristics, labels = get_mahalanobis(X_test, X_test_noisy, X_test_adv, magnitude, sample_mean, precision, 'test')
-    file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'test', FLAGS.with_noise))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+        # for test set
+        characteristics, labels = get_mahalanobis(X_test, X_test_noisy, X_test_adv, magnitude, sample_mean, precision, 'test')
+        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'test', FLAGS.with_noise))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
 
 if FLAGS.characteristics == 'dknn':
     assert FLAGS.with_noise is False
