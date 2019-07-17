@@ -52,7 +52,7 @@ num_of_spatial_activations = {
 }
 
 FLAGS = flags.FLAGS
-flags.DEFINE_integer('batch_size', 5, 'Size of training batches')
+flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
