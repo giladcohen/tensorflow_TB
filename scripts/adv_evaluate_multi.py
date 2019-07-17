@@ -53,6 +53,9 @@ flags.DEFINE_bool('backward', False, 'ending index')
 flags.DEFINE_bool('overwrite_A', False, 'whether or not to overwrite the A calculation')
 flags.DEFINE_integer('num_threads', 1, 'number of threads')
 
+flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
+flags.DEFINE_string('port', 'null', 'to bypass pycharm bug')
+
 if FLAGS.set == 'val':
     test_val_set = True
     WORKSPACE = 'influence_workspace_validation'

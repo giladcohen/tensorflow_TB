@@ -19,9 +19,9 @@ from tensorflow.python.platform import flags
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('attack', 'cw', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', 'lid', 'type of defence: lid/mahalanobis/dknn/nnif')
+flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
 # FOR LID
@@ -35,6 +35,8 @@ flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
 flags.DEFINE_integer('max_indices', 200, 'maximum number of helpful indices to use in NNIF detection')
 flags.DEFINE_string('ablation', '1111', 'for ablation test')
 
+flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
+flags.DEFINE_string('port', 'null', 'to bypass pycharm bug')
 
 
 if FLAGS.dataset == 'cifar10':
