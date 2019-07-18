@@ -814,7 +814,7 @@ def get_dknn_nonconformity(features, calbiration_vec, k):
 if FLAGS.characteristics == 'lid':
 
     if FLAGS.k_nearest == -1:
-        k_vec = np.arange(10, 31, 2)
+        k_vec = np.arange(10, 41, 2)
     else:
         k_vec = [FLAGS.k_nearest]
 
@@ -857,8 +857,8 @@ if FLAGS.characteristics == 'nnif':
 
         # test
         characteristics, labels = get_nnif(X_test, 'test', max_indices)
-        characteristics[:, 0] *= 10
-        characteristics[:, 2] *= 10
+        characteristics[:, 0] *= (49/5)
+        characteristics[:, 2] *= (49/5)
         characteristics = characteristics[:, sel_column]
 
         print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
