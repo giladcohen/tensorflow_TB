@@ -66,14 +66,14 @@ flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dkn
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 
 # FOR LID
-flags.DEFINE_integer('k_nearest', 17, 'number of nearest neighbors to use for LID/DkNN detection')
+flags.DEFINE_integer('k_nearest', -1, 'number of nearest neighbors to use for LID/DkNN detection')
 
 # FOR MAHANABOLIS
-flags.DEFINE_float('magnitude', 0.002, 'magnitude for mahalanobis detection')
+flags.DEFINE_float('magnitude', -1, 'magnitude for mahalanobis detection')
 flags.DEFINE_float('rgb_scale', 1, 'scale for mahalanobis')
 
 # FOR NNIF
-flags.DEFINE_integer('max_indices', 200, 'maximum number of helpful indices to use in NNIF detection')
+flags.DEFINE_integer('max_indices', -1, 'maximum number of helpful indices to use in NNIF detection')
 flags.DEFINE_string('ablation', '1111', 'for ablation test')
 
 flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
@@ -813,9 +813,12 @@ def get_dknn_nonconformity(features, calbiration_vec, k):
 
 if FLAGS.characteristics == 'lid':
 
-    k = FLAGS.k_nearest
+    if FLAGS.k_nearest == -1:
+        k_vec = np.arange(10, 31, 2)
+    else:
+        k_vec = [FLAGS.k_nearest]
 
-    for k in tqdm(np.arange(10, 31, 2)):
+    for k in tqdm(k_vec):
         print('Extracting LID characteristics for k={}'.format(k))
         # for val set
         characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
@@ -832,31 +835,36 @@ if FLAGS.characteristics == 'lid':
 
 if FLAGS.characteristics == 'nnif':
 
-    max_indices = FLAGS.max_indices
     # for ablation:
     sel_column = []
     for i in [0, 1, 2, 3]:
         if FLAGS.ablation[i] == '1':
             sel_column.append(i)
 
-    # val
-    characteristics, labels = get_nnif(X_val, 'val', max_indices)
-    characteristics = characteristics[:, sel_column]
-    print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+    if FLAGS.max_indices == -1:
+        max_indices_vec = np.arange(50, 550, 50)
+    else:
+        max_indices_vec = [FLAGS.max_indices]
 
-    # test
-    characteristics, labels = get_nnif(X_test, 'test', max_indices)
-    characteristics[:, 0] *= 10
-    characteristics[:, 2] *= 10
-    characteristics = characteristics[:, sel_column]
+    for max_indices in tqdm(max_indices_vec):
+        # val
+        characteristics, labels = get_nnif(X_val, 'val', max_indices)
+        characteristics = characteristics[:, sel_column]
+        print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
 
-    print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
+        # test
+        characteristics, labels = get_nnif(X_test, 'test', max_indices)
+        characteristics[:, 0] *= 10
+        characteristics[:, 2] *= 10
+        characteristics = characteristics[:, sel_column]
+
+        print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
 
 if FLAGS.characteristics == 'mahalanobis':
 
@@ -864,9 +872,12 @@ if FLAGS.characteristics == 'mahalanobis':
     sample_mean, precision = sample_estimator(feeder.num_classes, X_train, y_train_sparse)
     print('Done calculating: sample_mean, precision.')
 
-    magnitude = FLAGS.magnitude
+    if FLAGS.magnitude == -1:
+        magnitude_vec = np.array([0.00001, 0.00002, 0.00005, 0.00008, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01])
+    else:
+        magnitude_vec = [FLAGS.magnitude]
 
-    for magnitude in tqdm(np.array([0.00001, 0.00002, 0.00005, 0.00008, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01])):
+    for magnitude in tqdm(magnitude_vec):
     # for magnitude in tqdm(np.array([0.00005, 0.00008, 0.0001, 0.0002])):
         print('Extracting Mahalanobis characteristics for magnitude={}'.format(magnitude))
 
@@ -886,14 +897,15 @@ if FLAGS.characteristics == 'mahalanobis':
 if FLAGS.characteristics == 'dknn':
     assert FLAGS.with_noise is False
 
-    k = FLAGS.k_nearest
-
-    if FLAGS.dataset == 'cifar10':
-        k_vec = np.arange(4000, 5100, 100)
-    elif FLAGS.dataset == 'cifar100':
-        k_vec = np.arange(10, 510, 10)
-    elif FLAGS.dataset == 'svhn':
-        k_vec = np.arange(1000, 5100, 200)
+    if FLAGS.k_nearest == -1:
+        if FLAGS.dataset == 'cifar10':
+            k_vec = np.arange(4000, 5600, 100)
+        elif FLAGS.dataset == 'cifar100':
+            k_vec = np.arange(10, 510, 10)
+        elif FLAGS.dataset == 'svhn':
+            k_vec = np.arange(1000, 5100, 200)
+    else:
+        kvec = [FLAGS.k_nearest]
 
     for k in tqdm(k_vec):
         print('Extracting DkNN characteristics for k={}'.format(k))
