@@ -891,7 +891,7 @@ if FLAGS.characteristics == 'dknn':
     if FLAGS.dataset == 'cifar10':
         k_vec = np.arange(4000, 5100, 100)
     elif FLAGS.dataset == 'cifar100':
-        k_vec = np.arange(400, 510, 10)
+        k_vec = np.arange(10, 510, 10)
     elif FLAGS.dataset == 'svhn':
         k_vec = np.arange(1000, 5100, 200)
 
