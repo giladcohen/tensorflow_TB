@@ -905,7 +905,7 @@ if FLAGS.characteristics == 'dknn':
         elif FLAGS.dataset == 'svhn':
             k_vec = np.arange(1000, 5100, 200)
     else:
-        kvec = [FLAGS.k_nearest]
+        k_vec = [FLAGS.k_nearest]
 
     for k in tqdm(k_vec):
         print('Extracting DkNN characteristics for k={}'.format(k))
