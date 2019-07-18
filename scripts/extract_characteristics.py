@@ -847,6 +847,8 @@ if FLAGS.characteristics == 'nnif':
         max_indices_vec = [FLAGS.max_indices]
 
     for max_indices in tqdm(max_indices_vec):
+        print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
+        
         # val
         characteristics, labels = get_nnif(X_val, 'val', max_indices)
         characteristics = characteristics[:, sel_column]
