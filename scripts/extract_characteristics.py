@@ -64,6 +64,7 @@ flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, c
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
+flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
 
 # FOR LID
 flags.DEFINE_integer('k_nearest', -1, 'number of nearest neighbors to use for LID/DkNN detection')
@@ -78,6 +79,8 @@ flags.DEFINE_string('ablation', '1111', 'for ablation test')
 
 flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
 flags.DEFINE_string('port', 'null', 'to bypass pycharm bug')
+
+assert FLAGS.with_noise is False  # TODO(support noise in the future)
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -423,7 +426,10 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
         X_adv_act   = batch_eval(sess, [x], model.net.values(), [X_test_adv[start:end]]  , batch_size)
         X_noisy_act = batch_eval(sess, [x], model.net.values(), [X_test_noisy[start:end]], batch_size)
 
-        for i, key in enumerate(model.net):
+        for i in range(len(model.net)):
+            if FLAGS.only_last and (model.net['layer{}'.format(i)] is not embeddings):
+                print('Skipping LID characteristics for layer{}'.format(i))
+                continue
             X_act[i]       = np.asarray(X_act[i]      , dtype=np.float32).reshape((n_feed, -1))
             X_adv_act[i]   = np.asarray(X_adv_act[i]  , dtype=np.float32).reshape((n_feed, -1))
             X_noisy_act[i] = np.asarray(X_noisy_act[i], dtype=np.float32).reshape((n_feed, -1))
@@ -470,6 +476,9 @@ def get_lid(X, X_noisy, X_adv, k, batch_size=100):
 
 def get_mahalanobis(X, X_noisy, X_adv, magnitude, sample_mean, precision, set):
     for layer in range(len(model.net)):
+        if FLAGS.only_last and (model.net['layer{}'.format(layer)] is not embeddings):
+            print('Skipping Mahalanobis characteristics for set {}, layer{}'.format(set, layer))
+            continue
         print('Calculating Mahalanobis characteristics for set {}, layer{}'.format(set, layer))
         with tf.name_scope('{}_gaussian_layer{}'.format(set, layer)):
             gaussian_score, grads = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes, layer)
@@ -810,6 +819,12 @@ def get_dknn_nonconformity(features, calbiration_vec, k):
 
     return empirical_p
 
+def append_suffix(f):
+    f = f + '_noisy_{}'.format(FLAGS.with_noise)  # TODO(remove in the future. For backward compatibility)
+    if FLAGS.only_last:
+        f = f + '_only_last'
+    f = f + '.npy'
+    return f
 
 if FLAGS.characteristics == 'lid':
 
@@ -823,17 +838,23 @@ if FLAGS.characteristics == 'lid':
         # for val set
         characteristics, label = get_lid(X_val, X_val_noisy, X_val_adv, k, 100)
         print("LID train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
-        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
+
+        file_name = 'k_{}_batch_{}_{}'.format(k, 100, 'train')
+        file_name = append_suffix(file_name)
+        file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, label), axis=1)
         np.save(file_name, data)
 
         # for test set
         characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, k, 100)
-        file_name = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(k, 100, FLAGS.with_noise))
+        file_name = 'k_{}_batch_{}_{}'.format(k, 100, 'test')
+        file_name = append_suffix(file_name)
+        file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, labels), axis=1)
         np.save(file_name, data)
 
 if FLAGS.characteristics == 'nnif':
+    assert FLAGS.only_last is True
 
     # for ablation:
     sel_column = []
@@ -886,18 +907,22 @@ if FLAGS.characteristics == 'mahalanobis':
         # for val set
         characteristics, label = get_mahalanobis(X_val, X_val_noisy, X_val_adv, magnitude, sample_mean, precision, 'train')
         print("Mahalanobis train: [characteristic shape: ", characteristics.shape, ", label shape: ", label.shape)
-        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'train', FLAGS.with_noise))
+        file_name = 'magnitude_{}_scale_{}_{}'.format(magnitude, FLAGS.rgb_scale, 'train')
+        file_name = append_suffix(file_name)
+        file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, label), axis=1)
         np.save(file_name, data)
 
         # for test set
         characteristics, labels = get_mahalanobis(X_test, X_test_noisy, X_test_adv, magnitude, sample_mean, precision, 'test')
-        file_name = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_{}_noisy_{}.npy'.format(magnitude, FLAGS.rgb_scale, 'test', FLAGS.with_noise))
+        file_name = 'magnitude_{}_scale_{}_{}'.format(magnitude, FLAGS.rgb_scale, 'test')
+        file_name = append_suffix(file_name)
+        file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, labels), axis=1)
         np.save(file_name, data)
 
 if FLAGS.characteristics == 'dknn':
-    assert FLAGS.with_noise is False
+    assert FLAGS.only_last is True
 
     if FLAGS.k_nearest == -1:
         if FLAGS.dataset == 'cifar10':
