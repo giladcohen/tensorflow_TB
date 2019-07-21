@@ -902,7 +902,7 @@ if FLAGS.characteristics == 'mahalanobis':
     print('Done calculating: sample_mean, precision.')
 
     if FLAGS.magnitude == -1:
-        magnitude_vec = np.array([0.00001, 0.00002, 0.00005, 0.00008, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01])
+        magnitude_vec = np.array([0.00001, 0.00002, 0.00005, 0.00008, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.008, 0.01])
     else:
         magnitude_vec = [FLAGS.magnitude]
 
