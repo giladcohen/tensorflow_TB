@@ -379,6 +379,12 @@ print("X_test: "      , X_test.shape)
 print("X_test_noisy: ", X_test_noisy.shape)
 print("X_test_adv: "  , X_test_adv.shape)
 
+# if only last, make sure that only the embedding is in model.net
+if FLAGS.only_last:
+    print('Keeping only the embedding layer in model.net')
+    model.net = {'layer31': model.net['layer31']}
+    assert embeddings is model.net['layer31']
+
 def merge_and_generate_labels(X_pos, X_neg):
     """
     merge positve and nagative artifact and generate labels
@@ -411,6 +417,7 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
     :return: lids: LID of normal images of shape (num_examples, lid_dim)
             lids_adv: LID of advs images of shape (num_examples, lid_dim)
     """
+
     lid_dim = len(model.net)
     print("Number of layers to estimate: ", lid_dim)
 
@@ -427,9 +434,6 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
         X_noisy_act = batch_eval(sess, [x], model.net.values(), [X_test_noisy[start:end]], batch_size)
 
         for i in range(len(model.net)):
-            if FLAGS.only_last and (model.net['layer{}'.format(i)] is not embeddings):
-                # print('Skipping LID characteristics for layer{}'.format(i))
-                continue
             X_act[i]       = np.asarray(X_act[i]      , dtype=np.float32).reshape((n_feed, -1))
             X_adv_act[i]   = np.asarray(X_adv_act[i]  , dtype=np.float32).reshape((n_feed, -1))
             X_noisy_act[i] = np.asarray(X_noisy_act[i], dtype=np.float32).reshape((n_feed, -1))
@@ -476,9 +480,6 @@ def get_lid(X, X_noisy, X_adv, k, batch_size=100):
 
 def get_mahalanobis(X, X_noisy, X_adv, magnitude, sample_mean, precision, set):
     for layer in range(len(model.net)):
-        if FLAGS.only_last and (model.net['layer{}'.format(layer)] is not embeddings):
-            print('Skipping Mahalanobis characteristics for set {}, layer{}'.format(set, layer))
-            continue
         print('Calculating Mahalanobis characteristics for set {}, layer{}'.format(set, layer))
         with tf.name_scope('{}_gaussian_layer{}'.format(set, layer)):
             gaussian_score, grads = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes, layer)
