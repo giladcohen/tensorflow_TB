@@ -479,9 +479,10 @@ def get_lid(X, X_noisy, X_adv, k, batch_size=100):
     return artifacts, labels
 
 def get_mahalanobis(X, X_noisy, X_adv, magnitude, sample_mean, precision, set):
-    for layer in range(len(model.net)):
-        print('Calculating Mahalanobis characteristics for set {}, layer{}'.format(set, layer))
-        with tf.name_scope('{}_gaussian_layer{}'.format(set, layer)):
+    first_pass = True
+    for layer in model.net.keys():
+        print('Calculating Mahalanobis characteristics for set {}, {}'.format(set, layer))
+        with tf.name_scope('{}_gaussian_{}'.format(set, layer)):
             gaussian_score, grads = get_mahanabolis_tensors(sample_mean, precision, feeder.num_classes, layer)
 
             # val
@@ -497,10 +498,11 @@ def get_mahalanobis(X, X_noisy, X_adv, magnitude, sample_mean, precision, set):
             else:  # just a placeholder with zeros
                 M_noisy = np.zeros_like(M_in)
 
-            if layer == 0:
+            if first_pass:
                 Mahalanobis_in    = M_in.reshape((M_in.shape[0], -1))
                 Mahalanobis_out   = M_out.reshape((M_out.shape[0], -1))
                 Mahalanobis_noisy = M_noisy.reshape((M_noisy.shape[0], -1))
+                first_pass = False
             else:
                 Mahalanobis_in    = np.concatenate((Mahalanobis_in, M_in.reshape((M_in.shape[0], -1))), axis=1)
                 Mahalanobis_out   = np.concatenate((Mahalanobis_out, M_out.reshape((M_out.shape[0], -1))), axis=1)
@@ -608,15 +610,18 @@ def get_Mahalanobis_score_adv(test_data, gaussian_score, grads, magnitude, scale
 
     return Mahalanobis
 
-def get_mahanabolis_tensors(sample_mean, precision, num_classes, layer_index=0):
+def get_mahanabolis_tensors(sample_mean, precision, num_classes, layer):
     # here we calculate the input gradients for -pure_tau. Meaning d(-pure_tau)/dx.
     # First, how do we calculate pure_tau? This is a computation on a batch.
-
-    layer = 'layer{}'.format(layer_index)
+    layer_index = int(layer[5:])
 
     with tf.name_scope('Mahanabolis_grad_calc_'.format(layer)):
-        precision_mat      = tf.convert_to_tensor(precision[layer_index]    , dtype=tf.float32)
-        sample_mean_tensor = tf.convert_to_tensor(sample_mean[layer_index]  , dtype=tf.float32)
+        if FLAGS.only_last:
+            precision_mat      = tf.convert_to_tensor(precision[0]  , dtype=tf.float32)
+            sample_mean_tensor = tf.convert_to_tensor(sample_mean[0], dtype=tf.float32)
+        else:
+            precision_mat      = tf.convert_to_tensor(precision[layer_index]    , dtype=tf.float32)
+            sample_mean_tensor = tf.convert_to_tensor(sample_mean[layer_index]  , dtype=tf.float32)
 
         out_features       = model.net[layer]
         if len(out_features.shape) == 4:
