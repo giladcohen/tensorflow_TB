@@ -23,6 +23,7 @@ flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, c
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
+flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
 
 # FOR LID
 flags.DEFINE_integer('k_nearest', 17, 'number of nearest neighbors to use for LID/DkNN detection')
@@ -55,20 +56,26 @@ if FLAGS.targeted:
 characteristics_dir = os.path.join(attack_dir, FLAGS.characteristics)
 
 if FLAGS.characteristics == 'lid':
-    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}.npy'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
+    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
 elif FLAGS.characteristics == 'mahalanobis':
-    train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}.npy'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
+    train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
 elif FLAGS.characteristics == 'nnif':
     #TODO(gilad): add noisy file as well
-    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(FLAGS.max_indices, FLAGS.ablation))
+    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}'.format(FLAGS.max_indices, FLAGS.ablation))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}'.format(FLAGS.max_indices, FLAGS.ablation))
 elif FLAGS.characteristics == 'dknn':
-    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
-    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}.npy'.format(FLAGS.k_nearest, FLAGS.with_noise))
+    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}'.format(FLAGS.k_nearest, FLAGS.with_noise))
+    test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}'.format(FLAGS.k_nearest, FLAGS.with_noise))
 else:
     raise AssertionError('{} is not supported'.format(FLAGS.characteristics))
+
+if FLAGS.only_last and FLAGS.characteristics in ['lid', 'mahalanobis']:
+    train_characteristics_file = train_characteristics_file + '_only_last'
+    test_characteristics_file  = test_characteristics_file  + '_only_last'
+train_characteristics_file = train_characteristics_file + '.npy'
+test_characteristics_file  = test_characteristics_file  + '.npy'
 
 def load_characteristics(characteristics_file):
     X, Y = None, None
