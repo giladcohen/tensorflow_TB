@@ -428,7 +428,7 @@ def get_lids_random_batch(X_test, X_test_noisy, X_test_adv, k=FLAGS.k_nearest, b
 
         for i in range(len(model.net)):
             if FLAGS.only_last and (model.net['layer{}'.format(i)] is not embeddings):
-                print('Skipping LID characteristics for layer{}'.format(i))
+                # print('Skipping LID characteristics for layer{}'.format(i))
                 continue
             X_act[i]       = np.asarray(X_act[i]      , dtype=np.float32).reshape((n_feed, -1))
             X_adv_act[i]   = np.asarray(X_adv_act[i]  , dtype=np.float32).reshape((n_feed, -1))
