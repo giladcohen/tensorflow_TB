@@ -234,7 +234,7 @@ else:
     # plotting the PCA:
     plt.figure(1)
     plt.scatter(neighbors_pca_embeddings[:, 0]    , neighbors_pca_embeddings[:, 1]    , s=10, marker='o', c='blue', alpha=0.5, label='normal $k$-NN')
-    plt.scatter(neighbors_pca_embeddings_adv[:, 0], neighbors_pca_embeddings_adv[:, 1], s=10, marker='o', c='red' , alpha=0.5, label='adv $k$-NN')
+    plt.scatter(neighbors_pca_embeddings_adv[:, 0], neighbors_pca_embeddings_adv[:, 1], s=10, marker='v', c='red' , alpha=0.5, label='adv $k$-NN')
     # TODO(gilad): plot overlapping neighbors in a merged color
 
     plt.scatter(top_helpful_pca_embeddings[:, 0]    , top_helpful_pca_embeddings[:, 1]    , s=10, marker='s', c='blue', label='normal most helpful')

@@ -61,19 +61,19 @@ ax1 = fig.add_subplot(121)
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/deepfool/dknn/k_4800_train.npy'
 test_characteristics_file  = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/deepfool/dknn/k_4800_train.npy'
 fpr1, tpr1, auc_score, acc = calc_metrics(train_characteristics_file, test_characteristics_file)
-ax1.plot(fpr1, tpr1, 'k')
+ax1.plot(fpr1, tpr1, 'k--')
 
 # LID
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/deepfool/lid/k_17_batch_100_train.npy'
 test_characteristics_file  = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/deepfool/lid/k_17_batch_100_test.npy'
 fpr2, tpr2, auc_score, acc = calc_metrics(train_characteristics_file, test_characteristics_file)
-ax1.plot(fpr2, tpr2, 'b')
+ax1.plot(fpr2, tpr2, 'b-.')
 
 # Mahalanobis
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/deepfool/mahalanobis/magnitude_0.0001_scale_1.0_train.npy'
 test_characteristics_file  = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/deepfool/mahalanobis/magnitude_0.0001_scale_1.0_test.npy'
 fpr3, tpr3, auc_score, acc = calc_metrics(train_characteristics_file, test_characteristics_file)
-ax1.plot(fpr3, tpr3, 'g')
+ax1.plot(fpr3, tpr3, 'g:', linewidth=2)
 
 # NNIF
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/deepfool/nnif/max_indices_200_train.npy'
@@ -91,9 +91,9 @@ subax1 = add_subplot_axes(ax1, subpos + [-0.25, 0.18, 0, 0])
 subax1.set_xlim([-0.02, 0.5])
 subax1.set_ylim([0.8, 1.05])
 subax1.set_yticks([0.85, 0.9, 0.95, 1.0])
-subax1.plot(fpr1, tpr1, 'k')
-subax1.plot(fpr2, tpr2, 'b')
-subax1.plot(fpr3, tpr3, 'g')
+subax1.plot(fpr1, tpr1, 'k--')
+subax1.plot(fpr2, tpr2, 'b-.')
+subax1.plot(fpr3, tpr3, 'g:', linewidth=2)
 subax1.plot(fpr4, tpr4, 'r')
 ax1.add_patch(patches.Polygon(xy=np.array([[0.0, 1.01], [0, 0.8], [0.213, 0.383], [0.66, 0.81], [0.5, 1.01]]), closed=True, color='silver'))
 
@@ -103,19 +103,19 @@ ax2 = fig.add_subplot(122)
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/cw_targeted/dknn/k_4700_train.npy'
 test_characteristics_file  = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/cw_targeted/dknn/k_4700_train.npy'
 fpr1, tpr1, auc_score, acc = calc_metrics(train_characteristics_file, test_characteristics_file)
-ax2.plot(fpr1, tpr1, 'k')
+ax2.plot(fpr1, tpr1, 'k--')
 
 # LID
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/cw_targeted/lid/k_20_batch_100_train.npy'
 test_characteristics_file  = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/cw_targeted/lid/k_20_batch_100_test.npy'
 fpr2, tpr2, auc_score, acc = calc_metrics(train_characteristics_file, test_characteristics_file)
-ax2.plot(fpr2, tpr2, 'b')
+ax2.plot(fpr2, tpr2, 'b-.')
 
 # Mahalanobis
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/cw_targeted/mahalanobis/magnitude_8e-05_scale_1.0_train.npy'
 test_characteristics_file  = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/cw_targeted/mahalanobis/magnitude_8e-05_scale_1.0_test.npy'
 fpr3, tpr3, auc_score, acc = calc_metrics(train_characteristics_file, test_characteristics_file)
-ax2.plot(fpr3, tpr3, 'g')
+ax2.plot(fpr3, tpr3, 'g:', linewidth=2)
 
 # NNIF
 train_characteristics_file = '/data/gilad/logs/influence/cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000/cw_targeted/nnif/max_indices_200_train.npy'
@@ -133,16 +133,13 @@ subax2 = add_subplot_axes(ax2, subpos + [-0.05, 0.18, 0, 0])
 subax2.set_xlim([-0.02, 0.5])
 subax2.set_ylim([0.8, 1.05])
 subax2.set_yticks([0.85, 0.9, 0.95, 1.0])
-subax2.plot(fpr1, tpr1, 'k')
-subax2.plot(fpr2, tpr2, 'b')
-subax2.plot(fpr3, tpr3, 'g')
+subax2.plot(fpr1, tpr1, 'k--')
+subax2.plot(fpr2, tpr2, 'b-.')
+subax2.plot(fpr3, tpr3, 'g:', linewidth=2)
 subax2.plot(fpr4, tpr4, 'r')
 ax2.add_patch(patches.Polygon(xy=np.array([[0.0, 1.01], [0, 0.8], [0.213, 0.383], [0.66, 0.81], [0.5, 1.01]]), closed=True, color='silver'))
 
-
-
-
 plt.tight_layout()
-plt.savefig('auc_plot.png', dpi=350)
+plt.savefig('auc_cifar10.png', dpi=350)
 
 
