@@ -19,9 +19,8 @@ from tensorflow.python.platform import flags
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('train_characteristics_file', '', 'adversarial attack the the detector was trained on')
+flags.DEFINE_string('seen_attack', '', 'Seen attack when training detector')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
@@ -50,31 +49,41 @@ elif FLAGS.dataset == 'svhn':
 else:
     raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
 
+if FLAGS.seen_attack != '':
+    SEEN_ATTACK = FLAGS.seen_attack
+else:
+    SEEN_ATTACK = FLAGS.attack
+
+SEEN_ATTACK_TARGETED = SEEN_ATTACK != 'deepfool'
+ATTACK_TARGETED      = FLAGS.attack != 'deepfool'
+
 model_dir          = os.path.join('/data/gilad/logs/influence', CHECKPOINT_NAME)
+seen_attack_dir    = os.path.join(model_dir, SEEN_ATTACK)
 attack_dir         = os.path.join(model_dir, FLAGS.attack)
-if FLAGS.targeted:
-    attack_dir = attack_dir + '_targeted'
-characteristics_dir = os.path.join(attack_dir, FLAGS.characteristics)
+
+if SEEN_ATTACK_TARGETED:
+    seen_attack_dir = seen_attack_dir + '_targeted'
+if ATTACK_TARGETED:
+    attack_dir      = attack_dir + '_targeted'
+
+seen_characteristics_dir = os.path.join(seen_attack_dir, FLAGS.characteristics)
+characteristics_dir      = os.path.join(attack_dir     , FLAGS.characteristics)
 
 if FLAGS.characteristics == 'lid':
-    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_batch_{}_train_noisy_{}'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
+    train_characteristics_file = os.path.join(seen_characteristics_dir, 'k_{}_batch_{}_train_noisy_{}'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
     test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_batch_{}_test_noisy_{}'.format(FLAGS.k_nearest, 100, FLAGS.with_noise))
 elif FLAGS.characteristics == 'mahalanobis':
-    train_characteristics_file = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
+    train_characteristics_file = os.path.join(seen_characteristics_dir, 'magnitude_{}_scale_{}_train_noisy_{}'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
     test_characteristics_file  = os.path.join(characteristics_dir, 'magnitude_{}_scale_{}_test_noisy_{}'.format(FLAGS.magnitude, FLAGS.rgb_scale, FLAGS.with_noise))
 elif FLAGS.characteristics == 'nnif':
     #TODO(gilad): add noisy file as well
-    train_characteristics_file = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}'.format(FLAGS.max_indices, FLAGS.ablation))
+    train_characteristics_file = os.path.join(seen_characteristics_dir, 'max_indices_{}_train_ablation_{}'.format(FLAGS.max_indices, FLAGS.ablation))
     test_characteristics_file  = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}'.format(FLAGS.max_indices, FLAGS.ablation))
 elif FLAGS.characteristics == 'dknn':
-    train_characteristics_file = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}'.format(FLAGS.k_nearest, FLAGS.with_noise))
+    train_characteristics_file = os.path.join(seen_characteristics_dir, 'k_{}_train_noisy_{}'.format(FLAGS.k_nearest, FLAGS.with_noise))
     test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}'.format(FLAGS.k_nearest, FLAGS.with_noise))
 else:
     raise AssertionError('{} is not supported'.format(FLAGS.characteristics))
-
-if FLAGS.train_characteristics_file != '':
-    print('Overriding the train caracteristics from the file: {}'.format(FLAGS.train_characteristics_file))
-    train_characteristics_file = FLAGS.train_characteristics_file
 
 if FLAGS.only_last and FLAGS.characteristics in ['lid', 'mahalanobis']:
     train_characteristics_file = train_characteristics_file + '_only_last'
@@ -93,7 +102,7 @@ def load_characteristics(characteristics_file):
     return X, Y
 
 
-print("Loading train attack: %s" % FLAGS.attack)
+print("Loading train attack: {}\nTraining file: {}\nTesting file: {}".format(FLAGS.attack, train_characteristics_file, test_characteristics_file))
 # X, Y = load_characteristics(characteristics_file)
 X_train, Y_train = load_characteristics(train_characteristics_file)
 X_test, Y_test   = load_characteristics(test_characteristics_file)
