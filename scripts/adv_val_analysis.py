@@ -9,7 +9,6 @@ import imageio
 from sklearn.neighbors import NearestNeighbors
 
 from tensorflow.python.platform import flags
-import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 import matplotlib as mpl
 mpl.rcParams['mathtext.fontset'] = 'custom'
 mpl.rcParams['mathtext.fallback_to_cm'] = True

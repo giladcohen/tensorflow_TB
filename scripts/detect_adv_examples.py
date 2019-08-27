@@ -19,6 +19,7 @@ from tensorflow.python.platform import flags
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
+flags.DEFINE_string('train_characteristics_file', '', 'adversarial attack the the detector was trained on')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dknn/nnif')
@@ -70,6 +71,10 @@ elif FLAGS.characteristics == 'dknn':
     test_characteristics_file  = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}'.format(FLAGS.k_nearest, FLAGS.with_noise))
 else:
     raise AssertionError('{} is not supported'.format(FLAGS.characteristics))
+
+if FLAGS.train_characteristics_file != '':
+    print('Overriding the train caracteristics from the file: {}'.format(FLAGS.train_characteristics_file))
+    train_characteristics_file = FLAGS.train_characteristics_file
 
 if FLAGS.only_last and FLAGS.characteristics in ['lid', 'mahalanobis']:
     train_characteristics_file = train_characteristics_file + '_only_last'
