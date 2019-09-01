@@ -33,6 +33,7 @@ from cleverhans.utils import random_targets
 from cleverhans.evaluation import batch_eval
 from tqdm import tqdm
 import sklearn.covariance
+from sklearn.neighbors import NearestNeighbors
 
 from lid_adversarial_subspace_detection.util import mle_batch
 
@@ -62,7 +63,7 @@ flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dknn/nnif')
+flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
 
@@ -657,6 +658,33 @@ def get_mahanabolis_tensors(sample_mean, precision, num_classes, layer):
 
     return gaussian_score, grads
 
+def find_ranks(sub_index, sorted_influence_indices, adversarial=False):
+
+    if adversarial:
+        ni = all_adv_ranks
+        nd = all_adv_dists
+    else:
+        ni = all_normal_ranks
+        nd = all_normal_dists
+
+    num_output = len(model.net)
+    ranks = -1 * np.ones((num_output, len(sorted_influence_indices)), dtype=np.int32)
+    dists = -1 * np.ones((num_output, len(sorted_influence_indices)), dtype=np.float32)
+
+    print('Finding ranks for sub_index={} (adversarial={})'.format(sub_index, adversarial))
+    for target_idx in range(len(sorted_influence_indices)):  # for only some indices (say, 0:50 only)
+        idx = sorted_influence_indices[target_idx]  # selecting training sample index
+        for layer_index in range(num_output):
+            loc_in_knn = np.where(ni[sub_index, layer_index] == idx)[0][0]
+            knn_dist   = nd[sub_index, layer_index, loc_in_knn]
+            ranks[layer_index, target_idx] = loc_in_knn
+            dists[layer_index, target_idx] = knn_dist
+
+    ranks_mean = np.mean(ranks, axis=1)
+    dists_mean = np.mean(dists, axis=1)
+
+    return ranks_mean, dists_mean
+
 def get_nnif(X, subset, max_indices):
     """Returns the knn rank of every testing sample"""
     if subset == 'val':
@@ -671,8 +699,12 @@ def get_nnif(X, subset, max_indices):
         x_preds_adv  = x_test_preds_adv
     inds_correct = feeder.get_global_index(subset, inds_correct)
 
-    ranks       = -1 * np.ones((len(X), 4))
-    ranks_adv   = -1 * np.ones((len(X), 4))
+    # initialize knn for layers
+    num_output = len(model.net)
+    assert len(knn.keys()) == num_output
+
+    ranks     = -1 * np.ones((len(X), num_output, 4))
+    ranks_adv = -1 * np.ones((len(X), num_output, 4))
 
     for i in tqdm(range(len(inds_correct))):
         global_index = inds_correct[i]
@@ -682,17 +714,17 @@ def get_nnif(X, subset, max_indices):
         assert pred_label == real_label, 'failed for i={}, global_index={}'.format(i, global_index)
         index_dir = os.path.join(model_dir, subset, '{}_index_{}'.format(subset, global_index))
 
-        # collect real
-        ranks[i, 0] = np.load(os.path.join(index_dir, 'real', 'helpful_ranks.npy'))[:max_indices].mean()
-        ranks[i, 1] = np.load(os.path.join(index_dir, 'real', 'helpful_dists.npy'))[:max_indices].mean()
-        ranks[i, 2] = np.load(os.path.join(index_dir, 'real', 'harmful_ranks.npy'))[:max_indices].mean()
-        ranks[i, 3] = np.load(os.path.join(index_dir, 'real', 'harmful_dists.npy'))[:max_indices].mean()
+        # collect pred scores:
+        scores = np.load(os.path.join(index_dir, 'real', 'scores.npy'))
+        sorted_indices = np.argsort(scores)
+        ranks[i, :, 0], ranks[i, :, 1] = find_ranks(i, sorted_indices[-max_indices:][::-1], adversarial=False)
+        ranks[i, :, 2], ranks[i, :, 3] = find_ranks(i, sorted_indices[:max_indices], adversarial=False)
 
-        # collect adv
-        ranks_adv[i, 0] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'helpful_ranks.npy'))[:max_indices].mean()
-        ranks_adv[i, 1] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'helpful_dists.npy'))[:max_indices].mean()
-        ranks_adv[i, 2] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'harmful_ranks.npy'))[:max_indices].mean()
-        ranks_adv[i, 3] = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'harmful_dists.npy'))[:max_indices].mean()
+        # collect adv scores:
+        scores = np.load(os.path.join(index_dir, 'adv', FLAGS.attack, 'scores.npy'))
+        sorted_indices = np.argsort(scores)
+        ranks_adv[i, :, 0], ranks_adv[i, :, 1] = find_ranks(i, sorted_indices[-max_indices:][::-1], adversarial=True)
+        ranks_adv[i, :, 2], ranks_adv[i, :, 3] = find_ranks(i, sorted_indices[:max_indices], adversarial=True)
 
     print("{} ranks_normal: ".format(subset), ranks.shape)
     print("{} ranks_adv: ".format(subset), ranks_adv.shape)
@@ -825,6 +857,40 @@ def get_dknn_nonconformity(features, calbiration_vec, k):
 
     return empirical_p
 
+def get_knn_layers(X_train, y_train_sparse):
+    knn = {}
+
+    train_features = batch_eval(sess, [x], model.net.values(), [X_train], FLAGS.batch_size)
+    print('Fitting knn models on all layers: {}'.format(model.net.keys()))
+    for layer_index, layer in enumerate(model.net.keys()):
+        if len(train_features[layer_index].shape) == 4:
+            train_features[layer_index] = np.asarray(train_features[layer_index], dtype=np.float32).reshape((X_train.shape[0], -1, train_features[layer_index].shape[-1]))
+            train_features[layer_index] = np.mean(train_features[layer_index], axis=1)
+        elif len(train_features[layer_index].shape) == 2:
+            pass  # leave as is
+        else:
+            raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(train_features[layer_index].shape), layer))
+
+        knn[layer] = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20, algorithm='brute')
+        knn[layer].fit(train_features[layer_index], y_train_sparse)
+
+    del train_features
+    return knn
+
+def calc_all_ranks_and_dists(knn, subset, X):
+    num_output = len(model.net.keys())
+    all_neighbor_ranks = -1 * np.ones((len(X), num_output, feeder.get_train_size()))
+    all_neighbor_dists = -1 * np.ones((len(X), num_output, feeder.get_train_size()))
+
+    features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
+    for layer_index, layer in enumerate(model.net.keys()):
+        print('Calculating ranks and distances for subset {} for layer {}'.format(subset, layer))
+        all_neighbor_dists[:, layer_index], all_neighbor_ranks[:, layer_index] = \
+            knn[layer].kneighbors(features[layer_index], return_distance=True)
+
+    del features
+    return all_neighbor_ranks, all_neighbor_dists
+
 def append_suffix(f):
     f = f + '_noisy_{}'.format(FLAGS.with_noise)  # TODO(remove in the future. For backward compatibility)
     if FLAGS.only_last:
@@ -860,7 +926,7 @@ if FLAGS.characteristics == 'lid':
         np.save(file_name, data)
 
 if FLAGS.characteristics == 'nnif':
-    assert FLAGS.only_last is True
+    # assert FLAGS.only_last is True
 
     # for ablation:
     sel_column = []
@@ -868,32 +934,41 @@ if FLAGS.characteristics == 'nnif':
         if FLAGS.ablation[i] == '1':
             sel_column.append(i)
 
-    if FLAGS.max_indices == -1:
-        max_indices_vec = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400, 450, 500]
-    else:
-        max_indices_vec = [FLAGS.max_indices]
+    # if FLAGS.max_indices == -1:
+    #     max_indices_vec = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+    # else:
+    #     max_indices_vec = [FLAGS.max_indices]
 
-    for max_indices in tqdm(max_indices_vec):
-        print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
-        
-        # val
-        characteristics, labels = get_nnif(X_val, 'val', max_indices)
-        characteristics = characteristics[:, sel_column]
-        print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-        file_name = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
-        data = np.concatenate((characteristics, labels), axis=1)
-        np.save(file_name, data)
+    # for max_indices in tqdm(max_indices_vec):
 
-        # test
-        characteristics, labels = get_nnif(X_test, 'test', max_indices)
-        characteristics[:, 0] *= (49/5)
-        characteristics[:, 2] *= (49/5)
-        characteristics = characteristics[:, sel_column]
+    max_indices = 50
+    print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
 
-        print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-        file_name = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
-        data = np.concatenate((characteristics, labels), axis=1)
-        np.save(file_name, data)
+    # training the knn layers
+    knn = get_knn_layers(X_train, y_train_sparse)
+
+    # val
+    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_val, 'val', knn)
+    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_val_adv, 'val', knn)
+    characteristics, labels = get_nnif(X_val, 'val', max_indices)
+    characteristics = characteristics[:, :, sel_column]
+    print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
+
+    # test
+    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn)
+    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'val', knn)
+    characteristics, labels = get_nnif(X_test, 'test', max_indices)
+    characteristics[:, :, 0] *= (49/5)
+    characteristics[:, :, 2] *= (49/5)
+    characteristics = characteristics[:, :, sel_column]
+
+    print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+    file_name = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+    data = np.concatenate((characteristics, labels), axis=1)
+    np.save(file_name, data)
 
 if FLAGS.characteristics == 'mahalanobis':
 
