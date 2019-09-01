@@ -856,32 +856,31 @@ def get_dknn_nonconformity(features, calbiration_vec, k):
 
     return empirical_p
 
-def get_knn_layers(X_train, y_train_sparse):
+def get_knn_layers(X, y):
     knn = {}
 
-    train_features = batch_eval(sess, [x], model.net.values(), [X_train], FLAGS.batch_size)
+    train_features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
     print('Fitting knn models on all layers: {}'.format(model.net.keys()))
     for layer_index, layer in enumerate(model.net.keys()):
         if len(train_features[layer_index].shape) == 4:
-            train_features[layer_index] = np.asarray(train_features[layer_index], dtype=np.float32).reshape((X_train.shape[0], -1, train_features[layer_index].shape[-1]))
+            train_features[layer_index] = np.asarray(train_features[layer_index], dtype=np.float32).reshape((X.shape[0], -1, train_features[layer_index].shape[-1]))
             train_features[layer_index] = np.mean(train_features[layer_index], axis=1)
         elif len(train_features[layer_index].shape) == 2:
             pass  # leave as is
         else:
             raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(train_features[layer_index].shape), layer))
 
-        knn[layer] = NearestNeighbors(n_neighbors=X_train.shape[0], p=2, n_jobs=20, algorithm='brute')
-        knn[layer].fit(train_features[layer_index], y_train_sparse)
+        knn[layer] = NearestNeighbors(n_neighbors=X.shape[0], p=2, n_jobs=20, algorithm='brute')
+        knn[layer].fit(train_features[layer_index], y)
 
     del train_features
     return knn
 
 def calc_all_ranks_and_dists(X, subset, knn):
-    if subset
-
     num_output = len(model.net.keys())
-    all_neighbor_ranks = -1 * np.ones((len(X), num_output, knn.n_neighbors))
-    all_neighbor_dists = -1 * np.ones((len(X), num_output, knn.n_neighbors))
+    n_neighbors = knn[knn.keys()[0]].n_neighbors
+    all_neighbor_ranks = -1 * np.ones((len(X), num_output, n_neighbors))
+    all_neighbor_dists = -1 * np.ones((len(X), num_output, n_neighbors))
 
     features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
     for layer_index, layer in enumerate(model.net.keys()):
