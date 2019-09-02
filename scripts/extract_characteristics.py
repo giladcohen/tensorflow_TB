@@ -953,27 +953,32 @@ if FLAGS.characteristics == 'nnif':
     print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
 
     # training the knn layers
-    knn   = get_knn_layers(X_train, y_train_sparse)
-    # knn_small_trainset = get_knn_layers(X_train_mini, y_train_mini_sparse)
+    knn_large_trainset = get_knn_layers(X_train, y_train_sparse)
+    knn_small_trainset = get_knn_layers(X_train_mini, y_train_mini_sparse)
 
     # val
-    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_val, 'val', knn)
-    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_val_adv, 'val', knn)
-    characteristics, labels = get_nnif(X_val, 'val', max_indices)
-    characteristics = characteristics[:, :, sel_column]
+    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_val, 'val', knn_large_trainset)
+    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_val_adv, 'val', knn_large_trainset)
+    ranks, ranks_adv = get_nnif(X_val, 'val', max_indices)
+    ranks     = ranks[:, :, sel_column]
+    ranks_adv = ranks_adv[:, :, sel_column]
+    characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
     print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
     file_name = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 
     # test
-    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn)
-    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'val', knn)
-    characteristics, labels = get_nnif(X_test, 'test', max_indices)
-    characteristics[:, :, 0] *= (49/5)
-    characteristics[:, :, 2] *= (49/5)
-    characteristics = characteristics[:, :, sel_column]
-
+    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn_small_trainset)
+    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'val', knn_small_trainset)
+    ranks, ranks_adv = get_nnif(X_test, 'test', max_indices)
+    ranks[:, :, 0] *= (49/5)
+    ranks[:, :, 2] *= (49/5)
+    ranks_adv[:, :, 0] *= (49/5)
+    ranks_adv[:, :, 2] *= (49/5)
+    ranks     = ranks[:, :, sel_column]
+    ranks_adv = ranks_adv[:, :, sel_column]
+    characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
     print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
     file_name = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
     data = np.concatenate((characteristics, labels), axis=1)
