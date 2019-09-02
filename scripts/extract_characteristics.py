@@ -949,7 +949,7 @@ if FLAGS.characteristics == 'nnif':
 
     # for max_indices in tqdm(max_indices_vec):
 
-    max_indices = 50
+    max_indices = FLAGS.max_indices
     print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
 
     # training the knn layers
