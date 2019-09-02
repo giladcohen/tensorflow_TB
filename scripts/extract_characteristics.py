@@ -730,8 +730,7 @@ def get_nnif(X, subset, max_indices):
     assert (ranks     != -1).all()
     assert (ranks_adv != -1).all()
 
-    artifacts, labels = merge_and_generate_labels(ranks_adv, ranks)
-    return artifacts, labels
+    return ranks, ranks_adv
 
 # def get_calibration(X_cal, y_cal, X_train, y_train_sparse, k, num_classes):  # used for all layers. not relevant
 #     """
