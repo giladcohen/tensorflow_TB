@@ -879,8 +879,8 @@ def get_knn_layers(X, y):
 def calc_all_ranks_and_dists(X, subset, knn):
     num_output = len(model.net.keys())
     n_neighbors = knn[knn.keys()[0]].n_neighbors
-    all_neighbor_ranks = -1 * np.ones((len(X), num_output, n_neighbors))
-    all_neighbor_dists = -1 * np.ones((len(X), num_output, n_neighbors))
+    all_neighbor_ranks = -1 * np.ones((len(X), num_output, n_neighbors), dtype=np.int32)
+    all_neighbor_dists = -1 * np.ones((len(X), num_output, n_neighbors), dtype=np.float32)
 
     features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
     for layer_index, layer in enumerate(model.net.keys()):
@@ -953,12 +953,12 @@ if FLAGS.characteristics == 'nnif':
     print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
 
     # training the knn layers
-    knn_big_trainset   = get_knn_layers(X_train, y_train_sparse)
-    knn_small_trainset = get_knn_layers(X_train_mini, y_train_mini_sparse)
+    knn   = get_knn_layers(X_train, y_train_sparse)
+    # knn_small_trainset = get_knn_layers(X_train_mini, y_train_mini_sparse)
 
     # val
-    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_val, 'val', knn_big_trainset)
-    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_val_adv, 'val', knn_big_trainset)
+    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_val, 'val', knn)
+    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_val_adv, 'val', knn)
     characteristics, labels = get_nnif(X_val, 'val', max_indices)
     characteristics = characteristics[:, :, sel_column]
     print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
@@ -967,8 +967,8 @@ if FLAGS.characteristics == 'nnif':
     np.save(file_name, data)
 
     # test
-    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn_small_trainset)
-    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'val', knn_small_trainset)
+    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn)
+    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'val', knn)
     characteristics, labels = get_nnif(X_test, 'test', max_indices)
     characteristics[:, :, 0] *= (49/5)
     characteristics[:, :, 2] *= (49/5)
