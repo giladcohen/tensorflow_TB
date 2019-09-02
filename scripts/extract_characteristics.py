@@ -885,6 +885,14 @@ def calc_all_ranks_and_dists(X, subset, knn):
     features = batch_eval(sess, [x], model.net.values(), [X], FLAGS.batch_size)
     for layer_index, layer in enumerate(model.net.keys()):
         print('Calculating ranks and distances for subset {} for layer {}'.format(subset, layer))
+        if len(features[layer_index].shape) == 4:
+            features[layer_index] = np.asarray(features[layer_index], dtype=np.float32).reshape((X.shape[0], -1, features[layer_index].shape[-1]))
+            features[layer_index] = np.mean(features[layer_index], axis=1)
+        elif len(features[layer_index].shape) == 2:
+            pass  # leave as is
+        else:
+            raise AssertionError('Expecting size of 2 or 4 but got {} for {}'.format(len(features[layer_index].shape), layer))
+
         all_neighbor_dists[:, layer_index], all_neighbor_ranks[:, layer_index] = \
             knn[layer].kneighbors(features[layer_index], return_distance=True)
 
