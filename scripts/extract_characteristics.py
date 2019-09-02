@@ -898,8 +898,9 @@ def calc_all_ranks_and_dists(X, subset, knn):
     del features
     return all_neighbor_ranks, all_neighbor_dists
 
-def append_suffix(f):
-    f = f + '_noisy_{}'.format(FLAGS.with_noise)  # TODO(remove in the future. For backward compatibility)
+def append_suffix(f, with_noisy=True):
+    if with_noisy:
+        f = f + '_noisy_{}'.format(FLAGS.with_noise)  # TODO(remove in the future. For backward compatibility)
     if FLAGS.only_last:
         f = f + '_only_last'
     f = f + '.npy'
@@ -963,7 +964,9 @@ if FLAGS.characteristics == 'nnif':
     ranks_adv = ranks_adv[:, :, sel_column]
     characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
     print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'max_indices_{}_train_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+    file_name = 'max_indices_{}_train_ablation_{}'.format(max_indices, FLAGS.ablation)
+    file_name = append_suffix(file_name, with_noisy=False)
+    file_name = os.path.join(characteristics_dir, file_name)
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 
@@ -979,7 +982,9 @@ if FLAGS.characteristics == 'nnif':
     ranks_adv = ranks_adv[:, :, sel_column]
     characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
     print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = os.path.join(characteristics_dir, 'max_indices_{}_test_ablation_{}.npy'.format(max_indices, FLAGS.ablation))
+    file_name = 'max_indices_{}_test_ablation_{}'.format(max_indices, FLAGS.ablation)
+    file_name = append_suffix(file_name, with_noisy=False)
+    file_name = os.path.join(characteristics_dir, file_name)
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
 

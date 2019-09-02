@@ -85,7 +85,7 @@ elif FLAGS.characteristics == 'dknn':
 else:
     raise AssertionError('{} is not supported'.format(FLAGS.characteristics))
 
-if FLAGS.only_last and FLAGS.characteristics in ['lid', 'mahalanobis']:
+if FLAGS.only_last and FLAGS.characteristics in ['lid', 'mahalanobis', 'nnif']:
     train_characteristics_file = train_characteristics_file + '_only_last'
     test_characteristics_file  = test_characteristics_file  + '_only_last'
 train_characteristics_file = train_characteristics_file + '.npy'
