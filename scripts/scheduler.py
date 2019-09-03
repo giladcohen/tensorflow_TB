@@ -10,37 +10,37 @@ def run_cmd(cmd):
 
 
 cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset cifar100 --attack fgsm --targeted True --characteristics nnif --max_indices 30'
+      ' --dataset cifar10 --attack jsma --targeted True --characteristics nnif --max_indices 50'
 run_cmd(cmd)
 
 cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset cifar100 --attack jsma --targeted True --characteristics nnif --max_indices 30'
+      ' --dataset cifar10 --attack deepfool --characteristics nnif --max_indices 50'
 run_cmd(cmd)
 
 cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset cifar100 --attack deepfool --characteristics nnif --max_indices 40'
+      ' --dataset cifar10 --attack cw --targeted True --characteristics nnif --max_indices 50'
 run_cmd(cmd)
 
 cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset cifar100 --attack cw --targeted True --characteristics nnif --max_indices 40'
+      ' --dataset cifar100 --attack deepfool --characteristics nnif --max_indices 30'
 run_cmd(cmd)
 
 
 
-cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset svhn --attack fgsm --targeted True --characteristics nnif --max_indices 300'
-run_cmd(cmd)
-
-cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset svhn --attack jsma --targeted True --characteristics nnif --max_indices 50'
-run_cmd(cmd)
-
-cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset svhn --attack deepfool --characteristics nnif --max_indices 300'
-run_cmd(cmd)
-
-cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
-      ' --dataset svhn --attack cw --targeted True --characteristics nnif --max_indices 50'
-run_cmd(cmd)
+# cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
+#       ' --dataset svhn --attack fgsm --targeted True --characteristics nnif --max_indices 300'
+# run_cmd(cmd)
+#
+# cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
+#       ' --dataset svhn --attack jsma --targeted True --characteristics nnif --max_indices 50'
+# run_cmd(cmd)
+#
+# cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
+#       ' --dataset svhn --attack deepfool --characteristics nnif --max_indices 300'
+# run_cmd(cmd)
+#
+# cmd = 'CUDA_VISIBLE_DEVICES=0 python tensorflow_TB/scripts/extract_characteristics.py' + \
+#       ' --dataset svhn --attack cw --targeted True --characteristics nnif --max_indices 50'
+# run_cmd(cmd)
 
 print('end of script.')
