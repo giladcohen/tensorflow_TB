@@ -25,7 +25,7 @@ flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, c
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
-flags.DEFINE_integer('pca_features', 33, 'Number of PCA features to train')
+flags.DEFINE_integer('pca_features', -1, 'Number of PCA features to train')
 
 # FOR LID
 flags.DEFINE_integer('k_nearest', 17, 'number of nearest neighbors to use for LID/DkNN detection')
