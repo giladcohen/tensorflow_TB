@@ -13,6 +13,7 @@ import os
 import numpy as np
 from sklearn.preprocessing import scale, MinMaxScaler, StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.decomposition import PCA
 from lid_adversarial_subspace_detection.util import (random_split, block_split, train_lr, compute_roc)
 
 from tensorflow.python.platform import flags
@@ -21,9 +22,10 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
 flags.DEFINE_string('seen_attack', '', 'Seen attack when training detector')
 flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
-flags.DEFINE_string('characteristics', '', 'type of defence: lid/mahalanobis/dknn/nnif')
+flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
+flags.DEFINE_integer('pca_features', 33, 'Number of PCA features to train')
 
 # FOR LID
 flags.DEFINE_integer('k_nearest', 17, 'number of nearest neighbors to use for LID/DkNN detection')
@@ -113,6 +115,13 @@ X_test  = scaler.transform(X_test)
 
 # test attack is the same as training attack
 # X_train, Y_train, X_test, Y_test = block_split(X, Y)
+
+if FLAGS.pca_features > 0:
+    print('Apply PCA decomposition. Reducing number of features from {} to {}'.format(X_train.shape[1], FLAGS.pca_features))
+    pca = PCA(n_components=FLAGS.pca_features)
+    pca.fit(X_train)
+    X_train = pca.transform(X_train)
+    X_test = pca.transform(X_test)
 
 print("Train data size: ", X_train.shape)
 print("Test data size: ", X_test.shape)
