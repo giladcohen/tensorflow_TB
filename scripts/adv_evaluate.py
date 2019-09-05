@@ -375,6 +375,15 @@ for i, set_ind in enumerate(feeder.test_inds):
     info['test'][i]['net_succ']     = net_succ
     info['test'][i]['attack_succ']  = attack_succ
 
+# calculate number of net_succ
+val_net_succ_indices              = [ind for ind in info['val'] if info['val'][ind]['net_succ']]
+val_net_succ_attack_succ_indices  = [ind for ind in info['val'] if info['val'][ind]['net_succ'] and info['val'][ind]['attack_succ']]
+test_net_succ_indices             = [ind for ind in info['test'] if info['test'][ind]['net_succ']]
+test_net_succ_attack_succ_indices = [ind for ind in info['test'] if info['test'][ind]['net_succ'] and info['test'][ind]['attack_succ']]
+val_attack_rate  = len(val_net_succ_attack_succ_indices)  / len(val_net_succ_indices)
+test_attack_rate = len(test_net_succ_attack_succ_indices) / len(test_net_succ_indices)
+print('adversarial ({}) validation attack rate: {}\nadversarial ({}) test attack rate: {}'.format(FLAGS.attack, val_attack_rate, FLAGS.attack, test_attack_rate))
+
 info_file = os.path.join(attack_dir, 'info.pkl')
 if not os.path.isfile(info_file):
     print('saving info as pickle to {}'.format(info_file))
