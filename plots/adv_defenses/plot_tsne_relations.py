@@ -243,7 +243,7 @@ else:
     vis_embeddings     = np.expand_dims(pca_x_val_embedded[vis_idx], axis=0)
     vis_embeddings_adv = np.expand_dims(pca_x_val_adv_embedded[vis_idx], axis=0)
     plt.scatter(vis_embeddings[:, 0]    , vis_embeddings[:, 1]    , s=200, marker='*', c='black', label='normal')
-    plt.scatter(vis_embeddings_adv[:, 0], vis_embeddings_adv[:, 1], s=200, marker='*', c='gold',  label='adv')
+    plt.scatter(vis_embeddings_adv[:, 0], vis_embeddings_adv[:, 1], s=200, marker='X', c='brown',  label='adv')
     # plt.savefig(os.path.join(plot_dir, 'pca', 'NN_{}'.format(FLAGS.k_nearest), 'val_index_{}.png'.format(global_val_index)), dpi=300)
     handles, labels = plt.gca().get_legend_handles_labels()
     order = [4, 5, 0, 1, 2, 3]
@@ -263,6 +263,6 @@ else:
     vis_embeddings     = np.expand_dims(tsne_x_val_embedded[vis_idx], axis=0)
     vis_embeddings_adv = np.expand_dims(tsne_x_val_adv_embedded[vis_idx], axis=0)
     plt.scatter(vis_embeddings[:, 0]    , vis_embeddings[:, 1]    , s=100, marker='*', c='black')
-    plt.scatter(vis_embeddings_adv[:, 0], vis_embeddings_adv[:, 1], s=100, marker='*', c='gold')
+    plt.scatter(vis_embeddings_adv[:, 0], vis_embeddings_adv[:, 1], s=100, marker='X', c='brown')
 
     # plt.savefig(os.path.join(plot_dir, 'tsne', 'NN_{}'.format(FLAGS.k_nearest), 'val_index_{}.png'.format(global_val_index)), dpi=300)
