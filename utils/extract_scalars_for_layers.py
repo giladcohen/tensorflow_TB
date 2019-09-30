@@ -9,7 +9,7 @@ import re
 
 import tensorflow as tf
 from tensorboard.backend.event_processing import plugin_event_multiplexer as event_multiplexer  # pylint: disable=line-too-long
-import plots
+import tensorflow_TB.plots as plots
 import json
 
 # Control downsampling: how many scalar data do we keep for each run/tag

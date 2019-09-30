@@ -5,7 +5,7 @@ from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import tensorflow as tf
-from lib.base.agent_base import AgentBase
+from tensorflow_TB.lib.base.agent_base import AgentBase
 
 class Agent(AgentBase):
     __metaclass__ = ABCMeta

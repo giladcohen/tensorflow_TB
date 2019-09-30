@@ -6,11 +6,11 @@ import warnings
 cwd = os.getcwd() # tensorflow-TB
 sys.path.insert(0, cwd)
 
-from lib.logger.logging_config import logging_config
-from utils.parameters import Parameters
-from utils.factories import Factories
+from tensorflow_TB.lib.logger.logging_config import logging_config
+from tensorflow_TB.utils.parameters import Parameters
+from tensorflow_TB.utils.factories import Factories
 import tensorflow as tf
-from utils.misc import query_yes_no
+from tensorflow_TB.utils.misc import query_yes_no
 
 def get_params(test_config):
     """get params and save them to root dir"""

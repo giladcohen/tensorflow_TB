@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 from sklearn.cluster import KMeans, k_means
-import lib.logger.logger as logger
+import tensorflow_TB.lib.logger.logger as logger
 import numpy as np
 
 

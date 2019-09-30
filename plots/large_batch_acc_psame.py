@@ -1,5 +1,5 @@
 """Plotting the accuracy of the large batch experiment, following MA/MD and P_SAME"""
-from utils.plots import load_data_from_csv_wrapper, add_subplot_axes
+from tensorflow_TB.utils.plots import load_data_from_csv_wrapper, add_subplot_axes
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np

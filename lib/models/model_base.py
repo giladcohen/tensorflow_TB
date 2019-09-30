@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
-from lib.base.agent_base import AgentBase
-from lib.base.collections import LOSSES
+from tensorflow_TB.lib.base.agent_base import AgentBase
+from tensorflow_TB.lib.base.collections import LOSSES
 
 class ModelBase(AgentBase):
     __metaclass__ = ABCMeta

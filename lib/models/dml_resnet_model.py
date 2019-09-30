@@ -1,8 +1,8 @@
 from abc import ABCMeta
 import tensorflow as tf
-from lib.models.resnet_model import ResNet
-from lib.tf_alias.metric_loss_ops import cluster_loss, lifted_struct_loss, compute_clustering_score
-from lib.base.collections import LOSSES
+from tensorflow_TB.lib.models.resnet_model import ResNet
+from tensorflow_TB.lib.tf_alias.metric_loss_ops import cluster_loss, lifted_struct_loss, compute_clustering_score
+from tensorflow_TB.lib.base.collections import LOSSES
 
 class DMLResNet(ResNet):
     __metaclass__ = ABCMeta

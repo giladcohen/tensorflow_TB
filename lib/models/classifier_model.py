@@ -1,7 +1,7 @@
 from abc import ABCMeta
-from lib.models.model_base import ModelBase
+from tensorflow_TB.lib.models.model_base import ModelBase
 import tensorflow as tf
-from lib.base.collections import LOSSES
+from tensorflow_TB.lib.base.collections import LOSSES
 
 class ClassifierModel(ModelBase):
     __metaclass__ = ABCMeta

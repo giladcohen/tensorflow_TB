@@ -3,10 +3,10 @@ from __future__ import division
 from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
-from lib.base.agent import Agent
+from tensorflow_TB.lib.base.agent import Agent
 import tensorflow as tf
 import os
-from utils.tensorboard_logging import TBLogger
+from tensorflow_TB.utils.tensorboard_logging import TBLogger
 
 class TesterBase(Agent):
     __metaclass__ = ABCMeta

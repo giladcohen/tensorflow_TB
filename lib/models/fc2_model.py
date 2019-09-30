@@ -2,9 +2,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from lib.models.classifier_model import ClassifierModel
+from tensorflow_TB.lib.models.classifier_model import ClassifierModel
 import tensorflow as tf
-from lib.models.layers import variable_summaries
+from tensorflow_TB.lib.models.layers import variable_summaries
 
 slim = tf.contrib.slim
 

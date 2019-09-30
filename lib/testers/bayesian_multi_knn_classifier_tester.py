@@ -3,8 +3,8 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from lib.testers.multi_knn_classifier_tester import MultiKNNClassifierTester
-from utils.misc import collect_features
+from tensorflow_TB.lib.testers.multi_knn_classifier_tester import MultiKNNClassifierTester
+from tensorflow_TB.utils.misc import collect_features
 
 eps = 0.000001
 

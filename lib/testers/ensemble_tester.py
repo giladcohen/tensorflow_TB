@@ -3,10 +3,10 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from lib.testers.knn_classifier_tester import KNNClassifierTester
+from tensorflow_TB.lib.testers.knn_classifier_tester import KNNClassifierTester
 import os
 from sklearn.neighbors import KNeighborsClassifier
-from utils.misc import collect_features
+from tensorflow_TB.utils.misc import collect_features
 
 class EnsembleTester(KNNClassifierTester):
 

@@ -3,11 +3,11 @@ This model is similar to WideResNet_28_10_pool_classes except that here I am poo
 instead of a class' logits.
 """
 
-from lib.models.resnet_model import ResNet
-from lib.models.layers import *
+from tensorflow_TB.lib.models.resnet_model import ResNet
+from tensorflow_TB.lib.models.layers import *
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-from lib.base.collections import LOSSES
+from tensorflow_TB.lib.base.collections import LOSSES
 
 
 class WideResNet_28_10_pool_classes2(ResNet):

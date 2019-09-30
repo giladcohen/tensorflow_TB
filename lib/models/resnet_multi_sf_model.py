@@ -1,7 +1,7 @@
-from lib.models.resnet_model import ResNet
-from lib.models.layers import *
+from tensorflow_TB.lib.models.resnet_model import ResNet
+from tensorflow_TB.lib.models.layers import *
 import six
-from lib.base.collections import LOSSES
+from tensorflow_TB.lib.base.collections import LOSSES
 
 class ResnetMultiSf(ResNet):
     def __init__(self, *args, **kwargs):

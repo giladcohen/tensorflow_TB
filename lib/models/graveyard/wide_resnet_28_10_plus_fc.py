@@ -1,5 +1,5 @@
-from lib.models.resnet_model import ResNet
-from lib.models.layers import *
+from tensorflow_TB.lib.models.resnet_model import ResNet
+from tensorflow_TB.lib.models.layers import *
 
 class WideResNet_28_10_plus_fc(ResNet):
 

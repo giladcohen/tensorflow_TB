@@ -4,13 +4,13 @@ from __future__ import print_function
 
 import os
 import numpy as np
-from lib.testers.tester_base import TesterBase
+from tensorflow_TB.lib.testers.tester_base import TesterBase
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC, SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import normalized_mutual_info_score
-from utils.misc import collect_features, calc_mutual_agreement, calc_psame
+from tensorflow_TB.utils.misc import collect_features, calc_mutual_agreement, calc_psame
 from scipy.stats import entropy
 
 eps = 0.000001

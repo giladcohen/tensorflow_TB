@@ -1,5 +1,5 @@
 """Plotting the 9 KNN accuracy plots"""
-from utils.plots import load_data_from_csv_wrapper, add_subplot_axes
+from tensorflow_TB.utils.plots import load_data_from_csv_wrapper, add_subplot_axes
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np

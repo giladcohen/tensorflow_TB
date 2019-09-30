@@ -1,5 +1,5 @@
-from lib.models.classifier_model import ClassifierModel
-from lib.models.layers import *
+from tensorflow_TB.lib.models.classifier_model import ClassifierModel
+from tensorflow_TB.lib.models.layers import *
 import six
 
 class ResNet(ClassifierModel):

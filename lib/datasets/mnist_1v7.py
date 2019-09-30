@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import numpy as np
-from lib.datasets.dataset_wrapper import DatasetWrapper
+from tensorflow_TB.lib.datasets.dataset_wrapper import DatasetWrapper
 import tensorflow as tf
 
 

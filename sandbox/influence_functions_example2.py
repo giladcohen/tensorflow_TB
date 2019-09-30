@@ -9,7 +9,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
-from darkon.log import logger
+from darkon.darkon.log import logger
 import os
 
 check_point = 'darkon_examples/cifar10_resnet/pre-trained/model.ckpt-79999'
