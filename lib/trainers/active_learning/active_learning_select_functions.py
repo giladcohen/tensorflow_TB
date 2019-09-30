@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from utils.misc import collect_features
+from tensorflow_TB.utils.misc import collect_features
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 import operator
