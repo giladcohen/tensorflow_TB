@@ -4,8 +4,8 @@ from __future__ import absolute_import
 
 import numpy as np
 import os
-from lib.datasets.dataset_wrapper import DatasetWrapper
-from utils.enums import Mode
+from tensorflow_TB.lib.datasets.dataset_wrapper import DatasetWrapper
+from tensorflow_TB.utils.enums import Mode
 
 class RandomDatasetWrapper(DatasetWrapper):
     """Wrapper which hold both the trainset and the validation set for cifar-10"""
