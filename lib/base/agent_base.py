@@ -1,4 +1,4 @@
-import lib.logger.logger as logger
+import tensorflow_TB.lib.logger.logger as logger
 from abc import ABCMeta
 
 
