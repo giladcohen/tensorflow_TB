@@ -1,5 +1,5 @@
 import numpy as np
-import lib.logger.logger as logger
+import tensorflow_TB.lib.logger.logger as logger
 import ast
 DEBUG_MODE = False
 

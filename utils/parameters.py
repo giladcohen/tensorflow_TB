@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import os
 import configparser
-import utils.ini_parsers as parser_utils
+import tensorflow_TB.utils.ini_parsers as parser_utils
 import numpy as np
 
 

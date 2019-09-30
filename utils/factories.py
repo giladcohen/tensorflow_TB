@@ -1,40 +1,41 @@
 from __future__ import division
 
-import lib.logger.logger as logger
-import lib.trainers.active_learning.active_learning_select_functions as alf
+import tensorflow_TB.lib.logger.logger as logger
+import tensorflow_TB.lib.trainers.active_learning.active_learning_select_functions as alf
 
-from lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
-from lib.datasets.dataset_wrapper import DatasetWrapper
-from lib.datasets.random_dataset_wrapper import RandomDatasetWrapper
-from lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
-from lib.datasets.mnist_1v7 import MNIST_1V7
-from lib.datasets.cifar10_cats_v_dogs import CIFAR10_CatsVDogs
-from lib.datasets.cifar10_cars_vs_trucks import CIFAR10_CarsVTrucks
-from lib.datasets.cifar10_airplanes_vs_ships import CIFAR10_AirplanesVShips
+from tensorflow_TB.lib.datasets.active_dataset_wrapper import ActiveDatasetWrapper
+from tensorflow_TB.lib.datasets.dataset_wrapper import DatasetWrapper
+from tensorflow_TB.lib.datasets.random_dataset_wrapper import RandomDatasetWrapper
+from tensorflow_TB.lib.datasets.semi_supervised_dataset_wrapper import SemiSupervisedDatasetWrapper
+from tensorflow_TB.lib.datasets.mnist_1v7 import MNIST_1V7
+from tensorflow_TB.lib.datasets.cifar10_cats_v_dogs import CIFAR10_CatsVDogs
+from tensorflow_TB.lib.datasets.cifar10_cars_vs_trucks import CIFAR10_CarsVTrucks
+from tensorflow_TB.lib.datasets.cifar10_airplanes_vs_ships import CIFAR10_AirplanesVShips
 
-from lib.models.dml_resnet_model import DMLResNet
-from lib.models.resnet_model import ResNet
-from lib.models.resnet_multi_sf_model import ResnetMultiSf
-from lib.models.lenet_model import LeNet
-from lib.models.fc2_model import FC2Net
+from tensorflow_TB.lib.models.dml_resnet_model import DMLResNet
+from tensorflow_TB.lib.models.resnet_model import ResNet
+from tensorflow_TB.lib.models.resnet_multi_sf_model import ResnetMultiSf
+from tensorflow_TB.lib.models.lenet_model import LeNet
+from tensorflow_TB.lib.models.fc2_model import FC2Net
 
-from lib.testers.ensemble_tester import EnsembleTester
-from lib.testers.knn_classifier_tester import KNNClassifierTester
-from lib.testers.multi_layer_knn_classifier_tester import MultiLayerKNNClassifierTester
-from lib.testers.multi_knn_classifier_tester import MultiKNNClassifierTester
-from lib.testers.bayesian_multi_knn_classifier_tester import BayesianMultiKNNClassifierTester
-from lib.testers.knn_influence_tester import KNNInfluenceTester
+from tensorflow_TB.lib.testers.ensemble_tester import EnsembleTester
+from tensorflow_TB.lib.testers.knn_classifier_tester import KNNClassifierTester
+from tensorflow_TB.lib.testers.multi_layer_knn_classifier_tester import MultiLayerKNNClassifierTester
+from tensorflow_TB.lib.testers.multi_knn_classifier_tester import MultiKNNClassifierTester
+from tensorflow_TB.lib.testers.bayesian_multi_knn_classifier_tester import BayesianMultiKNNClassifierTester
+from tensorflow_TB.lib.testers.knn_influence_tester import KNNInfluenceTester
+from tensorflow_TB.lib.testers.lr_retrain_tester import LRRetrain
 
-from lib.trainers.active_trainer import ActiveTrainer
-from lib.trainers.classification_ma_trainer import ClassificationMATrainer
-from lib.trainers.classification_metrics_trainer import ClassificationMetricsTrainer
-from lib.trainers.classification_trainer import ClassificationTrainer
-from lib.trainers.dml_classification_trainer import DMLClassificationTrainer
-from lib.trainers.dynamic_model_trainer import DynamicModelTrainer
-from lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
-from lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
-from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
-from lib.trainers.semi_supervised_trainer import SemiSupervisedTrainer
+from tensorflow_TB.lib.trainers.active_trainer import ActiveTrainer
+from tensorflow_TB.lib.trainers.classification_ma_trainer import ClassificationMATrainer
+from tensorflow_TB.lib.trainers.classification_metrics_trainer import ClassificationMetricsTrainer
+from tensorflow_TB.lib.trainers.classification_trainer import ClassificationTrainer
+from tensorflow_TB.lib.trainers.dml_classification_trainer import DMLClassificationTrainer
+from tensorflow_TB.lib.trainers.dynamic_model_trainer import DynamicModelTrainer
+from tensorflow_TB.lib.trainers.hooks.decay_by_score_setter import DecayByScoreSetter
+from tensorflow_TB.lib.trainers.hooks.fixed_schedule_setter import FixedScheduleSetter
+from tensorflow_TB.lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
+from tensorflow_TB.lib.trainers.semi_supervised_trainer import SemiSupervisedTrainer
 
 
 class Factories(object):
@@ -113,7 +114,8 @@ class Factories(object):
                              'ensemble_classifier'                  : EnsembleTester,
                              'multi_knn_classifier'                 : MultiKNNClassifierTester,
                              'bayesian_multi_knn_classifier_tester' : BayesianMultiKNNClassifierTester,
-                             'knn_influence'                        : KNNInfluenceTester}
+                             'knn_influence'                        : KNNInfluenceTester,
+                             'lr_retrain'                           : LRRetrain}
         if self.tester in available_testers:
             tester = available_testers[self.tester](self.tester, self.prm, model, dataset)
             self.log.info('get_tester: returning ' + str(tester))

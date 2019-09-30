@@ -3,9 +3,9 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from lib.testers.knn_classifier_tester import KNNClassifierTester
+from tensorflow_TB.lib.testers.knn_classifier_tester import KNNClassifierTester
 from sklearn.neighbors import NearestNeighbors
-from lib.datasets.influence_feeder import Feeder
+from tensorflow_TB.lib.datasets.influence_feeder import MyFeeder
 import darkon
 import matplotlib.pyplot as plt
 
@@ -19,7 +19,7 @@ class KNNInfluenceTester(KNNClassifierTester):
                                     p=int(self.knn_norm[-1]),
                                     n_jobs=self.knn_jobs)
 
-        self.feeder = Feeder('influence_feeder', self.prm)
+        self.feeder = MyFeeder('influence_feeder', self.prm)
 
         self.one_hot_labels = self.prm.network.ONE_HOT_LABELS
 

@@ -3,10 +3,10 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-from lib.testers.knn_classifier_tester import KNNClassifierTester
+from tensorflow_TB.lib.testers.knn_classifier_tester import KNNClassifierTester
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.stats import entropy
-from utils.misc import calc_psame
+from tensorflow_TB.utils.misc import calc_psame
 
 eps = 0.000001
 
