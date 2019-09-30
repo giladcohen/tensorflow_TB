@@ -5,9 +5,8 @@ from __future__ import absolute_import
 import numpy as np
 import os
 from sklearn import preprocessing
-from lib.datasets.dataset_wrapper import DatasetWrapper
-from utils.enums import Mode
-from utils.misc import one_hot
+from tensorflow_TB.lib.datasets.dataset_wrapper import DatasetWrapper
+from tensorflow_TB.utils.enums import Mode
 
 class SemiSupervisedDatasetWrapper(DatasetWrapper):
     def __init__(self, *args, **kwargs):
