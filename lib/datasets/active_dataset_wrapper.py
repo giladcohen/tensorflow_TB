@@ -3,8 +3,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
-from lib.datasets.dataset_wrapper import DatasetWrapper
-from utils.enums import Mode
+from tensorflow_TB.lib.datasets.dataset_wrapper import DatasetWrapper
+from tensorflow_TB.utils.enums import Mode
 
 class ActiveDatasetWrapper(DatasetWrapper):
     def __init__(self, *args, **kwargs):
