@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
-import darkon
+import darkon.darkon as darkon
 import darkon_examples.cifar10_resnet.cifar10_input as cifar10_input
 from tensorflow_TB.utils.misc import one_hot
 
