@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 import os
-import lib.logger.logger as logger
+import tensorflow_TB.lib.logger.logger as logger
 
 from tensorflow.python.training.summary_io import SummaryWriterCache
 from tensorflow.core.util.event_pb2 import SessionLog
