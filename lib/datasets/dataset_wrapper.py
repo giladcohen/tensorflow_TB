@@ -254,8 +254,7 @@ class DatasetWrapper(AgentBase):
         # could use the `output_types` and `output_shapes` properties of either
         # `training_dataset` or `validation_dataset` here, because they have
         # identical structure.
-        with tf.device('GPU:0'):
-            self.handle = tf.placeholder(tf.string, shape=[])
+        self.handle = tf.placeholder(tf.string, shape=[])
         self.iterator = tf.data.Iterator.from_string_handle(
             self.handle, self.train_dataset.output_types, self.train_dataset.output_shapes)
         self.next_minibatch = self.iterator.get_next()
