@@ -1,4 +1,4 @@
-from lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
+from tensorflow_TB.lib.trainers.hooks.learning_rate_setter_base import LearningRateSetterBase
 
 class FixedScheduleSetter(LearningRateSetterBase):
     """Decreasing the learning rate in fixed steps, using fixed decay rate"""

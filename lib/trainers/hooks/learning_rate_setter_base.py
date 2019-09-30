@@ -1,7 +1,7 @@
 from __future__ import division
 
 import tensorflow as tf
-import lib.logger.logger as logger
+import tensorflow_TB.lib.logger.logger as logger
 
 class LearningRateSetterBase(tf.train.SessionRunHook):
     """Sets learning_rate based on the initial learning rate parameter."""

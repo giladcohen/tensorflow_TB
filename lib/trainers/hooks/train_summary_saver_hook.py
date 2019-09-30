@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import tensorflow as tf
-import lib.logger.logger as logger
+import tensorflow_TB.lib.logger.logger as logger
 
 class TrainSummarySaverHook(tf.train.SummarySaverHook):
 
