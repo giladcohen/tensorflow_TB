@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.classification_trainer import ClassificationTrainer
-from lib.trainers.hooks.margin_multiplier_setter import MarginMultiplierSetter
-from utils.misc import get_vars, collect_features_1d
-from lib.base.collections import TRAIN_SUMMARIES
+from tensorflow_TB.lib.trainers.classification_trainer import ClassificationTrainer
+from tensorflow_TB.lib.trainers.hooks.margin_multiplier_setter import MarginMultiplierSetter
+from tensorflow_TB.utils.misc import get_vars, collect_features_1d
+from tensorflow_TB.lib.base.collections import TRAIN_SUMMARIES
 import tensorflow as tf
 import os
 import numpy as np

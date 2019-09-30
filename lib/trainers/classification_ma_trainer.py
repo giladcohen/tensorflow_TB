@@ -2,9 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from lib.trainers.classification_trainer import ClassificationTrainer
+from tensorflow_TB.lib.trainers.classification_trainer import ClassificationTrainer
 import numpy as np
-from utils.misc import collect_features, calc_mutual_agreement
+from tensorflow_TB.utils.misc import collect_features, calc_mutual_agreement
 from sklearn.neighbors import KNeighborsClassifier
 
 class ClassificationMATrainer(ClassificationTrainer):

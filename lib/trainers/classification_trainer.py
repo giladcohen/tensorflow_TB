@@ -3,11 +3,11 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from lib.trainers.trainer_base import TrainerBase
+from tensorflow_TB.lib.trainers.trainer_base import TrainerBase
 from math import ceil
-from lib.base.collections import TRAIN_SUMMARIES
+from tensorflow_TB.lib.base.collections import TRAIN_SUMMARIES
 import numpy as np
-from utils.misc import collect_features
+from tensorflow_TB.utils.misc import collect_features
 
 
 class ClassificationTrainer(TrainerBase):

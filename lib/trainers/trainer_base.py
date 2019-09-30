@@ -4,13 +4,13 @@ from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
-from lib.base.agent import Agent
-from lib.base.collections import TRAIN_SUMMARIES
-import utils
-from lib.retention import Retention
-from lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
-from lib.trainers.hooks.train_summary_saver_hook import TrainSummarySaverHook
-from utils.tensorboard_logging import TBLogger
+from tensorflow_TB.lib.base.agent import Agent
+from tensorflow_TB.lib.base.collections import TRAIN_SUMMARIES
+import tensorflow_TB.utils as utils
+from tensorflow_TB.lib.retention import Retention
+from tensorflow_TB.lib.trainers.hooks.global_step_checkpoint_saver_hook import GlobalStepCheckpointSaverHook
+from tensorflow_TB.lib.trainers.hooks.train_summary_saver_hook import TrainSummarySaverHook
+from tensorflow_TB.utils.tensorboard_logging import TBLogger
 
 class TrainerBase(Agent):
     __metaclass__ = ABCMeta
