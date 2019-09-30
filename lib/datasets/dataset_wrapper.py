@@ -4,14 +4,12 @@ from __future__ import absolute_import
 
 import numpy as np
 import os
-from lib.base.agent_base import AgentBase
-import lib.logger.logger as logger
+from tensorflow_TB.lib.base.agent_base import AgentBase
+import tensorflow_TB.lib.logger.logger as logger
 import csv
 import tensorflow as tf
-from utils.enums import Mode
-from utils.misc import numericalSort, one_hot
-from PIL import Image
-import matplotlib.pyplot as plt
+from tensorflow_TB.utils.enums import Mode
+from tensorflow_TB.utils.misc import numericalSort, one_hot
 
 class DatasetWrapper(AgentBase):
     """Wrapper which hold both the trainset and the validation set for cifar-10"""
