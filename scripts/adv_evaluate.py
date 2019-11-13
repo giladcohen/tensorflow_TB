@@ -81,7 +81,7 @@ if FLAGS.dataset == 'cifar10':
         'truck'
     )
     ARCH_NAME = 'model1'
-    CHECKPOINT_NAME = 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_cp'
+    CHECKPOINT_NAME = 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000'
     LABEL_SMOOTHING = 0.1
 elif FLAGS.dataset == 'cifar100':
     _classes = (
