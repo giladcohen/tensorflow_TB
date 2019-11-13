@@ -44,12 +44,12 @@ flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'test', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('cases', 'all', 'can be rither real, pred, or adv')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
-flags.DEFINE_bool('backward', False, 'ending index')
+flags.DEFINE_bool('backward', False, 'going from the last to to first')
 flags.DEFINE_bool('overwrite_A', False, 'whether or not to overwrite the A calculation')
 flags.DEFINE_integer('num_threads', 1, 'number of threads')
 
@@ -280,7 +280,7 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     fgsm_param = {
         'clip_min': 0.0,
         'clip_max': 1.0,
-        'eps': 0.05 if FLAGS.dataset in ['cifar10', 'cifar100'] else 0.13
+        'eps': 0.1
     }
     if FLAGS.targeted:
         jsma_params.update({'y_target': y_adv})
