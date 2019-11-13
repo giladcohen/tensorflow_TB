@@ -394,6 +394,5 @@ if not os.path.exists(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))
     np.save(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))         , X_set_adv)
     np.save(os.path.join(attack_dir, 'x_{}_preds_adv.npy'.format(FLAGS.set))   , x_set_preds_adv)
     np.save(os.path.join(attack_dir, 'x_{}_features_adv.npy'.format(FLAGS.set)), x_set_features_adv)
-
 else:
     print('{} already exists'.format(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))))

@@ -35,7 +35,7 @@ from cleverhans.evaluation import batch_eval
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
+flags.DEFINE_integer('batch_size', 100, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
@@ -394,6 +394,8 @@ else:
     with open(info_file, 'rb') as handle:
         info_old = pickle.load(handle)
     assert info == info_old
+
+exit(0)
 
 # start the knn observation
 knn = NearestNeighbors(n_neighbors=feeder.get_train_size(), p=2, n_jobs=20)
