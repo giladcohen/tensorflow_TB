@@ -59,10 +59,11 @@ num_of_spatial_activations = {
 }
 
 FLAGS = flags.FLAGS
-flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
+flags.DEFINE_integer('batch_size', 100, 'Size of training batches')
 flags.DEFINE_string('dataset', 'cifar10', 'dataset: cifar10/100 or svhn')
-flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw')
+flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_bool('tanh', False, 'whether or not we converted the helpful/harmful train images to tanh space')
 flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis/dknn/nnif')
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
@@ -138,6 +139,9 @@ model_dir          = os.path.join('/data/gilad/logs/influence', CHECKPOINT_NAME)
 attack_dir         = os.path.join(model_dir, FLAGS.attack)
 if FLAGS.targeted:
     attack_dir = attack_dir + '_targeted'
+if not FLAGS.tanh:
+    attack_dir = attack_dir + '_pure'
+
 characteristics_dir = os.path.join(attack_dir, FLAGS.characteristics)
 if not os.path.exists(characteristics_dir):
     os.makedirs(characteristics_dir)
