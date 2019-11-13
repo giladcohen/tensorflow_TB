@@ -42,6 +42,7 @@ flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_string('attack', 'cw_nnif', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
 flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_bool('tanh', False, 'whether or not to convert the helpful/harmful train images to tanh space')
 
 flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
 flags.DEFINE_string('port', 'null', 'to bypass pycharm bug')
@@ -122,6 +123,8 @@ workspace_dir = os.path.join(model_dir, WORKSPACE)
 attack_dir    = os.path.join(model_dir, FLAGS.attack)
 if FLAGS.targeted:
     attack_dir = attack_dir + '_targeted'
+if not FLAGS.tanh:
+    attack_dir = attack_dir + '_pure'
 
 # make sure the attack dir is constructed
 if not os.path.exists(attack_dir):
@@ -269,7 +272,14 @@ for i, set_ind in enumerate(feeder.test_inds):
 sub_relevant_indices = [ind for ind in info_tmp[FLAGS.set]]
 relevant_indices     = [info_tmp[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-if not os.path.exists(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set))):
+if FLAGS.tanh:
+    file_suffix = '_tanh.npy'
+else:
+    file_suffix = '.npy'
+helpful_npy_path = os.path.join(attack_dir, '{}_most_helpful{}'.format(FLAGS.set, file_suffix))
+harmful_npy_path = os.path.join(attack_dir, '{}_most_harmful{}'.format(FLAGS.set, file_suffix))
+
+if not os.path.exists(helpful_npy_path):
     # loading the embedding vectors of all the val's/test's most harmful/helpful training examples
     most_helpful_list = []
     most_harmful_list = []
@@ -319,23 +329,27 @@ if not os.path.exists(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format
 
         # find out the embedding space of the train images in the tanh space
         # first we calculate the tanh transformation:
-        X_train_tanh = (np.tanh(X_train) + 1) / 2
-        most_helpful_images = X_train_tanh[helpful_inds]
-        most_harmful_images = X_train_tanh[harmful_inds]
-        train_helpful_embeddings_tanh = batch_eval(sess, [x, y], [embeddings], [most_helpful_images, y_train[helpful_inds]], FLAGS.batch_size)[0]
-        train_harmful_embeddings_tanh = batch_eval(sess, [x, y], [embeddings], [most_harmful_images, y_train[harmful_inds]], FLAGS.batch_size)[0]
+        if FLAGS.tanh:
+            X_train_transform = (np.tanh(X_train) + 1) / 2
+        else:
+            X_train_transform = X_train
 
-        most_helpful_list.append(train_helpful_embeddings_tanh)
-        most_harmful_list.append(train_harmful_embeddings_tanh)
+        most_helpful_images = X_train_transform[helpful_inds]
+        most_harmful_images = X_train_transform[harmful_inds]
+        train_helpful_embeddings = batch_eval(sess, [x, y], [embeddings], [most_helpful_images, y_train[helpful_inds]], FLAGS.batch_size)[0]
+        train_harmful_embeddings = batch_eval(sess, [x, y], [embeddings], [most_harmful_images, y_train[harmful_inds]], FLAGS.batch_size)[0]
+
+        most_helpful_list.append(train_helpful_embeddings)
+        most_harmful_list.append(train_harmful_embeddings)
 
     most_helpful = np.asarray(most_helpful_list)
     most_harmful = np.asarray(most_harmful_list)
-    np.save(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set)), most_helpful)
-    np.save(os.path.join(attack_dir, '{}_most_harmful_tanh.npy'.format(FLAGS.set)), most_harmful)
+    np.save(helpful_npy_path, most_helpful)
+    np.save(harmful_npy_path, most_harmful)
 else:
-    print('{} already exist. Loading...'.format(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set))))
-    most_helpful = np.load(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set)))
-    most_harmful = np.load(os.path.join(attack_dir, '{}_most_harmful_tanh.npy'.format(FLAGS.set)))
+    print('{} already exist. Loading...'.format(helpful_npy_path))
+    most_helpful = np.load(helpful_npy_path)
+    most_harmful = np.load(harmful_npy_path)
 
 # DEBUG:
 # most_helpful = np.tile(most_helpful, [100, 1, 1])
