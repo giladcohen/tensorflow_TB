@@ -40,15 +40,8 @@ flags.DEFINE_integer('batch_size', 100, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
-flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'cw_nnif', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
 flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('cases', 'all', 'can be rither real, pred, or adv')
-flags.DEFINE_integer('b', -1, 'beginning index')
-flags.DEFINE_integer('e', -1, 'ending index')
-flags.DEFINE_bool('backward', False, 'going from the last to to first')
-flags.DEFINE_bool('overwrite_A', False, 'whether or not to overwrite the A calculation')
-flags.DEFINE_bool('overwrite_C', False, 'whether or not to overwrite the C calculation')
 
 flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
 flags.DEFINE_string('port', 'null', 'to bypass pycharm bug')
@@ -61,12 +54,6 @@ else:
     test_val_set = False
     WORKSPACE = 'influence_workspace_test_mini'
     USE_TRAIN_MINI = True
-
-assert FLAGS.cases in ['all', 'real', 'pred', 'adv']
-if FLAGS.cases == 'all':
-    ALLOWED_CASES = ['real', 'pred', 'adv']
-else:
-    ALLOWED_CASES = [FLAGS.cases]
 
 if FLAGS.dataset == 'cifar10':
     _classes = (
@@ -282,23 +269,14 @@ for i, set_ind in enumerate(feeder.test_inds):
 sub_relevant_indices = [ind for ind in info_tmp[FLAGS.set]]
 relevant_indices     = [info_tmp[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-if FLAGS.b != -1:
-    b, e = FLAGS.b, FLAGS.e
-    sub_relevant_indices = sub_relevant_indices[b:e]
-    relevant_indices     = relevant_indices[b:e]
-
-if FLAGS.backward:
-    sub_relevant_indices = sub_relevant_indices[::-1]
-    relevant_indices     = relevant_indices[::-1]
-
 # loading the embedding vectors of all the val's/test's most harmful/helpful training examples
 most_helpful_list = []
 most_harmful_list = []
 
 for i in tqdm(range(len(sub_relevant_indices))):
     # DEBUG:
-    if i >= 10:
-        break
+    # if i >= 10:
+    #     break
     sub_index = sub_relevant_indices[i]
     if test_val_set:
         global_index = feeder.val_inds[sub_index]
@@ -353,8 +331,8 @@ most_helpful = np.asarray(most_helpful_list)
 most_harmful = np.asarray(most_harmful_list)
 
 # DEBUG:
-most_helpful = np.tile(most_helpful, [100, 1, 1])
-most_harmful = np.tile(most_harmful, [100, 1, 1])
+# most_helpful = np.tile(most_helpful, [100, 1, 1])
+# most_harmful = np.tile(most_harmful, [100, 1, 1])
 
 
 # initialize adversarial examples if necessary
