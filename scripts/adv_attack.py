@@ -336,7 +336,7 @@ most_harmful = np.asarray(most_harmful_list)
 
 
 # initialize adversarial examples if necessary
-if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
+if not os.path.exists(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))):
     y_adv     = tf.placeholder(tf.float32, shape=(None, nb_classes), name='y_adv')
     m_help_ph = tf.placeholder(tf.float32, shape=(None,) + most_helpful.shape[1:])
     m_harm_ph = tf.placeholder(tf.float32, shape=(None,) + most_harmful.shape[1:])
@@ -361,34 +361,19 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     logits_adv     = model.get_logits(adv_x)
     embeddings_adv = model.get_embeddings(adv_x)
 
-    # val attack
+    # attack
     tf_inputs    = [x, y, y_adv, m_help_ph, m_harm_ph]
     tf_outputs   = [adv_x, preds_adv, embeddings_adv]
-    numpy_inputs = [X_val, y_val, y_val_targets, most_helpful, most_harmful]
+    if FLAGS.set == 'val':
+        numpy_inputs = [X_val, y_val, y_val_targets, most_helpful, most_harmful]
+    elif FLAGS.set == 'test':
+        numpy_inputs = [X_test, y_test, y_test_targets, most_helpful, most_harmful]
 
-    X_val_adv, x_val_preds_adv, x_val_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
-    x_val_preds_adv = x_val_preds_adv.astype(np.int32)
-    np.save(os.path.join(attack_dir, 'X_val_adv.npy')         , X_val_adv)
-    np.save(os.path.join(attack_dir, 'x_val_preds_adv.npy')   , x_val_preds_adv)
-    np.save(os.path.join(attack_dir, 'x_val_features_adv.npy'), x_val_features_adv)
+    X_set_adv, x_set_preds_adv, x_set_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
+    x_set_preds_adv = x_set_preds_adv.astype(np.int32)
+    np.save(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))         , X_set_adv)
+    np.save(os.path.join(attack_dir, 'x_{}_preds_adv.npy'.format(FLAGS.set))   , x_set_preds_adv)
+    np.save(os.path.join(attack_dir, 'x_{}_features_adv.npy'.format(FLAGS.set)), x_set_features_adv)
 
-    # test attack
-    tf_inputs    = [x, y]
-    tf_outputs   = [adv_x, preds_adv, embeddings_adv]
-    numpy_inputs = [X_test, y_test]
-    if FLAGS.targeted:
-        tf_inputs.append(y_adv)
-        numpy_inputs.append(y_test_targets)
-
-    X_test_adv, x_test_preds_adv, x_test_features_adv = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
-    x_test_preds_adv = x_test_preds_adv.astype(np.int32)
-    np.save(os.path.join(attack_dir, 'X_test_adv.npy')         , X_test_adv)
-    np.save(os.path.join(attack_dir, 'x_test_preds_adv.npy')   , x_test_preds_adv)
-    np.save(os.path.join(attack_dir, 'x_test_features_adv.npy'), x_test_features_adv)
 else:
-    X_val_adv           = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
-    x_val_preds_adv     = np.load(os.path.join(attack_dir, 'x_val_preds_adv.npy'))
-    x_val_features_adv  = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
-    X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
-    x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
-    x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
+    print('{} already exists'.format(os.path.exists(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set)))))
