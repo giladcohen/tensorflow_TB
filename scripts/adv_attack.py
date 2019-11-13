@@ -269,71 +269,77 @@ for i, set_ind in enumerate(feeder.test_inds):
 sub_relevant_indices = [ind for ind in info_tmp[FLAGS.set]]
 relevant_indices     = [info_tmp[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-# loading the embedding vectors of all the val's/test's most harmful/helpful training examples
-most_helpful_list = []
-most_harmful_list = []
+if not os.path.exists(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set))):
+    # loading the embedding vectors of all the val's/test's most harmful/helpful training examples
+    most_helpful_list = []
+    most_harmful_list = []
 
-for i in tqdm(range(len(sub_relevant_indices))):
-    # DEBUG:
-    # if i >= 10:
-    #     break
-    sub_index = sub_relevant_indices[i]
-    if test_val_set:
-        global_index = feeder.val_inds[sub_index]
-    else:
-        global_index = feeder.test_inds[sub_index]
-    assert global_index == relevant_indices[i]
+    for i in tqdm(range(len(sub_relevant_indices))):
+        # DEBUG:
+        # if i >= 10:
+        #     break
+        sub_index = sub_relevant_indices[i]
+        if test_val_set:
+            global_index = feeder.val_inds[sub_index]
+        else:
+            global_index = feeder.test_inds[sub_index]
+        assert global_index == relevant_indices[i]
 
-    _, real_label = feeder.test_indices(sub_index)
-    real_label = np.argmax(real_label)
+        _, real_label = feeder.test_indices(sub_index)
+        real_label = np.argmax(real_label)
 
-    if test_val_set:
-        pred_label = x_val_preds[sub_index]
-    else:
-        pred_label = x_test_preds[sub_index]
+        if test_val_set:
+            pred_label = x_val_preds[sub_index]
+        else:
+            pred_label = x_test_preds[sub_index]
 
-    if info_tmp[FLAGS.set][sub_index]['net_succ']:
-        assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
+        if info_tmp[FLAGS.set][sub_index]['net_succ']:
+            assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
 
-    progress_str = 'sample {}/{}: processing helpful/harmful for {} index {} (sub={}).\n' \
-                   'real label: {}, pred label: {}. net_succ={}' \
-        .format(i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
-                _classes[pred_label], info_tmp[FLAGS.set][sub_index]['net_succ'])
-    logging.info(progress_str)
-    print(progress_str)
+        progress_str = 'sample {}/{}: processing helpful/harmful for {} index {} (sub={}).\n' \
+                       'real label: {}, pred label: {}. net_succ={}' \
+            .format(i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
+                    _classes[pred_label], info_tmp[FLAGS.set][sub_index]['net_succ'])
+        logging.info(progress_str)
+        print(progress_str)
 
-    if not info_tmp[FLAGS.set][sub_index]['net_succ']:  # if prediction is different than real
-        case = 'pred'
-    else:
-        case = 'real'
+        if not info_tmp[FLAGS.set][sub_index]['net_succ']:  # if prediction is different than real
+            case = 'pred'
+        else:
+            case = 'real'
 
-    # creating the relevant index folders
-    dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
-    scores = np.load(os.path.join(dir, 'scores.npy'))
-    sorted_indices = np.argsort(scores)
-    # help_inds = np.load(os.path.join(dir, 'helpful_ranks.npy'))[0:50]
-    # harm_inds = np.load(os.path.join(dir, 'harmful_ranks.npy'))[0:50]
-    harmful_inds = sorted_indices[:50]
-    helpful_inds = sorted_indices[-50:][::-1]
+        # creating the relevant index folders
+        dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+        scores = np.load(os.path.join(dir, 'scores.npy'))
+        sorted_indices = np.argsort(scores)
+        # help_inds = np.load(os.path.join(dir, 'helpful_ranks.npy'))[0:50]
+        # harm_inds = np.load(os.path.join(dir, 'harmful_ranks.npy'))[0:50]
+        harmful_inds = sorted_indices[:50]
+        helpful_inds = sorted_indices[-50:][::-1]
 
-    # find out the embedding space of the train images in the tanh space
-    # first we calculate the tanh transformation:
-    X_train_tanh = (np.tanh(X_train) + 1) / 2
-    most_helpful_images = X_train_tanh[helpful_inds]
-    most_harmful_images = X_train_tanh[harmful_inds]
-    train_helpful_embeddings_tanh = batch_eval(sess, [x, y], [embeddings], [most_helpful_images, y_train[helpful_inds[0:1000]]], FLAGS.batch_size)[0]
-    train_harmful_embeddings_tanh = batch_eval(sess, [x, y], [embeddings], [most_harmful_images, y_train[harmful_inds[0:1000]]], FLAGS.batch_size)[0]
+        # find out the embedding space of the train images in the tanh space
+        # first we calculate the tanh transformation:
+        X_train_tanh = (np.tanh(X_train) + 1) / 2
+        most_helpful_images = X_train_tanh[helpful_inds]
+        most_harmful_images = X_train_tanh[harmful_inds]
+        train_helpful_embeddings_tanh = batch_eval(sess, [x, y], [embeddings], [most_helpful_images, y_train[helpful_inds]], FLAGS.batch_size)[0]
+        train_harmful_embeddings_tanh = batch_eval(sess, [x, y], [embeddings], [most_harmful_images, y_train[harmful_inds]], FLAGS.batch_size)[0]
 
-    most_helpful_list.append(train_helpful_embeddings_tanh)
-    most_harmful_list.append(train_harmful_embeddings_tanh)
+        most_helpful_list.append(train_helpful_embeddings_tanh)
+        most_harmful_list.append(train_harmful_embeddings_tanh)
 
-most_helpful = np.asarray(most_helpful_list)
-most_harmful = np.asarray(most_harmful_list)
+    most_helpful = np.asarray(most_helpful_list)
+    most_harmful = np.asarray(most_harmful_list)
+    np.save(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set)), most_helpful)
+    np.save(os.path.join(attack_dir, '{}_most_harmful_tanh.npy'.format(FLAGS.set)), most_harmful)
+else:
+    print('{} already exist. Loading...'.format(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set))))
+    most_helpful = np.load(os.path.join(attack_dir, '{}_most_helpful_tanh.npy'.format(FLAGS.set)))
+    most_harmful = np.load(os.path.join(attack_dir, '{}_most_harmful_tanh.npy'.format(FLAGS.set)))
 
 # DEBUG:
 # most_helpful = np.tile(most_helpful, [100, 1, 1])
 # most_harmful = np.tile(most_harmful, [100, 1, 1])
-
 
 # initialize adversarial examples if necessary
 if not os.path.exists(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))):
@@ -376,4 +382,4 @@ if not os.path.exists(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))
     np.save(os.path.join(attack_dir, 'x_{}_features_adv.npy'.format(FLAGS.set)), x_set_features_adv)
 
 else:
-    print('{} already exists'.format(os.path.exists(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set)))))
+    print('{} already exists'.format(os.path.join(attack_dir, 'X_{}_adv.npy'.format(FLAGS.set))))
