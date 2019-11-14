@@ -436,33 +436,36 @@ inspector_pred_list = []
 inspector_adv_list = []
 
 for ii in range(FLAGS.num_threads):
-    inspector_list.append(
-        darkon.Influence(
-            workspace=os.path.join(workspace_dir, 'real'),
-            feeder=copy.deepcopy(feeder),
-            loss_op_train=full_loss.fprop(x=x, y=y),
-            loss_op_test=loss.fprop(x=x, y=y),
-            x_placeholder=x,
-            y_placeholder=y)
-    )
-    inspector_pred_list.append(
-        darkon.Influence(
-            workspace=os.path.join(workspace_dir, 'pred'),
-            feeder=copy.deepcopy(pred_feeder),
-            loss_op_train=full_loss.fprop(x=x, y=y),
-            loss_op_test=loss.fprop(x=x, y=y),
-            x_placeholder=x,
-            y_placeholder=y)
-    )
-    inspector_adv_list.append(
-        darkon.Influence(
-            workspace=os.path.join(workspace_dir, 'adv', FLAGS.attack),
-            feeder=copy.deepcopy(adv_feeder),
-            loss_op_train=full_loss.fprop(x=x, y=y),
-            loss_op_test=loss.fprop(x=x, y=y),
-            x_placeholder=x,
-            y_placeholder=y)
-    )
+    if 'real' in ALLOWED_CASES:
+        inspector_list.append(
+            darkon.Influence(
+                workspace=os.path.join(workspace_dir, 'real'),
+                feeder=copy.deepcopy(feeder),
+                loss_op_train=full_loss.fprop(x=x, y=y),
+                loss_op_test=loss.fprop(x=x, y=y),
+                x_placeholder=x,
+                y_placeholder=y)
+        )
+    if 'pred' in ALLOWED_CASES:
+        inspector_pred_list.append(
+            darkon.Influence(
+                workspace=os.path.join(workspace_dir, 'pred'),
+                feeder=copy.deepcopy(pred_feeder),
+                loss_op_train=full_loss.fprop(x=x, y=y),
+                loss_op_test=loss.fprop(x=x, y=y),
+                x_placeholder=x,
+                y_placeholder=y)
+        )
+    if 'adv' in ALLOWED_CASES:
+        inspector_adv_list.append(
+            darkon.Influence(
+                workspace=os.path.join(workspace_dir, 'adv', FLAGS.attack),
+                feeder=copy.deepcopy(adv_feeder),
+                loss_op_train=full_loss.fprop(x=x, y=y),
+                loss_op_test=loss.fprop(x=x, y=y),
+                x_placeholder=x,
+                y_placeholder=y)
+        )
 
 testset_batch_size = 100
 train_batch_size = 200
