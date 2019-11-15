@@ -436,6 +436,7 @@ inspector_pred_list = []
 inspector_adv_list = []
 
 for ii in range(FLAGS.num_threads):
+    print('Setting feeders for {} cases for thread #{}...'.format(ALLOWED_CASES, ii+1))
     if 'real' in ALLOWED_CASES:
         inspector_list.append(
             darkon.Influence(
@@ -604,6 +605,7 @@ def collect_influence(q, thread_id):
     return True
 
 
+print('Start setting up the queue...')
 # set up a queue to hold all the jobs:
 q = Queue(maxsize=0)
 for i in range(len(sub_relevant_indices)):
