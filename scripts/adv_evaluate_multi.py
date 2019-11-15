@@ -495,110 +495,110 @@ if FLAGS.backward:
 def collect_influence(q, thread_id):
     while not q.empty():
         work = q.get()
-        # try:
-        i = work[0]
-        sub_index = sub_relevant_indices[i]
-        if test_val_set:
-            global_index = feeder.val_inds[sub_index]
-        else:
-            global_index = feeder.test_inds[sub_index]
-        assert global_index == relevant_indices[i]
-
-        _, real_label = feeder.test_indices(sub_index)
-        real_label = np.argmax(real_label)
-
-        if test_val_set:
-            pred_label = x_val_preds[sub_index]
-        else:
-            pred_label = x_test_preds[sub_index]
-
-        _, adv_label = adv_feeder.test_indices(sub_index)
-        adv_label = np.argmax(adv_label)
-
-        if info[FLAGS.set][sub_index]['attack_succ']:
-            assert pred_label != adv_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
-        if info[FLAGS.set][sub_index]['net_succ']:
-            assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
-        progress_str = 'thread_id: {}. sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
-                       'real label: {}, adv label: {}, pred label: {}. net_succ={}, attack_succ={}' \
-            .format(thread_id, i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
-                    _classes[adv_label], _classes[pred_label], info[FLAGS.set][sub_index]['net_succ'], info[FLAGS.set][sub_index]['attack_succ'])
-        logging.info(progress_str)
-        print(progress_str)
-
-        cases = ['real', 'adv']
-        if not info[FLAGS.set][sub_index]['net_succ']:  # if prediction is different than real
-            cases.append('pred')
-
-        for case in cases:
-            if case == 'real':
-                insp = inspector_list[thread_id]
-                feed = feeder
-                # ni = all_neighbor_indices
-                # nd = all_neighbor_dists
-            elif case == 'pred':
-                insp = inspector_pred_list[thread_id]
-                feed = pred_feeder
-                # ni = all_neighbor_indices
-                # nd = all_neighbor_dists
-            elif case == 'adv':
-                insp = inspector_adv_list[thread_id]
-                feed = adv_feeder
-                # ni = all_neighbor_indices_adv
-                # nd = all_neighbor_dists_adv
+        try:
+            i = work[0]
+            sub_index = sub_relevant_indices[i]
+            if test_val_set:
+                global_index = feeder.val_inds[sub_index]
             else:
-                raise AssertionError('only real and adv are accepted.')
+                global_index = feeder.test_inds[sub_index]
+            assert global_index == relevant_indices[i]
 
-            if case not in ALLOWED_CASES:
-                continue
+            _, real_label = feeder.test_indices(sub_index)
+            real_label = np.argmax(real_label)
 
-            if FLAGS.prepare:
-                try:
-                    insp._prepare(
-                        sess=sess,
-                        test_indices=[sub_index],
-                        test_batch_size=testset_batch_size,
-                        approx_params=approx_params,
-                        force_refresh=FLAGS.overwrite_A
-                    )
-                except Exception as e:
-                    print('Error with influence _prepare for sub_index={} (global_idex={}): {}. Forcing...'.format(sub_index, global_index, e))
-                    insp._prepare(
-                        sess=sess,
-                        test_indices=[sub_index],
-                        test_batch_size=testset_batch_size,
-                        approx_params=approx_params,
-                        force_refresh=True
-                    )
+            if test_val_set:
+                pred_label = x_val_preds[sub_index]
             else:
-                # creating the relevant index folders
-                dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
-                if case == 'adv':
-                    dir = os.path.join(dir, FLAGS.attack)
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
+                pred_label = x_test_preds[sub_index]
 
-                if os.path.isfile(os.path.join(dir, 'scores.npy')):
-                    print('scores already exists in {}'.format(os.path.join(dir, 'scores.npy')))
-                    # scores = np.load(os.path.join(dir, 'scores.npy'))
+            _, adv_label = adv_feeder.test_indices(sub_index)
+            adv_label = np.argmax(adv_label)
+
+            if info[FLAGS.set][sub_index]['attack_succ']:
+                assert pred_label != adv_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
+            if info[FLAGS.set][sub_index]['net_succ']:
+                assert pred_label == real_label, 'failed for i={}, sub_index={}, global_index={}'.format(i, sub_index, global_index)
+            progress_str = 'thread_id: {}. sample {}/{}: calculating scores for {} index {} (sub={}).\n' \
+                           'real label: {}, adv label: {}, pred label: {}. net_succ={}, attack_succ={}' \
+                .format(thread_id, i + 1, len(sub_relevant_indices), FLAGS.set, global_index, sub_index, _classes[real_label],
+                        _classes[adv_label], _classes[pred_label], info[FLAGS.set][sub_index]['net_succ'], info[FLAGS.set][sub_index]['attack_succ'])
+            logging.info(progress_str)
+            print(progress_str)
+
+            cases = ['real', 'adv']
+            if not info[FLAGS.set][sub_index]['net_succ']:  # if prediction is different than real
+                cases.append('pred')
+
+            for case in ALLOWED_CASES:
+                if case == 'real':
+                    insp = inspector_list[thread_id]
+                    feed = feeder
+                    # ni = all_neighbor_indices
+                    # nd = all_neighbor_dists
+                elif case == 'pred':
+                    insp = inspector_pred_list[thread_id]
+                    feed = pred_feeder
+                    # ni = all_neighbor_indices
+                    # nd = all_neighbor_dists
+                elif case == 'adv':
+                    insp = inspector_adv_list[thread_id]
+                    feed = adv_feeder
+                    # ni = all_neighbor_indices_adv
+                    # nd = all_neighbor_dists_adv
                 else:
-                    scores = insp.upweighting_influence_batch(
-                        sess=sess,
-                        test_indices=[sub_index],
-                        test_batch_size=testset_batch_size,
-                        approx_params=approx_params,
-                        train_batch_size=train_batch_size,
-                        train_iterations=train_iterations)
-                    np.save(os.path.join(dir, 'scores.npy'), scores)
+                    raise AssertionError('only real and adv are accepted.')
 
-                print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
-                image, _ = feed.test_indices(sub_index)
-                imageio.imwrite(os.path.join(dir, 'image.png'), image)
-                np.save(os.path.join(dir, 'image.npy'), image)
-        # except Exception as e:
-        #     print('Error with influence collect function for i={}: {}'.format(i, e))
-        #     exit(1)
-        #     raise AssertionError('Error with influence collect function for i={}!'.format(i))
+                if case not in ALLOWED_CASES:
+                    continue
+
+                if FLAGS.prepare:
+                    try:
+                        insp._prepare(
+                            sess=sess,
+                            test_indices=[sub_index],
+                            test_batch_size=testset_batch_size,
+                            approx_params=approx_params,
+                            force_refresh=FLAGS.overwrite_A
+                        )
+                    except Exception as e:
+                        print('Error with influence _prepare for sub_index={} (global_idex={}): {}. Forcing...'.format(sub_index, global_index, e))
+                        insp._prepare(
+                            sess=sess,
+                            test_indices=[sub_index],
+                            test_batch_size=testset_batch_size,
+                            approx_params=approx_params,
+                            force_refresh=True
+                        )
+                else:
+                    # creating the relevant index folders
+                    dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
+                    if case == 'adv':
+                        dir = os.path.join(dir, FLAGS.attack)
+                    if not os.path.exists(dir):
+                        os.makedirs(dir)
+
+                    if os.path.isfile(os.path.join(dir, 'scores.npy')):
+                        print('scores already exists in {}'.format(os.path.join(dir, 'scores.npy')))
+                        # scores = np.load(os.path.join(dir, 'scores.npy'))
+                    else:
+                        scores = insp.upweighting_influence_batch(
+                            sess=sess,
+                            test_indices=[sub_index],
+                            test_batch_size=testset_batch_size,
+                            approx_params=approx_params,
+                            train_batch_size=train_batch_size,
+                            train_iterations=train_iterations)
+                        np.save(os.path.join(dir, 'scores.npy'), scores)
+
+                    print('saving image to {}'.format(os.path.join(dir, 'image.npy/png')))
+                    image, _ = feed.test_indices(sub_index)
+                    imageio.imwrite(os.path.join(dir, 'image.png'), image)
+                    np.save(os.path.join(dir, 'image.npy'), image)
+        except Exception as e:
+            print('Error with influence collect function for i={}: {}'.format(i, e))
+            exit(1)
+            raise AssertionError('Error with influence collect function for i={}!'.format(i))
 
         # signal to the queue that task has been processed
         q.task_done()
