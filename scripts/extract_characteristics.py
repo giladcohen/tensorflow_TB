@@ -976,7 +976,7 @@ if FLAGS.characteristics == 'nnif':
 
     # test
     all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn_small_trainset)
-    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'val', knn_small_trainset)
+    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'test', knn_small_trainset)
     ranks, ranks_adv = get_nnif(X_test, 'test', max_indices)
     ranks[:, :, 0] *= (49/5)
     ranks[:, :, 2] *= (49/5)
