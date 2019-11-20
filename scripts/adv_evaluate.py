@@ -28,7 +28,6 @@ from tensorflow_TB.utils.misc import one_hot
 from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 from tensorflow_TB.lib.datasets.influence_feeder_val_test import MyFeederValTest
-from tensorflow_TB.utils.misc import np_evaluate
 import pickle
 from cleverhans.utils import random_targets
 from cleverhans.evaluation import batch_eval
@@ -214,7 +213,11 @@ else:
     train_preds_file    = os.path.join(model_dir, 'x_train_preds.npy')
     train_features_file = os.path.join(model_dir, 'x_train_features.npy')
 if not os.path.isfile(train_preds_file):
-    x_train_preds, x_train_features = np_evaluate(sess, [preds, embeddings], X_train, y_train, x, y, FLAGS.batch_size, log=logging)
+    tf_inputs    = [x, y]
+    tf_outputs   = [preds, embeddings]
+    numpy_inputs = [X_train, y_train]
+
+    x_train_preds, x_train_features = batch_eval(sess, tf_inputs, tf_outputs, numpy_inputs, FLAGS.batch_size)
     x_train_preds = x_train_preds.astype(np.int32)
     np.save(train_preds_file, x_train_preds)
     np.save(train_features_file, x_train_features)
