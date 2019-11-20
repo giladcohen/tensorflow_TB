@@ -37,12 +37,9 @@ from cleverhans.evaluation import batch_eval
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 100, 'Size of training batches')
-flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_string('attack', 'cw_nnif', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
-flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_bool('tanh', False, 'whether or not to convert the helpful/harmful train images to tanh space')
 
 flags.DEFINE_string('mode', 'null', 'to bypass pycharm bug')
 flags.DEFINE_string('port', 'null', 'to bypass pycharm bug')
@@ -72,6 +69,7 @@ if FLAGS.dataset == 'cifar10':
     ARCH_NAME = 'model1'
     CHECKPOINT_NAME = 'cifar10/log_080419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000'
     LABEL_SMOOTHING = 0.1
+    NUM_INDICES = 50
 elif FLAGS.dataset == 'cifar100':
     _classes = (
         'apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle',
@@ -92,6 +90,7 @@ elif FLAGS.dataset == 'cifar100':
     ARCH_NAME = 'model_cifar_100'
     CHECKPOINT_NAME = 'cifar100/log_300419_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_ls_0.01'
     LABEL_SMOOTHING = 0.01
+    NUM_INDICES = 5
 elif FLAGS.dataset == 'svhn':
     _classes = (
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -99,8 +98,12 @@ elif FLAGS.dataset == 'svhn':
     ARCH_NAME = 'model_svhn'
     CHECKPOINT_NAME = 'svhn_mini/log_300519_b_125_wd_0.0004_mom_lr_0.1_f_0.9_p_3_c_2_val_size_1000_exp1'
     LABEL_SMOOTHING = 0.1
+    NUM_INDICES = 50
 else:
     raise AssertionError('dataset {} not supported'.format(FLAGS.dataset))
+
+weight_decay = 0.0004
+TARGETED = FLAGS.attack != 'deepfool'
 
 # Object used to keep track of (and return) key accuracies
 report = AccuracyReport()
@@ -121,10 +124,8 @@ sess = tf.Session(config=tf.ConfigProto(**config_args))
 model_dir     = os.path.join('/data/gilad/logs/influence', CHECKPOINT_NAME)
 workspace_dir = os.path.join(model_dir, WORKSPACE)
 attack_dir    = os.path.join(model_dir, FLAGS.attack)
-if FLAGS.targeted:
+if TARGETED:
     attack_dir = attack_dir + '_targeted'
-if not FLAGS.tanh:
-    attack_dir = attack_dir + '_pure'
 
 # make sure the attack dir is constructed
 if not os.path.exists(attack_dir):
@@ -147,7 +148,7 @@ y_train_sparse         = y_train.argmax(axis=-1).astype(np.int32)
 y_val_sparse           = y_val.argmax(axis=-1).astype(np.int32)
 y_test_sparse          = y_test.argmax(axis=-1).astype(np.int32)
 
-if FLAGS.targeted:
+if TARGETED:
     # get also the adversarial labels of the val and test sets
     if not os.path.isfile(os.path.join(attack_dir, 'y_val_targets.npy')):
         y_val_targets  = random_targets(y_val_sparse , feeder.num_classes)
@@ -177,7 +178,7 @@ embeddings = model.get_embeddings(x)
 
 loss = CrossEntropy(model, smoothing=LABEL_SMOOTHING)
 regu_losses = WeightDecay(model)
-full_loss = WeightedSum(model, [(1.0, loss), (FLAGS.weight_decay, regu_losses)])
+full_loss = WeightedSum(model, [(1.0, loss), (weight_decay, regu_losses)])
 
 def do_eval(preds, x_set, y_set, report_key, is_adv=None):
     acc = model_eval(sess, x, y, preds, x_set, y_set, args=eval_params)
@@ -272,12 +273,8 @@ for i, set_ind in enumerate(feeder.test_inds):
 sub_relevant_indices = [ind for ind in info_tmp[FLAGS.set]]
 relevant_indices     = [info_tmp[FLAGS.set][ind]['global_index'] for ind in sub_relevant_indices]
 
-if FLAGS.tanh:
-    file_suffix = '_tanh.npy'
-else:
-    file_suffix = '.npy'
-helpful_npy_path = os.path.join(attack_dir, '{}_most_helpful{}'.format(FLAGS.set, file_suffix))
-harmful_npy_path = os.path.join(attack_dir, '{}_most_harmful{}'.format(FLAGS.set, file_suffix))
+helpful_npy_path = os.path.join(attack_dir, '{}_most_helpful.npy'.format(FLAGS.set))
+harmful_npy_path = os.path.join(attack_dir, '{}_most_harmful.npy'.format(FLAGS.set))
 
 if not os.path.exists(helpful_npy_path):
     # loading the embedding vectors of all the val's/test's most harmful/helpful training examples
@@ -322,17 +319,12 @@ if not os.path.exists(helpful_npy_path):
         dir = os.path.join(model_dir, FLAGS.set, FLAGS.set + '_index_{}'.format(global_index), case)
         scores = np.load(os.path.join(dir, 'scores.npy'))
         sorted_indices = np.argsort(scores)
-        # help_inds = np.load(os.path.join(dir, 'helpful_ranks.npy'))[0:50]
-        # harm_inds = np.load(os.path.join(dir, 'harmful_ranks.npy'))[0:50]
-        harmful_inds = sorted_indices[:50]
-        helpful_inds = sorted_indices[-50:][::-1]
+        harmful_inds = sorted_indices[:NUM_INDICES]
+        helpful_inds = sorted_indices[-NUM_INDICES:][::-1]
 
         # find out the embedding space of the train images in the tanh space
         # first we calculate the tanh transformation:
-        if FLAGS.tanh:
-            X_train_transform = (np.tanh(X_train) + 1) / 2
-        else:
-            X_train_transform = X_train
+        X_train_transform = (np.tanh(X_train) + 1) / 2
 
         most_helpful_images = X_train_transform[helpful_inds]
         most_harmful_images = X_train_transform[harmful_inds]

@@ -83,6 +83,7 @@ class CWL2_NNIF(object):
         self.repeat = binary_search_steps >= 10
 
         self.shape = shape = tuple([batch_size] + list(shape))
+        self.num_indices = -0.5 * (num_labels - 10) + 50
 
         # the variable we're going to optimize over
         modifier = tf.Variable(np.zeros(shape, dtype=np_dtype))
@@ -91,15 +92,15 @@ class CWL2_NNIF(object):
         self.timg   = tf.Variable(np.zeros(shape), dtype=tf_dtype, name='timg')
         self.tlab   = tf.Variable(np.zeros((batch_size, num_labels)), dtype=tf_dtype, name='tlab')
         self.const  = tf.Variable(np.zeros(batch_size), dtype=tf_dtype, name='const')
-        self.m_help = tf.Variable(np.zeros((batch_size, 50, 64)), dtype=tf_dtype, name='m_help')
-        self.m_harm = tf.Variable(np.zeros((batch_size, 50, 64)), dtype=tf_dtype, name='m_harm')
+        self.m_help = tf.Variable(np.zeros((batch_size, self.num_indices, 64)), dtype=tf_dtype, name='m_help')
+        self.m_harm = tf.Variable(np.zeros((batch_size, self.num_indices, 64)), dtype=tf_dtype, name='m_harm')
 
         # and here's what we use to assign them
         self.assign_timg   = tf.placeholder(tf_dtype, shape, name='assign_timg')
         self.assign_tlab   = tf.placeholder(tf_dtype, (batch_size, num_labels), name='assign_tlab')
         self.assign_const  = tf.placeholder(tf_dtype, [batch_size], name='assign_const')
-        self.assign_m_help = tf.placeholder(tf_dtype, (batch_size, 50, 64), name='assign_m_help')
-        self.assign_m_harm = tf.placeholder(tf_dtype, (batch_size, 50, 64), name='assign_m_harm')
+        self.assign_m_help = tf.placeholder(tf_dtype, (batch_size, self.num_indices, 64), name='assign_m_help')
+        self.assign_m_harm = tf.placeholder(tf_dtype, (batch_size, self.num_indices, 64), name='assign_m_harm')
 
         # the resulting instance, tanh'd to keep bounded from clip_min
         # to clip_max
@@ -131,7 +132,7 @@ class CWL2_NNIF(object):
 
         # NNID addition:
         self.embeddings = tf.expand_dims(self.embeddings, axis=1)  # expand (batch, 64) to (batch, 1, 64)
-        self.embeddings = tf.tile(self.embeddings, [1, 50, 1])  # duplicate (batch, 1, 64) to (batch, 50, 64)
+        self.embeddings = tf.tile(self.embeddings, [1, self.num_indices, 1])  # duplicate (batch, 1, 64) to (batch, self.num_indices, 64)
         self.helpful_dist = tf.norm(self.embeddings - self.m_help, ord=1, axis=(1, 2))  # , axis=list(range(1, len(self.embeddings.shape))))
         # harmful_dist = reduce_sum(tf.norm(self.embeddings - self.m_harm, ord=1, axis=list(range(1, len(self.embeddings)))))
 
