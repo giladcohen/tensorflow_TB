@@ -83,7 +83,7 @@ class CWL2_NNIF(object):
         self.repeat = binary_search_steps >= 10
 
         self.shape = shape = tuple([batch_size] + list(shape))
-        self.num_indices = -0.5 * (num_labels - 10) + 50
+        self.num_indices = int(-0.5 * (num_labels - 10) + 50)
 
         # the variable we're going to optimize over
         modifier = tf.Variable(np.zeros(shape, dtype=np_dtype))
