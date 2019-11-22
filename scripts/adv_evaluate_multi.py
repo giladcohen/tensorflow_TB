@@ -13,7 +13,6 @@ import logging
 import numpy as np
 import tensorflow as tf
 import os
-import imageio
 
 import darkon.darkon as darkon
 
@@ -495,8 +494,8 @@ if FLAGS.backward:
 def collect_influence(q, thread_id):
     while not q.empty():
         work = q.get()
+        i = work[0]
         try:
-            i = work[0]
             sub_index = sub_relevant_indices[i]
             if test_val_set:
                 global_index = feeder.val_inds[sub_index]
