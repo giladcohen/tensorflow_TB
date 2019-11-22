@@ -336,7 +336,7 @@ y_val_sparse       = y_val_sparse[val_inds_correct]
 
 test_inds_correct = np.where(x_test_preds == y_test_sparse)[0]
 # HACK: select only the inds that have a value smaller than 4000
-test_inds_correct = [i for i in test_inds_correct if i < 4000]
+# test_inds_correct = [i for i in test_inds_correct if i < 4000]
 print("Number of correctly test predict images: %s" % (len(test_inds_correct)))
 X_test              = X_test[test_inds_correct]
 X_test_noisy        = X_test_noisy[test_inds_correct]
