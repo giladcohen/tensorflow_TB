@@ -37,33 +37,33 @@ for dataset in ['cifar10', 'cifar100', 'svhn']:
         else:
             indices = range(1000)
 
-    print('working on dataset {} for subset {}...'.format(dataset, subset))
-    old_dir_tmp = old_dir[dataset]
-    new_dir_tmp = new_dir[dataset]
-    for i in tqdm(indices):
-        val_dir = os.path.join(old_dir_tmp, subset, '{}_index_{}'.format(subset, i))
-        real_path = os.path.join(val_dir, 'real')
-        pred_path = os.path.join(val_dir, 'pred')
-        adv_path  = os.path.join(val_dir, 'adv')
+        print('working on dataset {} for subset {}...'.format(dataset, subset))
+        old_dir_tmp = old_dir[dataset]
+        new_dir_tmp = new_dir[dataset]
+        for i in tqdm(indices):
+            val_dir = os.path.join(old_dir_tmp, subset, '{}_index_{}'.format(subset, i))
+            real_path = os.path.join(val_dir, 'real')
+            pred_path = os.path.join(val_dir, 'pred')
+            adv_path  = os.path.join(val_dir, 'adv')
 
-        new_pred  = os.path.join(new_dir_tmp, subset, '{}_index_{}'.format(subset, i), 'pred')
-        new_adv   = os.path.join(new_dir_tmp, subset, '{}_index_{}'.format(subset, i), 'adv')
+            new_pred  = os.path.join(new_dir_tmp, subset, '{}_index_{}'.format(subset, i), 'pred')
+            new_adv   = os.path.join(new_dir_tmp, subset, '{}_index_{}'.format(subset, i), 'adv')
 
-        mkdir(new_pred)
+            mkdir(new_pred)
 
-        # copy pred
-        if os.path.exists(pred_path):
-            run_cmd('cp {} {}'.format(os.path.join(pred_path, 'scores.npy'), os.path.join(new_pred, 'scores.npy')))
-        else:
-            run_cmd('cp {} {}'.format(os.path.join(real_path, 'scores.npy'), os.path.join(new_pred, 'scores.npy')))
+            # copy pred
+            if os.path.exists(pred_path):
+                run_cmd('cp {} {}'.format(os.path.join(pred_path, 'scores.npy'), os.path.join(new_pred, 'scores.npy')))
+            else:
+                run_cmd('cp {} {}'.format(os.path.join(real_path, 'scores.npy'), os.path.join(new_pred, 'scores.npy')))
 
-        # copy adv
-        for attack in ['deepfool', 'jsma', 'cw', 'cw_nnif', 'fgsm']:
-            scores_path = os.path.join(adv_path, attack, 'scores.npy')
-            new_attack  = os.path.join(new_adv, attack)
-            mkdir(new_attack)
-            scores_path_new = os.path.join(new_attack, 'scores.npy')
-            run_cmd('cp {} {}'.format(scores_path, scores_path_new))
+            # copy adv
+            for attack in ['deepfool', 'jsma', 'cw', 'cw_nnif', 'fgsm']:
+                scores_path = os.path.join(adv_path, attack, 'scores.npy')
+                new_attack  = os.path.join(new_adv, attack)
+                mkdir(new_attack)
+                scores_path_new = os.path.join(new_attack, 'scores.npy')
+                run_cmd('cp {} {}'.format(scores_path, scores_path_new))
 
 
 
