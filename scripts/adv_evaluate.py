@@ -284,8 +284,8 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     pgd_params = {
         'clip_min': 0.0,
         'clip_max': 1.0,
-        'eps': 1.5,
-        'eps_iter': 0.25,
+        'eps': 0.3,
+        'eps_iter': 0.05,
         'ord': np.inf,
     }
     if FLAGS.targeted:
