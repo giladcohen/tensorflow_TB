@@ -36,10 +36,10 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('dataset', 'svhn', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('attack', 'pgd', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
+flags.DEFINE_string('attack', 'ead', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
 flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
 flags.DEFINE_string('cases', 'adv', 'can be rither real, pred, or adv')
 flags.DEFINE_integer('b', -1, 'beginning index')
@@ -361,9 +361,13 @@ else:
     X_val_adv           = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
     x_val_preds_adv     = np.load(os.path.join(attack_dir, 'x_val_preds_adv.npy'))
     x_val_features_adv  = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
-    X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
-    x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
-    x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
+    # X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
+    # x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
+    # x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
+    # HACK for val only:
+    X_test_adv          = np.zeros((10000, 32, 32, 3), dtype=np.float32)
+    x_test_preds_adv    = np.zeros((10000,), dtype=np.int32)
+    x_test_features_adv = np.zeros((10000, 64), dtype=np.float32)
 
 # accuracy computation
 # do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
