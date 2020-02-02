@@ -286,7 +286,7 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
         'clip_max': 1.0,
         'eps': 0.02,
         'eps_iter': 0.002,
-        'ord': np.inf,
+        'ord': np.inf
     }
     ead_params = {
         'clip_min': 0.0,
