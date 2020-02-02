@@ -39,9 +39,9 @@ flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
 flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
-flags.DEFINE_string('attack', 'deepfool', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
-flags.DEFINE_bool('targeted', False, 'whether or not the adversarial attack is targeted')
-flags.DEFINE_string('cases', 'all', 'can be rither real, pred, or adv')
+flags.DEFINE_string('attack', 'pgd', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
+flags.DEFINE_bool('targeted', True, 'whether or not the adversarial attack is targeted')
+flags.DEFINE_string('cases', 'adv', 'can be rither real, pred, or adv')
 flags.DEFINE_integer('b', -1, 'beginning index')
 flags.DEFINE_integer('e', -1, 'ending index')
 flags.DEFINE_bool('backward', False, 'going from the last to to first')
@@ -284,8 +284,8 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     pgd_params = {
         'clip_min': 0.0,
         'clip_max': 1.0,
-        'eps': 0.3,
-        'eps_iter': 0.05,
+        'eps': 0.1,
+        'eps_iter': 0.01,
         'ord': np.inf,
     }
     if FLAGS.targeted:
