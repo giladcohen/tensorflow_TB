@@ -18,7 +18,7 @@ from tqdm import tqdm
 
 import darkon.darkon as darkon
 
-from cleverhans.attacks import FastGradientMethod, DeepFool, SaliencyMapMethod, CarliniWagnerL2, MadryEtAl
+from cleverhans.attacks import FastGradientMethod, DeepFool, SaliencyMapMethod, CarliniWagnerL2, MadryEtAl, ElasticNetMethod
 from tensorflow.python.platform import flags
 from cleverhans.loss import CrossEntropy, WeightDecay, WeightedSum
 from tensorflow_TB.lib.models.darkon_replica_model import DarkonReplica
@@ -288,6 +288,15 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
         'eps_iter': 0.002,
         'ord': np.inf,
     }
+    ead_params = {
+        'clip_min': 0.0,
+        'clip_max': 1.0,
+        'batch_size': 125,
+        'confidence': 0.8,
+        'learning_rate': 0.01,
+        'initial_const': 0.1,
+        'decision_rule': 'L1'
+    }
     if FLAGS.targeted:
         jsma_params.update({'y_target': y_adv})
         cw_params.update({'y_target': y_adv})
@@ -309,6 +318,9 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     elif FLAGS.attack == 'pgd':
         attack_params = pgd_params
         attack_class  = MadryEtAl
+    elif FLAGS.attack == 'ead':
+        attack_params = ead_params
+        attack_class  = ElasticNetMethod
     else:
         raise AssertionError('Attack {} is not supported'.format(FLAGS.attack))
 
