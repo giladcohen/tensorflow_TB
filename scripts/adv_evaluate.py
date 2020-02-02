@@ -36,7 +36,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('batch_size', 125, 'Size of training batches')
 flags.DEFINE_float('weight_decay', 0.0004, 'weight decay')
-flags.DEFINE_string('dataset', 'cifar10', 'datasset: cifar10/100 or svhn')
+flags.DEFINE_string('dataset', 'svhn', 'datasset: cifar10/100 or svhn')
 flags.DEFINE_string('set', 'val', 'val or test set to evaluate')
 flags.DEFINE_bool('prepare', False, 'whether or not we are in the prepare phase, when hvp is calculated')
 flags.DEFINE_string('attack', 'pgd', 'adversarial attack: deepfool, jsma, cw, cw_nnif')
@@ -284,8 +284,8 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
     pgd_params = {
         'clip_min': 0.0,
         'clip_max': 1.0,
-        'eps': 0.02,
-        'eps_iter': 0.002,
+        'eps': 0.03,
+        'eps_iter': 0.003,
         'ord': np.inf,
     }
     if FLAGS.targeted:
