@@ -361,13 +361,13 @@ else:
     X_val_adv           = np.load(os.path.join(attack_dir, 'X_val_adv.npy'))
     x_val_preds_adv     = np.load(os.path.join(attack_dir, 'x_val_preds_adv.npy'))
     x_val_features_adv  = np.load(os.path.join(attack_dir, 'x_val_features_adv.npy'))
-    # X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
-    # x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
-    # x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
+    X_test_adv          = np.load(os.path.join(attack_dir, 'X_test_adv.npy'))
+    x_test_preds_adv    = np.load(os.path.join(attack_dir, 'x_test_preds_adv.npy'))
+    x_test_features_adv = np.load(os.path.join(attack_dir, 'x_test_features_adv.npy'))
     # HACK for val only:
-    X_test_adv          = np.zeros((10000, 32, 32, 3), dtype=np.float32)
-    x_test_preds_adv    = np.zeros((10000,), dtype=np.int32)
-    x_test_features_adv = np.zeros((10000, 64), dtype=np.float32)
+    # X_test_adv          = np.zeros((10000, 32, 32, 3), dtype=np.float32)
+    # x_test_preds_adv    = np.zeros((10000,), dtype=np.int32)
+    # x_test_features_adv = np.zeros((10000, 64), dtype=np.float32)
 
 # accuracy computation
 # do_eval(logits, X_train, y_train, 'clean_train_clean_eval_trainset', False)
