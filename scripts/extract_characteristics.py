@@ -953,55 +953,52 @@ if FLAGS.characteristics == 'nnif':
         if FLAGS.ablation[i] == '1':
             sel_column.append(i)
 
-    # if FLAGS.max_indices == -1:
-    #     max_indices_vec = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400, 450, 500]
-    # else:
-    #     max_indices_vec = [FLAGS.max_indices]
+    if FLAGS.max_indices == -1:
+        max_indices_vec = [50, 100, 150, 200, 250, 300]
+    else:
+        max_indices_vec = [FLAGS.max_indices]
 
-    # for max_indices in tqdm(max_indices_vec):
+    for max_indices in tqdm(max_indices_vec):
+        print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
+        # training the knn layers
+        knn_large_trainset = get_knn_layers(X_train, y_train_sparse)
+        knn_small_trainset = get_knn_layers(X_train_mini, y_train_mini_sparse)
 
-    max_indices = FLAGS.max_indices
-    print('Extracting NNIF characteristics for max_indices={}'.format(max_indices))
+        # val
+        all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_val, 'val', knn_large_trainset)
+        all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_val_adv, 'val', knn_large_trainset)
+        ranks, ranks_adv = get_nnif(X_val, 'val', max_indices)
+        ranks     = ranks[:, :, sel_column]
+        ranks_adv = ranks_adv[:, :, sel_column]
+        characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
+        print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = 'max_indices_{}_train_ablation_{}'.format(max_indices, FLAGS.ablation)
+        file_name = append_suffix(file_name, with_noisy=False)
+        file_name = os.path.join(characteristics_dir, file_name)
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
+        end_val = time.time()
+        print('total feature extraction time for val: {} sec'.format(end_val - start))
 
-    # training the knn layers
-    knn_large_trainset = get_knn_layers(X_train, y_train_sparse)
-    knn_small_trainset = get_knn_layers(X_train_mini, y_train_mini_sparse)
-
-    # val
-    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_val, 'val', knn_large_trainset)
-    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_val_adv, 'val', knn_large_trainset)
-    ranks, ranks_adv = get_nnif(X_val, 'val', max_indices)
-    ranks     = ranks[:, :, sel_column]
-    ranks_adv = ranks_adv[:, :, sel_column]
-    characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
-    print("NNIF train: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = 'max_indices_{}_train_ablation_{}'.format(max_indices, FLAGS.ablation)
-    file_name = append_suffix(file_name, with_noisy=False)
-    file_name = os.path.join(characteristics_dir, file_name)
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
-    end_val = time.time()
-    print('total feature extraction time for val: {} sec'.format(end_val - start))
-
-    # test
-    all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn_small_trainset)
-    all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'test', knn_small_trainset)
-    ranks, ranks_adv = get_nnif(X_test, 'test', max_indices)
-    ranks[:, :, 0] *= (49/5)
-    ranks[:, :, 2] *= (49/5)
-    ranks_adv[:, :, 0] *= (49/5)
-    ranks_adv[:, :, 2] *= (49/5)
-    ranks     = ranks[:, :, sel_column]
-    ranks_adv = ranks_adv[:, :, sel_column]
-    characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
-    print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
-    file_name = 'max_indices_{}_test_ablation_{}'.format(max_indices, FLAGS.ablation)
-    file_name = append_suffix(file_name, with_noisy=False)
-    file_name = os.path.join(characteristics_dir, file_name)
-    data = np.concatenate((characteristics, labels), axis=1)
-    np.save(file_name, data)
-    end_test = time.time()
-    print('total feature extraction time for test: {} sec'.format(end_test - end_val))
+        # test
+        all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn_small_trainset)
+        all_adv_ranks   , all_adv_dists    = calc_all_ranks_and_dists(X_test_adv, 'test', knn_small_trainset)
+        ranks, ranks_adv = get_nnif(X_test, 'test', max_indices)
+        ranks[:, :, 0] *= (49/5)
+        ranks[:, :, 2] *= (49/5)
+        ranks_adv[:, :, 0] *= (49/5)
+        ranks_adv[:, :, 2] *= (49/5)
+        ranks     = ranks[:, :, sel_column]
+        ranks_adv = ranks_adv[:, :, sel_column]
+        characteristics, labels = merge_and_generate_labels(ranks_adv, ranks)
+        print("NNIF test: [characteristic shape: ", characteristics.shape, ", label shape: ", labels.shape)
+        file_name = 'max_indices_{}_test_ablation_{}'.format(max_indices, FLAGS.ablation)
+        file_name = append_suffix(file_name, with_noisy=False)
+        file_name = os.path.join(characteristics_dir, file_name)
+        data = np.concatenate((characteristics, labels), axis=1)
+        np.save(file_name, data)
+        end_test = time.time()
+        print('total feature extraction time for test: {} sec'.format(end_test - end_val))
 
 if FLAGS.characteristics == 'mahalanobis':
 
