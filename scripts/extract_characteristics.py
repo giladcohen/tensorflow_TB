@@ -68,7 +68,7 @@ flags.DEFINE_string('characteristics', 'nnif', 'type of defence: lid/mahalanobis
 flags.DEFINE_bool('with_noise', False, 'whether or not to include noisy samples')
 flags.DEFINE_bool('only_last', False, 'Using just the last layer, the embedding vector')
 
-# FOR LID
+# FOR LID/DkNN
 flags.DEFINE_integer('k_nearest', -1, 'number of nearest neighbors to use for LID/DkNN detection')
 
 # FOR MAHANABOLIS
@@ -954,7 +954,7 @@ if FLAGS.characteristics == 'nnif':
             sel_column.append(i)
 
     if FLAGS.max_indices == -1:
-        max_indices_vec = [50, 100, 150, 200, 250, 300]
+        max_indices_vec = [350, 400, 450, 500]
     else:
         max_indices_vec = [FLAGS.max_indices]
 
@@ -1012,7 +1012,6 @@ if FLAGS.characteristics == 'mahalanobis':
         magnitude_vec = [FLAGS.magnitude]
 
     for magnitude in tqdm(magnitude_vec):
-    # for magnitude in tqdm(np.array([0.00005, 0.00008, 0.0001, 0.0002])):
         print('Extracting Mahalanobis characteristics for magnitude={}'.format(magnitude))
 
         # for val set
