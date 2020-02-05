@@ -931,6 +931,8 @@ if FLAGS.characteristics == 'lid':
         file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, label), axis=1)
         np.save(file_name, data)
+        end_val = time.time()
+        print('total feature extraction time for val: {} sec'.format(end_val - start))
 
         # for test set
         characteristics, labels = get_lid(X_test, X_test_noisy, X_test_adv, k, 100)
@@ -939,6 +941,8 @@ if FLAGS.characteristics == 'lid':
         file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, labels), axis=1)
         np.save(file_name, data)
+        end_test = time.time()
+        print('total feature extraction time for test: {} sec'.format(end_test - end_val))
 
 if FLAGS.characteristics == 'nnif':
     # assert FLAGS.only_last is True
@@ -976,6 +980,8 @@ if FLAGS.characteristics == 'nnif':
     file_name = os.path.join(characteristics_dir, file_name)
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
+    end_val = time.time()
+    print('total feature extraction time for val: {} sec'.format(end_val - start))
 
     # test
     all_normal_ranks, all_normal_dists = calc_all_ranks_and_dists(X_test, 'test', knn_small_trainset)
@@ -994,6 +1000,8 @@ if FLAGS.characteristics == 'nnif':
     file_name = os.path.join(characteristics_dir, file_name)
     data = np.concatenate((characteristics, labels), axis=1)
     np.save(file_name, data)
+    end_test = time.time()
+    print('total feature extraction time for test: {} sec'.format(end_test - end_val))
 
 if FLAGS.characteristics == 'mahalanobis':
 
@@ -1018,6 +1026,8 @@ if FLAGS.characteristics == 'mahalanobis':
         file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, label), axis=1)
         np.save(file_name, data)
+        end_val = time.time()
+        print('total feature extraction time for val: {} sec'.format(end_val - start))
 
         # for test set
         characteristics, labels = get_mahalanobis(X_test, X_test_noisy, X_test_adv, magnitude, sample_mean, precision, 'test')
@@ -1026,6 +1036,8 @@ if FLAGS.characteristics == 'mahalanobis':
         file_name = os.path.join(characteristics_dir, file_name)
         data = np.concatenate((characteristics, labels), axis=1)
         np.save(file_name, data)
+        end_test = time.time()
+        print('total feature extraction time for test: {} sec'.format(end_test - end_val))
 
 if FLAGS.characteristics == 'dknn':
     assert FLAGS.only_last is True
@@ -1073,6 +1085,8 @@ if FLAGS.characteristics == 'dknn':
         file_name = os.path.join(characteristics_dir, 'k_{}_train_noisy_{}.npy'.format(k, FLAGS.with_noise))
         data = np.concatenate((characteristics, labels), axis=1)
         np.save(file_name, data)
+        end_val = time.time()
+        print('total feature extraction time for val: {} sec'.format(end_val - start))
 
         # set testing set
         test_normal_characteristics = get_dknn_nonconformity(x_test_features    , calbiration_vec, k)
@@ -1086,6 +1100,5 @@ if FLAGS.characteristics == 'dknn':
         file_name = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}.npy'.format(k, FLAGS.with_noise))
         data = np.concatenate((characteristics, labels), axis=1)
         np.save(file_name, data)
-
-end = time.time()
-print('total feature extraction file: {} sec'.format(end - start))
+        end_test = time.time()
+        print('total feature extraction time for test: {} sec'.format(end_test - end_val))
