@@ -14,6 +14,7 @@ import numpy as np
 import tensorflow as tf
 import os
 import imageio
+import time
 
 import darkon.darkon as darkon
 
@@ -909,6 +910,9 @@ def append_suffix(f, with_noisy=True):
     f = f + '.npy'
     return f
 
+
+start = time.time()
+
 if FLAGS.characteristics == 'lid':
 
     if FLAGS.k_nearest == -1:
@@ -1082,3 +1086,6 @@ if FLAGS.characteristics == 'dknn':
         file_name = os.path.join(characteristics_dir, 'k_{}_test_noisy_{}.npy'.format(k, FLAGS.with_noise))
         data = np.concatenate((characteristics, labels), axis=1)
         np.save(file_name, data)
+
+end = time.time()
+print('total feature extraction file: {} sec'.format(end - start))
