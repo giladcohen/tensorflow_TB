@@ -56,8 +56,8 @@ if FLAGS.seen_attack != '':
 else:
     SEEN_ATTACK = FLAGS.attack
 
-SEEN_ATTACK_TARGETED = SEEN_ATTACK != 'deepfool'
-ATTACK_TARGETED      = FLAGS.attack != 'deepfool'
+SEEN_ATTACK_TARGETED = SEEN_ATTACK not in ['deepfool', 'ead']
+ATTACK_TARGETED      = FLAGS.attack not in ['deepfool', 'ead']
 
 model_dir          = os.path.join('/data/gilad/logs/influence', CHECKPOINT_NAME)
 seen_attack_dir    = os.path.join(model_dir, SEEN_ATTACK)
