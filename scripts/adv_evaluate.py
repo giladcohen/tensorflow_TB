@@ -302,6 +302,7 @@ if not os.path.exists(os.path.join(attack_dir, 'X_val_adv.npy')):
         cw_params.update({'y_target': y_adv})
         fgsm_params.update({'y_target': y_adv})
         pgd_params.update({'y_target': y_adv})
+        # ead_params.update({'y_target': y_adv})  #TODO(add targeted version)
 
     if FLAGS.attack   == 'deepfool':
         attack_params = deepfool_params

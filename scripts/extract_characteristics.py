@@ -791,12 +791,12 @@ def get_calibration(x_cal_features, y_cal, k):
     knn_pred_cnt = np.asarray(knn_predict_prob * k, dtype=np.int32)
 
     # how many wrong predictions do we have for the true label?
-    calbiration_vec = np.zeros(x_cal_features.shape[0])
+    calibration_vec = np.zeros(x_cal_features.shape[0])
     for i in range(x_cal_features.shape[0]):
         label = y_cal[i]
-        calbiration_vec[i] = k - knn_pred_cnt[i, label]
+        calibration_vec[i] = k - knn_pred_cnt[i, label]
 
-    return calbiration_vec
+    return calibration_vec
 
 # def get_dknn_nonconformity(X, calbiration_vec, knn, num_classes, set):  # used for all layers. not relevant
 #     """
@@ -840,7 +840,7 @@ def get_calibration(x_cal_features, y_cal, k):
 #
 #     return empirical_p
 
-def get_dknn_nonconformity(features, calbiration_vec, k):
+def get_dknn_nonconformity(features, calibration_vec, k):
     knn = KNeighborsClassifier(n_neighbors=k, p=2, n_jobs=20)
     knn.fit(x_train_features, y_train_sparse)
 
@@ -854,8 +854,8 @@ def get_dknn_nonconformity(features, calbiration_vec, k):
     empirical_p = np.zeros_like(nonconformity, dtype=np.float32)
     for i in range(len(nonconformity)):  # for every sample
         for j in range(feeder.num_classes):  # for every class
-            num_of_greater_calib_values = np.sum(calbiration_vec >= nonconformity[i, j])
-            empirical_p[i, j] = num_of_greater_calib_values / len(calbiration_vec)
+            num_of_greater_calib_values = np.sum(calibration_vec >= nonconformity[i, j])
+            empirical_p[i, j] = num_of_greater_calib_values / len(calibration_vec)
 
     return empirical_p
 
@@ -1058,7 +1058,7 @@ if FLAGS.characteristics == 'dknn':
         y_cal          = y_val_sparse[:calibration_size]
 
         print("Calculating the calibration matrix...")
-        calbiration_vec = get_calibration(x_cal_features, y_cal, k)
+        calibration_vec = get_calibration(x_cal_features, y_cal, k)
         print("Done calculating the calibration matrix.")
 
         X_val2              = X_val[calibration_size:]
@@ -1070,8 +1070,8 @@ if FLAGS.characteristics == 'dknn':
         x_val2_features_adv = x_val_features_adv[calibration_size:]
 
         # set training set
-        val_normal_characteristics = get_dknn_nonconformity(x_val2_features    , calbiration_vec, k)
-        val_adv_characteristics    = get_dknn_nonconformity(x_val2_features_adv, calbiration_vec, k)
+        val_normal_characteristics = get_dknn_nonconformity(x_val2_features, calibration_vec, k)
+        val_adv_characteristics    = get_dknn_nonconformity(x_val2_features_adv, calibration_vec, k)
 
         dknn_neg = val_normal_characteristics
         dknn_pos = val_adv_characteristics
@@ -1085,8 +1085,8 @@ if FLAGS.characteristics == 'dknn':
         print('total feature extraction time for val: {} sec'.format(end_val - start))
 
         # set testing set
-        test_normal_characteristics = get_dknn_nonconformity(x_test_features    , calbiration_vec, k)
-        test_adv_characteristics    = get_dknn_nonconformity(x_test_features_adv, calbiration_vec, k)
+        test_normal_characteristics = get_dknn_nonconformity(x_test_features, calibration_vec, k)
+        test_adv_characteristics    = get_dknn_nonconformity(x_test_features_adv, calibration_vec, k)
 
         dknn_neg = test_normal_characteristics
         dknn_pos = test_adv_characteristics
