@@ -954,7 +954,7 @@ if FLAGS.characteristics == 'nnif':
             sel_column.append(i)
 
     if FLAGS.max_indices == -1:
-        max_indices_vec = [350, 400]
+        max_indices_vec = [10, 20, 30, 40, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600]
     else:
         max_indices_vec = [FLAGS.max_indices]
 
