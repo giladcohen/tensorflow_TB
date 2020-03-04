@@ -675,7 +675,7 @@ def find_ranks(sub_index, sorted_influence_indices, adversarial=False):
     ranks = -1 * np.ones((num_output, len(sorted_influence_indices)), dtype=np.int32)
     dists = -1 * np.ones((num_output, len(sorted_influence_indices)), dtype=np.float32)
 
-    print('Finding ranks for sub_index={} (adversarial={})'.format(sub_index, adversarial))
+    # print('Finding ranks for sub_index={} (adversarial={})'.format(sub_index, adversarial))
     for target_idx in range(len(sorted_influence_indices)):  # for only some indices (say, 0:50 only)
         idx = sorted_influence_indices[target_idx]  # selecting training sample index
         for layer_index in range(num_output):
